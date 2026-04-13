@@ -1,4 +1,5 @@
 import { pipeline } from '@huggingface/transformers';
+import { aggregateEntities } from './anonymizer.js';
 
 let ner = null;
 
@@ -35,10 +36,11 @@ self.onmessage = async (e) => {
       return;
     }
     try {
-      const results = await ner(e.data.text, {
-        aggregation_strategy: 'simple',
-      });
-      self.postMessage({ type: 'result', data: results });
+      const raw = await ner(e.data.text);
+      const data = raw[0]?.entity_group
+        ? raw
+        : aggregateEntities(raw, e.data.text);
+      self.postMessage({ type: 'result', data });
     } catch (err) {
       self.postMessage({ type: 'error', message: err.message });
     }
