@@ -55,17 +55,9 @@ worker.onmessage = (e) => {
 
 // --- Download model ---
 downloadBtn.addEventListener('click', () => {
-  const backend = document.querySelector('input[name="backend"]:checked').value;
   downloadBtn.disabled = true;
-  document.querySelectorAll('input[name="backend"]').forEach((r) => {
-    r.disabled = true;
-  });
   modelStatus.textContent = 'Initializing...';
-  worker.postMessage({
-    type: 'load',
-    device: backend === 'webgpu' ? 'webgpu' : undefined,
-    dtype: backend === 'webgpu' ? 'fp32' : 'q8',
-  });
+  worker.postMessage({ type: 'load' });
 });
 
 // --- Anonymize ---

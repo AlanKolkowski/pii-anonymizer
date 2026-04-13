@@ -10,24 +10,21 @@ self.onmessage = async (e) => {
 
   if (type === 'load') {
     try {
-      const opts = {
-        dtype: e.data.dtype || 'q8',
-        progress_callback: (data) => {
-          if (data.status === 'progress') {
-            self.postMessage({
-              type: 'progress',
-              file: data.file,
-              progress: data.progress,
-            });
-          }
-        },
-      };
-      if (e.data.device) opts.device = e.data.device;
-
       ner = await pipeline(
         'token-classification',
         'bardsai/eu-pii-anonimization',
-        opts,
+        {
+          dtype: 'q8',
+          progress_callback: (data) => {
+            if (data.status === 'progress') {
+              self.postMessage({
+                type: 'progress',
+                file: data.file,
+                progress: data.progress,
+              });
+            }
+          },
+        },
       );
       self.postMessage({ type: 'loaded' });
     } catch (err) {
