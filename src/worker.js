@@ -1,28 +1,33 @@
 import { pipeline } from '@huggingface/transformers';
-import { aggregateEntities } from './anonymizer.js';
+import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities } from './anonymizer.js';
 
 let ner = null;
+
+const MAX_CHUNK_CHARS = 1200;
 
 self.onmessage = async (e) => {
   const { type } = e.data;
 
   if (type === 'load') {
     try {
+      const opts = {
+        dtype: e.data.dtype || 'q8',
+        progress_callback: (data) => {
+          if (data.status === 'progress') {
+            self.postMessage({
+              type: 'progress',
+              file: data.file,
+              progress: data.progress,
+            });
+          }
+        },
+      };
+      if (e.data.device) opts.device = e.data.device;
+
       ner = await pipeline(
         'token-classification',
-        'bardsai/eu-pii-anonimization-multilang',
-        {
-          dtype: 'q8',
-          progress_callback: (data) => {
-            if (data.status === 'progress') {
-              self.postMessage({
-                type: 'progress',
-                file: data.file,
-                progress: data.progress,
-              });
-            }
-          },
-        },
+        'bardsai/eu-pii-anonimization',
+        opts,
       );
       self.postMessage({ type: 'loaded' });
     } catch (err) {
@@ -36,10 +41,29 @@ self.onmessage = async (e) => {
       return;
     }
     try {
-      const raw = await ner(e.data.text);
-      const data = raw[0]?.entity_group
-        ? raw
-        : aggregateEntities(raw, e.data.text);
+      const text = e.data.text;
+      const chunks = chunkText(text, MAX_CHUNK_CHARS);
+
+      const allEntities = [];
+      for (const chunk of chunks) {
+        const raw = await ner(chunk.text);
+        const chunkEntities = raw[0]?.entity_group
+          ? raw
+          : aggregateEntities(raw, chunk.text);
+
+        for (const entity of chunkEntities) {
+          allEntities.push({
+            ...entity,
+            start: entity.start + chunk.offset,
+            end: entity.end + chunk.offset,
+          });
+        }
+      }
+
+      // Merge regex-detected emails (catches full addresses the model may fragment)
+      allEntities.push(...findRegexEntities(text));
+
+      const data = deduplicateEntities(allEntities);
       self.postMessage({ type: 'result', data });
     } catch (err) {
       self.postMessage({ type: 'error', message: err.message });
