@@ -55,9 +55,13 @@ worker.onmessage = (e) => {
 
 // --- Download model ---
 downloadBtn.addEventListener('click', () => {
+  const dtype = document.querySelector('input[name="backend"]:checked').value;
   downloadBtn.disabled = true;
+  document.querySelectorAll('input[name="backend"]').forEach((r) => {
+    r.disabled = true;
+  });
   modelStatus.textContent = 'Initializing...';
-  worker.postMessage({ type: 'load' });
+  worker.postMessage({ type: 'load', dtype });
 });
 
 // --- Anonymize ---

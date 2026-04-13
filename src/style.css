@@ -167,6 +167,30 @@ td code {
   font-size: 0.85rem;
 }
 
+/* --- Backend picker --- */
+.backend-picker {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.backend-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.backend-option input[type='radio'] {
+  accent-color: #3b82f6;
+}
+
+.backend-option input:disabled + span {
+  color: #999;
+}
+
 /* --- Status text --- */
 #model-status {
   margin-top: 0.5rem;

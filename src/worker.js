@@ -10,11 +10,14 @@ self.onmessage = async (e) => {
 
   if (type === 'load') {
     try {
+      const dtype = e.data.dtype || 'q8';
+      console.log('[worker] Loading pipeline with dtype:', dtype);
+
       ner = await pipeline(
         'token-classification',
         'bardsai/eu-pii-anonimization',
         {
-          dtype: 'q8',
+          dtype,
           progress_callback: (data) => {
             if (data.status === 'progress') {
               self.postMessage({
@@ -26,8 +29,10 @@ self.onmessage = async (e) => {
           },
         },
       );
+      console.log('[worker] Pipeline loaded OK');
       self.postMessage({ type: 'loaded' });
     } catch (err) {
+      console.error('[worker] Pipeline load failed:', err);
       self.postMessage({ type: 'error', message: err.message });
     }
   }
