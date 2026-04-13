@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -184,5 +184,211 @@ describe('aggregateEntities', () => {
     ];
     const result = aggregateEntities(raw, text);
     expect(result).toHaveLength(2);
+  });
+});
+
+describe('chunkText', () => {
+  it('returns single chunk for short text', () => {
+    const chunks = chunkText('hello world', 100);
+    expect(chunks).toEqual([{ text: 'hello world', offset: 0 }]);
+  });
+
+  it('splits text without newlines by character boundary', () => {
+    const text = 'a'.repeat(100);
+    const chunks = chunkText(text, 40);
+    expect(chunks.length).toBe(3);
+    expect(chunks[0]).toEqual({ text: 'a'.repeat(40), offset: 0 });
+    expect(chunks[2].offset + chunks[2].text.length).toBe(100);
+  });
+
+  it('splits at paragraph boundaries when available', () => {
+    const text = 'para1 content\n\npara2 content\n\npara3 content';
+    // 14 + 2 + 14 + 2 + 14 = 46 chars
+    const chunks = chunkText(text, 20);
+    // Each paragraph (~14 chars) fits in 20, so should split at \n\n
+    expect(chunks.length).toBe(3);
+    expect(chunks[0].text).toBe('para1 content\n\n');
+    expect(chunks[1].text).toBe('para2 content\n\n');
+    expect(chunks[2].text).toBe('para3 content');
+  });
+
+  it('falls back to line breaks when no paragraphs', () => {
+    const text = 'aaaa\nbbbb\ncccc\ndddd\neeee\n';
+    const chunks = chunkText(text, 12);
+    // Should split at \n boundaries
+    for (const chunk of chunks) {
+      if (chunk.offset > 0) {
+        expect(text[chunk.offset - 1]).toBe('\n');
+      }
+    }
+  });
+
+  it('covers the entire text without gaps', () => {
+    const text = 'aaa\n\nbbb\n\nccc\n\nddd\n\neee';
+    const chunks = chunkText(text, 10);
+    for (let i = 0; i < text.length; i++) {
+      const covered = chunks.some(
+        (c) => i >= c.offset && i < c.offset + c.text.length,
+      );
+      expect(covered).toBe(true);
+    }
+  });
+
+  it('last chunk reaches end of text', () => {
+    const text = 'x'.repeat(250);
+    const chunks = chunkText(text, 100);
+    const last = chunks[chunks.length - 1];
+    expect(last.offset + last.text.length).toBe(text.length);
+  });
+
+  it('handles oversized paragraph gracefully', () => {
+    const text = 'a'.repeat(50) + '\n\nshort\n\nother';
+    const chunks = chunkText(text, 30);
+    // The 50-char paragraph exceeds maxChars but gets included as one chunk
+    expect(chunks[0].text).toBe('a'.repeat(50) + '\n\n');
+    expect(chunks[0].offset).toBe(0);
+    // Remaining paragraphs follow
+    const last = chunks[chunks.length - 1];
+    expect(last.offset + last.text.length).toBe(text.length);
+  });
+});
+
+describe('deduplicateEntities', () => {
+  it('returns empty array for empty input', () => {
+    expect(deduplicateEntities([])).toEqual([]);
+  });
+
+  it('keeps non-overlapping entities', () => {
+    const entities = [
+      { start: 0, end: 5, score: 0.9, entity_group: 'PERSON_NAME' },
+      { start: 10, end: 15, score: 0.8, entity_group: 'LOCATION' },
+    ];
+    expect(deduplicateEntities(entities)).toHaveLength(2);
+  });
+
+  it('keeps higher-score entity when overlapping', () => {
+    const entities = [
+      { start: 0, end: 10, score: 0.7, entity_group: 'PERSON_NAME' },
+      { start: 5, end: 12, score: 0.9, entity_group: 'PERSON_NAME' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].score).toBe(0.9);
+  });
+
+  it('keeps lower-start entity when scores tie (first wins)', () => {
+    const entities = [
+      { start: 0, end: 10, score: 0.9, entity_group: 'PERSON_NAME' },
+      { start: 5, end: 12, score: 0.8, entity_group: 'PERSON_NAME' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe(0);
+  });
+
+  it('handles single entity', () => {
+    const entities = [{ start: 0, end: 5, score: 0.9, entity_group: 'X' }];
+    expect(deduplicateEntities(entities)).toEqual(entities);
+  });
+});
+
+describe('couldBeSamePerson', () => {
+  it('matches Polish nominative vs genitive (full name)', () => {
+    expect(couldBeSamePerson('Marcin Jabłoński', 'Marcina Jabłońskiego')).toBe(true);
+  });
+
+  it('matches nominative vs instrumental', () => {
+    expect(couldBeSamePerson('Tomasz Wiśniewski', 'Tomaszem Wiśniewskim')).toBe(true);
+  });
+
+  it('matches nominative vs genitive (short surname)', () => {
+    expect(couldBeSamePerson('Tomasz Wiśniewski', 'Tomasza Wiśniewskiego')).toBe(true);
+  });
+
+  it('matches single surname forms', () => {
+    expect(couldBeSamePerson('Nowak', 'Nowaka')).toBe(true);
+  });
+
+  it('matches last name only vs full name', () => {
+    expect(couldBeSamePerson('Wiśniewski', 'Tomasz Wiśniewski')).toBe(true);
+  });
+
+  it('rejects completely different names', () => {
+    expect(couldBeSamePerson('Anna Nowak', 'Tomasz Wiśniewski')).toBe(false);
+  });
+
+  it('rejects names with same-length but different stems', () => {
+    expect(couldBeSamePerson('Kowalski', 'Kowalczyk')).toBe(false);
+  });
+
+  it('rejects different first names even with similar surnames', () => {
+    expect(couldBeSamePerson('Jan Kowalski', 'Adam Kowalski')).toBe(false);
+  });
+});
+
+describe('buildTokenMap with Polish declension', () => {
+  it('assigns same token to declined forms of the same name', () => {
+    const text = 'Marcin Jabłoński i Marcina Jabłońskiego';
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 16, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 19, end: 39, score: 0.97 },
+    ];
+    const { seen, legend } = buildTokenMap(entities, text);
+    // Both forms should map to the same token
+    expect(seen['PERSON_NAME::Marcin Jabłoński']).toBe(
+      seen['PERSON_NAME::Marcina Jabłońskiego'],
+    );
+    // Legend should have only one entry for this person
+    const personTokens = Object.keys(legend).filter((k) =>
+      k.startsWith('[PERSON_NAME_'),
+    );
+    expect(personTokens).toHaveLength(1);
+  });
+
+  it('keeps different tokens for genuinely different people', () => {
+    const text = 'Jan Kowalski i Anna Nowak';
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 15, end: 24, score: 0.97 },
+    ];
+    const { legend } = buildTokenMap(entities, text);
+    const personTokens = Object.keys(legend).filter((k) =>
+      k.startsWith('[PERSON_NAME_'),
+    );
+    expect(personTokens).toHaveLength(2);
+  });
+
+  it('does not normalize non-PERSON_NAME entities', () => {
+    const text = 'Warszawa and Warszawy';
+    const entities = [
+      { entity_group: 'LOCATION', start: 0, end: 8, score: 0.98 },
+      { entity_group: 'LOCATION', start: 13, end: 21, score: 0.97 },
+    ];
+    const { legend } = buildTokenMap(entities, text);
+    const locTokens = Object.keys(legend).filter((k) =>
+      k.startsWith('[LOCATION_'),
+    );
+    expect(locTokens).toHaveLength(2);
+  });
+});
+
+describe('findRegexEntities', () => {
+  it('detects email addresses', () => {
+    const text = 'contact biuro@nowak-wspolnicy.pl for info';
+    const entities = findRegexEntities(text);
+    expect(entities).toHaveLength(1);
+    expect(entities[0].entity_group).toBe('EMAIL_ADDRESS');
+    expect(text.slice(entities[0].start, entities[0].end)).toBe(
+      'biuro@nowak-wspolnicy.pl',
+    );
+  });
+
+  it('detects multiple emails', () => {
+    const text = 'a@b.com and c@d.pl';
+    expect(findRegexEntities(text)).toHaveLength(2);
+  });
+
+  it('returns empty for text without emails', () => {
+    expect(findRegexEntities('no emails here')).toEqual([]);
   });
 });

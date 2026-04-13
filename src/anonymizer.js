@@ -1,18 +1,86 @@
+function commonPrefixLength(a, b) {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i;
+}
+
+function wordsMatch(w1, w2) {
+  const a = w1.toLowerCase();
+  const b = w2.toLowerCase();
+  const shorter = Math.min(a.length, b.length);
+  const prefixLen = commonPrefixLength(a, b);
+  // The shorter word must match all but at most 2 ending characters.
+  // This handles Polish declension where endings change by 1-2 chars
+  // while the stem (prefix) stays the same.
+  return prefixLen >= Math.max(3, shorter - 2);
+}
+
+export function couldBeSamePerson(name1, name2) {
+  const words1 = name1.split(/\s+/);
+  const words2 = name2.split(/\s+/);
+
+  if (words1.length === words2.length) {
+    return words1.every((w, i) => wordsMatch(w, words2[i]));
+  }
+
+  // Different word count: check if all words of the shorter name
+  // match a subset of the longer name's words
+  const [shorter, longer] =
+    words1.length < words2.length ? [words1, words2] : [words2, words1];
+
+  const used = new Set();
+  for (const sw of shorter) {
+    let found = false;
+    for (let i = 0; i < longer.length; i++) {
+      if (!used.has(i) && wordsMatch(sw, longer[i])) {
+        used.add(i);
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+function createNameNormalizer() {
+  const groups = [];
+
+  return function (name) {
+    for (const group of groups) {
+      if (couldBeSamePerson(name, group.canonical)) {
+        return group.canonical;
+      }
+    }
+    groups.push({ canonical: name });
+    return name;
+  };
+}
+
 export function buildTokenMap(entities, originalText) {
   const counters = {};
   const seen = {};
   const legend = {};
+  const normalizeName = createNameNormalizer();
 
   for (const entity of entities) {
     const value = originalText.slice(entity.start, entity.end);
     const type = entity.entity_group;
-    const key = `${type}::${value}`;
+    const normalizedValue =
+      type === 'PERSON_NAME' ? normalizeName(value) : value;
+    const canonicalKey = `${type}::${normalizedValue}`;
 
-    if (!seen[key]) {
+    if (!seen[canonicalKey]) {
       counters[type] = (counters[type] || 0) + 1;
       const token = `[${type}_${counters[type]}]`;
-      seen[key] = token;
+      seen[canonicalKey] = token;
       legend[token] = value;
+    }
+
+    // Also index by raw value so anonymizeText can look up by exact text
+    const rawKey = `${type}::${value}`;
+    if (rawKey !== canonicalKey) {
+      seen[rawKey] = seen[canonicalKey];
     }
   }
 
@@ -92,6 +160,107 @@ export function aggregateEntities(rawTokens, originalText) {
     end: g.end,
     score: g.scores.reduce((a, b) => a + b, 0) / g.scores.length,
   }));
+}
+
+export function chunkText(text, maxChars) {
+  if (text.length <= maxChars) return [{ text, offset: 0 }];
+
+  // Prefer paragraph boundaries (\n\n+), fall back to lines (\n), then characters
+  const paraBreaks = [0];
+  for (const m of text.matchAll(/\n\n+/g)) {
+    paraBreaks.push(m.index + m[0].length);
+  }
+  paraBreaks.push(text.length);
+
+  if (paraBreaks.length >= 3) { // need at least one real \n\n break (not just 0 + text.length)
+    const chunks = [];
+    let from = 0;
+    let fromIdx = 0;
+
+    for (let i = 1; i < paraBreaks.length; i++) {
+      if (paraBreaks[i] - from > maxChars) {
+        if (i > fromIdx + 1) {
+          chunks.push({ text: text.slice(from, paraBreaks[i - 1]), offset: from });
+          from = paraBreaks[i - 1];
+          fromIdx = i - 1;
+        } else {
+          // Single paragraph exceeds maxChars — include it as-is
+          chunks.push({ text: text.slice(from, paraBreaks[i]), offset: from });
+          from = paraBreaks[i];
+          fromIdx = i;
+        }
+      }
+    }
+    if (from < text.length) {
+      chunks.push({ text: text.slice(from, text.length), offset: from });
+    }
+    return chunks;
+  }
+
+  // Fallback: line-based
+  const lineBreaks = [0];
+  for (const m of text.matchAll(/\n/g)) {
+    lineBreaks.push(m.index + 1);
+  }
+
+  if (lineBreaks.length >= 2) {
+    const chunks = [];
+    let from = 0;
+
+    for (let i = 1; i < lineBreaks.length; i++) {
+      if (lineBreaks[i] - from > maxChars && lineBreaks[i - 1] > from) {
+        chunks.push({ text: text.slice(from, lineBreaks[i - 1]), offset: from });
+        from = lineBreaks[i - 1];
+      }
+    }
+    if (from < text.length) {
+      chunks.push({ text: text.slice(from, text.length), offset: from });
+    }
+    return chunks;
+  }
+
+  // Fallback: character-based
+  const chunks = [];
+  for (let pos = 0; pos < text.length; pos += maxChars) {
+    const end = Math.min(pos + maxChars, text.length);
+    chunks.push({ text: text.slice(pos, end), offset: pos });
+  }
+  return chunks;
+}
+
+export function findRegexEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(/[\w.+-]+@[\w.-]+\.\w{2,}/g)) {
+    entities.push({
+      entity_group: 'EMAIL_ADDRESS',
+      start: m.index,
+      end: m.index + m[0].length,
+      score: 1.0,
+    });
+  }
+  return entities;
+}
+
+export function deduplicateEntities(entities) {
+  if (entities.length <= 1) return entities;
+
+  entities.sort((a, b) => a.start - b.start || b.score - a.score);
+
+  const result = [entities[0]];
+  for (let i = 1; i < entities.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = entities[i];
+
+    if (curr.start < prev.end) {
+      if (curr.score > prev.score) {
+        result[result.length - 1] = curr;
+      }
+    } else {
+      result.push(curr);
+    }
+  }
+
+  return result;
 }
 
 export function deanonymizeText(text, legend) {
