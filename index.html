@@ -10,9 +10,66 @@
   <div class="container">
     <header>
       <h1>PII Anonymizer</h1>
-      <p>Anonymize personal data locally in your browser. No data leaves your device.</p>
+      <p class="subtitle">
+        Anonymize personal data locally in your browser using
+        <a href="https://huggingface.co/bardsai/eu-pii-anonimization-multilang" target="_blank" rel="noopener">bardsai/eu-pii-anonimization-multilang</a>.
+        No data leaves your device.
+      </p>
     </header>
+
+    <section id="model-section">
+      <button id="download-btn" class="btn btn-primary">Download Model (~110 MB)</button>
+      <p id="model-status"></p>
+    </section>
+
+    <section id="input-section">
+      <label for="input-text">1. Paste your document</label>
+      <textarea id="input-text" rows="10" placeholder="Paste text containing personal data..."></textarea>
+      <button id="anonymize-btn" class="btn btn-primary" disabled>Anonymize</button>
+    </section>
+
+    <section id="result-section" hidden>
+      <h2>Anonymized Text</h2>
+      <div class="output-wrapper">
+        <pre id="anonymized-output" class="output-box"></pre>
+        <button id="copy-anonymized" class="btn btn-secondary">Copy to Clipboard</button>
+      </div>
+
+      <h3>Legend</h3>
+      <table id="legend-table">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Original Value</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="deanonymize-section" hidden>
+      <label for="deanonymize-input">2. Paste LLM output containing tokens</label>
+      <textarea id="deanonymize-input" rows="10" placeholder="Paste text with [PERSON_NAME_1] style tokens..."></textarea>
+      <button id="deanonymize-btn" class="btn btn-primary">De-anonymize</button>
+    </section>
+
+    <section id="deanonymize-result-section" hidden>
+      <h2>De-anonymized Text</h2>
+      <div class="output-wrapper">
+        <pre id="deanonymized-output" class="output-box"></pre>
+        <button id="copy-deanonymized" class="btn btn-secondary">Copy to Clipboard</button>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Model: <a href="https://huggingface.co/bardsai/eu-pii-anonimization-multilang" target="_blank" rel="noopener">bardsai/eu-pii-anonimization-multilang</a>
+        &middot; Apache 2.0
+        &middot; Powered by <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
+      </p>
+    </footer>
   </div>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
