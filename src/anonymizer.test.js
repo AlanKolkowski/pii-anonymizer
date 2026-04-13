@@ -5,8 +5,8 @@ describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
     const text = 'Jan Kowalski and Anna Nowak';
     const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
-      { entity_group: 'PERSON_NAME', start: 18, end: 27, score: 0.97 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 17, end: 27, score: 0.97 },
     ];
     const { legend } = buildTokenMap(entities, text);
     expect(legend).toEqual({
@@ -18,8 +18,8 @@ describe('buildTokenMap', () => {
   it('reuses token when same value repeats', () => {
     const text = 'Jan Kowalski called Jan Kowalski';
     const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
-      { entity_group: 'PERSON_NAME', start: 20, end: 33, score: 0.97 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 20, end: 32, score: 0.97 },
     ];
     const { legend } = buildTokenMap(entities, text);
     expect(legend).toEqual({
@@ -30,7 +30,7 @@ describe('buildTokenMap', () => {
   it('handles multiple entity types independently', () => {
     const text = 'Jan Kowalski, email jan@test.com';
     const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
       { entity_group: 'EMAIL_ADDRESS', start: 20, end: 32, score: 0.99 },
     ];
     const { legend } = buildTokenMap(entities, text);
@@ -50,8 +50,8 @@ describe('anonymizeText', () => {
   it('replaces entities with indexed tokens', () => {
     const text = 'Jan Kowalski works at Example Corp';
     const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
-      { entity_group: 'ORGANIZATION_NAME', start: 23, end: 35, score: 0.95 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'ORGANIZATION_NAME', start: 22, end: 34, score: 0.95 },
     ];
     const { anonymized, legend } = anonymizeText(text, entities);
     expect(anonymized).toBe('[PERSON_NAME_1] works at [ORGANIZATION_NAME_1]');
@@ -62,8 +62,8 @@ describe('anonymizeText', () => {
   it('uses same token for duplicate entity values', () => {
     const text = 'Jan Kowalski called Jan Kowalski';
     const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
-      { entity_group: 'PERSON_NAME', start: 20, end: 33, score: 0.97 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'PERSON_NAME', start: 20, end: 32, score: 0.97 },
     ];
     const { anonymized } = anonymizeText(text, entities);
     expect(anonymized).toBe('[PERSON_NAME_1] called [PERSON_NAME_1]');
@@ -72,8 +72,8 @@ describe('anonymizeText', () => {
   it('handles entities not sorted by position', () => {
     const text = 'Jan Kowalski works at Example Corp';
     const entities = [
-      { entity_group: 'ORGANIZATION_NAME', start: 23, end: 35, score: 0.95 },
-      { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.98 },
+      { entity_group: 'ORGANIZATION_NAME', start: 22, end: 34, score: 0.95 },
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
     ];
     const { anonymized } = anonymizeText(text, entities);
     expect(anonymized).toBe('[PERSON_NAME_1] works at [ORGANIZATION_NAME_1]');
