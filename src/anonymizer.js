@@ -229,16 +229,59 @@ export function chunkText(text, maxChars) {
 }
 
 export function findRegexEntities(text) {
+  const patterns = [
+    { regex: /[\w.+-]+@[\w.-]+\.\w{2,}/g, entity_group: 'EMAIL_ADDRESS' },
+    { regex: /\b\d{11}\b/g, entity_group: 'PERSON_IDENTIFIER' },
+    { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
+    { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
+    { regex: /\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
+  ];
+
   const entities = [];
-  for (const m of text.matchAll(/[\w.+-]+@[\w.-]+\.\w{2,}/g)) {
-    entities.push({
-      entity_group: 'EMAIL_ADDRESS',
-      start: m.index,
-      end: m.index + m[0].length,
-      score: 1.0,
-    });
+  for (const { regex, entity_group } of patterns) {
+    for (const m of text.matchAll(regex)) {
+      entities.push({
+        entity_group,
+        start: m.index,
+        end: m.index + m[0].length,
+        score: 1.0,
+      });
+    }
   }
   return entities;
+}
+
+const ADDRESS_TYPES = new Set(['POSTAL_ADDRESS', 'LOCATION']);
+
+export function mergeAdjacentEntities(entities, text) {
+  if (entities.length <= 1) return entities;
+
+  // Sort by position
+  const sorted = [...entities].sort((a, b) => a.start - b.start);
+  const result = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = sorted[i];
+
+    if (ADDRESS_TYPES.has(prev.entity_group) && ADDRESS_TYPES.has(curr.entity_group)) {
+      const gap = text.slice(prev.end, curr.start);
+      if (gap.length <= 3 && /^[\s,\n]*$/.test(gap)) {
+        // Merge into one POSTAL_ADDRESS
+        result[result.length - 1] = {
+          entity_group: 'POSTAL_ADDRESS',
+          start: prev.start,
+          end: curr.end,
+          score: Math.max(prev.score, curr.score),
+        };
+        continue;
+      }
+    }
+
+    result.push(curr);
+  }
+
+  return result;
 }
 
 export function deduplicateEntities(entities) {

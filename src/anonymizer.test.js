@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, mergeAdjacentEntities } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -390,5 +390,136 @@ describe('findRegexEntities', () => {
 
   it('returns empty for text without emails', () => {
     expect(findRegexEntities('no emails here')).toEqual([]);
+  });
+
+  it('detects PESEL (11-digit identifier)', () => {
+    const text = 'PESEL: 92071314764';
+    const entities = findRegexEntities(text);
+    const pesel = entities.find((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(pesel).toBeDefined();
+    expect(text.slice(pesel.start, pesel.end)).toBe('92071314764');
+    expect(pesel.score).toBe(1.0);
+  });
+
+  it('detects NIP with dashes', () => {
+    const text = 'NIP: 123-456-78-19';
+    const entities = findRegexEntities(text);
+    const nip = entities.find((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER');
+    expect(nip).toBeDefined();
+    expect(text.slice(nip.start, nip.end)).toBe('123-456-78-19');
+    expect(nip.score).toBe(1.0);
+  });
+
+  it('detects NIP without separators', () => {
+    const text = 'NIP: 1234567819';
+    const entities = findRegexEntities(text);
+    const nip = entities.find((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER');
+    expect(nip).toBeDefined();
+    expect(text.slice(nip.start, nip.end)).toBe('1234567819');
+  });
+
+  it('detects Polish IBAN', () => {
+    const text = 'Konto: PL61 1090 1014 0000 0712 1981 2874';
+    const entities = findRegexEntities(text);
+    const iban = entities.find((e) => e.entity_group === 'BANK_ACCOUNT_IDENTIFIER');
+    expect(iban).toBeDefined();
+    expect(text.slice(iban.start, iban.end)).toBe('PL61 1090 1014 0000 0712 1981 2874');
+    expect(iban.score).toBe(1.0);
+  });
+
+  it('detects IBAN without spaces', () => {
+    const text = 'Konto: PL61109010140000071219812874';
+    const entities = findRegexEntities(text);
+    const iban = entities.find((e) => e.entity_group === 'BANK_ACCOUNT_IDENTIFIER');
+    expect(iban).toBeDefined();
+    expect(text.slice(iban.start, iban.end)).toBe('PL61109010140000071219812874');
+  });
+
+  it('detects phone number with country code', () => {
+    const text = 'Tel: +48 600 123 45 67';
+    const entities = findRegexEntities(text);
+    const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
+    expect(phone).toBeDefined();
+    expect(text.slice(phone.start, phone.end)).toBe('+48 600 123 45 67');
+    expect(phone.score).toBe(1.0);
+  });
+
+  it('detects phone number without country code', () => {
+    const text = 'Tel: 48 600 123 45 67';
+    const entities = findRegexEntities(text);
+    const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
+    expect(phone).toBeDefined();
+    expect(text.slice(phone.start, phone.end)).toBe('48 600 123 45 67');
+  });
+});
+
+describe('mergeAdjacentEntities', () => {
+  it('merges adjacent POSTAL_ADDRESS and LOCATION into one POSTAL_ADDRESS', () => {
+    const text = 'ul. Marszałkowska 47/12, 00-648 Warszawa';
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 23, score: 0.85 },
+      { entity_group: 'LOCATION', start: 25, end: 40, score: 0.90 },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(1);
+    expect(result[0].entity_group).toBe('POSTAL_ADDRESS');
+    expect(result[0].start).toBe(0);
+    expect(result[0].end).toBe(40);
+    expect(result[0].score).toBe(0.90);
+  });
+
+  it('merges multiple address fragments into one', () => {
+    const text = 'ul. Marszałkowska 47/12, 00-648 Warszawa';
+    const entities = [
+      { entity_group: 'LOCATION', start: 0, end: 3, score: 0.80 },
+      { entity_group: 'POSTAL_ADDRESS', start: 4, end: 23, score: 0.85 },
+      { entity_group: 'LOCATION', start: 25, end: 40, score: 0.90 },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(1);
+    expect(result[0].entity_group).toBe('POSTAL_ADDRESS');
+    expect(result[0].start).toBe(0);
+    expect(result[0].end).toBe(40);
+  });
+
+  it('does not merge entities with gap > 3 characters', () => {
+    const text = 'ul. Marszałkowska 47      00-648 Warszawa';
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 18, score: 0.85 },
+      { entity_group: 'LOCATION', start: 24, end: 41, score: 0.90 },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(2);
+  });
+
+  it('does not merge non-address entity types', () => {
+    const text = 'Jan Kowalski Warszawa';
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.95 },
+      { entity_group: 'LOCATION', start: 13, end: 21, score: 0.90 },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(2);
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(mergeAdjacentEntities([], '')).toEqual([]);
+  });
+
+  it('returns single entity unchanged', () => {
+    const entities = [{ entity_group: 'POSTAL_ADDRESS', start: 0, end: 10, score: 0.9 }];
+    const result = mergeAdjacentEntities(entities, 'some text.');
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(entities[0]);
+  });
+
+  it('does not merge gap with non-whitespace/comma chars', () => {
+    const text = 'ul. Marszałkowska i Warszawa';
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 17, score: 0.85 },
+      { entity_group: 'LOCATION', start: 20, end: 28, score: 0.90 },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(2);
   });
 });

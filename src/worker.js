@@ -1,5 +1,5 @@
 import { pipeline } from '@huggingface/transformers';
-import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities } from './anonymizer.js';
+import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities, mergeAdjacentEntities } from './anonymizer.js';
 
 let ner = null;
 
@@ -15,7 +15,7 @@ self.onmessage = async (e) => {
 
       ner = await pipeline(
         'token-classification',
-        'bardsai/eu-pii-anonimization',
+        'bardsai/eu-pii-anonimization-multilang',
         {
           dtype,
           progress_callback: (data) => {
@@ -65,7 +65,8 @@ self.onmessage = async (e) => {
       // Merge regex-detected emails (catches full addresses the model may fragment)
       allEntities.push(...findRegexEntities(text));
 
-      const data = deduplicateEntities(allEntities);
+      const deduped = deduplicateEntities(allEntities);
+      const data = mergeAdjacentEntities(deduped, text);
       self.postMessage({ type: 'result', data });
     } catch (err) {
       self.postMessage({ type: 'error', message: err.message });
