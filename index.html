@@ -12,13 +12,23 @@
       <h1>PII Anonymizer</h1>
       <p class="subtitle">
         Anonymize personal data locally in your browser using
-        <a href="https://huggingface.co/bardsai/eu-pii-anonimization-multilang" target="_blank" rel="noopener">bardsai/eu-pii-anonimization-multilang</a>.
+        <a href="https://huggingface.co/bardsai/eu-pii-anonimization" target="_blank" rel="noopener">bardsai/eu-pii-anonimization</a>.
         No data leaves your device.
       </p>
     </header>
 
     <section id="model-section">
-      <button id="download-btn" class="btn btn-primary">Download Model (~110 MB)</button>
+      <div class="backend-picker">
+        <label class="backend-option">
+          <input type="radio" name="backend" value="cpu" checked>
+          <span>CPU (int8, ~279 MB)</span>
+        </label>
+        <label class="backend-option">
+          <input type="radio" name="backend" value="webgpu">
+          <span>WebGPU (fp32, ~1.1 GB)</span>
+        </label>
+      </div>
+      <button id="download-btn" class="btn btn-primary">Download Model</button>
       <p id="model-status"></p>
     </section>
 
@@ -63,7 +73,7 @@
 
     <footer>
       <p>
-        Model: <a href="https://huggingface.co/bardsai/eu-pii-anonimization-multilang" target="_blank" rel="noopener">bardsai/eu-pii-anonimization-multilang</a>
+        Model: <a href="https://huggingface.co/bardsai/eu-pii-anonimization" target="_blank" rel="noopener">bardsai/eu-pii-anonimization</a>
         &middot; Apache 2.0
         &middot; Powered by <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
       </p>
