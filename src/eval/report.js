@@ -402,3 +402,192 @@ export function humanizeDocName(filename) {
   const rest = name.replace(/_/g, ' ');
   return rest.charAt(0).toUpperCase() + rest.slice(1);
 }
+
+// ── Scoring metrics section ────────────────────────────────────────
+
+function buildScoringSection(docScores) {
+  const rows = Object.entries(docScores.byType)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, m]) => `<tr>
+      <td>${type}</td>
+      <td>${pct(m.precision)}</td>
+      <td>${pct(m.recall)}</td>
+      <td>${pct(m.f1)}</td>
+      <td>${m.tp}</td>
+      <td>${m.fp}</td>
+      <td>${m.fn}</td>
+    </tr>`)
+    .join('\n');
+
+  return `
+    <div class="section-title">Scoring</div>
+    <p>Precision: <strong>${pct(docScores.precision)}</strong> &nbsp;
+       Recall: <strong>${pct(docScores.recall)}</strong> &nbsp;
+       F1: <strong>${pct(docScores.f1)}</strong> &nbsp;
+       TP: ${docScores.tp} &nbsp; FP: ${docScores.fp} &nbsp; FN: ${docScores.fn}</p>
+    <table class="scoring-table">
+      <thead><tr><th>Type</th><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── F1 badge ───────────────────────────────────────────────────────
+
+function f1Badge(f1) {
+  const cls = f1 >= 0.9 ? 'green' : f1 >= 0.7 ? 'yellow' : 'red';
+  return `<span class="f1-badge ${cls}">F1: ${pct(f1)}</span>`;
+}
+
+// ── Main report generator ──────────────────────────────────────────
+
+export async function generateReport(runId, scoresData) {
+  const runDir = join(RESULTS_DIR, runId);
+  const docNames = Object.keys(scoresData.documents).sort();
+
+  // Load historical scores
+  const historicalRuns = await loadHistoricalScores(runId);
+
+  // Build comparison columns: historical + current
+  const currentSummaryRaw = await readFile(join(runDir, 'summary.json'), 'utf-8');
+  const currentSummary = JSON.parse(currentSummaryRaw);
+
+  const comparisonColumns = [
+    ...historicalRuns.map(r => ({
+      runId: r.runId,
+      label: r.label,
+      f1: r.scores.overall.f1,
+      precision: r.scores.overall.precision,
+      recall: r.scores.overall.recall,
+      documents: r.scores.documents,
+      byType: r.scores.overall.byType,
+    })),
+    {
+      runId,
+      label: currentSummary.label || null,
+      f1: scoresData.overall.f1,
+      precision: scoresData.overall.precision,
+      recall: scoresData.overall.recall,
+      documents: scoresData.documents,
+      byType: scoresData.overall.byType,
+    },
+  ];
+
+  const allTypes = Object.keys(scoresData.overall.byType).sort();
+
+  // Build overall comparison table
+  const overallComparisonHtml = buildComparisonTable(comparisonColumns, runId, {
+    docRows: docNames,
+    typeRows: allTypes,
+  });
+
+  // Build per-document sections
+  const docSections = [];
+  for (const docName of docNames) {
+    const docScores = scoresData.documents[docName];
+
+    // Load source text
+    let sourceText;
+    try {
+      sourceText = await readFile(join(TEST_DATA_DIR, `${docName}.txt`), 'utf-8');
+    } catch {
+      sourceText = `(source text not found for ${docName})`;
+    }
+
+    // Load predicted entities
+    let predicted = [];
+    try {
+      const raw = await readFile(join(runDir, docName, 'entities.json'), 'utf-8');
+      predicted = JSON.parse(raw);
+      // Add text from source
+      for (const e of predicted) {
+        if (!e.text) e.text = sourceText.slice(e.start, e.end);
+      }
+    } catch {}
+
+    // Load expected entities
+    let expected = [];
+    try {
+      const raw = await readFile(join(TEST_DATA_DIR, `${docName}.expected.json`), 'utf-8');
+      expected = JSON.parse(raw);
+    } catch {}
+
+    // Classify entities
+    const spans = classifyEntities(expected, predicted);
+    const annotatedHtml = buildAnnotatedText(sourceText, spans);
+    const legendHtml = buildLegend(spans);
+    const scoringHtml = buildScoringSection(docScores);
+
+    // Per-document comparison table
+    const docComparisonColumns = comparisonColumns.map(col => ({
+      ...col,
+      f1: col.documents?.[docName]?.f1 ?? null,
+      precision: col.documents?.[docName]?.precision ?? null,
+      recall: col.documents?.[docName]?.recall ?? null,
+      byType: col.documents?.[docName]?.byType ?? {},
+    }));
+    const docTypes = Object.keys(docScores.byType).sort();
+    const docComparisonHtml = buildComparisonTable(docComparisonColumns, runId, {
+      typeRows: docTypes,
+    });
+
+    docSections.push(`
+      <details>
+        <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
+        <div>
+          <div class="section-title">Annotated Text</div>
+          <div class="annotated-text">${annotatedHtml}</div>
+          ${legendHtml}
+          ${scoringHtml}
+          <div class="section-title">Comparison</div>
+          ${docComparisonHtml}
+        </div>
+      </details>
+    `);
+  }
+
+  // Assemble full HTML
+  const html = `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Report — ${runId}</title>
+  <style>${buildCss()}</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Eval Report</h1>
+    <div class="meta">
+      Run: <strong>${runId}</strong>
+      ${currentSummary.label ? ` — ${escapeHtml(currentSummary.label)}` : ''}
+      &nbsp;|&nbsp; ${currentSummary.timestamp || ''}
+      &nbsp;|&nbsp; ${docNames.length} documents
+    </div>
+  </div>
+
+  <div class="big-metrics">
+    <div class="big-metric">
+      <div class="value">${pct(scoresData.overall.f1)}</div>
+      <div class="label">F1</div>
+    </div>
+    <div class="big-metric">
+      <div class="value">${pct(scoresData.overall.precision)}</div>
+      <div class="label">Precision</div>
+    </div>
+    <div class="big-metric">
+      <div class="value">${pct(scoresData.overall.recall)}</div>
+      <div class="label">Recall</div>
+    </div>
+  </div>
+
+  <div class="section-title">Overall Comparison</div>
+  ${overallComparisonHtml}
+
+  ${docSections.join('\n')}
+</body>
+</html>`;
+
+  const outPath = join(runDir, 'report.html');
+  await writeFile(outPath, html, 'utf-8');
+  return outPath;
+}

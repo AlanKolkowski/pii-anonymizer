@@ -3,6 +3,7 @@ import {
   buildAnnotatedText, classifyEntities, humanizeDocName,
   ENTITY_COLORS, buildLegend,
   buildComparisonTable, formatDelta,
+  generateReport,
 } from './report.js';
 
 describe('classifyEntities', () => {
@@ -141,5 +142,11 @@ describe('humanizeDocName', () => {
 
   it('handles names without number prefix', () => {
     expect(humanizeDocName('custom_test_document')).toBe('Custom test document');
+  });
+});
+
+describe('generateReport', () => {
+  it('exports a function', () => {
+    expect(typeof generateReport).toBe('function');
   });
 });

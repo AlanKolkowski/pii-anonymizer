@@ -1,6 +1,7 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename, extname } from 'node:path';
 import { matchEntities } from './matching.js';
+import { generateReport } from './report.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
@@ -169,6 +170,10 @@ async function main() {
 
   await writeFile(join(runDir, 'scores.json'), JSON.stringify(scoresData, null, 2), 'utf-8');
   console.log(`\nScores saved: ${join(runDir, 'scores.json')}`);
+
+  // Generate HTML report
+  const reportPath = await generateReport(runId, scoresData);
+  console.log(`Report saved: ${reportPath}`);
 }
 
 main().catch((err) => {
