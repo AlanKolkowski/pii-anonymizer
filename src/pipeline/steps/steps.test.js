@@ -5,6 +5,9 @@ import { snapStep } from './snap.js';
 import { filterStep } from './filter.js';
 import { dedupStep } from './dedup.js';
 import { mergeStep } from './merge.js';
+import { regexStep } from './regex.js';
+import { rescanStep } from './rescan.js';
+import { tokenizeStep } from './tokenize.js';
 
 describe('normalizeWhitespace', () => {
   it('passes text through unchanged (no-op)', () => {
@@ -145,5 +148,69 @@ describe('mergeStep', () => {
     expect(result.entities[0].start).toBe(0);
     expect(result.entities[0].end).toBe(24);
     expect(result.debug[0].step).toBe('merge');
+  });
+});
+
+describe('regexStep', () => {
+  it('adds regex-detected entities to existing entities', () => {
+    const text = 'Contact jan@test.com for details';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 7, score: 0.9 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = regexStep(ctx);
+    // Should have original entity + the email
+    expect(result.entities.length).toBe(2);
+    const email = result.entities.find(e => e.entity_group === 'EMAIL_ADDRESS');
+    expect(email).toBeDefined();
+    expect(email.score).toBe(1.0);
+    expect(result.debug[0].step).toBe('regex');
+  });
+});
+
+describe('tokenizeStep', () => {
+  it('produces anonymized text and legend from entities', () => {
+    const text = 'Jan Kowalski lives in Warszawa';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9 },
+        { entity_group: 'LOCATION', start: 22, end: 30, score: 0.85 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = tokenizeStep(ctx);
+    expect(result.anonymized).toContain('[PERSON_NAME_1]');
+    expect(result.anonymized).toContain('[LOCATION_1]');
+    expect(result.anonymized).not.toContain('Jan Kowalski');
+    expect(result.legend['[PERSON_NAME_1]']).toBe('Jan Kowalski');
+    expect(result.debug[0].step).toBe('tokenize');
+  });
+});
+
+describe('rescanStep', () => {
+  it('catches remaining PII in anonymized text', () => {
+    // Simulate: tokenize found "Jan Kowalski" but missed "Jana Kowalskiego" (declined form)
+    const ctx = {
+      text: 'original text',
+      segments: [],
+      entities: [],
+      anonymized: 'Pismo od Jana Kowalskiego do sądu',
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      debug: [],
+    };
+    const result = rescanStep(ctx);
+    expect(result.anonymized).toContain('[PERSON_NAME_1]');
+    expect(result.anonymized).not.toContain('Jana Kowalskiego');
+    expect(result.debug[0].step).toBe('rescan');
   });
 });
