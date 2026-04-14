@@ -1,4 +1,6 @@
 import { pipeline as hfPipeline } from '@huggingface/transformers';
+import init, { get_sentence_boundaries } from 'sentencex-wasm';
+import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { runPipeline } from './pipeline/runner.js';
 import { createDefaultPipeline, MODELS } from './pipeline/configs/default.js';
 
@@ -18,6 +20,7 @@ self.onmessage = async (e) => {
 
   if (type === 'load') {
     try {
+      await init(sentencexWasm);
       availableModels = [];
       console.log('[worker] Preloading models...');
 
@@ -52,7 +55,7 @@ self.onmessage = async (e) => {
       }
 
       // Build pipeline config with only the models that loaded successfully
-      pipelineConfig = createDefaultPipeline(loadModelBrowser);
+      pipelineConfig = createDefaultPipeline(loadModelBrowser, get_sentence_boundaries);
 
       console.log(`[worker] ${availableModels.length} model(s) ready`);
       self.postMessage({ type: 'loaded' });

@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",
-    "onnxruntime-node": "^1.24.3"
+    "onnxruntime-node": "^1.24.3",
+    "sentencex": "^1.0.20",
+    "sentencex-wasm": "^0.1.20"
   },
   "devDependencies": {
     "vite": "^6.0.0",

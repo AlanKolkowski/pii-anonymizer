@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { get_sentence_boundaries } from 'sentencex';
 import { createDefaultPipeline } from './default.js';
 import { runPipeline } from '../runner.js';
 
@@ -20,7 +21,7 @@ describe('default pipeline (with mock NER)', () => {
       dispose: async () => {},
     });
 
-    const pipeline = createDefaultPipeline(mockLoadModel);
+    const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries);
     const text = 'Jan Kowalski, email jan@test.com, PESEL 12345678901';
     const result = await runPipeline(text, pipeline);
 
