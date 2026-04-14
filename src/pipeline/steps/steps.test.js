@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeWhitespace } from './preprocess.js';
 import { segmentStep } from './segment.js';
+import { snapStep } from './snap.js';
+import { filterStep } from './filter.js';
+import { dedupStep } from './dedup.js';
+import { mergeStep } from './merge.js';
 
 describe('normalizeWhitespace', () => {
   it('passes text through unchanged (no-op)', () => {
@@ -56,5 +60,90 @@ describe('segmentStep', () => {
     for (const seg of result.segments) {
       expect(text.slice(seg.offset, seg.offset + seg.text.length)).toBe(seg.text);
     }
+  });
+});
+
+describe('snapStep', () => {
+  it('snaps entity boundaries to word boundaries', () => {
+    // "Jan" is already at word boundaries
+    const text = 'notariusz Jan Kowalski';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 10, end: 13, score: 0.9 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = snapStep(ctx);
+    expect(result.entities[0].start).toBe(10);
+    expect(result.entities[0].end).toBe(13);
+    expect(result.debug).toHaveLength(1);
+    expect(result.debug[0].step).toBe('snap');
+  });
+});
+
+describe('filterStep', () => {
+  it('removes oversized entities', () => {
+    const ctx = {
+      text: '',
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.9 },
+        { entity_group: 'PERSON_NAME', start: 0, end: 100, score: 0.8 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = filterStep(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].end).toBe(10);
+    expect(result.debug[0].step).toBe('filter');
+  });
+});
+
+describe('dedupStep', () => {
+  it('removes overlapping entities keeping higher-priority', () => {
+    const ctx = {
+      text: '',
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.8 },
+        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.95 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = dedupStep(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].score).toBe(0.95);
+    expect(result.debug[0].step).toBe('dedup');
+  });
+});
+
+describe('mergeStep', () => {
+  it('merges adjacent address entities', () => {
+    const text = 'ul. Kwiatowa 5, Warszawa';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'POSTAL_ADDRESS', start: 0, end: 14, score: 0.9 },
+        { entity_group: 'LOCATION', start: 16, end: 24, score: 0.85 },
+      ],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = mergeStep(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
+    expect(result.entities[0].start).toBe(0);
+    expect(result.entities[0].end).toBe(24);
+    expect(result.debug[0].step).toBe('merge');
   });
 });
