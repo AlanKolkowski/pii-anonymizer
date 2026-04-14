@@ -1,11 +1,5 @@
 [
   {
-    "entity_group": "LOCATION",
-    "start": 292,
-    "end": 301,
-    "text": "Białystok"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 349,
     "end": 364,
@@ -38,11 +32,11 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 484,
-    "end": 500,
-    "text": "ELECTRO MEGA sp."
+    "end": 507,
+    "text": "ELECTRO MEGA sp. z o.o."
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 508,
     "end": 543,
     "text": "ul. Produkcyjna 56\n15-680 Białystok"
@@ -78,13 +72,7 @@
     "text": "801 234 567"
   },
   {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 712,
-    "end": 719,
-    "text": "Samsung"
-  },
-  {
-    "entity_group": "VEHICLE_IDENTIFIER",
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 720,
     "end": 734,
     "text": "WW90T984DSH/S3"
@@ -96,7 +84,7 @@
     "text": "WW90-2024-081234-PL"
   },
   {
-    "entity_group": "DOCUMENT_IDENTIFIER",
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 813,
     "end": 831,
     "text": "EM/2024/10/0087654"
@@ -108,7 +96,7 @@
     "text": "3 299,00 zł"
   },
   {
-    "entity_group": "VEHICLE_IDENTIFIER",
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 1226,
     "end": 1240,
     "text": "WW90T984DSH/S3"
@@ -116,8 +104,8 @@
   {
     "entity_group": "FINANCIAL_AMOUNT",
     "start": 1281,
-    "end": 1293,
-    "text": "3 299,00 zł."
+    "end": 1292,
+    "text": "3 299,00 zł"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -138,7 +126,7 @@
     "text": "3 299,00 zł"
   },
   {
-    "entity_group": "POSTAL_ADDRESS",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 1519,
     "end": 1523,
     "text": "4821"
@@ -154,12 +142,6 @@
     "start": 1600,
     "end": 1618,
     "text": "SAM-GW-2024-081234"
-  },
-  {
-    "entity_group": "PERSON_NAME",
-    "start": 2352,
-    "end": 2360,
-    "text": "SERWISEM"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -182,14 +164,8 @@
   {
     "entity_group": "DOCUMENT_REFERENCE",
     "start": 2547,
-    "end": 2566,
-    "text": "ZGL/2025/04/012543."
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 2593,
-    "end": 2613,
-    "text": "technika serwisowego"
+    "end": 2565,
+    "text": "ZGL/2025/04/012543"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -206,8 +182,8 @@
   {
     "entity_group": "FINANCIAL_AMOUNT",
     "start": 4417,
-    "end": 4429,
-    "text": "3 299,00 zł."
+    "end": 4428,
+    "text": "3 299,00 zł"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -254,8 +230,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 5012,
-    "end": 5059,
-    "text": "Sądu Rejonowego w Białymstoku, Wydział Cywilny."
+    "end": 5058,
+    "text": "Sądu Rejonowego w Białymstoku, Wydział Cywilny"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -272,8 +248,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 6272,
-    "end": 6288,
-    "text": "ELECTRO MEGA sp."
+    "end": 6295,
+    "text": "ELECTRO MEGA sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -306,7 +282,7 @@
     "text": "ul. Lipowej 34/6,\n15-427 Białystok"
   },
   {
-    "entity_group": "VEHICLE_IDENTIFIER",
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 6637,
     "end": 6651,
     "text": "WW90T984DSH/S3"
@@ -314,8 +290,8 @@
   {
     "entity_group": "DOCUMENT_REFERENCE",
     "start": 6662,
-    "end": 6681,
-    "text": "EM/2024/10/0087654."
+    "end": 6680,
+    "text": "EM/2024/10/0087654"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -342,16 +318,10 @@
     "text": "Łukasz Pietrzak"
   },
   {
-    "entity_group": "PROPER_NAME",
-    "start": 7010,
-    "end": 7037,
-    "text": "POTWIERDZENIE NADANIA PISMA"
-  },
-  {
     "entity_group": "POSTAL_ADDRESS",
     "start": 7206,
-    "end": 7256,
-    "text": "Białystok 4, ul. Elektryczna 12, 15-080 Białystok."
+    "end": 7255,
+    "text": "Białystok 4, ul. Elektryczna 12, 15-080 Białystok"
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",

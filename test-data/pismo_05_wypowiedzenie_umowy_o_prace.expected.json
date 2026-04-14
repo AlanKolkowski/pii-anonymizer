@@ -1,18 +1,12 @@
 [
   {
-    "entity_group": "LOCATION",
-    "start": 288,
-    "end": 296,
-    "text": "Katowice"
-  },
-  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 331,
     "end": 353,
     "text": "POLTECH SOLUTIONS S.A."
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 354,
     "end": 385,
     "text": "ul. Bytomska 12\n40-154 Katowice"
@@ -40,12 +34,6 @@
     "start": 468,
     "end": 487,
     "text": "Agnieszkę Rutkowską"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 490,
-    "end": 501,
-    "text": "Dyrektor HR"
   },
   {
     "entity_group": "PHONE_NUMBER",
@@ -84,18 +72,6 @@
     "text": "PT/2019/00341"
   },
   {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 694,
-    "end": 717,
-    "text": "Starszy Specjalista ds."
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 786,
-    "end": 795,
-    "text": "Kierownik"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 796,
     "end": 814,
@@ -108,61 +84,31 @@
     "text": "POLTECH SOLUTIONS S.A."
   },
   {
-    "entity_group": "LOCATION",
-    "start": 1034,
-    "end": 1044,
-    "text": "Katowicach"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 1463,
-    "end": 1488,
-    "text": "Starszego\nSpecjalisty ds."
-  },
-  {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 1528,
-    "end": 1562,
-    "text": "Działu Logistyki\ni Łańcucha Dostaw"
-  },
-  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 1736,
-    "end": 1751,
-    "text": "LOG PARTNER sp."
+    "end": 1758,
+    "text": "LOG PARTNER sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
     "start": 1760,
-    "end": 1798,
-    "text": "ul. Przemysłowa 8,\n42-200 Częstochowa."
+    "end": 1797,
+    "text": "ul. Przemysłowa 8,\n42-200 Częstochowa"
   },
   {
     "entity_group": "PERSON_NAME",
     "start": 1928,
-    "end": 1948,
-    "text": "Michała Olejniczaka."
+    "end": 1947,
+    "text": "Michała Olejniczaka"
   },
   {
-    "entity_group": "PROPER_NAME",
-    "start": 2274,
-    "end": 2294,
-    "text": "HP EliteBook 845 G10"
-  },
-  {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "DOCUMENT_IDENTIFIER",
     "start": 2312,
     "end": 2322,
     "text": "5CD3001XYZ"
   },
   {
-    "entity_group": "PROPER_NAME",
-    "start": 2341,
-    "end": 2359,
-    "text": "Samsung Galaxy S23"
-  },
-  {
-    "entity_group": "PHONE_NUMBER",
+    "entity_group": "DOCUMENT_IDENTIFIER",
     "start": 2367,
     "end": 2382,
     "text": "354871234567890"
@@ -212,8 +158,8 @@
   {
     "entity_group": "PERSON_NAME",
     "start": 4231,
-    "end": 4253,
-    "text": "Agnieszki Rutkowskiej."
+    "end": 4252,
+    "text": "Agnieszki Rutkowskiej"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -222,7 +168,7 @@
     "text": "Sądu Pracy (Sąd Rejonowy Katowice-Zachód,\nWydział Pracy i Ubezpieczeń Społecznych"
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 4486,
     "end": 4520,
     "text": "ul. Warszawska 45, 40-010 Katowice"
@@ -232,12 +178,6 @@
     "start": 4719,
     "end": 4738,
     "text": "Agnieszka Rutkowska"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4781,
-    "end": 4793,
-    "text": "Dyrektor HR,"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -312,10 +252,10 @@
     "text": "Agnieszka Rutkowska"
   },
   {
-    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 6648,
-    "end": 6656,
-    "text": "PT-0341)"
+    "end": 6655,
+    "text": "PT-0341"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -330,7 +270,7 @@
     "text": "POLTECH SOLUTIONS S.A."
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 7065,
     "end": 7099,
     "text": "ul. Bytomskiej 12, 40-154 Katowice"
@@ -340,12 +280,6 @@
     "start": 7110,
     "end": 7125,
     "text": "iodo@poltech.pl"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 7483,
-    "end": 7495,
-    "text": "Prezesa UODO"
   },
   {
     "entity_group": "POSTAL_ADDRESS",

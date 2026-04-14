@@ -36,12 +36,6 @@
     "text": "0000412873"
   },
   {
-    "entity_group": "LOCATION",
-    "start": 489,
-    "end": 497,
-    "text": "Warszawa"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 533,
     "end": 548,
@@ -58,12 +52,6 @@
     "start": 587,
     "end": 626,
     "text": "ul. Marszałkowska 47/12\n00-648 Warszawa"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 637,
-    "end": 640,
-    "text": "Pan"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -114,12 +102,6 @@
     "text": "Rep. A nr 1042/2025"
   },
   {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 1175,
-    "end": 1184,
-    "text": "notariusz"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 1185,
     "end": 1203,
@@ -148,6 +130,12 @@
     "start": 1454,
     "end": 1474,
     "text": "Tomaszem Wiśniewskim"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 1497,
+    "end": 1512,
+    "text": "7 marca 1985 r."
   },
   {
     "entity_group": "LOCATION",
@@ -187,9 +175,9 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
-    "start": 1863,
+    "start": 1869,
     "end": 1891,
-    "text": "Bank: Bank Zachodni WBK S.A."
+    "text": "Bank Zachodni WBK S.A."
   },
   {
     "entity_group": "PERSON_NAME",
@@ -296,8 +284,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 3944,
-    "end": 3956,
-    "text": "Finanse Pro\""
+    "end": 3967,
+    "text": "Finanse Pro\" sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -306,28 +294,10 @@
     "text": "ul. Dietla 55/2, 31-070 Kraków"
   },
   {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 4030,
-    "end": 4039,
-    "text": "Dłużnika."
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4227,
-    "end": 4231,
-    "text": "Pani"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 4232,
     "end": 4252,
     "text": "Aleksandra Kowalczyk"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4254,
-    "end": 4258,
-    "text": "zam."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -348,22 +318,10 @@
     "text": "+48 601 234 567"
   },
   {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4352,
-    "end": 4355,
-    "text": "Pan"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 4356,
     "end": 4368,
     "text": "Robert Zając"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4370,
-    "end": 4374,
-    "text": "zam."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -390,7 +348,7 @@
     "text": "Pod Arkadami"
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 4529,
     "end": 4563,
     "text": "ul. Rynek Główny 15, 31-008 Kraków"
@@ -434,14 +392,8 @@
   {
     "entity_group": "PERSON_NAME",
     "start": 4995,
-    "end": 4997,
-    "text": "T."
-  },
-  {
-    "entity_group": "PERSON_NAME",
-    "start": 4998,
     "end": 5008,
-    "text": "Wiśniewski"
+    "text": "T. Wiśniewski"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -486,12 +438,6 @@
     "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A."
   },
   {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 6380,
-    "end": 6390,
-    "text": "Kancelarii"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 6410,
     "end": 6427,
@@ -518,8 +464,14 @@
   {
     "entity_group": "FINANCIAL_AMOUNT",
     "start": 6735,
-    "end": 6748,
-    "text": "45 000,00 zł."
+    "end": 6747,
+    "text": "45 000,00 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 6798,
+    "end": 6817,
+    "text": "Rep. A nr 1042/2025"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -528,7 +480,7 @@
     "text": "Krzysztof Nowak"
   },
   {
-    "entity_group": "ACCOUNT_IDENTIFIER",
+    "entity_group": "PERSON_IDENTIFIER",
     "start": 7467,
     "end": 7475,
     "text": "WA/12347"

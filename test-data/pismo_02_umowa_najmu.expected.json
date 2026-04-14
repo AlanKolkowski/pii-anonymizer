@@ -1,11 +1,5 @@
 [
   {
-    "entity_group": "LOCATION",
-    "start": 296,
-    "end": 303,
-    "text": "Wrocław"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 343,
     "end": 362,
@@ -66,7 +60,7 @@
     "text": "ul. Gajowej 14/2, 50-520 Wrocław"
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 1336,
     "end": 1367,
     "text": "ul. Gajowa 14/2, 50-520 Wrocław"
@@ -152,8 +146,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 4324,
-    "end": 4383,
-    "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny."
+    "end": 4382,
+    "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -178,12 +172,6 @@
     "start": 4855,
     "end": 4874,
     "text": "Elżbieta Malinowska"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4917,
-    "end": 4928,
-    "text": "Wynajmująca"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -216,10 +204,10 @@
     "text": "Piotr Malinowski"
   },
   {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 6609,
-    "end": 6621,
-    "text": "Wynajmującej"
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 6604,
+    "end": 6622,
+    "text": "(syn Wynajmującej)"
   },
   {
     "entity_group": "PHONE_NUMBER",
@@ -272,7 +260,7 @@
   {
     "entity_group": "PHONE_NUMBER",
     "start": 7497,
-    "end": 7513,
-    "text": "+48 800 102 102."
+    "end": 7512,
+    "text": "+48 800 102 102"
   }
 ]

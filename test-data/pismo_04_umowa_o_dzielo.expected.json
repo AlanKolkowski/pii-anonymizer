@@ -1,27 +1,15 @@
 [
   {
     "entity_group": "DOCUMENT_REFERENCE",
-    "start": 112,
+    "start": 158,
     "end": 175,
-    "text": "UMOWA O DZIEŁO\n                            nr UOD/2025/03/00117"
-  },
-  {
-    "entity_group": "LOCATION",
-    "start": 313,
-    "end": 319,
-    "text": "Poznań"
-  },
-  {
-    "entity_group": "LOCATION",
-    "start": 371,
-    "end": 379,
-    "text": "Poznaniu"
+    "text": "UOD/2025/03/00117"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 414,
-    "end": 431,
-    "text": "ARCHON STUDIO sp."
+    "end": 438,
+    "text": "ARCHON STUDIO sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -46,12 +34,6 @@
     "start": 535,
     "end": 545,
     "text": "0000567234"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 570,
-    "end": 585,
-    "text": "Prezesa Zarządu"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -84,7 +66,7 @@
     "text": "Marta Lewandowska-Ostrów"
   },
   {
-    "entity_group": "LOCATION",
+    "entity_group": "POSTAL_ADDRESS",
     "start": 818,
     "end": 849,
     "text": "ul. Ułańska 7/11, 60-748 Poznań"
@@ -96,7 +78,7 @@
     "text": "92051867234"
   },
   {
-    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "entity_group": "PERSON_IDENTIFIER",
     "start": 878,
     "end": 891,
     "text": "972-123-45-67"
@@ -132,34 +114,10 @@
     "text": "+48 505 678 234"
   },
   {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 1353,
-    "end": 1367,
-    "text": "Lumina\n   Home"
-  },
-  {
-    "entity_group": "PROPER_NAME",
-    "start": 1717,
-    "end": 1725,
-    "text": "InDesign"
-  },
-  {
-    "entity_group": "ORGANIZATION_NAME",
-    "start": 1822,
-    "end": 1850,
-    "text": "WeTransfer lub Google Drive."
-  },
-  {
     "entity_group": "FINANCIAL_AMOUNT",
     "start": 2504,
     "end": 2515,
     "text": "9 800,00 zł"
-  },
-  {
-    "entity_group": "FINANCIAL_AMOUNT",
-    "start": 2533,
-    "end": 2566,
-    "text": "dziewięć tysięcy osiemset złotych"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -181,9 +139,9 @@
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",
-    "start": 3453,
+    "start": 3472,
     "end": 3489,
-    "text": "UMOWA O DZIEŁO  nr UOD/2025/03/00117"
+    "text": "UOD/2025/03/00117"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -192,22 +150,10 @@
     "text": "150,00 zł"
   },
   {
-    "entity_group": "INCOME_COMPENSATION",
-    "start": 4565,
-    "end": 4570,
-    "text": "netto"
-  },
-  {
     "entity_group": "PERSON_NAME",
     "start": 4745,
     "end": 4761,
     "text": "Karolinę Woźniak"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 4763,
-    "end": 4776,
-    "text": "Kierownik ds."
   },
   {
     "entity_group": "EMAIL_ADDRESS",
@@ -218,38 +164,32 @@
   {
     "entity_group": "PHONE_NUMBER",
     "start": 4833,
-    "end": 4850,
-    "text": "+48 61 852 34 57."
+    "end": 4849,
+    "text": "+48 61 852 34 57"
   },
   {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 5865,
-    "end": 5879,
-    "text": "Prezes Zarządu"
+    "entity_group": "PERSON_NAME",
+    "start": 5796,
+    "end": 5815,
+    "text": "Sebastian Grabowski"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 5881,
-    "end": 5898,
-    "text": "ARCHON STUDIO sp."
+    "end": 5905,
+    "text": "ARCHON STUDIO sp. z o.o."
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",
-    "start": 6241,
+    "start": 6260,
     "end": 6277,
-    "text": "UMOWA O DZIEŁO  nr UOD/2025/03/00117"
+    "text": "UOD/2025/03/00117"
   },
   {
     "entity_group": "PERSON_NAME",
     "start": 6588,
     "end": 6604,
     "text": "Karolina Woźniak"
-  },
-  {
-    "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 6619,
-    "end": 6632,
-    "text": "Kierownik ds."
   },
   {
     "entity_group": "PERSON_NAME",
@@ -270,7 +210,7 @@
     "text": "ul. Ułańska 7/11, 60-748 Poznań"
   },
   {
-    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "entity_group": "PERSON_IDENTIFIER",
     "start": 7578,
     "end": 7591,
     "text": "972-123-45-67"
@@ -284,8 +224,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 7631,
-    "end": 7648,
-    "text": "ARCHON STUDIO sp."
+    "end": 7655,
+    "text": "ARCHON STUDIO sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
