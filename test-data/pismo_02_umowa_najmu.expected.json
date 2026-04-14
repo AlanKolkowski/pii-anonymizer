@@ -1,0 +1,278 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 296,
+    "end": 303,
+    "text": "Wrocław"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 343,
+    "end": 362,
+    "text": "Elżbieta Malinowska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 363,
+    "end": 396,
+    "text": "ul. Świdnicka 23/8\n50-066 Wrocław"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 404,
+    "end": 415,
+    "text": "61042798430"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 422,
+    "end": 438,
+    "text": "+48 71 345 67 89"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 453,
+    "end": 471,
+    "text": "Dariusz Kędzierski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 472,
+    "end": 502,
+    "text": "ul. Gajowa 14/2\n50-520 Wrocław"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 510,
+    "end": 521,
+    "text": "88071345612"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 528,
+    "end": 543,
+    "text": "+48 693 451 287"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 602,
+    "end": 642,
+    "text": "ul. Gajowa 14/2,\n         50-520 Wrocław"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1114,
+    "end": 1146,
+    "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1336,
+    "end": 1367,
+    "text": "ul. Gajowa 14/2, 50-520 Wrocław"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1495,
+    "end": 1510,
+    "text": "WR1K/00234567/8"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1512,
+    "end": 1546,
+    "text": "Sąd Rejonowy dla Wrocławia-Krzyków"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1570,
+    "end": 1581,
+    "text": "2 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1616,
+    "end": 1627,
+    "text": "7 200,00 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1953,
+    "end": 1988,
+    "text": "PL 44 1020 5226 0000 6102 0789 4321"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1997,
+    "end": 2017,
+    "text": "PKO Bank Polski S.A."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2111,
+    "end": 2122,
+    "text": "2 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2180,
+    "end": 2191,
+    "text": "2 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2249,
+    "end": 2260,
+    "text": "2 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2320,
+    "end": 2329,
+    "text": "143,18 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2389,
+    "end": 2400,
+    "text": "7 343,18 zł"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3396,
+    "end": 3428,
+    "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3878,
+    "end": 3889,
+    "text": "7 200,00 zł"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4324,
+    "end": 4383,
+    "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4550,
+    "end": 4559,
+    "text": "160,00 zł"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 4626,
+    "end": 4656,
+    "text": "e.malinowska.wroclaw@gmail.com"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4682,
+    "end": 4698,
+    "text": "+48 71 345 67 89"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4855,
+    "end": 4874,
+    "text": "Elżbieta Malinowska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4917,
+    "end": 4928,
+    "text": "Wynajmująca"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5974,
+    "end": 5992,
+    "text": "Dariusz Kędzierski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 6001,
+    "end": 6012,
+    "text": "88071345612"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6031,
+    "end": 6063,
+    "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6282,
+    "end": 6300,
+    "text": "Dariusz Kędzierski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6587,
+    "end": 6603,
+    "text": "Piotr Malinowski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6609,
+    "end": 6621,
+    "text": "Wynajmującej"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 6630,
+    "end": 6645,
+    "text": "+48 601 987 654"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6742,
+    "end": 6763,
+    "text": "Dariuszem Kędzierskim"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6978,
+    "end": 6993,
+    "text": "Henryk Borowiak"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7000,
+    "end": 7015,
+    "text": "ul. Gajowa 14/1"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 7024,
+    "end": 7035,
+    "text": "54030867891"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7425,
+    "end": 7433,
+    "text": "PZU S.A."
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 7445,
+    "end": 7461,
+    "text": "HN/2024/00087432"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7470,
+    "end": 7487,
+    "text": "Beata Szczepańska"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 7497,
+    "end": 7513,
+    "text": "+48 800 102 102."
+  }
+]

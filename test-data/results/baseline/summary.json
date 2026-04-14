@@ -1,0 +1,136 @@
+{
+  "runId": "baseline",
+  "timestamp": "2026-04-14T00:00:00Z",
+  "label": "baseline (migrated)",
+  "totals": {
+    "documents": 6,
+    "entities": 406,
+    "tokens": 309,
+    "elapsed": "0"
+  },
+  "documents": {
+    "pismo_01_wezwanie_do_zaplaty": {
+      "entityCount": 91,
+      "tokenCount": 65,
+      "entitiesByType": {
+        "ORGANIZATION_NAME": 16,
+        "POSTAL_ADDRESS": 11,
+        "PHONE_NUMBER": 7,
+        "EMAIL_ADDRESS": 4,
+        "ORGANIZATION_IDENTIFIER": 4,
+        "LOCATION": 3,
+        "PERSON_NAME": 17,
+        "PERSON_ROLE_OR_TITLE": 6,
+        "PERSON_IDENTIFIER": 5,
+        "DOCUMENT_REFERENCE": 5,
+        "FINANCIAL_AMOUNT": 10,
+        "BANK_ACCOUNT_IDENTIFIER": 2,
+        "ACCOUNT_IDENTIFIER": 1
+      },
+      "elapsed": "0"
+    },
+    "pismo_02_umowa_najmu": {
+      "entityCount": 46,
+      "tokenCount": 34,
+      "entitiesByType": {
+        "LOCATION": 2,
+        "PERSON_NAME": 9,
+        "POSTAL_ADDRESS": 7,
+        "PERSON_IDENTIFIER": 4,
+        "PHONE_NUMBER": 5,
+        "DOCUMENT_REFERENCE": 2,
+        "ORGANIZATION_NAME": 4,
+        "FINANCIAL_AMOUNT": 9,
+        "BANK_ACCOUNT_IDENTIFIER": 1,
+        "EMAIL_ADDRESS": 1,
+        "PERSON_ROLE_OR_TITLE": 2
+      },
+      "elapsed": "0"
+    },
+    "pismo_03_odwolanie_od_decyzji_zus": {
+      "entityCount": 93,
+      "tokenCount": 81,
+      "entitiesByType": {
+        "LOCATION": 6,
+        "PERSON_ROLE_OR_TITLE": 10,
+        "PERSON_NAME": 15,
+        "POSTAL_ADDRESS": 12,
+        "PERSON_IDENTIFIER": 4,
+        "PHONE_NUMBER": 4,
+        "EMAIL_ADDRESS": 2,
+        "ORGANIZATION_NAME": 25,
+        "DOCUMENT_IDENTIFIER": 1,
+        "DOCUMENT_REFERENCE": 3,
+        "PERSON_ATTRIBUTE": 1,
+        "ORGANIZATION_IDENTIFIER": 2,
+        "DATE_OF_BIRTH": 1,
+        "HEALTH_DATA": 5,
+        "FINANCIAL_AMOUNT": 2
+      },
+      "elapsed": "0"
+    },
+    "pismo_04_umowa_o_dzielo": {
+      "entityCount": 55,
+      "tokenCount": 42,
+      "entitiesByType": {
+        "DOCUMENT_REFERENCE": 4,
+        "LOCATION": 3,
+        "ORGANIZATION_NAME": 6,
+        "POSTAL_ADDRESS": 3,
+        "ORGANIZATION_IDENTIFIER": 6,
+        "PERSON_ROLE_OR_TITLE": 4,
+        "PERSON_NAME": 7,
+        "PERSON_IDENTIFIER": 4,
+        "EMAIL_ADDRESS": 3,
+        "PHONE_NUMBER": 3,
+        "BANK_ACCOUNT_IDENTIFIER": 1,
+        "PROPER_NAME": 1,
+        "FINANCIAL_AMOUNT": 9,
+        "INCOME_COMPENSATION": 1
+      },
+      "elapsed": "0"
+    },
+    "pismo_05_wypowiedzenie_umowy_o_prace": {
+      "entityCount": 59,
+      "tokenCount": 45,
+      "entitiesByType": {
+        "LOCATION": 5,
+        "ORGANIZATION_NAME": 8,
+        "ORGANIZATION_IDENTIFIER": 4,
+        "PERSON_NAME": 14,
+        "PERSON_ROLE_OR_TITLE": 6,
+        "PHONE_NUMBER": 4,
+        "EMAIL_ADDRESS": 2,
+        "POSTAL_ADDRESS": 3,
+        "PERSON_IDENTIFIER": 1,
+        "DOCUMENT_REFERENCE": 4,
+        "PROPER_NAME": 2,
+        "FINANCIAL_AMOUNT": 5,
+        "BANK_ACCOUNT_IDENTIFIER": 1
+      },
+      "elapsed": "0"
+    },
+    "pismo_06_reklamacja_konsumencka": {
+      "entityCount": 62,
+      "tokenCount": 42,
+      "entitiesByType": {
+        "LOCATION": 2,
+        "PERSON_NAME": 9,
+        "POSTAL_ADDRESS": 7,
+        "PERSON_IDENTIFIER": 2,
+        "PHONE_NUMBER": 5,
+        "EMAIL_ADDRESS": 3,
+        "ORGANIZATION_NAME": 10,
+        "ORGANIZATION_IDENTIFIER": 3,
+        "VEHICLE_IDENTIFIER": 3,
+        "DOCUMENT_REFERENCE": 7,
+        "DOCUMENT_IDENTIFIER": 1,
+        "FINANCIAL_AMOUNT": 6,
+        "PERSON_ROLE_OR_TITLE": 1,
+        "BANK_ACCOUNT_IDENTIFIER": 2,
+        "PROPER_NAME": 1
+      },
+      "elapsed": "0"
+    }
+  }
+}

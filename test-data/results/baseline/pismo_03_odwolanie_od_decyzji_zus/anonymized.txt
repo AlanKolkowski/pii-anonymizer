@@ -1,0 +1,176 @@
+================================================================================
+                    ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH
+================================================================================
+
+                                                       [LOCATION_1], 22 lutego 2025 r.
+
+Odwołująca się:
+[PERSON_ROLE_OR_TITLE_1] [PERSON_NAME_1]
+[POSTAL_ADDRESS_1]
+PESEL: [PERSON_IDENTIFIER_1]
+Tel.: [PHONE_NUMBER_1] / [PHONE_NUMBER_2]
+E-mail: [EMAIL_ADDRESS_1]
+
+Organ rentowy:
+[ORGANIZATION_NAME_1]
+[POSTAL_ADDRESS_2]
+
+[ORGANIZATION_NAME_2]
+
+Do:
+[ORGANIZATION_NAME_3]
+[LOCATION_2]
+
+Sygnatura decyzji [ORGANIZATION_NAME_4]: [DOCUMENT_IDENTIFIER_1]
+Data wydania decyzji: 30 stycznia 2025 r.
+Data doręczenia decyzji: 7 lutego 2025 r.
+
+────────────────────────────────────────────────────────────────────────────────
+
+                        ODWOŁANIE OD [ORGANIZATION_NAME_5]
+              odmawiającej prawa do renty z tytułu niezdolności do pracy
+
+Szanowny Sądzie,
+
+Działając w imieniu własnym, niniejszym wnoszę odwołanie od decyzji [ORGANIZATION_NAME_6] z dnia 30 stycznia 2025 r.,
+nr [DOCUMENT_REFERENCE_1], doręczonej mi w dniu 7 lutego 2025 r.,
+odmawiającej przyznania prawa do renty z tytułu całkowitej niezdolności do pracy.
+
+I. ZASKARŻONA DECYZJA I JEJ TREŚĆ
+
+[ORGANIZATION_NAME_7] odmówił mi prawa do renty z tytułu niezdolności do pracy,
+powołując się na orzeczenie [ORGANIZATION_NAME_8] z dnia 20 stycznia 2025 r.,
+sygn. [DOCUMENT_REFERENCE_2], zgodnie z którym uznano mnie za osobę zdolną do pracy.
+
+Orzeczenie [ORGANIZATION_NAME_9] zostało wydane po badaniu przeprowadzonym przez:
+  - [PERSON_ROLE_OR_TITLE_2] med. [PERSON_NAME_2] ([PERSON_ROLE_OR_TITLE_3]),
+  - [PERSON_ROLE_OR_TITLE_4] [PERSON_NAME_3] ([PERSON_ROLE_OR_TITLE_5]),
+przy [POSTAL_ADDRESS_3]
+
+II. ZARZUTY WOBEC ZASKARŻONEJ DECYZJI
+
+Zaskarżonej decyzji zarzucam:
+
+  1. Naruszenie art. 12 ust. 1 ustawy z dnia 17 grudnia 1998 r. o emeryturach
+     i rentach z [ORGANIZATION_NAME_10] (t.j. Dz.U. z 2023 r. poz. 1251)
+     poprzez błędne przyjęcie, że nie jestem [PERSON_ATTRIBUTE_1]
+
+  2. Sprzeczność ustaleń [ORGANIZATION_NAME_9] z dokumentacją medyczną, w tym:
+     - historią choroby z [ORGANIZATION_NAME_11] [ORGANIZATION_NAME_19] [ORGANIZATION_NAME_12] w [LOCATION_3],
+       [POSTAL_ADDRESS_4] (lekarz prowadzący: [PERSON_ROLE_OR_TITLE_6] [PERSON_NAME_4], nr rej. pacjenta: [ORGANIZATION_IDENTIFIER_1]),
+     - dokumentacją z poradni reumatologicznej prowadzonej przez
+       [PERSON_ROLE_OR_TITLE_4] [PERSON_NAME_5], [POSTAL_ADDRESS_5]
+
+  3. Pominięcie wyników badań MRI [HEALTH_DATA_2] lędźwiowego z dnia 11 grudnia 2024 r.
+     (Zakład Diagnostyki Obrazowej [ORGANIZATION_NAME_13], [POSTAL_ADDRESS_6], NIP: [ORGANIZATION_IDENTIFIER_2]), opisanych przez lek. rad. [PERSON_NAME_6],
+     wskazujących na wielopoziomową dyskopatię L3/L4 i L4/L5 z uciskiem na korzeń
+     nerwowy.
+
+================================================================================
+                                 STRONA 1 / 3
+================================================================================
+
+
+================================================================================
+                    ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH
+================================================================================
+
+III. STAN FAKTYCZNY
+
+Urodziłam się dnia [DATE_OF_BIRTH_1] w [LOCATION_4] Przez 34 lata
+pracowałam jako [PERSON_ROLE_OR_TITLE_7] oddziałowa w [ORGANIZATION_NAME_14] [PERSON_NAME_7] w [POSTAL_ADDRESS_7] (nr pracownika: [DOCUMENT_REFERENCE_3]). Stosunek pracy
+ustał w dniu 31 marca 2024 r. [HEALTH_DATA_1]
+
+Cierpię na następujące schorzenia, udokumentowane w załączonej dokumentacji:
+  a) wielopoziomową dyskopatię [HEALTH_DATA_2] lędźwiowego (L3/L4, L4/L5),
+  b) zespół bólowy [HEALTH_DATA_2] szyjnego po urazie komunikacyjnym (2019 r.),
+  c) [HEALTH_DATA_3] typu 2 leczoną insuliną (od 2021 r.),
+  d) [HEALTH_DATA_4] III stopnia.
+
+Łączny staż ubezpieczeniowy na dzień złożenia wniosku o rentę (12.11.2024 r.)
+wynosi 38 lat, 4 miesiące i 17 dni, co spełnia warunek stażu ubezpieczeniowego
+przewidziany w art. 57 ww. ustawy.
+
+IV. WNIOSEK
+
+Mając na uwadze powyższe, wnoszę o:
+
+  1. [ORGANIZATION_NAME_15] z dnia 30 stycznia 2025 r. i przyznanie
+     mi prawa do renty z tytułu całkowitej niezdolności do pracy od dnia
+     1 kwietnia 2024 r., tj. od zaprzestania aktywności zawodowej.
+
+  2. Dopuszczenie i przeprowadzenie dowodu z opinii biegłego sądowego
+     z zakresu ortopedii i traumatologii oraz diabetologii na okoliczność
+     ustalenia stopnia i charakteru niezdolności do pracy.
+
+  3. Dopuszczenie i przeprowadzenie dowodu z zeznań świadka:
+     [PERSON_NAME_8], współpracownicy i sąsiadki, [PERSON_ROLE_OR_TITLE_8] [POSTAL_ADDRESS_8], PESEL: [PERSON_IDENTIFIER_2], tel.: [PHONE_NUMBER_3],
+     na okoliczność stanu zdrowia i codziennego funkcjonowania odwołującej.
+
+  4. Zasądzenie na moją rzecz kosztów postępowania według norm przepisanych.
+
+V. WARTOŚĆ PRZEDMIOTU SPORU
+
+Miesięczna wysokość wnioskowanej renty, według wyliczeń [ORGANIZATION_NAME_4] przesłanych
+w piśmie informacyjnym z dnia 15 listopada 2024 r. (nr pisma: WYL/2024/00912),
+wynosi [FINANCIAL_AMOUNT_1] brutto. Wartość przedmiotu sporu za okres 12 miesięcy
+wynosi [FINANCIAL_AMOUNT_2]
+
+Podpis odwołującej się:
+
+                                          ___________________________________
+                                          [PERSON_NAME_1]
+
+================================================================================
+                                 STRONA 2 / 3
+================================================================================
+
+
+================================================================================
+                    ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH
+================================================================================
+
+VI. ZAŁĄCZNIKI
+
+  1. Kopia zaskarżonej decyzji [ORGANIZATION_NAME_4] z dnia 30 stycznia 2025 r.
+  2. Kopia orzeczenia [ORGANIZATION_NAME_8] z dnia 20 stycznia 2025 r.
+  3. Dokumentacja medyczna z [ORGANIZATION_NAME_16] (13 stron).
+  4. Dokumentacja z poradni reumatologicznej dr [PERSON_NAME_9] (8 stron).
+  5. Wynik badania MRI [HEALTH_DATA_2] lędźwiowego z dnia 11 grudnia 2024 r.
+  6. Zaświadczenie lekarskie o leczeniu cukrzycy ([PERSON_ROLE_OR_TITLE_4] [PERSON_NAME_10],
+     [ORGANIZATION_NAME_17], [POSTAL_ADDRESS_9]).
+  7. Świadectwo pracy ze [ORGANIZATION_NAME_18] [ORGANIZATION_NAME_19] [POSTAL_ADDRESS_10] w [LOCATION_5]
+  8. [ORGANIZATION_NAME_20]
+
+────────────────────────────────────────────────────────────────────────────────
+                        PEŁNOMOCNICTWO PROCESOWE
+────────────────────────────────────────────────────────────────────────────────
+
+Ja, [PERSON_NAME_1], PESEL: [PERSON_IDENTIFIER_1], [PERSON_ROLE_OR_TITLE_8] [POSTAL_ADDRESS_11], niniejszym udzielam pełnomocnictwa procesowego mojej córce:
+
+  [PERSON_ROLE_OR_TITLE_1]ą [PERSON_NAME_11]
+  [POSTAL_ADDRESS_12]
+  PESEL: [PERSON_IDENTIFIER_3]
+  Tel.: [PHONE_NUMBER_4]
+  E-mail: [EMAIL_ADDRESS_2]
+
+do reprezentowania mnie przed [ORGANIZATION_NAME_21] w niniejszej
+sprawie, ze wszystkimi prawami strony, w tym do składania pism, wniosków,
+odbierania korespondencji i zawierania ugód.
+
+[LOCATION_1], 22 lutego 2025 r.
+
+Podpis mocodawczyni:   ___________________________________
+                       [PERSON_NAME_1]
+
+Podpis pełnomocnika:   ___________________________________
+                       [PERSON_NAME_12]
+
+────────────────────────────────────────────────────────────────────────────────
+Odwołanie wniesione w terminie ustawowym (art. 477⁹ § 1 k.p.c. – 30 dni od
+doręczenia decyzji). Doręczenie: 7 lutego 2025 r. Termin upływa: 9 marca 2025 r.
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+                                 STRONA 3 / 3
+================================================================================

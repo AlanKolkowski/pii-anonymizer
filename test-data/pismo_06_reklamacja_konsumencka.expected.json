@@ -1,0 +1,374 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 292,
+    "end": 301,
+    "text": "Białystok"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 349,
+    "end": 364,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 365,
+    "end": 397,
+    "text": "ul. Lipowa 34/6\n15-427 Białystok"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 405,
+    "end": 416,
+    "text": "94082756341"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 423,
+    "end": 438,
+    "text": "+48 533 987 654"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 447,
+    "end": 470,
+    "text": "lukasz.pietrzak94@wp.pl"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 484,
+    "end": 500,
+    "text": "ELECTRO MEGA sp."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 508,
+    "end": 543,
+    "text": "ul. Produkcyjna 56\n15-680 Białystok"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 549,
+    "end": 562,
+    "text": "542-234-12-78"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 570,
+    "end": 581,
+    "text": "200 345 678"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 587,
+    "end": 597,
+    "text": "0000478123"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 621,
+    "end": 646,
+    "text": "reklamacje@electromega.pl"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 653,
+    "end": 664,
+    "text": "801 234 567"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 712,
+    "end": 719,
+    "text": "Samsung"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 720,
+    "end": 734,
+    "text": "WW90T984DSH/S3"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 768,
+    "end": 787,
+    "text": "WW90-2024-081234-PL"
+  },
+  {
+    "entity_group": "DOCUMENT_IDENTIFIER",
+    "start": 813,
+    "end": 831,
+    "text": "EM/2024/10/0087654"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 902,
+    "end": 913,
+    "text": "3 299,00 zł"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 1226,
+    "end": 1240,
+    "text": "WW90T984DSH/S3"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1281,
+    "end": 1293,
+    "text": "3 299,00 zł."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1402,
+    "end": 1414,
+    "text": "ELECTRO MEGA"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1416,
+    "end": 1445,
+    "text": "ul. Produkcyjna 56, Białystok"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1456,
+    "end": 1467,
+    "text": "3 299,00 zł"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1519,
+    "end": 1523,
+    "text": "4821"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1549,
+    "end": 1572,
+    "text": "EM-POS3-20241014-008723"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1600,
+    "end": 1618,
+    "text": "SAM-GW-2024-081234"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2352,
+    "end": 2360,
+    "text": "SERWISEM"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 2417,
+    "end": 2429,
+    "text": "ELECTRO MEGA"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 2454,
+    "end": 2465,
+    "text": "801 234 567"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2479,
+    "end": 2495,
+    "text": "Jakub Wiśniewicz"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 2547,
+    "end": 2566,
+    "text": "ZGL/2025/04/012543."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2593,
+    "end": 2613,
+    "text": "technika serwisowego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2615,
+    "end": 2629,
+    "text": "Mariusz Czajka"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 2636,
+    "end": 2669,
+    "text": "+48 602 345\n                  678"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4417,
+    "end": 4429,
+    "text": "3 299,00 zł."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4460,
+    "end": 4471,
+    "text": "3 299,00 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 4498,
+    "end": 4533,
+    "text": "PL 55 1140 2004 0000 3802 1122 3344"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4535,
+    "end": 4545,
+    "text": "mBank S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4564,
+    "end": 4579,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4748,
+    "end": 4763,
+    "text": "+48 533 987 654"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4893,
+    "end": 4937,
+    "text": "Rzecznika Konsumentów Powiatu Białostockiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4946,
+    "end": 5003,
+    "text": "Inspekcji Handlowej Okręgowego Inspektoratu w Białymstoku"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5012,
+    "end": 5059,
+    "text": "Sądu Rejonowego w Białymstoku, Wydział Cywilny."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5196,
+    "end": 5211,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 5713,
+    "end": 5736,
+    "text": "EM-POS3-20241014-008723"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6272,
+    "end": 6288,
+    "text": "ELECTRO MEGA sp."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6297,
+    "end": 6333,
+    "text": "ul. Produkcyjna 56, 15-680 Białystok"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 6352,
+    "end": 6377,
+    "text": "reklamacje@electromega.pl"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6383,
+    "end": 6398,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 6407,
+    "end": 6418,
+    "text": "94082756341"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6438,
+    "end": 6472,
+    "text": "ul. Lipowej 34/6,\n15-427 Białystok"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 6637,
+    "end": 6651,
+    "text": "WW90T984DSH/S3"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 6662,
+    "end": 6681,
+    "text": "EM/2024/10/0087654."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 6704,
+    "end": 6715,
+    "text": "3 299,00 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 6739,
+    "end": 6774,
+    "text": "PL 55 1140 2004 0000 3802 1122 3344"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6776,
+    "end": 6786,
+    "text": "mBank S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6886,
+    "end": 6901,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "PROPER_NAME",
+    "start": 7010,
+    "end": 7037,
+    "text": "POTWIERDZENIE NADANIA PISMA"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7206,
+    "end": 7256,
+    "text": "Białystok 4, ul. Elektryczna 12, 15-080 Białystok."
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 7271,
+    "end": 7285,
+    "text": "R 123456789 PL"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7326,
+    "end": 7341,
+    "text": "Łukasz Pietrzak"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7343,
+    "end": 7376,
+    "text": "ul. Lipowa 34/6, 15-427 Białystok"
+  }
+]

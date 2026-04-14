@@ -1,0 +1,4421 @@
+[
+  {
+    "step": "normalizeWhitespace",
+    "phase": "preprocess",
+    "changes": {}
+  },
+  {
+    "step": "segmentSentencexStep",
+    "phase": "segment",
+    "changes": {
+      "segments": {
+        "added": [
+          {
+            "offset": 0,
+            "length": 238,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 238,
+            "length": 194,
+            "preview": ": +48 22 456 78 90 | biuro@nowak-wspolnicy.pl\n              "
+          },
+          {
+            "offset": 432,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 434,
+            "length": 83,
+            "preview": "                                                       Warsz"
+          },
+          {
+            "offset": 517,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 519,
+            "length": 14,
+            "preview": "Nadawca:\nadw. "
+          },
+          {
+            "offset": 533,
+            "length": 93,
+            "preview": "Krzysztof Nowak\nKancelaria Prawna „Nowak & Wspólnicy\"\nul. Ma"
+          },
+          {
+            "offset": 626,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 628,
+            "length": 79,
+            "preview": "Adresat:\nPan Tomasz Wiśniewski\nul. Różana 18/3\n31-505 Kraków"
+          },
+          {
+            "offset": 707,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 709,
+            "length": 62,
+            "preview": "Dotyczy: Wezwanie do zapłaty – umowa pożyczki nr 2023/PZ/008"
+          },
+          {
+            "offset": 771,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 773,
+            "length": 80,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 853,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 855,
+            "length": 49,
+            "preview": "                              WEZWANIE DO ZAPŁATY"
+          },
+          {
+            "offset": 904,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 906,
+            "length": 15,
+            "preview": "Szanowny Panie,"
+          },
+          {
+            "offset": 921,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 923,
+            "length": 215,
+            "preview": "Działając w imieniu i na rzecz mojego Mocodawcy, Pana Marcin"
+          },
+          {
+            "offset": 1138,
+            "length": 194,
+            "preview": "(akt notarialny\nRep. A nr 1042/2025, notariusz Joanna Kwiatk"
+          },
+          {
+            "offset": 1332,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1334,
+            "length": 3,
+            "preview": "I. "
+          },
+          {
+            "offset": 1337,
+            "length": 27,
+            "preview": "PODSTAWA PRAWNA I FAKTYCZNA"
+          },
+          {
+            "offset": 1364,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1366,
+            "length": 131,
+            "preview": "W dniu 10 września 2023 roku pomiędzy Panem Marcinem Jabłońs"
+          },
+          {
+            "offset": 1497,
+            "length": 16,
+            "preview": "7 marca 1985 r. "
+          },
+          {
+            "offset": 1513,
+            "length": 194,
+            "preview": "w Krakowie,\nlegitymującym się dowodem osobistym seria i nr: "
+          },
+          {
+            "offset": 1707,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1709,
+            "length": 61,
+            "preview": "Środki finansowe zostały przelane w dniu 12 września 2023 r."
+          },
+          {
+            "offset": 1770,
+            "length": 35,
+            "preview": "na rachunek bankowy\nPożyczkobiorcy:"
+          },
+          {
+            "offset": 1805,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1807,
+            "length": 82,
+            "preview": "  Numer rachunku: PL 62 1090 2590 0000 0001 4321 8765\n  Bank"
+          },
+          {
+            "offset": 1889,
+            "length": 5,
+            "preview": "A.\n  "
+          },
+          {
+            "offset": 1894,
+            "length": 38,
+            "preview": "Właściciel rachunku: Tomasz Wiśniewski"
+          },
+          {
+            "offset": 1932,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1934,
+            "length": 19,
+            "preview": "Zgodnie z § 4 ust. "
+          },
+          {
+            "offset": 1953,
+            "length": 6,
+            "preview": "1 ww. "
+          },
+          {
+            "offset": 1959,
+            "length": 127,
+            "preview": "umowy, całkowita spłata pożyczki wraz z odsetkami\numownymi w"
+          },
+          {
+            "offset": 2086,
+            "length": 70,
+            "preview": "Do chwili sporządzenia niniejszego pisma nie odnotowano żadn"
+          },
+          {
+            "offset": 2156,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2158,
+            "length": 4,
+            "preview": "II. "
+          },
+          {
+            "offset": 2162,
+            "length": 19,
+            "preview": "WYSOKOŚĆ ZADŁUŻENIA"
+          },
+          {
+            "offset": 2181,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2183,
+            "length": 28,
+            "preview": "Na dzień 14 czerwca 2025 r. "
+          },
+          {
+            "offset": 2211,
+            "length": 45,
+            "preview": "zadłużenie Pana Tomasza Wiśniewskiego wynosi:"
+          },
+          {
+            "offset": 2256,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2258,
+            "length": 384,
+            "preview": "  a) Kapitał pożyczki:                             45 000,00"
+          },
+          {
+            "offset": 2642,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2644,
+            "length": 207,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 2851,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2853,
+            "length": 239,
+            "preview": "\n==========================================================="
+          },
+          {
+            "offset": 3092,
+            "length": 126,
+            "preview": ": +48 22 456 78 90 | biuro@nowak-wspolnicy.pl\n=============="
+          },
+          {
+            "offset": 3218,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3220,
+            "length": 5,
+            "preview": "III. "
+          },
+          {
+            "offset": 3225,
+            "length": 37,
+            "preview": "HISTORIA KONTAKTU I PODJĘTYCH DZIAŁAŃ"
+          },
+          {
+            "offset": 3262,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3264,
+            "length": 92,
+            "preview": "Kancelaria pragnie przypomnieć, że jest to już trzecia próba"
+          },
+          {
+            "offset": 3356,
+            "length": 35,
+            "preview": "Poprzednie wezwania kierowane były:"
+          },
+          {
+            "offset": 3391,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3393,
+            "length": 5,
+            "preview": "  1. "
+          },
+          {
+            "offset": 3398,
+            "length": 33,
+            "preview": "Pismo z dnia 15 kwietnia 2024 r. "
+          },
+          {
+            "offset": 3431,
+            "length": 69,
+            "preview": "– doręczone za potwierdzeniem odbioru\n     w dniu 18 kwietni"
+          },
+          {
+            "offset": 3500,
+            "length": 30,
+            "preview": ", podpisane przez adresata.\n  "
+          },
+          {
+            "offset": 3530,
+            "length": 3,
+            "preview": "2. "
+          },
+          {
+            "offset": 3533,
+            "length": 34,
+            "preview": "Pismo z dnia 20 listopada 2024 r. "
+          },
+          {
+            "offset": 3567,
+            "length": 64,
+            "preview": "– zwrócone do nadawcy z adnotacją\n     „nie podjęto w termin"
+          },
+          {
+            "offset": 3631,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3633,
+            "length": 92,
+            "preview": "W toku sprawy ustalono, że Pan Tomasz Wiśniewski prowadzi dz"
+          },
+          {
+            "offset": 3725,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3727,
+            "length": 114,
+            "preview": "  WIŚNIEWSKI TRANS Tomasz Wiśniewski\n  ul. Przemysłowa 34, 3"
+          },
+          {
+            "offset": 3841,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3843,
+            "length": 118,
+            "preview": "i osiąga dochody z tytułu kontraktów transportowych, co zost"
+          },
+          {
+            "offset": 3961,
+            "length": 6,
+            "preview": "z o.o."
+          },
+          {
+            "offset": 3967,
+            "length": 72,
+            "preview": ", ul. Dietla 55/2, 31-070 Kraków,\nobsługujące przedsiębiorst"
+          },
+          {
+            "offset": 4039,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4041,
+            "length": 4,
+            "preview": "IV. "
+          },
+          {
+            "offset": 4045,
+            "length": 28,
+            "preview": "ŚWIADKOWIE I OSOBY POWIĄZANE"
+          },
+          {
+            "offset": 4073,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4075,
+            "length": 135,
+            "preview": "W toku ewentualnego postępowania sądowego Mocodawca zamierza"
+          },
+          {
+            "offset": 4210,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4212,
+            "length": 47,
+            "preview": "  Świadek 1:\n  Pani Aleksandra Kowalczyk, zam. "
+          },
+          {
+            "offset": 4259,
+            "length": 59,
+            "preview": "ul. Wiśniowa 7/9, 31-436 Kraków,\n  PESEL: 90061823456, tel."
+          },
+          {
+            "offset": 4318,
+            "length": 17,
+            "preview": ": +48 601 234 567"
+          },
+          {
+            "offset": 4335,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4337,
+            "length": 38,
+            "preview": "  Świadek 2:\n  Pan Robert Zając, zam. "
+          },
+          {
+            "offset": 4375,
+            "length": 57,
+            "preview": "ul. Topolowa 3, 80-175 Gdańsk,\n  PESEL: 82112756789, tel."
+          },
+          {
+            "offset": 4432,
+            "length": 17,
+            "preview": ": +48 512 876 543"
+          },
+          {
+            "offset": 4449,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4451,
+            "length": 139,
+            "preview": "Obydwoje byli obecni podczas podpisywania umowy w restauracj"
+          },
+          {
+            "offset": 4590,
+            "length": 10,
+            "preview": ", o godz. "
+          },
+          {
+            "offset": 4600,
+            "length": 6,
+            "preview": "18:30."
+          },
+          {
+            "offset": 4606,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4608,
+            "length": 3,
+            "preview": "V. "
+          },
+          {
+            "offset": 4611,
+            "length": 7,
+            "preview": "ŻĄDANIE"
+          },
+          {
+            "offset": 4618,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4620,
+            "length": 209,
+            "preview": "Wzywam Pana do zapłaty kwoty 51 890,74 zł (słownie: pięćdzie"
+          },
+          {
+            "offset": 4829,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4831,
+            "length": 70,
+            "preview": "  Numer rachunku: PL 89 1140 2004 0000 3302 7654 3210\n  Bank"
+          },
+          {
+            "offset": 4901,
+            "length": 5,
+            "preview": "A.\n  "
+          },
+          {
+            "offset": 4906,
+            "length": 92,
+            "preview": "Właściciel rachunku: Marcin Jabłoński\n  Tytuł przelewu: „Spł"
+          },
+          {
+            "offset": 4998,
+            "length": 11,
+            "preview": "Wiśniewski\""
+          },
+          {
+            "offset": 5009,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5011,
+            "length": 207,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 5218,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5220,
+            "length": 239,
+            "preview": "\n==========================================================="
+          },
+          {
+            "offset": 5459,
+            "length": 126,
+            "preview": ": +48 22 456 78 90 | biuro@nowak-wspolnicy.pl\n=============="
+          },
+          {
+            "offset": 5585,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5587,
+            "length": 4,
+            "preview": "VI. "
+          },
+          {
+            "offset": 5591,
+            "length": 20,
+            "preview": "SKUTKI BRAKU ZAPŁATY"
+          },
+          {
+            "offset": 5611,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5613,
+            "length": 111,
+            "preview": "Uprzejmie informuję, że w przypadku bezskutecznego upływu ws"
+          },
+          {
+            "offset": 5724,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5726,
+            "length": 5,
+            "preview": "  1. "
+          },
+          {
+            "offset": 5731,
+            "length": 98,
+            "preview": "Skierowania pozwu do Sądu Rejonowego dla Krakowa-Śródmieścia"
+          },
+          {
+            "offset": 5829,
+            "length": 97,
+            "preview": "kwoty wraz z dalszymi odsetkami ustawowymi za\n     opóźnieni"
+          },
+          {
+            "offset": 5926,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5928,
+            "length": 5,
+            "preview": "  2. "
+          },
+          {
+            "offset": 5933,
+            "length": 140,
+            "preview": "Złożenia wniosku o zabezpieczenie powództwa poprzez zajęcie "
+          },
+          {
+            "offset": 6073,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6075,
+            "length": 5,
+            "preview": "  3. "
+          },
+          {
+            "offset": 6080,
+            "length": 69,
+            "preview": "Przekazania informacji o zadłużeniu do Biura Informacji Kred"
+          },
+          {
+            "offset": 6149,
+            "length": 8,
+            "preview": "A.\n     "
+          },
+          {
+            "offset": 6157,
+            "length": 63,
+            "preview": "oraz Krajowego Rejestru Długów Biuro Informacji Gospodarczej"
+          },
+          {
+            "offset": 6220,
+            "length": 2,
+            "preview": "A."
+          },
+          {
+            "offset": 6222,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6224,
+            "length": 5,
+            "preview": "VII. "
+          },
+          {
+            "offset": 6229,
+            "length": 22,
+            "preview": "DANE DO KORESPONDENCJI"
+          },
+          {
+            "offset": 6251,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6253,
+            "length": 92,
+            "preview": "Wszelką korespondencję w niniejszej sprawie prosimy kierować"
+          },
+          {
+            "offset": 6345,
+            "length": 51,
+            "preview": "Osobą prowadzącą sprawę po stronie Kancelarii jest:"
+          },
+          {
+            "offset": 6396,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6398,
+            "length": 7,
+            "preview": "  apl. "
+          },
+          {
+            "offset": 6405,
+            "length": 5,
+            "preview": "adw. "
+          },
+          {
+            "offset": 6410,
+            "length": 25,
+            "preview": "Natalia Dąbrowska\n  Tel. "
+          },
+          {
+            "offset": 6435,
+            "length": 98,
+            "preview": "bezpośredni: +48 22 456 78 91\n  E-mail: n.dabrowska@nowak-ws"
+          },
+          {
+            "offset": 6533,
+            "length": 4,
+            "preview": "–pt."
+          },
+          {
+            "offset": 6537,
+            "length": 12,
+            "preview": ", 9:00–17:00"
+          },
+          {
+            "offset": 6549,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6551,
+            "length": 6,
+            "preview": "VIII. "
+          },
+          {
+            "offset": 6557,
+            "length": 10,
+            "preview": "ZAŁĄCZNIKI"
+          },
+          {
+            "offset": 6567,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6569,
+            "length": 30,
+            "preview": "Do niniejszego pisma załączam:"
+          },
+          {
+            "offset": 6599,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6601,
+            "length": 5,
+            "preview": "  1. "
+          },
+          {
+            "offset": 6606,
+            "length": 67,
+            "preview": "Kopię umowy pożyczki nr 2023/PZ/00892 z dnia 10 września 202"
+          },
+          {
+            "offset": 6673,
+            "length": 3,
+            "preview": "2. "
+          },
+          {
+            "offset": 6676,
+            "length": 50,
+            "preview": "Potwierdzenie przelewu z dnia 12 września 2023 r. "
+          },
+          {
+            "offset": 6726,
+            "length": 25,
+            "preview": "na kwotę 45 000,00 zł.\n  "
+          },
+          {
+            "offset": 6751,
+            "length": 3,
+            "preview": "3. "
+          },
+          {
+            "offset": 6754,
+            "length": 43,
+            "preview": "Kopię pełnomocnictwa z dnia 3 maja 2025 r. "
+          },
+          {
+            "offset": 6797,
+            "length": 25,
+            "preview": "(Rep. A nr 1042/2025).\n  "
+          },
+          {
+            "offset": 6822,
+            "length": 3,
+            "preview": "4. "
+          },
+          {
+            "offset": 6825,
+            "length": 61,
+            "preview": "Kalkulację odsetek sporządzoną na dzień 14 czerwca 2025 r.\n "
+          },
+          {
+            "offset": 6886,
+            "length": 3,
+            "preview": "5. "
+          },
+          {
+            "offset": 6889,
+            "length": 57,
+            "preview": "Potwierdzenie doręczenia pisma z dnia 15 kwietnia 2024 r."
+          },
+          {
+            "offset": 6946,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6948,
+            "length": 157,
+            "preview": "Mam nadzieję, że niniejsze pismo skłoni Pana do polubownego "
+          },
+          {
+            "offset": 7105,
+            "length": 133,
+            "preview": "Jestem otwarty na negocjacje w zakresie ewentualnego rozłoże"
+          },
+          {
+            "offset": 7238,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7240,
+            "length": 13,
+            "preview": "Z poważaniem,"
+          },
+          {
+            "offset": 7253,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7255,
+            "length": 125,
+            "preview": "                                          __________________"
+          },
+          {
+            "offset": 7380,
+            "length": 173,
+            "preview": "Krzysztof Nowak\n                                          nr"
+          },
+          {
+            "offset": 7553,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7555,
+            "length": 159,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 7714,
+            "length": 131,
+            "preview": "Jeżeli otrzymałeś je omyłkowo, prosimy o niezwłoczny kontakt"
+          },
+          {
+            "offset": 7845,
+            "length": 80,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 7925,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7927,
+            "length": 208,
+            "preview": "============================================================"
+          }
+        ],
+        "count": {
+          "before": 0,
+          "after": 169
+        }
+      }
+    }
+  },
+  {
+    "step": "nerStep",
+    "phase": "ner",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 105,
+            "end": 142,
+            "score": 0.9851478197995354,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 177,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 177,
+            "end": 186,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 187,
+            "end": 196,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 196,
+            "end": 209,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 240,
+            "end": 256,
+            "score": 0.9870557884375254,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 267,
+            "score": 0.4872579425573349,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 267,
+            "end": 283,
+            "score": 0.7142873619283948,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 320,
+            "end": 333,
+            "score": 0.7834846377372742,
+            "text": "527-234-56-78"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 341,
+            "end": 351,
+            "score": 0.9614184945821762,
+            "text": "0000412873"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 489,
+            "end": 497,
+            "score": 0.9992805123329163,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 533,
+            "end": 548,
+            "score": 0.999734123547872,
+            "text": "Krzysztof Nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 549,
+            "end": 586,
+            "score": 0.9974543314713699,
+            "text": "Kancelaria Prawna „Nowak & Wspólnicy\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 587,
+            "end": 613,
+            "score": 0.7479012707869211,
+            "text": "ul. Marszałkowska 47/12\n00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 613,
+            "end": 626,
+            "score": 0.8754690289497375,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 641,
+            "end": 658,
+            "score": 0.9988951563835144,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 666,
+            "score": 0.8079819281895956,
+            "text": "ul. Róż"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 666,
+            "end": 669,
+            "score": 0.5480695962905884,
+            "text": "ana"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 670,
+            "end": 674,
+            "score": 0.8664640784263611,
+            "text": "18/3"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 675,
+            "end": 688,
+            "score": 0.7468322515487671,
+            "text": "31-505 Kraków"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 696,
+            "end": 707,
+            "score": 0.9983716607093811,
+            "text": "85030712345"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 758,
+            "end": 762,
+            "score": 0.6319445967674255,
+            "text": "2023"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 762,
+            "end": 765,
+            "score": 0.5549874305725098,
+            "text": "/PZ"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 765,
+            "end": 771,
+            "score": 0.6045169830322266,
+            "text": "/00892"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 977,
+            "end": 997,
+            "score": 0.9998246550559997,
+            "text": "Marcina Jabłońskiego"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1018,
+            "end": 1051,
+            "score": 0.9191893637180328,
+            "text": "ul. Słonecznej 9/5, 80-287 Gdańsk"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1060,
+            "end": 1071,
+            "score": 0.9532012462615966,
+            "text": "77091534521"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1154,
+            "end": 1173,
+            "score": 0.80160049029759,
+            "text": "Rep. A nr 1042/2025"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 1175,
+            "end": 1184,
+            "score": 0.752424418926239,
+            "text": "notariusz"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1185,
+            "end": 1203,
+            "score": 0.9995661576588949,
+            "text": "Joanna Kwiatkowska"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1205,
+            "end": 1226,
+            "score": 0.9993457198143005,
+            "text": "Kancelaria Notarialna"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1228,
+            "end": 1255,
+            "score": 0.9698470036188761,
+            "text": "ul. Długa 22, 80-828 Gdańsk"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1410,
+            "end": 1429,
+            "score": 0.9997316598892212,
+            "text": "Marcinem Jabłońskim"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1454,
+            "end": 1474,
+            "score": 0.9975131154060364,
+            "text": "Tomaszem Wiśniewskim"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1515,
+            "end": 1523,
+            "score": 0.9978379607200623,
+            "text": "Krakowie"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1573,
+            "end": 1581,
+            "score": 0.5926271080970764,
+            "text": "AZK 4482"
+          },
+          {
+            "entity_group": "VEHICLE_IDENTIFIER",
+            "start": 1581,
+            "end": 1583,
+            "score": 0.5869024991989136,
+            "text": "91"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1619,
+            "end": 1623,
+            "score": 0.5230748057365417,
+            "text": "2023"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1623,
+            "end": 1630,
+            "score": 0.6829963326454163,
+            "text": "/PZ/008"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1630,
+            "end": 1632,
+            "score": 0.6404502391815186,
+            "text": "92"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1642,
+            "end": 1654,
+            "score": 0.9997695982456207,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1670,
+            "end": 1705,
+            "score": 0.9853760344641549,
+            "text": "dzieści\npięć tysięcy złotych 00/100"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 1825,
+            "end": 1860,
+            "score": 0.9818181246519089,
+            "text": "PL 62 1090 2590 0000 0001 4321 8765"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1889,
+            "score": 0.9995263963937759,
+            "text": "Bank: Bank Zachodni WBK S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1915,
+            "end": 1932,
+            "score": 0.9995884895324707,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2227,
+            "end": 2248,
+            "score": 0.9261572599411011,
+            "text": "Tomasza Wiśniewskiego"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2309,
+            "end": 2321,
+            "score": 0.999289482831955,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2352,
+            "end": 2385,
+            "score": 0.9972542325655619,
+            "text": "457 dni):             4 503,29 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2438,
+            "end": 2449,
+            "score": 0.9984735608100891,
+            "text": "2 187,45 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2504,
+            "end": 2513,
+            "score": 0.8713173667589823,
+            "text": "200,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2630,
+            "end": 2642,
+            "score": 0.9996193766593933,
+            "text": "51 890,74 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 2959,
+            "end": 2996,
+            "score": 0.9851478197995354,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3031,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3031,
+            "end": 3040,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3041,
+            "end": 3050,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3050,
+            "end": 3063,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 3094,
+            "end": 3110,
+            "score": 0.9989152352015177,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3119,
+            "end": 3124,
+            "score": 0.46842074394226074,
+            "text": "nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3124,
+            "end": 3137,
+            "score": 0.31727858384450275,
+            "text": "-wspolnicy.pl"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3664,
+            "end": 3681,
+            "score": 0.9998481750488282,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3729,
+            "end": 3745,
+            "score": 0.8731614003578821,
+            "text": "WIŚNIEWSKI TRANS"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3746,
+            "end": 3763,
+            "score": 0.9996264457702637,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3766,
+            "end": 3768,
+            "score": 0.6913023591041565,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3768,
+            "end": 3799,
+            "score": 0.8748074531555176,
+            "text": ". Przemysłowa 34, 31-217 Kraków"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 3807,
+            "end": 3820,
+            "score": 0.8744699358940125,
+            "text": "679-234-11-90"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 3830,
+            "end": 3841,
+            "score": 0.9337293108304342,
+            "text": "381 245 670"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3944,
+            "end": 3956,
+            "score": 0.9581796228885651,
+            "text": "Finanse Pro\""
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3969,
+            "end": 3999,
+            "score": 0.9446467399597168,
+            "text": "ul. Dietla 55/2, 31-070 Kraków"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4038,
+            "score": 0.993791401386261,
+            "text": "Dłużnika"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4232,
+            "end": 4252,
+            "score": 0.9993448615074157,
+            "text": "Aleksandra Kowalczyk"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4254,
+            "end": 4258,
+            "score": 0.6811703741550446,
+            "text": "zam."
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 4259,
+            "end": 4290,
+            "score": 0.9402944337237965,
+            "text": "ul. Wiśniowa 7/9, 31-436 Kraków"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4304,
+            "score": 0.4809439480304718,
+            "text": "900"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4304,
+            "end": 4312,
+            "score": 0.7547768354415894,
+            "text": "61823456"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4320,
+            "end": 4335,
+            "score": 0.939942228794098,
+            "text": "+48 601 234 567"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4356,
+            "end": 4368,
+            "score": 0.9976024429003397,
+            "text": "Robert Zając"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 4375,
+            "end": 4404,
+            "score": 0.9167257905006408,
+            "text": "ul. Topolowa 3, 80-175 Gdańsk"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4415,
+            "end": 4426,
+            "score": 0.8166866526007652,
+            "text": "82112756789"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4434,
+            "end": 4449,
+            "score": 0.9891156454881033,
+            "text": "+48 512 876 543"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 4529,
+            "end": 4563,
+            "score": 0.9845388174057007,
+            "text": "ul. Rynek Główny 15, 31-008 Kraków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 4649,
+            "end": 4661,
+            "score": 0.9996871709823608,
+            "text": "51 890,74 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 4672,
+            "end": 4741,
+            "score": 0.9609134644269943,
+            "text": "pięćdziesiąt jeden tysięcy\nośmiuset dziewięćdziesięciu złotych 74/100"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 4849,
+            "end": 4869,
+            "score": 0.48860277732213336,
+            "text": "PL 89 1140 2004 0000"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 4870,
+            "end": 4884,
+            "score": 0.7358370323975881,
+            "text": "3302 7654 3210"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4893,
+            "end": 4901,
+            "score": 0.9982983022928238,
+            "text": "mBank S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4927,
+            "end": 4943,
+            "score": 0.9996781945228577,
+            "text": "Marcin Jabłoński"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 4984,
+            "end": 4992,
+            "score": 0.8365068912506104,
+            "text": "PZ/00892"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5326,
+            "end": 5363,
+            "score": 0.9851478197995354,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5398,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5398,
+            "end": 5407,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5408,
+            "end": 5417,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5417,
+            "end": 5430,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 5461,
+            "end": 5477,
+            "score": 0.9989152352015177,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5486,
+            "end": 5491,
+            "score": 0.46842074394226074,
+            "text": "nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5491,
+            "end": 5504,
+            "score": 0.31727858384450275,
+            "text": "-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5752,
+            "end": 5791,
+            "score": 0.9987953645842416,
+            "text": "Sądu Rejonowego dla Krakowa-Śródmieścia"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5806,
+            "end": 5813,
+            "score": 0.7006675998369852,
+            "text": "Cywilny"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6149,
+            "score": 0.9994922935962677,
+            "text": "Biura Informacji Kredytowej S."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6220,
+            "score": 0.9870431145032247,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6380,
+            "end": 6390,
+            "score": 0.7936495244503021,
+            "text": "Kancelarii"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6410,
+            "end": 6427,
+            "score": 0.9994009256362915,
+            "text": "Natalia Dąbrowska"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6448,
+            "end": 6464,
+            "score": 0.9408996601899465,
+            "text": "+48 22 456 78 91"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6492,
+            "score": 0.857532761991024,
+            "text": "n.dabrowska@nowak"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6492,
+            "end": 6493,
+            "score": 0.2805590331554413,
+            "text": "-"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6495,
+            "score": 0.22268415987491608,
+            "text": "ws"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6495,
+            "end": 6503,
+            "score": 0.29450029134750366,
+            "text": "polnicy."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6503,
+            "end": 6505,
+            "score": 0.2537313401699066,
+            "text": "pl"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 6630,
+            "end": 6643,
+            "score": 0.8322522299630302,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6747,
+            "score": 0.9986531883478165,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7380,
+            "end": 7395,
+            "score": 0.9756486614545187,
+            "text": "Krzysztof Nowak"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 7467,
+            "end": 7475,
+            "score": 0.7172735532124838,
+            "text": "WA/12347"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7518,
+            "end": 7553,
+            "score": 0.9985843631956313,
+            "text": "Okręgowa Rada Adwokacka w Warszawie"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7800,
+            "end": 7816,
+            "score": 0.9620481133460999,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 105,
+            "end": 142,
+            "score": 0.8974463553989634,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 200,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 201,
+            "end": 209,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 240,
+            "end": 256,
+            "score": 0.9819053709506989,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 267,
+            "score": 0.73079052567482,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 267,
+            "end": 280,
+            "score": 0.6004181385040284,
+            "text": "wak-wspolnicy"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 320,
+            "end": 333,
+            "score": 0.9889198740323385,
+            "text": "527-234-56-78"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 341,
+            "end": 351,
+            "score": 0.8294738233089447,
+            "text": "0000412873"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 489,
+            "end": 497,
+            "score": 0.9571992754936218,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 533,
+            "end": 548,
+            "score": 0.9991010228792826,
+            "text": "Krzysztof Nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 560,
+            "end": 586,
+            "score": 0.898227310180664,
+            "text": "Prawna „Nowak & Wspólnicy\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 587,
+            "end": 626,
+            "score": 0.9598615815242132,
+            "text": "ul. Marszałkowska 47/12\n00-648 Warszawa"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 637,
+            "end": 640,
+            "score": 0.4769103229045868,
+            "text": "Pan"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 641,
+            "end": 658,
+            "score": 0.9964849948883057,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 681,
+            "score": 0.9927200741238065,
+            "text": "ul. Różana 18/3\n31-505"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 682,
+            "end": 688,
+            "score": 0.9501833319664001,
+            "text": "Kraków"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 696,
+            "end": 699,
+            "score": 0.651459813117981,
+            "text": "850"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 699,
+            "end": 707,
+            "score": 0.8606749922037125,
+            "text": "30712345"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 758,
+            "end": 763,
+            "score": 0.4270774573087692,
+            "text": "2023/"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 763,
+            "end": 765,
+            "score": 0.47454822063446045,
+            "text": "PZ"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 765,
+            "end": 771,
+            "score": 0.5041500131289164,
+            "text": "/00892"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 977,
+            "end": 997,
+            "score": 0.9956633567810058,
+            "text": "Marcina Jabłońskiego"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 1018,
+            "end": 1051,
+            "score": 0.9990110198656718,
+            "text": "ul. Słonecznej 9/5, 80-287 Gdańsk"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1060,
+            "end": 1061,
+            "score": 0.5039413571357727,
+            "text": "7"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1061,
+            "end": 1071,
+            "score": 0.9162978678941727,
+            "text": "7091534521"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1185,
+            "end": 1203,
+            "score": 0.9917499423027039,
+            "text": "Joanna Kwiatkowska"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1205,
+            "end": 1226,
+            "score": 0.9779938936233521,
+            "text": "Kancelaria Notarialna"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 1228,
+            "end": 1255,
+            "score": 0.9951836930380927,
+            "text": "ul. Długa 22, 80-828 Gdańsk"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1410,
+            "end": 1429,
+            "score": 0.9993257522583008,
+            "text": "Marcinem Jabłońskim"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1454,
+            "end": 1474,
+            "score": 0.9429954886436462,
+            "text": "Tomaszem Wiśniewskim"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1515,
+            "end": 1523,
+            "score": 0.9689467549324036,
+            "text": "Krakowie"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1573,
+            "end": 1574,
+            "score": 0.7011764645576477,
+            "text": "A"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1574,
+            "end": 1576,
+            "score": 0.3411390781402588,
+            "text": "ZK"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1577,
+            "end": 1583,
+            "score": 0.5194148818651835,
+            "text": "448291"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1619,
+            "end": 1632,
+            "score": 0.9254393151828221,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1646,
+            "end": 1654,
+            "score": 0.9434081315994263,
+            "text": "00,00 zł"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 1825,
+            "end": 1860,
+            "score": 0.9847782701253891,
+            "text": "PL 62 1090 2590 0000 0001 4321 8765"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1889,
+            "score": 0.8252696245908737,
+            "text": "Bank: Bank Zachodni WBK S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1889,
+            "end": 1891,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1915,
+            "end": 1932,
+            "score": 0.9994295120239258,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2227,
+            "end": 2248,
+            "score": 0.9383702397346496,
+            "text": "Tomasza Wiśniewskiego"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 2959,
+            "end": 2996,
+            "score": 0.8974463553989634,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3054,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3055,
+            "end": 3063,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 3094,
+            "end": 3110,
+            "score": 0.9723999003569285,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3121,
+            "score": 0.8335109353065491,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3121,
+            "end": 3137,
+            "score": 0.5971291363239288,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3664,
+            "end": 3681,
+            "score": 0.9995726943016052,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3729,
+            "end": 3732,
+            "score": 0.680130273103714,
+            "text": "WIŚ"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3732,
+            "end": 3735,
+            "score": 0.5382442474365234,
+            "text": "NIE"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3735,
+            "end": 3745,
+            "score": 0.6682632764180502,
+            "text": "WSKI TRANS"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3746,
+            "end": 3763,
+            "score": 0.9991175413131714,
+            "text": "Tomasz Wiśniewski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3766,
+            "end": 3799,
+            "score": 0.9516558322039518,
+            "text": "ul. Przemysłowa 34, 31-217 Kraków"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 3807,
+            "end": 3820,
+            "score": 0.920278537273407,
+            "text": "679-234-11-90"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 3830,
+            "end": 3841,
+            "score": 0.5852895180384318,
+            "text": "381 245 670"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3944,
+            "end": 3955,
+            "score": 0.944256067276001,
+            "text": "Finanse Pro"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3969,
+            "end": 3999,
+            "score": 0.9867522656917572,
+            "text": "ul. Dietla 55/2, 31-070 Kraków"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4038,
+            "score": 0.959578295548757,
+            "text": "Dłużnika"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4227,
+            "end": 4231,
+            "score": 0.5457192659378052,
+            "text": "Pani"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4232,
+            "end": 4252,
+            "score": 0.9161470532417297,
+            "text": "Aleksandra Kowalczyk"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4254,
+            "end": 4256,
+            "score": 0.8221358060836792,
+            "text": "za"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 4259,
+            "end": 4290,
+            "score": 0.9572868843873342,
+            "text": "ul. Wiśniowa 7/9, 31-436 Kraków"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4301,
+            "end": 4304,
+            "score": 0.35959550738334656,
+            "text": "900"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4320,
+            "end": 4335,
+            "score": 0.9710257053375244,
+            "text": "+48 601 234 567"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4352,
+            "end": 4355,
+            "score": 0.6513065695762634,
+            "text": "Pan"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4356,
+            "end": 4368,
+            "score": 0.9861435691515604,
+            "text": "Robert Zając"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4370,
+            "end": 4373,
+            "score": 0.6328940987586975,
+            "text": "zam"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 4375,
+            "end": 4404,
+            "score": 0.9494798421859741,
+            "text": "ul. Topolowa 3, 80-175 Gdańsk"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4434,
+            "end": 4449,
+            "score": 0.9910798172156016,
+            "text": "+48 512 876 543"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4514,
+            "end": 4526,
+            "score": 0.8252827922503153,
+            "text": "Pod Arkadami"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 4529,
+            "end": 4563,
+            "score": 0.970457923412323,
+            "text": "ul. Rynek Główny 15, 31-008 Kraków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 4652,
+            "end": 4661,
+            "score": 0.8335045427083969,
+            "text": "890,74 zł"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 4849,
+            "end": 4884,
+            "score": 0.9714601188898087,
+            "text": "PL 89 1140 2004 0000 3302 7654 3210"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4901,
+            "end": 4903,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4927,
+            "end": 4943,
+            "score": 0.9990276396274567,
+            "text": "Marcin Jabłoński"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4979,
+            "end": 4992,
+            "score": 0.7057211526802608,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4995,
+            "end": 4997,
+            "score": 0.8235513865947723,
+            "text": "T."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4998,
+            "end": 5008,
+            "score": 0.5340394377708435,
+            "text": "Wiśniewski"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5326,
+            "end": 5363,
+            "score": 0.8974463553989634,
+            "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5421,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5422,
+            "end": 5430,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 5461,
+            "end": 5477,
+            "score": 0.9723999003569285,
+            "text": "+48 22 456 78 90"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5488,
+            "score": 0.8335109353065491,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5488,
+            "end": 5504,
+            "score": 0.5971291363239288,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5752,
+            "end": 5813,
+            "score": 0.8283116122086843,
+            "text": "Sądu Rejonowego dla Krakowa-Śródmieścia, Wydział\n     Cywilny"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6149,
+            "score": 0.8804708927869797,
+            "text": "Biura Informacji Kredytowej S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6149,
+            "end": 6151,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6220,
+            "score": 0.9961296359697978,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6220,
+            "end": 6222,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6410,
+            "end": 6427,
+            "score": 0.998531985282898,
+            "text": "Natalia Dąbrowska"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6448,
+            "end": 6464,
+            "score": 0.9708584149678549,
+            "text": "+48 22 456 78 91"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6495,
+            "score": 0.8836952030658722,
+            "text": "n.dabrowska@nowak-ws"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6495,
+            "end": 6498,
+            "score": 0.45674654841423035,
+            "text": "pol"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6498,
+            "end": 6503,
+            "score": 0.4911000728607178,
+            "text": "nicy."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6503,
+            "end": 6505,
+            "score": 0.44955581426620483,
+            "text": "pl"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 6630,
+            "end": 6643,
+            "score": 0.8264043245996747,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6747,
+            "score": 0.7115059097607931,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7380,
+            "end": 7395,
+            "score": 0.9988968769709269,
+            "text": "Krzysztof Nowak"
+          },
+          {
+            "entity_group": "ACCOUNT_IDENTIFIER",
+            "start": 7467,
+            "end": 7475,
+            "score": 0.8791416883468628,
+            "text": "WA/12347"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7518,
+            "end": 7541,
+            "score": 0.9820013386862618,
+            "text": "Okręgowa Rada Adwokacka"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7544,
+            "end": 7553,
+            "score": 0.8359135985374451,
+            "text": "Warszawie"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7800,
+            "end": 7816,
+            "score": 0.9978454411029816,
+            "text": "+48 22 456 78 90"
+          }
+        ],
+        "removed": [],
+        "count": {
+          "before": 0,
+          "after": 215
+        }
+      }
+    }
+  },
+  {
+    "step": "regexStep",
+    "phase": "ner",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 283,
+            "score": 1,
+            "text": "biuro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3137,
+            "score": 1,
+            "text": "biuro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5504,
+            "score": 1,
+            "text": "biuro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6505,
+            "score": 1,
+            "text": "n.dabrowska@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4301,
+            "end": 4312,
+            "score": 1,
+            "text": "90061823456"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4415,
+            "end": 4426,
+            "score": 1,
+            "text": "82112756789"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 696,
+            "end": 707,
+            "score": 1,
+            "text": "85030712345"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 1060,
+            "end": 1071,
+            "score": 1,
+            "text": "77091534521"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4312,
+            "score": 1,
+            "text": "90061823456"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4415,
+            "end": 4426,
+            "score": 1,
+            "text": "82112756789"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2374,
+            "end": 2385,
+            "score": 1,
+            "text": "4 503,29 zł"
+          }
+        ],
+        "removed": [],
+        "count": {
+          "before": 215,
+          "after": 247
+        }
+      }
+    }
+  },
+  {
+    "step": "snapStep",
+    "phase": "postprocess",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 183,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 173,
+            "end": 186,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 194,
+            "end": 209,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 270,
+            "score": 0.4872579425573349,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 261,
+            "end": 283,
+            "score": 0.7142873619283948,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 611,
+            "end": 626,
+            "score": 0.8754690289497375,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 669,
+            "score": 0.8079819281895956,
+            "text": "ul. Różana"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 663,
+            "end": 669,
+            "score": 0.5480695962905884,
+            "text": "Różana"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 758,
+            "end": 768,
+            "score": 0.6319445967674255,
+            "text": "2023/PZ/00"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 758,
+            "end": 771,
+            "score": 0.5549874305725098,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 759,
+            "end": 771,
+            "score": 0.6045169830322266,
+            "text": "023/PZ/00892"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1573,
+            "end": 1583,
+            "score": 0.5926271080970764,
+            "text": "AZK 448291"
+          },
+          {
+            "entity_group": "VEHICLE_IDENTIFIER",
+            "start": 1577,
+            "end": 1583,
+            "score": 0.5869024991989136,
+            "text": "448291"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1619,
+            "end": 1629,
+            "score": 0.5230748057365417,
+            "text": "2023/PZ/00"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1624,
+            "end": 1632,
+            "score": 0.6404502391815186,
+            "text": "PZ/00892"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1665,
+            "end": 1705,
+            "score": 0.9853760344641549,
+            "text": "czterdzieści\npięć tysięcy złotych 00/100"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1891,
+            "score": 0.9995263963937759,
+            "text": "Bank: Bank Zachodni WBK S.A."
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3037,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3027,
+            "end": 3040,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3048,
+            "end": 3063,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3124,
+            "score": 0.46842074394226074,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3118,
+            "end": 3137,
+            "score": 0.31727858384450275,
+            "text": "@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3766,
+            "end": 3769,
+            "score": 0.6913023591041565,
+            "text": "ul."
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3766,
+            "end": 3799,
+            "score": 0.8748074531555176,
+            "text": "ul. Przemysłowa 34, 31-217 Kraków"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4039,
+            "score": 0.993791401386261,
+            "text": "Dłużnika."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4310,
+            "score": 0.4809439480304718,
+            "text": "900618234"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4301,
+            "end": 4312,
+            "score": 0.7547768354415894,
+            "text": "90061823456"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4893,
+            "end": 4903,
+            "score": 0.9982983022928238,
+            "text": "mBank S.A."
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 4979,
+            "end": 4992,
+            "score": 0.8365068912506104,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5404,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5394,
+            "end": 5407,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5415,
+            "end": 5430,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5491,
+            "score": 0.46842074394226074,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5485,
+            "end": 5504,
+            "score": 0.31727858384450275,
+            "text": "@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6151,
+            "score": 0.9994922935962677,
+            "text": "Biura Informacji Kredytowej S.A."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6222,
+            "score": 0.9870431145032247,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A."
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6486,
+            "end": 6499,
+            "score": 0.2805590331554413,
+            "text": "@nowak-wspoln"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6501,
+            "score": 0.22268415987491608,
+            "text": "wspolnic"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6493,
+            "end": 6505,
+            "score": 0.29450029134750366,
+            "text": "wspolnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6497,
+            "end": 6505,
+            "score": 0.2537313401699066,
+            "text": "lnicy.pl"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6748,
+            "score": 0.9986531883478165,
+            "text": "45 000,00 zł."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 270,
+            "score": 0.73079052567482,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 261,
+            "end": 283,
+            "score": 0.6004181385040284,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 696,
+            "end": 705,
+            "score": 0.651459813117981,
+            "text": "850307123"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 696,
+            "end": 707,
+            "score": 0.8606749922037125,
+            "text": "85030712345"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 758,
+            "end": 769,
+            "score": 0.4270774573087692,
+            "text": "2023/PZ/008"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 758,
+            "end": 771,
+            "score": 0.47454822063446045,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 759,
+            "end": 771,
+            "score": 0.5041500131289164,
+            "text": "023/PZ/00892"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1060,
+            "end": 1067,
+            "score": 0.5039413571357727,
+            "text": "7709153"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1060,
+            "end": 1071,
+            "score": 0.9162978678941727,
+            "text": "77091534521"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1573,
+            "end": 1576,
+            "score": 0.7011764645576477,
+            "text": "AZK"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1573,
+            "end": 1576,
+            "score": 0.3411390781402588,
+            "text": "AZK"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1645,
+            "end": 1654,
+            "score": 0.9434081315994263,
+            "text": "000,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1891,
+            "score": 0.8252696245908737,
+            "text": "Bank: Bank Zachodni WBK S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1887,
+            "end": 1891,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3124,
+            "score": 0.8335109353065491,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3115,
+            "end": 3137,
+            "score": 0.5971291363239288,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3729,
+            "end": 3738,
+            "score": 0.680130273103714,
+            "text": "WIŚNIEWSK"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3729,
+            "end": 3739,
+            "score": 0.5382442474365234,
+            "text": "WIŚNIEWSKI"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4039,
+            "score": 0.959578295548757,
+            "text": "Dłużnika."
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4301,
+            "end": 4310,
+            "score": 0.35959550738334656,
+            "text": "900618234"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4370,
+            "end": 4374,
+            "score": 0.6328940987586975,
+            "text": "zam."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4899,
+            "end": 4903,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5491,
+            "score": 0.8335109353065491,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5482,
+            "end": 5504,
+            "score": 0.5971291363239288,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6151,
+            "score": 0.8804708927869797,
+            "text": "Biura Informacji Kredytowej S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6147,
+            "end": 6151,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6222,
+            "score": 0.9961296359697978,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6218,
+            "end": 6222,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6501,
+            "score": 0.8836952030658722,
+            "text": "n.dabrowska@nowak-wspolnic"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6493,
+            "end": 6504,
+            "score": 0.45674654841423035,
+            "text": "wspolnicy.p"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6505,
+            "score": 0.4911000728607178,
+            "text": "wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6497,
+            "end": 6505,
+            "score": 0.44955581426620483,
+            "text": "lnicy.pl"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6748,
+            "score": 0.7115059097607931,
+            "text": "45 000,00 zł."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6748,
+            "score": 1,
+            "text": "45 000,00 zł."
+          }
+        ],
+        "removed": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 177,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 177,
+            "end": 186,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 196,
+            "end": 209,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 267,
+            "score": 0.4872579425573349,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 267,
+            "end": 283,
+            "score": 0.7142873619283948,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 613,
+            "end": 626,
+            "score": 0.8754690289497375,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 666,
+            "score": 0.8079819281895956,
+            "text": "ul. Róż"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 666,
+            "end": 669,
+            "score": 0.5480695962905884,
+            "text": "ana"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 758,
+            "end": 762,
+            "score": 0.6319445967674255,
+            "text": "2023"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 762,
+            "end": 765,
+            "score": 0.5549874305725098,
+            "text": "/PZ"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 765,
+            "end": 771,
+            "score": 0.6045169830322266,
+            "text": "/00892"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1573,
+            "end": 1581,
+            "score": 0.5926271080970764,
+            "text": "AZK 4482"
+          },
+          {
+            "entity_group": "VEHICLE_IDENTIFIER",
+            "start": 1581,
+            "end": 1583,
+            "score": 0.5869024991989136,
+            "text": "91"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1619,
+            "end": 1623,
+            "score": 0.5230748057365417,
+            "text": "2023"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1623,
+            "end": 1630,
+            "score": 0.6829963326454163,
+            "text": "/PZ/008"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1630,
+            "end": 1632,
+            "score": 0.6404502391815186,
+            "text": "92"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1670,
+            "end": 1705,
+            "score": 0.9853760344641549,
+            "text": "dzieści\npięć tysięcy złotych 00/100"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1889,
+            "score": 0.9995263963937759,
+            "text": "Bank: Bank Zachodni WBK S."
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3031,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3031,
+            "end": 3040,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3050,
+            "end": 3063,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3119,
+            "end": 3124,
+            "score": 0.46842074394226074,
+            "text": "nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3124,
+            "end": 3137,
+            "score": 0.31727858384450275,
+            "text": "-wspolnicy.pl"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3766,
+            "end": 3768,
+            "score": 0.6913023591041565,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3768,
+            "end": 3799,
+            "score": 0.8748074531555176,
+            "text": ". Przemysłowa 34, 31-217 Kraków"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4038,
+            "score": 0.993791401386261,
+            "text": "Dłużnika"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4304,
+            "score": 0.4809439480304718,
+            "text": "900"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4304,
+            "end": 4312,
+            "score": 0.7547768354415894,
+            "text": "61823456"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4893,
+            "end": 4901,
+            "score": 0.9982983022928238,
+            "text": "mBank S."
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 4984,
+            "end": 4992,
+            "score": 0.8365068912506104,
+            "text": "PZ/00892"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5398,
+            "score": 0.7902866204579672,
+            "text": "ul. Mars"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5398,
+            "end": 5407,
+            "score": 0.7610607345898946,
+            "text": "załkowska"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5417,
+            "end": 5430,
+            "score": 0.7661399245262146,
+            "text": "-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5486,
+            "end": 5491,
+            "score": 0.46842074394226074,
+            "text": "nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5491,
+            "end": 5504,
+            "score": 0.31727858384450275,
+            "text": "-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6149,
+            "score": 0.9994922935962677,
+            "text": "Biura Informacji Kredytowej S."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6220,
+            "score": 0.9870431145032247,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S."
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6492,
+            "end": 6493,
+            "score": 0.2805590331554413,
+            "text": "-"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6495,
+            "score": 0.22268415987491608,
+            "text": "ws"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6495,
+            "end": 6503,
+            "score": 0.29450029134750366,
+            "text": "polnicy."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6503,
+            "end": 6505,
+            "score": 0.2537313401699066,
+            "text": "pl"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6747,
+            "score": 0.9986531883478165,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 267,
+            "score": 0.73079052567482,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 267,
+            "end": 280,
+            "score": 0.6004181385040284,
+            "text": "wak-wspolnicy"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 696,
+            "end": 699,
+            "score": 0.651459813117981,
+            "text": "850"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 699,
+            "end": 707,
+            "score": 0.8606749922037125,
+            "text": "30712345"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 758,
+            "end": 763,
+            "score": 0.4270774573087692,
+            "text": "2023/"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 763,
+            "end": 765,
+            "score": 0.47454822063446045,
+            "text": "PZ"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 765,
+            "end": 771,
+            "score": 0.5041500131289164,
+            "text": "/00892"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1060,
+            "end": 1061,
+            "score": 0.5039413571357727,
+            "text": "7"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1061,
+            "end": 1071,
+            "score": 0.9162978678941727,
+            "text": "7091534521"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1573,
+            "end": 1574,
+            "score": 0.7011764645576477,
+            "text": "A"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1574,
+            "end": 1576,
+            "score": 0.3411390781402588,
+            "text": "ZK"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1646,
+            "end": 1654,
+            "score": 0.9434081315994263,
+            "text": "00,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1863,
+            "end": 1889,
+            "score": 0.8252696245908737,
+            "text": "Bank: Bank Zachodni WBK S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1889,
+            "end": 1891,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3121,
+            "score": 0.8335109353065491,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3121,
+            "end": 3137,
+            "score": 0.5971291363239288,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3729,
+            "end": 3732,
+            "score": 0.680130273103714,
+            "text": "WIŚ"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3732,
+            "end": 3735,
+            "score": 0.5382442474365234,
+            "text": "NIE"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3735,
+            "end": 3745,
+            "score": 0.6682632764180502,
+            "text": "WSKI TRANS"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4030,
+            "end": 4038,
+            "score": 0.959578295548757,
+            "text": "Dłużnika"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4254,
+            "end": 4256,
+            "score": 0.8221358060836792,
+            "text": "za"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4301,
+            "end": 4304,
+            "score": 0.35959550738334656,
+            "text": "900"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4370,
+            "end": 4373,
+            "score": 0.6328940987586975,
+            "text": "zam"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4901,
+            "end": 4903,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5488,
+            "score": 0.8335109353065491,
+            "text": "biuro@no"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5488,
+            "end": 5504,
+            "score": 0.5971291363239288,
+            "text": "wak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6119,
+            "end": 6149,
+            "score": 0.8804708927869797,
+            "text": "Biura Informacji Kredytowej S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6149,
+            "end": 6151,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6162,
+            "end": 6220,
+            "score": 0.9961296359697978,
+            "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6220,
+            "end": 6222,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6495,
+            "score": 0.8836952030658722,
+            "text": "n.dabrowska@nowak-ws"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6495,
+            "end": 6498,
+            "score": 0.45674654841423035,
+            "text": "pol"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6498,
+            "end": 6503,
+            "score": 0.4911000728607178,
+            "text": "nicy."
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6503,
+            "end": 6505,
+            "score": 0.44955581426620483,
+            "text": "pl"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6747,
+            "score": 0.7115059097607931,
+            "text": "45 000,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 6735,
+            "end": 6747,
+            "score": 1,
+            "text": "45 000,00 zł"
+          }
+        ],
+        "count": {
+          "before": 247,
+          "after": 247
+        }
+      }
+    }
+  },
+  {
+    "step": "filterStep",
+    "phase": "postprocess",
+    "changes": {}
+  },
+  {
+    "step": "dedupStep",
+    "phase": "postprocess",
+    "changes": {
+      "entities": {
+        "added": [],
+        "removed": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 183,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 173,
+            "end": 186,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 187,
+            "end": 196,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 194,
+            "end": 209,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 270,
+            "score": 0.73079052567482,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 259,
+            "end": 270,
+            "score": 0.4872579425573349,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 261,
+            "end": 283,
+            "score": 0.7142873619283948,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 261,
+            "end": 283,
+            "score": 0.6004181385040284,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 320,
+            "end": 333,
+            "score": 0.9889198740323385,
+            "text": "527-234-56-78"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 560,
+            "end": 586,
+            "score": 0.898227310180664,
+            "text": "Prawna „Nowak & Wspólnicy\""
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 587,
+            "end": 613,
+            "score": 0.7479012707869211,
+            "text": "ul. Marszałkowska 47/12\n00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 611,
+            "end": 626,
+            "score": 0.8754690289497375,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 669,
+            "score": 0.8079819281895956,
+            "text": "ul. Różana"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 663,
+            "end": 669,
+            "score": 0.5480695962905884,
+            "text": "Różana"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 670,
+            "end": 674,
+            "score": 0.8664640784263611,
+            "text": "18/3"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 675,
+            "end": 688,
+            "score": 0.7468322515487671,
+            "text": "31-505 Kraków"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 696,
+            "end": 707,
+            "score": 1,
+            "text": "85030712345"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 696,
+            "end": 707,
+            "score": 0.8606749922037125,
+            "text": "85030712345"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 696,
+            "end": 705,
+            "score": 0.651459813117981,
+            "text": "850307123"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 758,
+            "end": 768,
+            "score": 0.6319445967674255,
+            "text": "2023/PZ/00"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 758,
+            "end": 771,
+            "score": 0.47454822063446045,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 758,
+            "end": 769,
+            "score": 0.4270774573087692,
+            "text": "2023/PZ/008"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 759,
+            "end": 771,
+            "score": 0.6045169830322266,
+            "text": "023/PZ/00892"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 759,
+            "end": 771,
+            "score": 0.5041500131289164,
+            "text": "023/PZ/00892"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1018,
+            "end": 1051,
+            "score": 0.9191893637180328,
+            "text": "ul. Słonecznej 9/5, 80-287 Gdańsk"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 1060,
+            "end": 1071,
+            "score": 1,
+            "text": "77091534521"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1060,
+            "end": 1071,
+            "score": 0.9162978678941727,
+            "text": "77091534521"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 1060,
+            "end": 1067,
+            "score": 0.5039413571357727,
+            "text": "7709153"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1228,
+            "end": 1255,
+            "score": 0.9698470036188761,
+            "text": "ul. Długa 22, 80-828 Gdańsk"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1573,
+            "end": 1576,
+            "score": 0.7011764645576477,
+            "text": "AZK"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1573,
+            "end": 1576,
+            "score": 0.3411390781402588,
+            "text": "AZK"
+          },
+          {
+            "entity_group": "VEHICLE_IDENTIFIER",
+            "start": 1577,
+            "end": 1583,
+            "score": 0.5869024991989136,
+            "text": "448291"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 1577,
+            "end": 1583,
+            "score": 0.5194148818651835,
+            "text": "448291"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1619,
+            "end": 1629,
+            "score": 0.5230748057365417,
+            "text": "2023/PZ/00"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1624,
+            "end": 1632,
+            "score": 0.6404502391815186,
+            "text": "PZ/00892"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1645,
+            "end": 1654,
+            "score": 0.9434081315994263,
+            "text": "000,00 zł"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 1887,
+            "end": 1891,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2352,
+            "end": 2385,
+            "score": 0.9972542325655619,
+            "text": "457 dni):             4 503,29 zł"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3037,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3027,
+            "end": 3040,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3041,
+            "end": 3050,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3048,
+            "end": 3063,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3124,
+            "score": 0.8335109353065491,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 3113,
+            "end": 3124,
+            "score": 0.46842074394226074,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3115,
+            "end": 3137,
+            "score": 0.5971291363239288,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3118,
+            "end": 3137,
+            "score": 0.31727858384450275,
+            "text": "@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3729,
+            "end": 3738,
+            "score": 0.680130273103714,
+            "text": "WIŚNIEWSK"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 3729,
+            "end": 3739,
+            "score": 0.5382442474365234,
+            "text": "WIŚNIEWSKI"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3766,
+            "end": 3799,
+            "score": 0.8748074531555176,
+            "text": "ul. Przemysłowa 34, 31-217 Kraków"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3766,
+            "end": 3769,
+            "score": 0.6913023591041565,
+            "text": "ul."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 3807,
+            "end": 3820,
+            "score": 0.920278537273407,
+            "text": "679-234-11-90"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 3944,
+            "end": 3955,
+            "score": 0.944256067276001,
+            "text": "Finanse Pro"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3969,
+            "end": 3999,
+            "score": 0.9446467399597168,
+            "text": "ul. Dietla 55/2, 31-070 Kraków"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 4259,
+            "end": 4290,
+            "score": 0.9402944337237965,
+            "text": "ul. Wiśniowa 7/9, 31-436 Kraków"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4312,
+            "score": 1,
+            "text": "90061823456"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4301,
+            "end": 4312,
+            "score": 0.7547768354415894,
+            "text": "90061823456"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4301,
+            "end": 4310,
+            "score": 0.4809439480304718,
+            "text": "900618234"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 4301,
+            "end": 4310,
+            "score": 0.35959550738334656,
+            "text": "900618234"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 4375,
+            "end": 4404,
+            "score": 0.9167257905006408,
+            "text": "ul. Topolowa 3, 80-175 Gdańsk"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4415,
+            "end": 4426,
+            "score": 1,
+            "text": "82112756789"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4415,
+            "end": 4426,
+            "score": 0.8166866526007652,
+            "text": "82112756789"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 4529,
+            "end": 4563,
+            "score": 0.970457923412323,
+            "text": "ul. Rynek Główny 15, 31-008 Kraków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 4652,
+            "end": 4661,
+            "score": 0.8335045427083969,
+            "text": "890,74 zł"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 4849,
+            "end": 4869,
+            "score": 0.48860277732213336,
+            "text": "PL 89 1140 2004 0000"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 4870,
+            "end": 4884,
+            "score": 0.7358370323975881,
+            "text": "3302 7654 3210"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4899,
+            "end": 4903,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 4979,
+            "end": 4992,
+            "score": 0.7057211526802608,
+            "text": "2023/PZ/00892"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5404,
+            "score": 0.7902866204579672,
+            "text": "ul. Marszałkow"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5394,
+            "end": 5407,
+            "score": 0.7610607345898946,
+            "text": "Marszałkowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5408,
+            "end": 5417,
+            "score": 0.6872989336649576,
+            "text": "47/12, 00"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5415,
+            "end": 5430,
+            "score": 0.7661399245262146,
+            "text": "00-648 Warszawa"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5491,
+            "score": 0.8335109353065491,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 5480,
+            "end": 5491,
+            "score": 0.46842074394226074,
+            "text": "biuro@nowak"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5482,
+            "end": 5504,
+            "score": 0.5971291363239288,
+            "text": "uro@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5485,
+            "end": 5504,
+            "score": 0.31727858384450275,
+            "text": "@nowak-wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5752,
+            "end": 5791,
+            "score": 0.9987953645842416,
+            "text": "Sądu Rejonowego dla Krakowa-Śródmieścia"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 5806,
+            "end": 5813,
+            "score": 0.7006675998369852,
+            "text": "Cywilny"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6147,
+            "end": 6151,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6218,
+            "end": 6222,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6501,
+            "score": 0.8836952030658722,
+            "text": "n.dabrowska@nowak-wspolnic"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6475,
+            "end": 6492,
+            "score": 0.857532761991024,
+            "text": "n.dabrowska@nowak"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6486,
+            "end": 6499,
+            "score": 0.2805590331554413,
+            "text": "@nowak-wspoln"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6505,
+            "score": 0.4911000728607178,
+            "text": "wspolnicy.pl"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6493,
+            "end": 6504,
+            "score": 0.45674654841423035,
+            "text": "wspolnicy.p"
+          },
+          {
+            "entity_group": "IDENTIFYING_LINK",
+            "start": 6493,
+            "end": 6505,
+            "score": 0.29450029134750366,
+            "text": "wspolnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6493,
+            "end": 6501,
+            "score": 0.22268415987491608,
+            "text": "wspolnic"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 6497,
+            "end": 6505,
+            "score": 0.44955581426620483,
+            "text": "lnicy.pl"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 6497,
+            "end": 6505,
+            "score": 0.2537313401699066,
+            "text": "lnicy.pl"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 7467,
+            "end": 7475,
+            "score": 0.7172735532124838,
+            "text": "WA/12347"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7518,
+            "end": 7541,
+            "score": 0.9820013386862618,
+            "text": "Okręgowa Rada Adwokacka"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7544,
+            "end": 7553,
+            "score": 0.8359135985374451,
+            "text": "Warszawie"
+          }
+        ],
+        "count": {
+          "before": 247,
+          "after": 95
+        }
+      }
+    }
+  },
+  {
+    "step": "mergeStep",
+    "phase": "postprocess",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 209,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 688,
+            "score": 0.9927200741238065,
+            "text": "ul. Różana 18/3\n31-505 Kraków"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3063,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5430,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+          }
+        ],
+        "removed": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 169,
+            "end": 200,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 201,
+            "end": 209,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 659,
+            "end": 681,
+            "score": 0.9927200741238065,
+            "text": "ul. Różana 18/3\n31-505"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 682,
+            "end": 688,
+            "score": 0.9501833319664001,
+            "text": "Kraków"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3023,
+            "end": 3054,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3055,
+            "end": 3063,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 5390,
+            "end": 5421,
+            "score": 0.9974898795286814,
+            "text": "ul. Marszałkowska 47/12, 00-648"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 5422,
+            "end": 5430,
+            "score": 0.801044225692749,
+            "text": "Warszawa"
+          }
+        ],
+        "count": {
+          "before": 95,
+          "after": 91
+        }
+      }
+    }
+  },
+  {
+    "step": "tokenizeStep",
+    "phase": "postprocess",
+    "changes": {
+      "anonymized": {
+        "changed": true,
+        "length": {
+          "before": 0,
+          "after": 8049
+        }
+      },
+      "legend": {
+        "added": {
+          "[ORGANIZATION_NAME_1]": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\"",
+          "[POSTAL_ADDRESS_1]": "ul. Marszałkowska 47/12, 00-648 Warszawa",
+          "[PHONE_NUMBER_1]": "+48 22 456 78 90",
+          "[EMAIL_ADDRESS_1]": "biuro@nowak-wspolnicy.pl",
+          "[ORGANIZATION_IDENTIFIER_1]": "527-234-56-78",
+          "[ORGANIZATION_IDENTIFIER_2]": "0000412873",
+          "[LOCATION_1]": "Warszawa",
+          "[PERSON_NAME_1]": "Krzysztof Nowak",
+          "[POSTAL_ADDRESS_2]": "ul. Marszałkowska 47/12\n00-648 Warszawa",
+          "[PERSON_ROLE_OR_TITLE_1]": "Pan",
+          "[PERSON_NAME_2]": "Tomasz Wiśniewski",
+          "[POSTAL_ADDRESS_3]": "ul. Różana 18/3\n31-505 Kraków",
+          "[PERSON_IDENTIFIER_1]": "85030712345",
+          "[DOCUMENT_REFERENCE_1]": "2023/PZ/00892",
+          "[PERSON_NAME_3]": "Marcina Jabłońskiego",
+          "[POSTAL_ADDRESS_4]": "ul. Słonecznej 9/5, 80-287 Gdańsk",
+          "[PERSON_IDENTIFIER_2]": "77091534521",
+          "[DOCUMENT_REFERENCE_2]": "Rep. A nr 1042/2025",
+          "[PERSON_ROLE_OR_TITLE_2]": "notariusz",
+          "[PERSON_NAME_4]": "Joanna Kwiatkowska",
+          "[ORGANIZATION_NAME_2]": "Kancelaria Notarialna",
+          "[POSTAL_ADDRESS_5]": "ul. Długa 22, 80-828 Gdańsk",
+          "[LOCATION_2]": "Krakowie",
+          "[PERSON_IDENTIFIER_3]": "AZK 448291",
+          "[FINANCIAL_AMOUNT_1]": "45 000,00 zł",
+          "[FINANCIAL_AMOUNT_2]": "czterdzieści\npięć tysięcy złotych 00/100",
+          "[BANK_ACCOUNT_IDENTIFIER_1]": "PL 62 1090 2590 0000 0001 4321 8765",
+          "[ORGANIZATION_NAME_3]": "Bank: Bank Zachodni WBK S.A.",
+          "[FINANCIAL_AMOUNT_3]": "4 503,29 zł",
+          "[FINANCIAL_AMOUNT_4]": "2 187,45 zł",
+          "[FINANCIAL_AMOUNT_5]": "200,00 zł",
+          "[FINANCIAL_AMOUNT_6]": "51 890,74 zł",
+          "[ORGANIZATION_NAME_4]": "WIŚNIEWSKI TRANS",
+          "[POSTAL_ADDRESS_6]": "ul. Przemysłowa 34, 31-217 Kraków",
+          "[ORGANIZATION_IDENTIFIER_3]": "679-234-11-90",
+          "[ORGANIZATION_IDENTIFIER_4]": "381 245 670",
+          "[ORGANIZATION_NAME_5]": "Finanse Pro\"",
+          "[POSTAL_ADDRESS_7]": "ul. Dietla 55/2, 31-070 Kraków",
+          "[ORGANIZATION_NAME_6]": "Dłużnika.",
+          "[PERSON_ROLE_OR_TITLE_3]": "Pani",
+          "[PERSON_NAME_5]": "Aleksandra Kowalczyk",
+          "[PERSON_ROLE_OR_TITLE_4]": "zam.",
+          "[POSTAL_ADDRESS_8]": "ul. Wiśniowa 7/9, 31-436 Kraków",
+          "[PERSON_IDENTIFIER_4]": "90061823456",
+          "[PHONE_NUMBER_2]": "+48 601 234 567",
+          "[PERSON_NAME_6]": "Robert Zając",
+          "[POSTAL_ADDRESS_9]": "ul. Topolowa 3, 80-175 Gdańsk",
+          "[PERSON_IDENTIFIER_5]": "82112756789",
+          "[PHONE_NUMBER_3]": "+48 512 876 543",
+          "[ORGANIZATION_NAME_7]": "Pod Arkadami",
+          "[LOCATION_3]": "ul. Rynek Główny 15, 31-008 Kraków",
+          "[FINANCIAL_AMOUNT_7]": "pięćdziesiąt jeden tysięcy\nośmiuset dziewięćdziesięciu złotych 74/100",
+          "[BANK_ACCOUNT_IDENTIFIER_2]": "PL 89 1140 2004 0000 3302 7654 3210",
+          "[ORGANIZATION_NAME_8]": "mBank S.A.",
+          "[PERSON_NAME_7]": "T.",
+          "[ORGANIZATION_NAME_9]": "Sądu Rejonowego dla Krakowa-Śródmieścia, Wydział\n     Cywilny",
+          "[ORGANIZATION_NAME_10]": "Biura Informacji Kredytowej S.A.",
+          "[ORGANIZATION_NAME_11]": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A.",
+          "[ORGANIZATION_NAME_12]": "Kancelarii",
+          "[PERSON_NAME_8]": "Natalia Dąbrowska",
+          "[PHONE_NUMBER_4]": "+48 22 456 78 91",
+          "[EMAIL_ADDRESS_2]": "n.dabrowska@nowak-wspolnicy.pl",
+          "[FINANCIAL_AMOUNT_8]": "45 000,00 zł.",
+          "[ACCOUNT_IDENTIFIER_1]": "WA/12347",
+          "[ORGANIZATION_NAME_13]": "Okręgowa Rada Adwokacka w Warszawie"
+        },
+        "count": {
+          "before": 0,
+          "after": 65
+        }
+      }
+    }
+  },
+  {
+    "step": "rescanStep",
+    "phase": "postprocess",
+    "changes": {
+      "anonymized": {
+        "changed": true,
+        "length": {
+          "before": 8049,
+          "after": 8264
+        }
+      }
+    }
+  }
+]

@@ -1,0 +1,204 @@
+================================================================================
+                               [DOCUMENT_REFERENCE_1]
+================================================================================
+
+                                                       [LOCATION_1], 5 marca 2025 r.
+
+Zawarta w dniu 5 marca 2025 r. w [LOCATION_2] pomiędzy:
+
+ZAMAWIAJĄCYM:
+  Firma: [ORGANIZATION_NAME_1] z o.o.
+  Adres: [POSTAL_ADDRESS_1]
+  NIP: [ORGANIZATION_IDENTIFIER_1]
+  REGON: [ORGANIZATION_IDENTIFIER_2]
+  KRS: [ORGANIZATION_IDENTIFIER_3]
+  Reprezentowana przez: [PERSON_ROLE_OR_TITLE_1] – Pana [PERSON_NAME_1],
+  nr PESEL: [PERSON_IDENTIFIER_1]
+  e-mail: [EMAIL_ADDRESS_1]
+  tel.: [PHONE_NUMBER_1]
+
+  (zwaną dalej „Zamawiającym")
+
+a
+
+WYKONAWCĄ:
+  Imię i nazwisko: [PERSON_NAME_2]
+  Adres zamieszkania: [LOCATION_3]
+  PESEL: [PERSON_IDENTIFIER_2]
+  NIP: [ORGANIZATION_IDENTIFIER_4]
+  Nr dowodu osobistego: [PERSON_IDENTIFIER_3]
+  Rachunek bankowy: [BANK_ACCOUNT_IDENTIFIER_1] ([ORGANIZATION_NAME_2])
+  E-mail: [EMAIL_ADDRESS_2]
+  Tel.: [PHONE_NUMBER_2]
+
+  (zwaną dalej „Wykonawcą")
+
+────────────────────────────────────────────────────────────────────────────────
+
+§ 1. PRZEDMIOT UMOWY
+
+1. Zamawiający zleca, a Wykonawca przyjmuje do wykonania dzieło polegające na:
+   zaprojektowaniu i wykonaniu kompletnej identyfikacji wizualnej marki „[ORGANIZATION_NAME_3]" obejmującej: logotyp (wersja podstawowa + 3 warianty kolorystyczne),
+   system typograficzny, paletę barw, projekt wizytówek, papier firmowy,
+   stopkę e-mail oraz przewodnik po identyfikacji wizualnej (brand book,
+   min. 40 stron A4), zwane dalej „Dziełem".
+
+2. Dzieło zostanie dostarczone w formatach źródłowych (Adobe Illustrator .ai,
+   Adobe [PROPER_NAME_1] .indd) oraz eksportowych (PDF, PNG, SVG, JPEG) na nośniku
+   USB oraz poprzez link do platformy [ORGANIZATION_NAME_4]
+
+§ 2. TERMIN WYKONANIA
+
+1. Wykonawca zobowiązuje się do dostarczenia Dzieła w następujących etapach:
+   - Etap I – moodboard i wstępne koncepcje logotypu (3 wersje):
+     do dnia 20 marca 2025 r.
+   - Etap II – wybrana koncepcja po poprawkach + system typograficzny i barwy:
+     do dnia 5 kwietnia 2025 r.
+   - Etap III – pełna dokumentacja (brand book) + wszystkie pliki finalne:
+     do dnia 30 kwietnia 2025 r.
+
+2. Zamawiający zobowiązuje się do przekazania uwag do każdego etapu
+   w terminie 5 dni roboczych od daty odbioru materiałów.
+
+§ 3. WYNAGRODZENIE
+
+1. Za wykonanie Dzieła Zamawiający zapłaci Wykonawcy wynagrodzenie w łącznej
+   wysokości [FINANCIAL_AMOUNT_1] brutto (słownie: [FINANCIAL_AMOUNT_2]),
+   płatne w następujących transzach:
+   - I transza: [FINANCIAL_AMOUNT_3] – zaliczka, płatna do 7 marca 2025 r.,
+   - II transza: [FINANCIAL_AMOUNT_3] – po odbiorze Etapu II, do 10 kwietnia 2025 r.,
+   - III transza: [FINANCIAL_AMOUNT_4] – po odbiorze Etapu III, do 5 maja 2025 r.
+
+2. Od wynagrodzenia Wykonawcy przysługuje 50% odliczenie kosztów uzyskania
+   przychodów na podstawie art. 22 ust. 9 pkt 3 ustawy o podatku dochodowym
+   od osób fizycznych (prawa autorskie).
+
+3. Płatności realizowane będą przelewem na rachunek bankowy Wykonawcy wskazany
+   w komparycji niniejszej umowy.
+
+================================================================================
+                                 STRONA 1 / 3
+================================================================================
+
+
+================================================================================
+                               [DOCUMENT_REFERENCE_2]
+================================================================================
+
+§ 4. PRAWA AUTORSKIE
+
+1. Z chwilą zapłaty ostatniej transzy wynagrodzenia Wykonawca przenosi na
+   Zamawiającego autorskie prawa majątkowe do Dzieła na wszystkich polach
+   eksploatacji znanych w chwili zawarcia umowy, w tym w szczególności:
+   a) utrwalanie i zwielokrotnianie Dzieła,
+   b) wprowadzanie do obrotu,
+   c) publiczne wystawienie, wyświetlenie, odtworzenie,
+   d) używanie w materiałach reklamowych i promocyjnych,
+   e) zamieszczanie w serwisach internetowych, w tym w mediach społecznościowych.
+
+2. Wykonawca zachowuje prawo do umieszczenia Dzieła w swoim portfolio
+   oraz prezentowania go w celach autopromocyjnych, chyba że Zamawiający
+   pisemnie zastrzeże inaczej w terminie 14 dni od odbioru Dzieła.
+
+§ 5. POPRAWKI I ODBIÓR
+
+1. W ramach wynagrodzenia Wykonawca zobowiązuje się do uwzględnienia
+   maksymalnie 2 rund poprawek do każdego z etapów. Dodatkowe zmiany
+   wykraczające poza zakres umowy wyceniane będą według stawki godzinowej
+   Wykonawcy wynoszącej [FINANCIAL_AMOUNT_5] [INCOME_COMPENSATION_1] za godzinę pracy.
+
+2. Odbiór każdego etapu potwierdzany jest pisemnie (e-mail lub podpis
+   na protokole odbioru) przez upoważnionego przedstawiciela Zamawiającego:
+   Panią [PERSON_NAME_3], [PERSON_ROLE_OR_TITLE_2] Marketingu,
+   e-mail: [EMAIL_ADDRESS_3], tel.: [PHONE_NUMBER_3]
+
+§ 6. KARY UMOWNE I ODPOWIEDZIALNOŚĆ
+
+1. W przypadku opóźnienia Wykonawcy w dostarczeniu któregokolwiek etapu
+   o więcej niż 7 dni, Zamawiający może naliczyć karę umowną w wysokości
+   0,5% wynagrodzenia za każdy dzień opóźnienia, nie więcej niż 10%
+   łącznego wynagrodzenia.
+
+2. W przypadku opóźnienia w płatności Zamawiającego, Wykonawcy przysługują
+   odsetki ustawowe za opóźnienie w transakcjach handlowych.
+
+§ 7. POSTANOWIENIA KOŃCOWE
+
+1. Umowę sporządzono w dwóch jednobrzmiących egzemplarzach, po jednym
+   dla każdej ze stron.
+
+2. W sprawach nieuregulowanych niniejszą umową stosuje się przepisy
+   Kodeksu cywilnego.
+
+3. Wszelkie zmiany umowy wymagają formy pisemnej pod rygorem nieważności.
+
+4. Spory wynikłe z umowy strony poddają rozstrzygnięciu sądu właściwego
+   dla siedziby Zamawiającego.
+
+ZAMAWIAJĄCY:                                WYKONAWCA:
+
+___________________________________         ___________________________________
+[PERSON_NAME_1]                         [PERSON_NAME_2]
+[PERSON_ROLE_OR_TITLE_3], [ORGANIZATION_NAME_1] z o.o.   Wykonawca
+
+================================================================================
+                                 STRONA 2 / 3
+================================================================================
+
+
+================================================================================
+                               [DOCUMENT_REFERENCE_2]
+================================================================================
+
+                           PROTOKÓŁ ODBIORU ETAPU I
+                    (do wypełnienia po realizacji Etapu I)
+
+Data odbioru: ......................................................
+
+Odbierający (Zamawiający):
+  Imię i nazwisko: [PERSON_NAME_3]
+  Stanowisko: [PERSON_ROLE_OR_TITLE_2] Marketingu
+  Data i podpis: ___________________________________
+
+Przekazujący (Wykonawca):
+  Imię i nazwisko: [PERSON_NAME_2]
+  Data i podpis: ___________________________________
+
+Zakres odebranego Etapu I:
+  [ ] Moodboard (min. 2 warianty)
+  [ ] Koncepcja logotypu – wariant A
+  [ ] Koncepcja logotypu – wariant B
+  [ ] Koncepcja logotypu – wariant C
+  [ ] Pliki źródłowe AI
+  [ ] Eksporty PDF / PNG
+
+Uwagi Zamawiającego (w terminie 5 dni roboczych):
+................................................................................
+................................................................................
+................................................................................
+
+────────────────────────────────────────────────────────────────────────────────
+
+                        RACHUNEK DO UMOWY O DZIEŁO – TRANSZA I
+
+Wystawiający:     [PERSON_NAME_2], [POSTAL_ADDRESS_2]
+NIP Wykonawcy:    [ORGANIZATION_IDENTIFIER_4], PESEL: [PERSON_IDENTIFIER_2]
+
+Odbiorca:         [ORGANIZATION_NAME_1] z o.o., [POSTAL_ADDRESS_3], NIP: [ORGANIZATION_IDENTIFIER_1]
+
+Tytuł:            Wynagrodzenie – zaliczka, Etap I, umowa [DOCUMENT_REFERENCE_3]
+Kwota brutto:     [FINANCIAL_AMOUNT_3]
+Zaliczka PIT:       [FINANCIAL_AMOUNT_6] (18% od 50% podstawy)
+Do wypłaty:       [FINANCIAL_AMOUNT_7]
+
+Data wystawienia: 5 marca 2025 r.
+Termin płatności: 7 marca 2025 r.
+
+Podpis Wykonawcy: ___________________________________
+                  [PERSON_NAME_2]
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+                                 STRONA 3 / 3
+================================================================================

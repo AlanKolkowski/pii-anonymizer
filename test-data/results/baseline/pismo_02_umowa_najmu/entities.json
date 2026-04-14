@@ -1,0 +1,278 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 296,
+    "end": 303,
+    "score": 0.9983066916465759
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 343,
+    "end": 362,
+    "score": 0.9556652506192526
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 363,
+    "end": 396,
+    "score": 0.9792820562918981
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 404,
+    "end": 415,
+    "score": 1
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 422,
+    "end": 438,
+    "score": 1
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 453,
+    "end": 471,
+    "score": 0.9862272640069326
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 472,
+    "end": 502,
+    "score": 0.9935630083084106
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 510,
+    "end": 521,
+    "score": 1
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 528,
+    "end": 543,
+    "score": 1
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 602,
+    "end": 642,
+    "score": 0.9988528815182772
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1114,
+    "end": 1146,
+    "score": 0.9928327744657343
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1336,
+    "end": 1367,
+    "score": 0.9984958117658441
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1495,
+    "end": 1510,
+    "score": 0.8575070649385452
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1512,
+    "end": 1546,
+    "score": 0.9515820741653442
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1570,
+    "end": 1581,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1616,
+    "end": 1627,
+    "score": 1
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1953,
+    "end": 1988,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1997,
+    "end": 2017,
+    "score": 0.9994870523611704
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2111,
+    "end": 2122,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2180,
+    "end": 2191,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2249,
+    "end": 2260,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2320,
+    "end": 2329,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2389,
+    "end": 2400,
+    "score": 1
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3396,
+    "end": 3428,
+    "score": 0.9965260408141396
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3878,
+    "end": 3889,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4324,
+    "end": 4383,
+    "score": 0.9663603338930342
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4550,
+    "end": 4559,
+    "score": 1
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 4626,
+    "end": 4656,
+    "score": 1
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4682,
+    "end": 4698,
+    "score": 1
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4855,
+    "end": 4874,
+    "score": 0.9982986152172089
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4917,
+    "end": 4928,
+    "score": 0.7647665143013
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5974,
+    "end": 5992,
+    "score": 0.9973936180273691
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 6001,
+    "end": 6012,
+    "score": 1
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6031,
+    "end": 6063,
+    "score": 0.9988191290335222
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6282,
+    "end": 6300,
+    "score": 0.9706685245037079
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6587,
+    "end": 6603,
+    "score": 0.9993137717247009
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6609,
+    "end": 6621,
+    "score": 0.8900280445814133
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 6630,
+    "end": 6645,
+    "score": 1
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6742,
+    "end": 6763,
+    "score": 0.9981217810085842
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6978,
+    "end": 6993,
+    "score": 0.9939544916152954
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7000,
+    "end": 7015,
+    "score": 0.9990828633308411
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 7024,
+    "end": 7035,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7425,
+    "end": 7433,
+    "score": 0.9976508319377899
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 7445,
+    "end": 7461,
+    "score": 0.9071645481245858
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7470,
+    "end": 7487,
+    "score": 0.9995184183120728
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 7497,
+    "end": 7513,
+    "score": 1
+  }
+]

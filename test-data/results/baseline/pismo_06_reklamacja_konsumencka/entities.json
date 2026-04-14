@@ -1,0 +1,374 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 292,
+    "end": 301,
+    "score": 0.9976143538951874
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 349,
+    "end": 364,
+    "score": 0.9998246133327484
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 365,
+    "end": 397,
+    "score": 0.9944019913673401
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 405,
+    "end": 416,
+    "score": 1
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 423,
+    "end": 438,
+    "score": 1
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 447,
+    "end": 470,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 484,
+    "end": 500,
+    "score": 0.964275768824986
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 508,
+    "end": 543,
+    "score": 0.9386051535606384
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 549,
+    "end": 562,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 570,
+    "end": 581,
+    "score": 0.9980422059694926
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 587,
+    "end": 597,
+    "score": 1
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 621,
+    "end": 646,
+    "score": 1
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 653,
+    "end": 664,
+    "score": 0.9986628741025925
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 712,
+    "end": 719,
+    "score": 0.7364951968193054
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 720,
+    "end": 734,
+    "score": 0.48744591176509855
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 768,
+    "end": 787,
+    "score": 0.7902069836854935
+  },
+  {
+    "entity_group": "DOCUMENT_IDENTIFIER",
+    "start": 813,
+    "end": 831,
+    "score": 0.9989482504980904
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 902,
+    "end": 913,
+    "score": 1
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 1226,
+    "end": 1240,
+    "score": 0.5783592313528061
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1281,
+    "end": 1293,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1402,
+    "end": 1414,
+    "score": 0.998838484287262
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1416,
+    "end": 1445,
+    "score": 0.9971916615962982
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1456,
+    "end": 1467,
+    "score": 1
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1519,
+    "end": 1523,
+    "score": 0.4611986577510834
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1549,
+    "end": 1572,
+    "score": 0.9323970838026567
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1600,
+    "end": 1618,
+    "score": 0.8634758251053947
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2352,
+    "end": 2360,
+    "score": 0.9487610658009847
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 2417,
+    "end": 2429,
+    "score": 0.9987189888954162
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 2454,
+    "end": 2465,
+    "score": 0.9722488224506378
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2479,
+    "end": 2495,
+    "score": 0.9994228601455688
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 2547,
+    "end": 2566,
+    "score": 0.9863900616765022
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2593,
+    "end": 2613,
+    "score": 0.8122395277023315
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2615,
+    "end": 2629,
+    "score": 0.9969321012496948
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 2636,
+    "end": 2669,
+    "score": 0.9905933241049448
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4417,
+    "end": 4429,
+    "score": 1
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4460,
+    "end": 4471,
+    "score": 1
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 4498,
+    "end": 4533,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4535,
+    "end": 4545,
+    "score": 0.9986045658588409
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4564,
+    "end": 4579,
+    "score": 0.9994253069162369
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4748,
+    "end": 4763,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4893,
+    "end": 4937,
+    "score": 0.9952311515808105
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4946,
+    "end": 5003,
+    "score": 0.9935345984995365
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5012,
+    "end": 5059,
+    "score": 0.9408820390701294
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5196,
+    "end": 5211,
+    "score": 0.9997651726007462
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 5713,
+    "end": 5736,
+    "score": 0.8682392727244984
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6272,
+    "end": 6288,
+    "score": 0.9816833223615374
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6297,
+    "end": 6333,
+    "score": 0.9885483781496683
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 6352,
+    "end": 6377,
+    "score": 1
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6383,
+    "end": 6398,
+    "score": 0.9998453706502914
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 6407,
+    "end": 6418,
+    "score": 1
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 6438,
+    "end": 6472,
+    "score": 0.9990527544702802
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 6637,
+    "end": 6651,
+    "score": 0.6188146948814393
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 6662,
+    "end": 6681,
+    "score": 0.9938494392803737
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 6704,
+    "end": 6715,
+    "score": 1
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 6739,
+    "end": 6774,
+    "score": 1
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6776,
+    "end": 6786,
+    "score": 0.9992435077826182
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6886,
+    "end": 6901,
+    "score": 0.9998304843902588
+  },
+  {
+    "entity_group": "PROPER_NAME",
+    "start": 7010,
+    "end": 7037,
+    "score": 0.7715781331062317
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7206,
+    "end": 7256,
+    "score": 0.9292198137233132
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 7271,
+    "end": 7285,
+    "score": 0.8319594264030457
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7326,
+    "end": 7341,
+    "score": 0.9993759095668793
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7343,
+    "end": 7376,
+    "score": 0.9989166217190879
+  }
+]

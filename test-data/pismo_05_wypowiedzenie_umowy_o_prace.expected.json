@@ -1,0 +1,356 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 288,
+    "end": 296,
+    "text": "Katowice"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 331,
+    "end": 353,
+    "text": "POLTECH SOLUTIONS S.A."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 354,
+    "end": 385,
+    "text": "ul. Bytomska 12\n40-154 Katowice"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 391,
+    "end": 404,
+    "text": "634-012-34-56"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 412,
+    "end": 423,
+    "text": "271 345 678"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 429,
+    "end": 439,
+    "text": "0000312456"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 468,
+    "end": 487,
+    "text": "Agnieszkę Rutkowską"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 490,
+    "end": 501,
+    "text": "Dyrektor HR"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 508,
+    "end": 524,
+    "text": "+48 32 765 43 21"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 533,
+    "end": 555,
+    "text": "a.rutkowska@poltech.pl"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 572,
+    "end": 589,
+    "text": "Michał Olejniczak"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 590,
+    "end": 633,
+    "text": "ul. Powstańców Śląskich 78/3\n41-506 Chorzów"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 641,
+    "end": 652,
+    "text": "91030456789"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 668,
+    "end": 681,
+    "text": "PT/2019/00341"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 694,
+    "end": 717,
+    "text": "Starszy Specjalista ds."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 786,
+    "end": 795,
+    "text": "Kierownik"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 796,
+    "end": 814,
+    "text": "Artur Szmajdziński"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 998,
+    "end": 1020,
+    "text": "POLTECH SOLUTIONS S.A."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1034,
+    "end": 1044,
+    "text": "Katowicach"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1463,
+    "end": 1488,
+    "text": "Starszego\nSpecjalisty ds."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1528,
+    "end": 1562,
+    "text": "Działu Logistyki\ni Łańcucha Dostaw"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1736,
+    "end": 1751,
+    "text": "LOG PARTNER sp."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1760,
+    "end": 1798,
+    "text": "ul. Przemysłowa 8,\n42-200 Częstochowa."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1928,
+    "end": 1948,
+    "text": "Michała Olejniczaka."
+  },
+  {
+    "entity_group": "PROPER_NAME",
+    "start": 2274,
+    "end": 2294,
+    "text": "HP EliteBook 845 G10"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 2312,
+    "end": 2322,
+    "text": "5CD3001XYZ"
+  },
+  {
+    "entity_group": "PROPER_NAME",
+    "start": 2341,
+    "end": 2359,
+    "text": "Samsung Galaxy S23"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 2367,
+    "end": 2382,
+    "text": "354871234567890"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3144,
+    "end": 3155,
+    "text": "8 200,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3202,
+    "end": 3214,
+    "text": "24 600,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3544,
+    "end": 3556,
+    "text": "24 600,00 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 3681,
+    "end": 3716,
+    "text": "PL 10 1050 1214 1000 0090 3456 7890"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 3718,
+    "end": 3738,
+    "text": "ING Bank Śląski S.A."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3925,
+    "end": 3934,
+    "text": "393,85 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 3964,
+    "end": 3975,
+    "text": "4 726,20 zł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4231,
+    "end": 4253,
+    "text": "Agnieszki Rutkowskiej."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4403,
+    "end": 4484,
+    "text": "Sądu Pracy (Sąd Rejonowy Katowice-Zachód,\nWydział Pracy i Ubezpieczeń Społecznych"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 4486,
+    "end": 4520,
+    "text": "ul. Warszawska 45, 40-010 Katowice"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4719,
+    "end": 4738,
+    "text": "Agnieszka Rutkowska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4781,
+    "end": 4793,
+    "text": "Dyrektor HR,"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4794,
+    "end": 4816,
+    "text": "POLTECH SOLUTIONS S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4931,
+    "end": 4948,
+    "text": "Michał Olejniczak"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 4964,
+    "end": 4977,
+    "text": "PT/2019/00341"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5138,
+    "end": 5155,
+    "text": "Michał Olejniczak"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5729,
+    "end": 5746,
+    "text": "Michał Olejniczak"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 5775,
+    "end": 5788,
+    "text": "PT/2019/00341"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6115,
+    "end": 6133,
+    "text": "Artur Szmajdziński"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6219,
+    "end": 6233,
+    "text": "Tomasz Grzesik"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 6235,
+    "end": 6251,
+    "text": "+48 32 765 43 34"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6351,
+    "end": 6366,
+    "text": "Renata Kowalska"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 6368,
+    "end": 6384,
+    "text": "+48 32 765 43 22"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6489,
+    "end": 6508,
+    "text": "Agnieszka Rutkowska"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 6648,
+    "end": 6656,
+    "text": "PT-0341)"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6766,
+    "end": 6777,
+    "text": "Paweł Dąbek"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7026,
+    "end": 7048,
+    "text": "POLTECH SOLUTIONS S.A."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 7065,
+    "end": 7099,
+    "text": "ul. Bytomskiej 12, 40-154 Katowice"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 7110,
+    "end": 7125,
+    "text": "iodo@poltech.pl"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 7483,
+    "end": 7495,
+    "text": "Prezesa UODO"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7497,
+    "end": 7526,
+    "text": "ul. Stawki 2, 00-193 Warszawa"
+  }
+]

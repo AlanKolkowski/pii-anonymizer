@@ -1,0 +1,2148 @@
+[
+  {
+    "step": "normalizeWhitespace",
+    "phase": "preprocess",
+    "changes": {}
+  },
+  {
+    "step": "segmentSentencexStep",
+    "phase": "segment",
+    "changes": {
+      "segments": {
+        "added": [
+          {
+            "offset": 0,
+            "length": 240,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 240,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 242,
+            "length": 81,
+            "preview": "                                                      Wrocła"
+          },
+          {
+            "offset": 323,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 325,
+            "length": 95,
+            "preview": "Wynajmujący:\nPani Elżbieta Malinowska\nul. Świdnicka 23/8\n50-"
+          },
+          {
+            "offset": 420,
+            "length": 18,
+            "preview": ": +48 71 345 67 89"
+          },
+          {
+            "offset": 438,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 440,
+            "length": 86,
+            "preview": "Najemca:\nPan Dariusz Kędzierski\nul. Gajowa 14/2\n50-520 Wrocł"
+          },
+          {
+            "offset": 526,
+            "length": 17,
+            "preview": ": +48 693 451 287"
+          },
+          {
+            "offset": 543,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 545,
+            "length": 130,
+            "preview": "Dotyczy: Wypowiedzenie umowy najmu lokalu mieszkalnego – ul."
+          },
+          {
+            "offset": 675,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 677,
+            "length": 80,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 757,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 759,
+            "length": 65,
+            "preview": "                    WYPOWIEDZENIE UMOWY NAJMU LOKALU MIESZKA"
+          },
+          {
+            "offset": 824,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 826,
+            "length": 15,
+            "preview": "Szanowny Panie,"
+          },
+          {
+            "offset": 841,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 843,
+            "length": 18,
+            "preview": "Na podstawie art. "
+          },
+          {
+            "offset": 861,
+            "length": 8,
+            "preview": "11 ust. "
+          },
+          {
+            "offset": 869,
+            "length": 41,
+            "preview": "2 pkt 2 ustawy z dnia 21 czerwca 2001 r. "
+          },
+          {
+            "offset": 910,
+            "length": 269,
+            "preview": "o ochronie\npraw lokatorów, mieszkaniowym zasobie gminy i o z"
+          },
+          {
+            "offset": 1179,
+            "length": 22,
+            "preview": "(zwaną dalej „Umową\")."
+          },
+          {
+            "offset": 1201,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1203,
+            "length": 3,
+            "preview": "I. "
+          },
+          {
+            "offset": 1206,
+            "length": 21,
+            "preview": "OPIS PRZEDMIOTU NAJMU"
+          },
+          {
+            "offset": 1227,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1229,
+            "length": 83,
+            "preview": "Przedmiotem wypowiedzianej umowy jest lokal mieszkalny o nas"
+          },
+          {
+            "offset": 1312,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1314,
+            "length": 361,
+            "preview": "  Adres:              ul. Gajowa 14/2, 50-520 Wrocław\n  Powi"
+          },
+          {
+            "offset": 1675,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1677,
+            "length": 4,
+            "preview": "II. "
+          },
+          {
+            "offset": 1681,
+            "length": 23,
+            "preview": "PRZYCZYNA WYPOWIEDZENIA"
+          },
+          {
+            "offset": 1704,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1706,
+            "length": 118,
+            "preview": "Przyczyną wypowiedzenia umowy najmu jest zwłoka Najemcy z za"
+          },
+          {
+            "offset": 1824,
+            "length": 19,
+            "preview": "Zgodnie z § 5 ust. "
+          },
+          {
+            "offset": 1843,
+            "length": 35,
+            "preview": "2 Umowy, czynsz\npłatny jest do 10. "
+          },
+          {
+            "offset": 1878,
+            "length": 55,
+            "preview": "dnia każdego miesiąca na rachunek bankowy Wynajmującej:"
+          },
+          {
+            "offset": 1933,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 1935,
+            "length": 80,
+            "preview": "  Numer rachunku: PL 44 1020 5226 0000 6102 0789 4321\n  Bank"
+          },
+          {
+            "offset": 2015,
+            "length": 2,
+            "preview": "A."
+          },
+          {
+            "offset": 2017,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2019,
+            "length": 68,
+            "preview": "Stan zaległości czynszowych na dzień sporządzenia niniejszeg"
+          },
+          {
+            "offset": 2087,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2089,
+            "length": 311,
+            "preview": "  Październik 2024:   2 400,00 zł  (termin płatności: 10.10."
+          },
+          {
+            "offset": 2400,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2402,
+            "length": 45,
+            "preview": "Uprzednim pismem z dnia 15 listopada 2024 r. "
+          },
+          {
+            "offset": 2447,
+            "length": 83,
+            "preview": "wezwałam Pana do uregulowania\nzaległości, wyznaczając miesię"
+          },
+          {
+            "offset": 2530,
+            "length": 57,
+            "preview": "Do dnia dzisiejszego\nżadna wpłata nie została odnotowana."
+          },
+          {
+            "offset": 2587,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2589,
+            "length": 207,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 2796,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 2798,
+            "length": 241,
+            "preview": "\n==========================================================="
+          },
+          {
+            "offset": 3039,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3041,
+            "length": 5,
+            "preview": "III. "
+          },
+          {
+            "offset": 3046,
+            "length": 20,
+            "preview": "TERMIN WYPOWIEDZENIA"
+          },
+          {
+            "offset": 3066,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3068,
+            "length": 15,
+            "preview": "Zgodnie z art. "
+          },
+          {
+            "offset": 3083,
+            "length": 8,
+            "preview": "11 ust. "
+          },
+          {
+            "offset": 3091,
+            "length": 12,
+            "preview": "2 pkt 2 ww. "
+          },
+          {
+            "offset": 3103,
+            "length": 98,
+            "preview": "ustawy, termin wypowiedzenia wynosi\njeden miesiąc, ze skutki"
+          },
+          {
+            "offset": 3201,
+            "length": 64,
+            "preview": "Niniejsze\nwypowiedzenie doręczane jest w dniu 3 stycznia 202"
+          },
+          {
+            "offset": 3265,
+            "length": 66,
+            "preview": ", w związku z czym\nstosunek najmu ustaje z dniem 28 lutego 2"
+          },
+          {
+            "offset": 3331,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3333,
+            "length": 4,
+            "preview": "IV. "
+          },
+          {
+            "offset": 3337,
+            "length": 22,
+            "preview": "ŻĄDANIE WYDANIA LOKALU"
+          },
+          {
+            "offset": 3359,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3361,
+            "length": 251,
+            "preview": "Wzywam Pana do wydania lokalu przy ul. Gajowej 14/2, 50-520 "
+          },
+          {
+            "offset": 3612,
+            "length": 9,
+            "preview": "do godz. "
+          },
+          {
+            "offset": 3621,
+            "length": 6,
+            "preview": "12:00."
+          },
+          {
+            "offset": 3627,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3629,
+            "length": 86,
+            "preview": "Przekazanie lokalu nastąpi protokolarnie w obecności obu str"
+          },
+          {
+            "offset": 3715,
+            "length": 119,
+            "preview": "O dokładnym terminie odbioru proszę poinformować mnie\ntelefo"
+          },
+          {
+            "offset": 3834,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3836,
+            "length": 3,
+            "preview": "V. "
+          },
+          {
+            "offset": 3839,
+            "length": 18,
+            "preview": "ROZLICZENIE KAUCJI"
+          },
+          {
+            "offset": 3857,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 3859,
+            "length": 92,
+            "preview": "Kaucja w wysokości 7 200,00 zł zostanie rozliczona w termini"
+          },
+          {
+            "offset": 3951,
+            "length": 225,
+            "preview": "Z kwoty kaucji zostaną potrącone:\n  - zaległości czynszowe i"
+          },
+          {
+            "offset": 4176,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4178,
+            "length": 4,
+            "preview": "VI. "
+          },
+          {
+            "offset": 4182,
+            "length": 38,
+            "preview": "SKUTKI NIEZASTOSOWANIA SIĘ DO WEZWANIA"
+          },
+          {
+            "offset": 4220,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4222,
+            "length": 162,
+            "preview": "W przypadku nieopuszczenia lokalu w wyznaczonym terminie, bę"
+          },
+          {
+            "offset": 4384,
+            "length": 87,
+            "preview": "Jednocześnie za każdy dzień bezumownego korzystania\nz lokalu"
+          },
+          {
+            "offset": 4471,
+            "length": 79,
+            "preview": "będę naliczać odszkodowanie w wysokości\ndwukrotności miesięc"
+          },
+          {
+            "offset": 4550,
+            "length": 24,
+            "preview": "160,00 zł za każdą dobę."
+          },
+          {
+            "offset": 4574,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4576,
+            "length": 131,
+            "preview": "Wszelkie pytania proszę kierować na adres e-mail: e.malinows"
+          },
+          {
+            "offset": 4707,
+            "length": 11,
+            "preview": "8:00–20:00."
+          },
+          {
+            "offset": 4718,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4720,
+            "length": 13,
+            "preview": "Z poważaniem,"
+          },
+          {
+            "offset": 4733,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4735,
+            "length": 193,
+            "preview": "                                          __________________"
+          },
+          {
+            "offset": 4928,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 4930,
+            "length": 17,
+            "preview": "Załączniki:\n  1. "
+          },
+          {
+            "offset": 4947,
+            "length": 43,
+            "preview": "Kopia umowy najmu z dnia 1 marca 2022 r.\n  "
+          },
+          {
+            "offset": 4990,
+            "length": 3,
+            "preview": "2. "
+          },
+          {
+            "offset": 4993,
+            "length": 68,
+            "preview": "Zestawienie zaległości czynszowych (wyciąg z rachunku bankow"
+          },
+          {
+            "offset": 5061,
+            "length": 3,
+            "preview": "3. "
+          },
+          {
+            "offset": 5064,
+            "length": 56,
+            "preview": "Kopia wezwania do zapłaty z dnia 15 listopada 2024 r.\n  "
+          },
+          {
+            "offset": 5120,
+            "length": 3,
+            "preview": "4. "
+          },
+          {
+            "offset": 5123,
+            "length": 52,
+            "preview": "Potwierdzenie wpłaty kaucji z dnia 28 lutego 2022 r."
+          },
+          {
+            "offset": 5175,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5177,
+            "length": 172,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 5349,
+            "length": 80,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 5429,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5431,
+            "length": 207,
+            "preview": "============================================================"
+          },
+          {
+            "offset": 5638,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5640,
+            "length": 241,
+            "preview": "\n==========================================================="
+          },
+          {
+            "offset": 5881,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5883,
+            "length": 65,
+            "preview": "                       POTWIERDZENIE ODBIORU PISMA (do odesł"
+          },
+          {
+            "offset": 5948,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 5950,
+            "length": 185,
+            "preview": "Ja, niżej podpisany Pan Dariusz Kędzierski, PESEL: 880713456"
+          },
+          {
+            "offset": 6135,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6137,
+            "length": 68,
+            "preview": "Data odbioru: .............................................."
+          },
+          {
+            "offset": 6205,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6207,
+            "length": 66,
+            "preview": "Podpis: ...................................................."
+          },
+          {
+            "offset": 6273,
+            "length": 27,
+            "preview": "\n        Dariusz Kędzierski"
+          },
+          {
+            "offset": 6300,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6302,
+            "length": 225,
+            "preview": "\n───────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 6527,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6529,
+            "length": 46,
+            "preview": "Data sporządzenia notatki: 3 stycznia 2025 r.\n"
+          },
+          {
+            "offset": 6575,
+            "length": 53,
+            "preview": "Sporządził: Piotr Malinowski (syn Wynajmującej), tel."
+          },
+          {
+            "offset": 6628,
+            "length": 17,
+            "preview": ": +48 601 987 654"
+          },
+          {
+            "offset": 6645,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6647,
+            "length": 55,
+            "preview": "Kontakty podjęte w celu polubownego rozwiązania sprawy:"
+          },
+          {
+            "offset": 6702,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 6704,
+            "length": 482,
+            "preview": "  12.10.2024 – rozmowa telefoniczna z Dariuszem Kędzierskim;"
+          },
+          {
+            "offset": 7186,
+            "length": 61,
+            "preview": "16.12.2024 – brak wpłaty, brak kontaktu ze strony Najemcy.\n "
+          },
+          {
+            "offset": 7247,
+            "length": 132,
+            "preview": "02.01.2025 – wizyta pod adresem lokalu; nikt nie otworzył dr"
+          },
+          {
+            "offset": 7379,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7381,
+            "length": 50,
+            "preview": "Kontakt z ubezpieczycielem nieruchomości:\n  PZU S."
+          },
+          {
+            "offset": 7431,
+            "length": 2,
+            "preview": "A."
+          },
+          {
+            "offset": 7433,
+            "length": 62,
+            "preview": ", polisa nr HN/2024/00087432, agent: Beata Szczepańska,\n  te"
+          },
+          {
+            "offset": 7495,
+            "length": 18,
+            "preview": ": +48 800 102 102."
+          },
+          {
+            "offset": 7513,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7515,
+            "length": 80,
+            "preview": "────────────────────────────────────────────────────────────"
+          },
+          {
+            "offset": 7595,
+            "length": 2,
+            "preview": "\n\n"
+          },
+          {
+            "offset": 7597,
+            "length": 208,
+            "preview": "============================================================"
+          }
+        ],
+        "count": {
+          "before": 0,
+          "after": 140
+        }
+      }
+    }
+  },
+  {
+    "step": "nerStep",
+    "phase": "ner",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "LOCATION",
+            "start": 296,
+            "end": 303,
+            "score": 0.9983066916465759,
+            "text": "Wrocław"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 343,
+            "end": 362,
+            "score": 0.9556652506192526,
+            "text": "Elżbieta Malinowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 363,
+            "end": 365,
+            "score": 0.6864948272705078,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 365,
+            "end": 396,
+            "score": 0.9535311731425199,
+            "text": ". Świdnicka 23/8\n50-066 Wrocław"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 404,
+            "end": 415,
+            "score": 0.967048954963684,
+            "text": "61042798430"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 422,
+            "end": 438,
+            "score": 0.991314043601354,
+            "text": "+48 71 345 67 89"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 453,
+            "end": 471,
+            "score": 0.9862272640069326,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 472,
+            "end": 494,
+            "score": 0.8306604822476705,
+            "text": "ul. Gajowa 14/2\n50-520"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 495,
+            "end": 502,
+            "score": 0.8018085956573486,
+            "text": "Wrocław"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 510,
+            "end": 521,
+            "score": 0.9402758002281189,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 528,
+            "end": 543,
+            "score": 0.9996436408587864,
+            "text": "+48 693 451 287"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 602,
+            "end": 642,
+            "score": 0.9895161986351013,
+            "text": "ul. Gajowa 14/2,\n         50-520 Wrocław"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1114,
+            "end": 1146,
+            "score": 0.98286092877388,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1336,
+            "end": 1367,
+            "score": 0.9984958117658441,
+            "text": "ul. Gajowa 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1495,
+            "end": 1510,
+            "score": 0.807952843606472,
+            "text": "WR1K/00234567/8"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1512,
+            "end": 1546,
+            "score": 0.9515820741653442,
+            "text": "Sąd Rejonowy dla Wrocławia-Krzyków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1570,
+            "end": 1581,
+            "score": 0.998903751373291,
+            "text": "2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1616,
+            "end": 1627,
+            "score": 0.9991051107645035,
+            "text": "7 200,00 zł"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 1953,
+            "end": 1988,
+            "score": 0.954745774085705,
+            "text": "PL 44 1020 5226 0000 6102 0789 4321"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2015,
+            "score": 0.9994870523611704,
+            "text": "PKO Bank Polski S."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2103,
+            "end": 2122,
+            "score": 0.8275066167116165,
+            "text": "2024:   2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2149,
+            "end": 2191,
+            "score": 0.6918309181928635,
+            "text": "2024 r.)\n  Listopad 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2218,
+            "end": 2260,
+            "score": 0.6690925061702728,
+            "text": "2024 r.)\n  Grudzień 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2320,
+            "end": 2329,
+            "score": 0.9961230009794235,
+            "text": "143,18 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2389,
+            "end": 2400,
+            "score": 0.9984168708324432,
+            "text": "7 343,18 zł"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3396,
+            "end": 3428,
+            "score": 0.8880782932043075,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 3878,
+            "end": 3889,
+            "score": 0.9994995296001434,
+            "text": "7 200,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4324,
+            "end": 4382,
+            "score": 0.9663603338930342,
+            "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4579,
+            "end": 4656,
+            "score": 0.740034050666369,
+            "text": "elkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4682,
+            "end": 4698,
+            "score": 0.9847920835018158,
+            "text": "+48 71 345 67 89"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4855,
+            "end": 4874,
+            "score": 0.9876915117104849,
+            "text": "Elżbieta Malinowska"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 5974,
+            "end": 5992,
+            "score": 0.9973936180273691,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 6001,
+            "end": 6012,
+            "score": 0.9985454678535461,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 6031,
+            "end": 6063,
+            "score": 0.9987099279056896,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6282,
+            "end": 6300,
+            "score": 0.9706685245037079,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6587,
+            "end": 6603,
+            "score": 0.9993137717247009,
+            "text": "Piotr Malinowski"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6630,
+            "end": 6645,
+            "score": 0.9989884297053019,
+            "text": "+48 601 987 654"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6742,
+            "end": 6763,
+            "score": 0.9728885293006897,
+            "text": "Dariuszem Kędzierskim"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6978,
+            "end": 6993,
+            "score": 0.9599342584609986,
+            "text": "Henryk Borowiak"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7000,
+            "end": 7002,
+            "score": 0.4118827283382416,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7002,
+            "end": 7013,
+            "score": 0.693985104560852,
+            "text": ". Gajowa 14"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7013,
+            "end": 7015,
+            "score": 0.5386418700218201,
+            "text": "/1"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 7024,
+            "end": 7033,
+            "score": 0.9865117520093918,
+            "text": "540308678"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7425,
+            "end": 7431,
+            "score": 0.9976508319377899,
+            "text": "PZU S."
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 7445,
+            "end": 7461,
+            "score": 0.9071645481245858,
+            "text": "HN/2024/00087432"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7470,
+            "end": 7487,
+            "score": 0.9995184183120728,
+            "text": "Beata Szczepańska"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7508,
+            "score": 0.8435169756412506,
+            "text": "+48 800 102"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 296,
+            "end": 303,
+            "score": 0.9800135493278503,
+            "text": "Wrocław"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 343,
+            "end": 362,
+            "score": 0.9135003884633383,
+            "text": "Elżbieta Malinowska"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 363,
+            "end": 396,
+            "score": 0.9792820562918981,
+            "text": "ul. Świdnicka 23/8\n50-066 Wrocław"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 404,
+            "end": 405,
+            "score": 0.5452009439468384,
+            "text": "6"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 405,
+            "end": 415,
+            "score": 0.7533232122659683,
+            "text": "1042798430"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 422,
+            "end": 438,
+            "score": 0.9954402347405752,
+            "text": "+48 71 345 67 89"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 453,
+            "end": 471,
+            "score": 0.9836336672306061,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 472,
+            "end": 502,
+            "score": 0.9935630083084106,
+            "text": "ul. Gajowa 14/2\n50-520 Wrocław"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 510,
+            "end": 521,
+            "score": 0.8421385407447814,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 528,
+            "end": 543,
+            "score": 0.9685039520263672,
+            "text": "+48 693 451 287"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 602,
+            "end": 642,
+            "score": 0.9988528815182772,
+            "text": "ul. Gajowa 14/2,\n         50-520 Wrocław"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 1114,
+            "end": 1146,
+            "score": 0.9928327744657343,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 1336,
+            "end": 1367,
+            "score": 0.9983388727361505,
+            "text": "ul. Gajowa 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 1495,
+            "end": 1510,
+            "score": 0.8575070649385452,
+            "text": "WR1K/00234567/8"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1529,
+            "end": 1538,
+            "score": 0.7251251637935638,
+            "text": "Wrocławia"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1540,
+            "end": 1546,
+            "score": 0.54950150847435,
+            "text": "rzyków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1573,
+            "end": 1581,
+            "score": 0.7381172180175781,
+            "text": "00,00 zł"
+          },
+          {
+            "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+            "start": 1953,
+            "end": 1988,
+            "score": 0.9895509022932786,
+            "text": "PL 44 1020 5226 0000 6102 0789 4321"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2015,
+            "score": 0.9935219486554464,
+            "text": "PKO Bank Polski S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2015,
+            "end": 2017,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 3396,
+            "end": 3428,
+            "score": 0.9965260408141396,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 3880,
+            "end": 3889,
+            "score": 0.9053525726000468,
+            "text": "200,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4324,
+            "end": 4365,
+            "score": 0.8182672659556071,
+            "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 4550,
+            "end": 4559,
+            "score": 0.648781975110372,
+            "text": "160,00 zł"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4579,
+            "end": 4656,
+            "score": 0.9238507335002606,
+            "text": "elkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 4682,
+            "end": 4698,
+            "score": 0.999368687470754,
+            "text": "+48 71 345 67 89"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 4855,
+            "end": 4874,
+            "score": 0.9982986152172089,
+            "text": "Elżbieta Malinowska"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 4917,
+            "end": 4928,
+            "score": 0.7647665143013,
+            "text": "Wynajmująca"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 5974,
+            "end": 5992,
+            "score": 0.945291668176651,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 6001,
+            "end": 6012,
+            "score": 0.7838311791419983,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 6031,
+            "end": 6063,
+            "score": 0.9988191290335222,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6282,
+            "end": 6300,
+            "score": 0.9400430917739868,
+            "text": "Dariusz Kędzierski"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6587,
+            "end": 6603,
+            "score": 0.9986294905344645,
+            "text": "Piotr Malinowski"
+          },
+          {
+            "entity_group": "PERSON_ROLE_OR_TITLE",
+            "start": 6609,
+            "end": 6621,
+            "score": 0.8900280445814133,
+            "text": "Wynajmującej"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6630,
+            "end": 6645,
+            "score": 0.9951369265715281,
+            "text": "+48 601 987 654"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6742,
+            "end": 6763,
+            "score": 0.9981217810085842,
+            "text": "Dariuszem Kędzierskim"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 6978,
+            "end": 6993,
+            "score": 0.9939544916152954,
+            "text": "Henryk Borowiak"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7000,
+            "end": 7015,
+            "score": 0.9990828633308411,
+            "text": "ul. Gajowa 14/1"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 7024,
+            "end": 7027,
+            "score": 0.7061575651168823,
+            "text": "540"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 7027,
+            "end": 7033,
+            "score": 0.7851554155349731,
+            "text": "308678"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7425,
+            "end": 7431,
+            "score": 0.9124225229024887,
+            "text": "PZU S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7431,
+            "end": 7433,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "DOCUMENT_REFERENCE",
+            "start": 7445,
+            "end": 7461,
+            "score": 0.6558350835527692,
+            "text": "HN/2024/00087432"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7470,
+            "end": 7487,
+            "score": 0.9988044023513794,
+            "text": "Beata Szczepańska"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7512,
+            "score": 0.942721140384674,
+            "text": "+48 800 102 102"
+          }
+        ],
+        "removed": [],
+        "count": {
+          "before": 0,
+          "after": 92
+        }
+      }
+    }
+  },
+  {
+    "step": "regexStep",
+    "phase": "ner",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4626,
+            "end": 4656,
+            "score": 1,
+            "text": "e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 7024,
+            "end": 7035,
+            "score": 1,
+            "text": "54030867891"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 404,
+            "end": 415,
+            "score": 1,
+            "text": "61042798430"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 510,
+            "end": 521,
+            "score": 1,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6001,
+            "end": 6012,
+            "score": 1,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7024,
+            "end": 7035,
+            "score": 1,
+            "text": "54030867891"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2111,
+            "end": 2122,
+            "score": 1,
+            "text": "2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2180,
+            "end": 2191,
+            "score": 1,
+            "text": "2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2249,
+            "end": 2260,
+            "score": 1,
+            "text": "2 400,00 zł"
+          }
+        ],
+        "removed": [],
+        "count": {
+          "before": 92,
+          "after": 116
+        }
+      }
+    }
+  },
+  {
+    "step": "snapStep",
+    "phase": "postprocess",
+    "changes": {
+      "entities": {
+        "added": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 363,
+            "end": 366,
+            "score": 0.6864948272705078,
+            "text": "ul."
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 363,
+            "end": 396,
+            "score": 0.9535311731425199,
+            "text": "ul. Świdnicka 23/8\n50-066 Wrocław"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2017,
+            "score": 0.9994870523611704,
+            "text": "PKO Bank Polski S.A."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2143,
+            "end": 2191,
+            "score": 0.6918309181928635,
+            "text": "10.10.2024 r.)\n  Listopad 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2212,
+            "end": 2260,
+            "score": 0.6690925061702728,
+            "text": "10.11.2024 r.)\n  Grudzień 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4324,
+            "end": 4383,
+            "score": 0.9663603338930342,
+            "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4576,
+            "end": 4656,
+            "score": 0.740034050666369,
+            "text": "Wszelkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7000,
+            "end": 7003,
+            "score": 0.4118827283382416,
+            "text": "ul."
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7000,
+            "end": 7015,
+            "score": 0.693985104560852,
+            "text": "ul. Gajowa 14/1"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7011,
+            "end": 7015,
+            "score": 0.5386418700218201,
+            "text": "14/1"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7425,
+            "end": 7433,
+            "score": 0.9976508319377899,
+            "text": "PZU S.A."
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 404,
+            "end": 411,
+            "score": 0.5452009439468384,
+            "text": "6104279"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 404,
+            "end": 415,
+            "score": 0.7533232122659683,
+            "text": "61042798430"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1539,
+            "end": 1546,
+            "score": 0.54950150847435,
+            "text": "Krzyków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1572,
+            "end": 1581,
+            "score": 0.7381172180175781,
+            "text": "400,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2017,
+            "score": 0.9935219486554464,
+            "text": "PKO Bank Polski S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2013,
+            "end": 2017,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4576,
+            "end": 4656,
+            "score": 0.9238507335002606,
+            "text": "Wszelkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 7024,
+            "end": 7035,
+            "score": 0.7851554155349731,
+            "text": "54030867891"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7425,
+            "end": 7433,
+            "score": 0.9124225229024887,
+            "text": "PZU S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7429,
+            "end": 7433,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7513,
+            "score": 0.942721140384674,
+            "text": "+48 800 102 102."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7513,
+            "score": 1,
+            "text": "+48 800 102 102."
+          }
+        ],
+        "removed": [
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 363,
+            "end": 365,
+            "score": 0.6864948272705078,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 365,
+            "end": 396,
+            "score": 0.9535311731425199,
+            "text": ". Świdnicka 23/8\n50-066 Wrocław"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2015,
+            "score": 0.9994870523611704,
+            "text": "PKO Bank Polski S."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2149,
+            "end": 2191,
+            "score": 0.6918309181928635,
+            "text": "2024 r.)\n  Listopad 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2218,
+            "end": 2260,
+            "score": 0.6690925061702728,
+            "text": "2024 r.)\n  Grudzień 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4324,
+            "end": 4382,
+            "score": 0.9663603338930342,
+            "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4579,
+            "end": 4656,
+            "score": 0.740034050666369,
+            "text": "elkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7000,
+            "end": 7002,
+            "score": 0.4118827283382416,
+            "text": "ul"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7002,
+            "end": 7013,
+            "score": 0.693985104560852,
+            "text": ". Gajowa 14"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7013,
+            "end": 7015,
+            "score": 0.5386418700218201,
+            "text": "/1"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 7425,
+            "end": 7431,
+            "score": 0.9976508319377899,
+            "text": "PZU S."
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 404,
+            "end": 405,
+            "score": 0.5452009439468384,
+            "text": "6"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 405,
+            "end": 415,
+            "score": 0.7533232122659683,
+            "text": "1042798430"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1540,
+            "end": 1546,
+            "score": 0.54950150847435,
+            "text": "rzyków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1573,
+            "end": 1581,
+            "score": 0.7381172180175781,
+            "text": "00,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 1997,
+            "end": 2015,
+            "score": 0.9935219486554464,
+            "text": "PKO Bank Polski S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2015,
+            "end": 2017,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4579,
+            "end": 4656,
+            "score": 0.9238507335002606,
+            "text": "elkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 7024,
+            "end": 7027,
+            "score": 0.7061575651168823,
+            "text": "540"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 7027,
+            "end": 7033,
+            "score": 0.7851554155349731,
+            "text": "308678"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7425,
+            "end": 7431,
+            "score": 0.9124225229024887,
+            "text": "PZU S."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7431,
+            "end": 7433,
+            "score": 0.7263153493404388,
+            "text": "A."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7512,
+            "score": 0.942721140384674,
+            "text": "+48 800 102 102"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7512,
+            "score": 1,
+            "text": "+48 800 102 102"
+          }
+        ],
+        "count": {
+          "before": 116,
+          "after": 116
+        }
+      }
+    }
+  },
+  {
+    "step": "filterStep",
+    "phase": "postprocess",
+    "changes": {}
+  },
+  {
+    "step": "dedupStep",
+    "phase": "postprocess",
+    "changes": {
+      "entities": {
+        "added": [],
+        "removed": [
+          {
+            "entity_group": "LOCATION",
+            "start": 363,
+            "end": 396,
+            "score": 0.9535311731425199,
+            "text": "ul. Świdnicka 23/8\n50-066 Wrocław"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 363,
+            "end": 366,
+            "score": 0.6864948272705078,
+            "text": "ul."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 404,
+            "end": 415,
+            "score": 1,
+            "text": "61042798430"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 404,
+            "end": 415,
+            "score": 0.7533232122659683,
+            "text": "61042798430"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 404,
+            "end": 411,
+            "score": 0.5452009439468384,
+            "text": "6104279"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 472,
+            "end": 494,
+            "score": 0.8306604822476705,
+            "text": "ul. Gajowa 14/2\n50-520"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 495,
+            "end": 502,
+            "score": 0.8018085956573486,
+            "text": "Wrocław"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 510,
+            "end": 521,
+            "score": 1,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 510,
+            "end": 521,
+            "score": 0.8421385407447814,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 602,
+            "end": 642,
+            "score": 0.9895161986351013,
+            "text": "ul. Gajowa 14/2,\n         50-520 Wrocław"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1114,
+            "end": 1146,
+            "score": 0.98286092877388,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 1336,
+            "end": 1367,
+            "score": 0.9983388727361505,
+            "text": "ul. Gajowa 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "DOCUMENT_IDENTIFIER",
+            "start": 1495,
+            "end": 1510,
+            "score": 0.807952843606472,
+            "text": "WR1K/00234567/8"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1529,
+            "end": 1538,
+            "score": 0.7251251637935638,
+            "text": "Wrocławia"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 1539,
+            "end": 1546,
+            "score": 0.54950150847435,
+            "text": "Krzyków"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 1572,
+            "end": 1581,
+            "score": 0.7381172180175781,
+            "text": "400,00 zł"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 2013,
+            "end": 2017,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2103,
+            "end": 2122,
+            "score": 0.8275066167116165,
+            "text": "2024:   2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2143,
+            "end": 2191,
+            "score": 0.6918309181928635,
+            "text": "10.10.2024 r.)\n  Listopad 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 2212,
+            "end": 2260,
+            "score": 0.6690925061702728,
+            "text": "10.11.2024 r.)\n  Grudzień 2024:      2 400,00 zł"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 3396,
+            "end": 3428,
+            "score": 0.8880782932043075,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "FINANCIAL_AMOUNT",
+            "start": 3880,
+            "end": 3889,
+            "score": 0.9053525726000468,
+            "text": "200,00 zł"
+          },
+          {
+            "entity_group": "ORGANIZATION_NAME",
+            "start": 4324,
+            "end": 4365,
+            "score": 0.8182672659556071,
+            "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4576,
+            "end": 4656,
+            "score": 0.9238507335002606,
+            "text": "Wszelkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "EMAIL_ADDRESS",
+            "start": 4576,
+            "end": 4656,
+            "score": 0.740034050666369,
+            "text": "Wszelkie pytania proszę kierować na adres e-mail: e.malinowska.wroclaw@gmail.com"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 6001,
+            "end": 6012,
+            "score": 1,
+            "text": "88071345612"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 6031,
+            "end": 6063,
+            "score": 0.9987099279056896,
+            "text": "ul. Gajowej 14/2, 50-520 Wrocław"
+          },
+          {
+            "entity_group": "LOCATION",
+            "start": 7000,
+            "end": 7015,
+            "score": 0.693985104560852,
+            "text": "ul. Gajowa 14/1"
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7000,
+            "end": 7003,
+            "score": 0.4118827283382416,
+            "text": "ul."
+          },
+          {
+            "entity_group": "POSTAL_ADDRESS",
+            "start": 7011,
+            "end": 7015,
+            "score": 0.5386418700218201,
+            "text": "14/1"
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7024,
+            "end": 7035,
+            "score": 1,
+            "text": "54030867891"
+          },
+          {
+            "entity_group": "ORGANIZATION_IDENTIFIER",
+            "start": 7024,
+            "end": 7035,
+            "score": 0.7851554155349731,
+            "text": "54030867891"
+          },
+          {
+            "entity_group": "PERSON_IDENTIFIER",
+            "start": 7024,
+            "end": 7033,
+            "score": 0.7061575651168823,
+            "text": "540308678"
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7425,
+            "end": 7433,
+            "score": 0.9124225229024887,
+            "text": "PZU S.A."
+          },
+          {
+            "entity_group": "PERSON_NAME",
+            "start": 7429,
+            "end": 7433,
+            "score": 0.7263153493404388,
+            "text": "S.A."
+          },
+          {
+            "entity_group": "PHONE_NUMBER",
+            "start": 7497,
+            "end": 7508,
+            "score": 0.8435169756412506,
+            "text": "+48 800 102"
+          }
+        ],
+        "count": {
+          "before": 116,
+          "after": 46
+        }
+      }
+    }
+  },
+  {
+    "step": "mergeStep",
+    "phase": "postprocess",
+    "changes": {}
+  },
+  {
+    "step": "tokenizeStep",
+    "phase": "postprocess",
+    "changes": {
+      "anonymized": {
+        "changed": true,
+        "length": {
+          "before": 0,
+          "after": 7784
+        }
+      },
+      "legend": {
+        "added": {
+          "[LOCATION_1]": "Wrocław",
+          "[PERSON_NAME_1]": "Elżbieta Malinowska",
+          "[POSTAL_ADDRESS_1]": "ul. Świdnicka 23/8\n50-066 Wrocław",
+          "[PERSON_IDENTIFIER_1]": "61042798430",
+          "[PHONE_NUMBER_1]": "+48 71 345 67 89",
+          "[PERSON_NAME_2]": "Dariusz Kędzierski",
+          "[POSTAL_ADDRESS_2]": "ul. Gajowa 14/2\n50-520 Wrocław",
+          "[PERSON_IDENTIFIER_2]": "88071345612",
+          "[PHONE_NUMBER_2]": "+48 693 451 287",
+          "[POSTAL_ADDRESS_3]": "ul. Gajowa 14/2,\n         50-520 Wrocław",
+          "[POSTAL_ADDRESS_4]": "ul. Gajowej 14/2, 50-520 Wrocław",
+          "[LOCATION_2]": "ul. Gajowa 14/2, 50-520 Wrocław",
+          "[DOCUMENT_REFERENCE_1]": "WR1K/00234567/8",
+          "[ORGANIZATION_NAME_1]": "Sąd Rejonowy dla Wrocławia-Krzyków",
+          "[FINANCIAL_AMOUNT_1]": "2 400,00 zł",
+          "[FINANCIAL_AMOUNT_2]": "7 200,00 zł",
+          "[BANK_ACCOUNT_IDENTIFIER_1]": "PL 44 1020 5226 0000 6102 0789 4321",
+          "[ORGANIZATION_NAME_2]": "PKO Bank Polski S.A.",
+          "[FINANCIAL_AMOUNT_3]": "143,18 zł",
+          "[FINANCIAL_AMOUNT_4]": "7 343,18 zł",
+          "[ORGANIZATION_NAME_3]": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny.",
+          "[FINANCIAL_AMOUNT_5]": "160,00 zł",
+          "[EMAIL_ADDRESS_1]": "e.malinowska.wroclaw@gmail.com",
+          "[PERSON_ROLE_OR_TITLE_1]": "Wynajmująca",
+          "[PERSON_NAME_3]": "Piotr Malinowski",
+          "[PERSON_ROLE_OR_TITLE_2]": "Wynajmującej",
+          "[PHONE_NUMBER_3]": "+48 601 987 654",
+          "[PERSON_NAME_4]": "Henryk Borowiak",
+          "[POSTAL_ADDRESS_5]": "ul. Gajowa 14/1",
+          "[PERSON_IDENTIFIER_3]": "54030867891",
+          "[ORGANIZATION_NAME_4]": "PZU S.A.",
+          "[DOCUMENT_REFERENCE_2]": "HN/2024/00087432",
+          "[PERSON_NAME_5]": "Beata Szczepańska",
+          "[PHONE_NUMBER_4]": "+48 800 102 102."
+        },
+        "count": {
+          "before": 0,
+          "after": 34
+        }
+      }
+    }
+  },
+  {
+    "step": "rescanStep",
+    "phase": "postprocess",
+    "changes": {
+      "anonymized": {
+        "changed": true,
+        "length": {
+          "before": 7784,
+          "after": 7796
+        }
+      }
+    }
+  }
+]

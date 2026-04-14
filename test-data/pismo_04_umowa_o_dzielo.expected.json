@@ -1,0 +1,332 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 112,
+    "end": 175,
+    "text": "UMOWA O DZIEŁO\n                            nr UOD/2025/03/00117"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 313,
+    "end": 319,
+    "text": "Poznań"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 371,
+    "end": 379,
+    "text": "Poznaniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 414,
+    "end": 431,
+    "text": "ARCHON STUDIO sp."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 448,
+    "end": 485,
+    "text": "ul. Święty Marcin 29/8, 61-806 Poznań"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 493,
+    "end": 506,
+    "text": "779-234-56-01"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 516,
+    "end": 527,
+    "text": "302 456 789"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 535,
+    "end": 545,
+    "text": "0000567234"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 570,
+    "end": 585,
+    "text": "Prezesa Zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 593,
+    "end": 616,
+    "text": "Sebastiana Grabowskiego"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 630,
+    "end": 641,
+    "text": "80042312309"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 652,
+    "end": 679,
+    "text": "s.grabowski@archonstudio.pl"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 688,
+    "end": 704,
+    "text": "+48 61 852 34 56"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 771,
+    "end": 795,
+    "text": "Marta Lewandowska-Ostrów"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 818,
+    "end": 849,
+    "text": "ul. Ułańska 7/11, 60-748 Poznań"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 859,
+    "end": 870,
+    "text": "92051867234"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 878,
+    "end": 891,
+    "text": "972-123-45-67"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 916,
+    "end": 926,
+    "text": "BPK 778901"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 947,
+    "end": 982,
+    "text": "PL 27 1600 1462 1800 0003 1234 5678"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 984,
+    "end": 999,
+    "text": "Alior Bank S.A."
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 1011,
+    "end": 1042,
+    "text": "marta.lewandowska.art@gmail.com"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 1051,
+    "end": 1066,
+    "text": "+48 505 678 234"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1353,
+    "end": 1367,
+    "text": "Lumina\n   Home"
+  },
+  {
+    "entity_group": "PROPER_NAME",
+    "start": 1717,
+    "end": 1725,
+    "text": "InDesign"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1822,
+    "end": 1850,
+    "text": "WeTransfer lub Google Drive."
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2504,
+    "end": 2515,
+    "text": "9 800,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2533,
+    "end": 2566,
+    "text": "dziewięć tysięcy osiemset złotych"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2622,
+    "end": 2633,
+    "text": "2 940,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2690,
+    "end": 2701,
+    "text": "2 940,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2768,
+    "end": 2779,
+    "text": "3 920,00 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 3453,
+    "end": 3489,
+    "text": "UMOWA O DZIEŁO  nr UOD/2025/03/00117"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4555,
+    "end": 4564,
+    "text": "150,00 zł"
+  },
+  {
+    "entity_group": "INCOME_COMPENSATION",
+    "start": 4565,
+    "end": 4570,
+    "text": "netto"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4745,
+    "end": 4761,
+    "text": "Karolinę Woźniak"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4763,
+    "end": 4776,
+    "text": "Kierownik ds."
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 4800,
+    "end": 4825,
+    "text": "k.wozniak@archonstudio.pl"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4833,
+    "end": 4850,
+    "text": "+48 61 852 34 57."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 5865,
+    "end": 5879,
+    "text": "Prezes Zarządu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5881,
+    "end": 5898,
+    "text": "ARCHON STUDIO sp."
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 6241,
+    "end": 6277,
+    "text": "UMOWA O DZIEŁO  nr UOD/2025/03/00117"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6588,
+    "end": 6604,
+    "text": "Karolina Woźniak"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6619,
+    "end": 6632,
+    "text": "Kierownik ds."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6743,
+    "end": 6767,
+    "text": "Marta Lewandowska-Ostrów"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7502,
+    "end": 7526,
+    "text": "Marta Lewandowska-Ostrów"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7528,
+    "end": 7559,
+    "text": "ul. Ułańska 7/11, 60-748 Poznań"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 7578,
+    "end": 7591,
+    "text": "972-123-45-67"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 7600,
+    "end": 7611,
+    "text": "92051867234"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7631,
+    "end": 7648,
+    "text": "ARCHON STUDIO sp."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 7657,
+    "end": 7712,
+    "text": "ul. Święty Marcin 29/8,\n                  61-806 Poznań"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 7719,
+    "end": 7732,
+    "text": "779-234-56-01"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 7792,
+    "end": 7809,
+    "text": "UOD/2025/03/00117"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 7828,
+    "end": 7839,
+    "text": "2 940,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 7860,
+    "end": 7869,
+    "text": "529,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 7910,
+    "end": 7921,
+    "text": "2 411,00 zł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8064,
+    "end": 8088,
+    "text": "Marta Lewandowska-Ostrów"
+  }
+]

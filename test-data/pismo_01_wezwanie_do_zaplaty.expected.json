@@ -1,0 +1,548 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 105,
+    "end": 142,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 169,
+    "end": 209,
+    "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 240,
+    "end": 256,
+    "text": "+48 22 456 78 90"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 259,
+    "end": 283,
+    "text": "biuro@nowak-wspolnicy.pl"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 320,
+    "end": 333,
+    "text": "527-234-56-78"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 341,
+    "end": 351,
+    "text": "0000412873"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 489,
+    "end": 497,
+    "text": "Warszawa"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 533,
+    "end": 548,
+    "text": "Krzysztof Nowak"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 549,
+    "end": 586,
+    "text": "Kancelaria Prawna „Nowak & Wspólnicy\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 587,
+    "end": 626,
+    "text": "ul. Marszałkowska 47/12\n00-648 Warszawa"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 637,
+    "end": 640,
+    "text": "Pan"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 641,
+    "end": 658,
+    "text": "Tomasz Wiśniewski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 659,
+    "end": 688,
+    "text": "ul. Różana 18/3\n31-505 Kraków"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 696,
+    "end": 707,
+    "text": "85030712345"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 758,
+    "end": 771,
+    "text": "2023/PZ/00892"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 977,
+    "end": 997,
+    "text": "Marcina Jabłońskiego"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1018,
+    "end": 1051,
+    "text": "ul. Słonecznej 9/5, 80-287 Gdańsk"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 1060,
+    "end": 1071,
+    "text": "77091534521"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1154,
+    "end": 1173,
+    "text": "Rep. A nr 1042/2025"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1175,
+    "end": 1184,
+    "text": "notariusz"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1185,
+    "end": 1203,
+    "text": "Joanna Kwiatkowska"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1205,
+    "end": 1226,
+    "text": "Kancelaria Notarialna"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 1228,
+    "end": 1255,
+    "text": "ul. Długa 22, 80-828 Gdańsk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1410,
+    "end": 1429,
+    "text": "Marcinem Jabłońskim"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1454,
+    "end": 1474,
+    "text": "Tomaszem Wiśniewskim"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1515,
+    "end": 1523,
+    "text": "Krakowie"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 1573,
+    "end": 1583,
+    "text": "AZK 448291"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1619,
+    "end": 1632,
+    "text": "2023/PZ/00892"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1642,
+    "end": 1654,
+    "text": "45 000,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1665,
+    "end": 1705,
+    "text": "czterdzieści\npięć tysięcy złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1825,
+    "end": 1860,
+    "text": "PL 62 1090 2590 0000 0001 4321 8765"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1863,
+    "end": 1891,
+    "text": "Bank: Bank Zachodni WBK S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1915,
+    "end": 1932,
+    "text": "Tomasz Wiśniewski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2227,
+    "end": 2248,
+    "text": "Tomasza Wiśniewskiego"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2309,
+    "end": 2321,
+    "text": "45 000,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2374,
+    "end": 2385,
+    "text": "4 503,29 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2438,
+    "end": 2449,
+    "text": "2 187,45 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2504,
+    "end": 2513,
+    "text": "200,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 2630,
+    "end": 2642,
+    "text": "51 890,74 zł"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 2959,
+    "end": 2996,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3023,
+    "end": 3063,
+    "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 3094,
+    "end": 3110,
+    "text": "+48 22 456 78 90"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 3113,
+    "end": 3137,
+    "text": "biuro@nowak-wspolnicy.pl"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 3664,
+    "end": 3681,
+    "text": "Tomasz Wiśniewski"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 3729,
+    "end": 3745,
+    "text": "WIŚNIEWSKI TRANS"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 3746,
+    "end": 3763,
+    "text": "Tomasz Wiśniewski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3766,
+    "end": 3799,
+    "text": "ul. Przemysłowa 34, 31-217 Kraków"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 3807,
+    "end": 3820,
+    "text": "679-234-11-90"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 3830,
+    "end": 3841,
+    "text": "381 245 670"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 3944,
+    "end": 3956,
+    "text": "Finanse Pro\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3969,
+    "end": 3999,
+    "text": "ul. Dietla 55/2, 31-070 Kraków"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4030,
+    "end": 4039,
+    "text": "Dłużnika."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4227,
+    "end": 4231,
+    "text": "Pani"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4232,
+    "end": 4252,
+    "text": "Aleksandra Kowalczyk"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4254,
+    "end": 4258,
+    "text": "zam."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 4259,
+    "end": 4290,
+    "text": "ul. Wiśniowa 7/9, 31-436 Kraków"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 4301,
+    "end": 4312,
+    "text": "90061823456"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4320,
+    "end": 4335,
+    "text": "+48 601 234 567"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4352,
+    "end": 4355,
+    "text": "Pan"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4356,
+    "end": 4368,
+    "text": "Robert Zając"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4370,
+    "end": 4374,
+    "text": "zam."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 4375,
+    "end": 4404,
+    "text": "ul. Topolowa 3, 80-175 Gdańsk"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 4415,
+    "end": 4426,
+    "text": "82112756789"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 4434,
+    "end": 4449,
+    "text": "+48 512 876 543"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4514,
+    "end": 4526,
+    "text": "Pod Arkadami"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 4529,
+    "end": 4563,
+    "text": "ul. Rynek Główny 15, 31-008 Kraków"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4649,
+    "end": 4661,
+    "text": "51 890,74 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 4672,
+    "end": 4741,
+    "text": "pięćdziesiąt jeden tysięcy\nośmiuset dziewięćdziesięciu złotych 74/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 4849,
+    "end": 4884,
+    "text": "PL 89 1140 2004 0000 3302 7654 3210"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4893,
+    "end": 4903,
+    "text": "mBank S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4927,
+    "end": 4943,
+    "text": "Marcin Jabłoński"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 4979,
+    "end": 4992,
+    "text": "2023/PZ/00892"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4995,
+    "end": 4997,
+    "text": "T."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 4998,
+    "end": 5008,
+    "text": "Wiśniewski"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5326,
+    "end": 5363,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 5390,
+    "end": 5430,
+    "text": "ul. Marszałkowska 47/12, 00-648 Warszawa"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 5461,
+    "end": 5477,
+    "text": "+48 22 456 78 90"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 5480,
+    "end": 5504,
+    "text": "biuro@nowak-wspolnicy.pl"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5752,
+    "end": 5813,
+    "text": "Sądu Rejonowego dla Krakowa-Śródmieścia, Wydział\n     Cywilny"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6119,
+    "end": 6151,
+    "text": "Biura Informacji Kredytowej S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6162,
+    "end": 6222,
+    "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6380,
+    "end": 6390,
+    "text": "Kancelarii"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6410,
+    "end": 6427,
+    "text": "Natalia Dąbrowska"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 6448,
+    "end": 6464,
+    "text": "+48 22 456 78 91"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 6475,
+    "end": 6505,
+    "text": "n.dabrowska@nowak-wspolnicy.pl"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 6630,
+    "end": 6643,
+    "text": "2023/PZ/00892"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 6735,
+    "end": 6748,
+    "text": "45 000,00 zł."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7380,
+    "end": 7395,
+    "text": "Krzysztof Nowak"
+  },
+  {
+    "entity_group": "ACCOUNT_IDENTIFIER",
+    "start": 7467,
+    "end": 7475,
+    "text": "WA/12347"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7518,
+    "end": 7553,
+    "text": "Okręgowa Rada Adwokacka w Warszawie"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 7800,
+    "end": 7816,
+    "text": "+48 22 456 78 90"
+  }
+]
