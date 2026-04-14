@@ -225,15 +225,20 @@ export function findRegexEntities(text) {
   return entities;
 }
 
+const WORD_BOUNDARY = /[\s,;:()„""–\-]/;
+const MAX_SNAP = 6; // max chars to expand in either direction
+
 export function snapToWordBoundaries(entities, text) {
   return entities.map((entity) => {
     let { start, end } = entity;
 
-    // Expand start to the beginning of the word
-    while (start > 0 && !/\s/.test(text[start - 1])) start--;
+    // Expand start to the beginning of the word (max MAX_SNAP chars)
+    const minStart = Math.max(0, start - MAX_SNAP);
+    while (start > minStart && !WORD_BOUNDARY.test(text[start - 1])) start--;
 
-    // Expand end to the end of the word
-    while (end < text.length && !/\s/.test(text[end])) end++;
+    // Expand end to the end of the word (max MAX_SNAP chars)
+    const maxEnd = Math.min(text.length, end + MAX_SNAP);
+    while (end < maxEnd && !WORD_BOUNDARY.test(text[end])) end++;
 
     if (start === entity.start && end === entity.end) return entity;
     return { ...entity, start, end };
