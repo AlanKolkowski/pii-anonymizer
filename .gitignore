@@ -2,3 +2,6 @@ node_modules
 dist
 test-data/results/
 !test-data/results/baseline/
+
+# Eval reports (generated per run)
+test-data/results/*/report.html
