@@ -571,8 +571,8 @@ describe('filterOversizedEntities', () => {
 
   it('does not filter types without limits', () => {
     const entities = [
-      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 200, score: 0.9 },
-      { entity_group: 'FINANCIAL_AMOUNT', start: 300, end: 500, score: 0.8 },
+      { entity_group: 'FINANCIAL_AMOUNT', start: 0, end: 200, score: 0.9 },
+      { entity_group: 'DATE_OF_BIRTH', start: 300, end: 500, score: 0.8 },
     ];
     expect(filterOversizedEntities(entities)).toHaveLength(2);
   });

@@ -4,11 +4,10 @@ import { aggregateEntities, chunkText, deduplicateEntities, filterOversizedEntit
 const MAX_CHUNK_CHARS = 1200;
 
 const MODELS = [
-  'bardsai/eu-pii-anonimization-multilang',
-  'bardsai/eu-pii-anonimization',
+  { id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' },
+  { id: 'bardsai/eu-pii-anonimization', dtype: 'q8' },
 ];
 
-let loadedDtype = 'q8';
 let availableModels = [];
 
 self.onmessage = async (e) => {
@@ -16,12 +15,10 @@ self.onmessage = async (e) => {
 
   if (type === 'load') {
     try {
-      const dtype = e.data.dtype || 'q8';
-      loadedDtype = dtype;
       availableModels = [];
-      console.log('[worker] Preloading models with dtype:', dtype);
+      console.log('[worker] Preloading models (multilang fp32 + PL q8)...');
 
-      const makeOpts = () => ({
+      const makeOpts = (dtype) => ({
         dtype,
         progress_callback: (data) => {
           if (data.status === 'progress') {
@@ -35,15 +32,15 @@ self.onmessage = async (e) => {
       });
 
       // Preload models one at a time — load, verify, dispose.
-      // Keeps only one model in WASM memory at a time (fp32 ≈ 1.4GB each).
+      // Keeps only one model in WASM memory at a time.
       for (const model of MODELS) {
         try {
-          const ner = await pipeline('token-classification', model, makeOpts());
+          const ner = await pipeline('token-classification', model.id, makeOpts(model.dtype));
           await ner.dispose();
           availableModels.push(model);
-          console.log(`[worker] ${model} preloaded and cached`);
+          console.log(`[worker] ${model.id} (${model.dtype}) preloaded and cached`);
         } catch (err) {
-          console.warn(`[worker] ${model} failed to preload:`, err);
+          console.warn(`[worker] ${model.id} (${model.dtype}) failed to preload:`, err);
         }
       }
 
@@ -82,7 +79,7 @@ self.onmessage = async (e) => {
       // Run each model sequentially: load from cache → infer all chunks → dispose.
       // Only one model in WASM memory at a time — allows fp32 to work.
       for (const model of availableModels) {
-        const ner = await pipeline('token-classification', model, { dtype: loadedDtype });
+        const ner = await pipeline('token-classification', model.id, { dtype: model.dtype });
 
         for (const chunk of chunks) {
           const raw = await ner(chunk.text);

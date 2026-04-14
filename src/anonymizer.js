@@ -235,6 +235,9 @@ const MAX_ENTITY_LENGTH = {
   ORGANIZATION_NAME: 120,
   VEHICLE_IDENTIFIER: 40,
   PROPER_NAME: 50,
+  LOCATION: 100,
+  POSTAL_ADDRESS: 100,
+  PERSON_ATTRIBUTE: 80,
 };
 
 export function filterOversizedEntities(entities) {
