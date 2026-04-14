@@ -209,6 +209,7 @@ export function findRegexEntities(text) {
     { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
     { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
     { regex: /\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
   const entities = [];
@@ -223,6 +224,20 @@ export function findRegexEntities(text) {
     }
   }
   return entities;
+}
+
+// Max entity length per type — filters hallucinated oversized entities
+// where the model labels entire sentences/paragraphs as a single entity
+const MAX_ENTITY_LENGTH = {
+  PERSON_NAME: 50,
+  PERSON_ROLE_OR_TITLE: 70,
+};
+
+export function filterOversizedEntities(entities) {
+  return entities.filter((entity) => {
+    const maxLen = MAX_ENTITY_LENGTH[entity.entity_group];
+    return !maxLen || (entity.end - entity.start) <= maxLen;
+  });
 }
 
 const WORD_BOUNDARY = /[\s,;:()„""–\-]/;
@@ -289,11 +304,18 @@ export function deduplicateEntities(entities) {
     const curr = entities[i];
 
     if (curr.start < prev.end) {
-      // Prefer wider span, then higher score
-      const prevSpan = prev.end - prev.start;
-      const currSpan = curr.end - curr.start;
-      if (currSpan > prevSpan || (currSpan === prevSpan && curr.score > prev.score)) {
-        result[result.length - 1] = curr;
+      // Perfect-score (regex) entities are precise — prefer them over wider NER
+      const prevPerfect = prev.score === 1.0;
+      const currPerfect = curr.score === 1.0;
+      if (prevPerfect !== currPerfect) {
+        if (currPerfect) result[result.length - 1] = curr;
+      } else {
+        // Same precision tier: prefer wider span, then higher score
+        const prevSpan = prev.end - prev.start;
+        const currSpan = curr.end - curr.start;
+        if (currSpan > prevSpan || (currSpan === prevSpan && curr.score > prev.score)) {
+          result[result.length - 1] = curr;
+        }
       }
     } else {
       result.push(curr);

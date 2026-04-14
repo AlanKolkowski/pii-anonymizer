@@ -1,5 +1,5 @@
 import { pipeline } from '@huggingface/transformers';
-import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities, mergeAdjacentEntities, snapToWordBoundaries } from './anonymizer.js';
+import { aggregateEntities, chunkText, deduplicateEntities, filterOversizedEntities, findRegexEntities, mergeAdjacentEntities, snapToWordBoundaries } from './anonymizer.js';
 
 let nerMultilang = null;
 let nerPl = null;
@@ -90,10 +90,14 @@ self.onmessage = async (e) => {
       // like "not" from "notariusz" or "N" from "Nadawca")
       const snapped = snapToWordBoundaries(allEntities, text);
 
-      // Add regex-detected entities
-      snapped.push(...findRegexEntities(text));
+      // Drop hallucinated oversized entities (e.g. entire sentences as PERSON_NAME)
+      // before dedup so correct shorter detections from the other model survive
+      const filtered = filterOversizedEntities(snapped);
 
-      const deduped = deduplicateEntities(snapped);
+      // Add regex-detected entities
+      filtered.push(...findRegexEntities(text));
+
+      const deduped = deduplicateEntities(filtered);
       const data = mergeAdjacentEntities(deduped, text);
       self.postMessage({ type: 'result', data });
     } catch (err) {

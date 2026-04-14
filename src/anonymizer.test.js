@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, mergeAdjacentEntities } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -303,6 +303,41 @@ describe('deduplicateEntities', () => {
     const entities = [{ start: 0, end: 5, score: 0.9, entity_group: 'X' }];
     expect(deduplicateEntities(entities)).toEqual(entities);
   });
+
+  it('prefers perfect-score (regex) entity over wider NER entity', () => {
+    // NER detects "457 dni): 4 503,29 zł" as one wide entity
+    // Regex detects "4 503,29 zł" precisely with score 1.0
+    const entities = [
+      { start: 0, end: 30, score: 0.85, entity_group: 'FINANCIAL_AMOUNT' },
+      { start: 18, end: 30, score: 1.0, entity_group: 'FINANCIAL_AMOUNT' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].score).toBe(1.0);
+    expect(result[0].start).toBe(18);
+  });
+
+  it('keeps wider span when both are perfect-score', () => {
+    const entities = [
+      { start: 0, end: 30, score: 1.0, entity_group: 'EMAIL_ADDRESS' },
+      { start: 5, end: 25, score: 1.0, entity_group: 'EMAIL_ADDRESS' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe(0);
+    expect(result[0].end).toBe(30);
+  });
+
+  it('keeps wider span when both are NER (non-perfect score)', () => {
+    const entities = [
+      { start: 0, end: 30, score: 0.7, entity_group: 'PERSON_NAME' },
+      { start: 5, end: 20, score: 0.9, entity_group: 'PERSON_NAME' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe(0);
+    expect(result[0].end).toBe(30);
+  });
 });
 
 describe('couldBeSamePerson', () => {
@@ -463,6 +498,87 @@ describe('findRegexEntities', () => {
     const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
     expect(phone).toBeDefined();
     expect(text.slice(phone.start, phone.end)).toBe('48 600 123 45 67');
+  });
+});
+
+describe('filterOversizedEntities', () => {
+  it('drops PERSON_NAME exceeding 50 chars', () => {
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 65, score: 0.8 },
+      { entity_group: 'PERSON_NAME', start: 100, end: 115, score: 0.9 },
+    ];
+    const result = filterOversizedEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe(100);
+  });
+
+  it('drops PERSON_ROLE_OR_TITLE exceeding 70 chars', () => {
+    const entities = [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 155, score: 0.7 },
+    ];
+    expect(filterOversizedEntities(entities)).toHaveLength(0);
+  });
+
+  it('keeps entities within limits', () => {
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 20, score: 0.9 },
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 25, end: 60, score: 0.85 },
+      { entity_group: 'ORGANIZATION_NAME', start: 70, end: 200, score: 0.8 },
+    ];
+    expect(filterOversizedEntities(entities)).toHaveLength(3);
+  });
+
+  it('does not filter types without limits', () => {
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 200, score: 0.9 },
+      { entity_group: 'FINANCIAL_AMOUNT', start: 300, end: 500, score: 0.8 },
+    ];
+    expect(filterOversizedEntities(entities)).toHaveLength(2);
+  });
+
+  it('keeps entities exactly at the limit', () => {
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 50, score: 0.9 },
+    ];
+    expect(filterOversizedEntities(entities)).toHaveLength(1);
+  });
+});
+
+describe('findRegexEntities — financial amounts', () => {
+  it('detects simple amount with zł', () => {
+    const text = 'kwota: 200,00 zł';
+    const entities = findRegexEntities(text);
+    const amount = entities.find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amount).toBeDefined();
+    expect(text.slice(amount.start, amount.end)).toBe('200,00 zł');
+  });
+
+  it('detects amount with thousands separator', () => {
+    const text = 'kwota: 45 000,00 zł';
+    const entities = findRegexEntities(text);
+    const amount = entities.find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amount).toBeDefined();
+    expect(text.slice(amount.start, amount.end)).toBe('45 000,00 zł');
+  });
+
+  it('detects amount without space before zł', () => {
+    const text = 'kwota: 200,00zł';
+    const entities = findRegexEntities(text);
+    const amount = entities.find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amount).toBeDefined();
+    expect(text.slice(amount.start, amount.end)).toBe('200,00zł');
+  });
+
+  it('detects multiple amounts', () => {
+    const text = '200,00 zł i 45 000,00 zł';
+    const amounts = findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amounts).toHaveLength(2);
+  });
+
+  it('has score 1.0', () => {
+    const text = '200,00 zł';
+    const amount = findRegexEntities(text).find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amount.score).toBe(1.0);
   });
 });
 
