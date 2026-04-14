@@ -6,6 +6,7 @@ const worker = new Worker(new URL('./worker.js', import.meta.url), {
 });
 
 let currentLegend = null;
+const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
 
 // --- DOM refs ---
 const downloadBtn = document.getElementById('download-btn');
@@ -16,6 +17,8 @@ const resultSection = document.getElementById('result-section');
 const anonymizedOutput = document.getElementById('anonymized-output');
 const copyAnonymizedBtn = document.getElementById('copy-anonymized');
 const legendTableBody = document.querySelector('#legend-table tbody');
+const debugSection = document.getElementById('debug-section');
+const debugPanel = document.getElementById('debug-panel');
 const deanonymizeSection = document.getElementById('deanonymize-section');
 const deanonymizeInput = document.getElementById('deanonymize-input');
 const deanonymizeBtn = document.getElementById('deanonymize-btn');
@@ -95,32 +98,126 @@ function handleAnonymizationResult(msg) {
   anonymizeBtn.disabled = false;
   anonymizeBtn.textContent = 'Anonymize';
 
-  // Debug: show "Copy Debug" button if ?debug=1
-  if (new URLSearchParams(window.location.search).get('debug') === '1') {
-    let debugBtn = document.getElementById('copy-debug');
-    if (!debugBtn) {
-      debugBtn = document.createElement('button');
-      debugBtn.id = 'copy-debug';
-      debugBtn.className = 'btn btn-secondary';
-      debugBtn.textContent = 'Copy Debug (text + legend)';
-      debugBtn.style.marginLeft = '0.5rem';
-      copyAnonymizedBtn.parentElement.appendChild(debugBtn);
-    }
-    debugBtn.onclick = () => {
-      const legendText = Object.entries(legend)
-        .map(([tok, val]) => `${tok}\t${val}`)
-        .join('\n');
-      const debugSteps = debug
-        .map((d) => `[${d.phase}] ${d.step}: ${JSON.stringify(d.out || d.in || {})}`)
-        .join('\n');
-      const debugOutput = `=== ANONYMIZED TEXT ===\n${anonymized}\n\n=== LEGEND ===\n${legendText}\n\n=== PIPELINE DEBUG ===\n${debugSteps}`;
-      navigator.clipboard.writeText(debugOutput);
-      debugBtn.textContent = 'Copied!';
-      setTimeout(() => {
-        debugBtn.textContent = 'Copy Debug (text + legend)';
-      }, 2000);
-    };
+  // Debug panel
+  if (isDebug && debug) {
+    renderDebugPanel(debug, anonymized, legend);
+    debugSection.hidden = false;
   }
+}
+
+// --- Debug panel ---
+function renderDebugPanel(debug, anonymized, legend) {
+  debugPanel.innerHTML = '';
+
+  for (const entry of debug) {
+    const card = document.createElement('details');
+    card.className = 'debug-step';
+
+    const summary = document.createElement('summary');
+    const c = entry.changes;
+    const parts = [`<strong>${entry.step}</strong> <span class="debug-phase">${entry.phase}</span>`];
+
+    if (c.segments) parts.push(`segments +${c.segments.added.length}`);
+    if (c.entities) {
+      const { added, removed, count } = c.entities;
+      const bits = [];
+      if (added.length) bits.push(`+${added.length}`);
+      if (removed.length) bits.push(`-${removed.length}`);
+      bits.push(`(${count.before}\u2192${count.after})`);
+      parts.push(`entities ${bits.join(' ')}`);
+    }
+    if (c.anonymized) parts.push('anonymized changed');
+    if (c.legend) parts.push(`legend +${Object.keys(c.legend.added).length}`);
+    if (c.text) parts.push('text changed');
+    if (Object.keys(c).length === 0) parts.push('<em>no changes</em>');
+
+    summary.innerHTML = parts.join(' &middot; ');
+    card.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'debug-step-body';
+
+    if (c.entities) {
+      if (c.entities.added.length > 0) {
+        body.appendChild(makeEntityTable('Added', c.entities.added));
+      }
+      if (c.entities.removed.length > 0) {
+        body.appendChild(makeEntityTable('Removed', c.entities.removed));
+      }
+    }
+
+    if (c.segments) {
+      const h = document.createElement('h5');
+      h.textContent = `Segments (${c.segments.count.after})`;
+      body.appendChild(h);
+      const ul = document.createElement('ul');
+      for (const seg of c.segments.added) {
+        const li = document.createElement('li');
+        li.textContent = `offset ${seg.offset}, ${seg.length} chars: "${seg.preview}..."`;
+        ul.appendChild(li);
+      }
+      body.appendChild(ul);
+    }
+
+    if (c.legend) {
+      const h = document.createElement('h5');
+      h.textContent = `Legend (+${Object.keys(c.legend.added).length})`;
+      body.appendChild(h);
+      const table = document.createElement('table');
+      table.className = 'debug-table';
+      for (const [token, value] of Object.entries(c.legend.added)) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td><code>${escHtml(token)}</code></td><td>${escHtml(value)}</td>`;
+        table.appendChild(row);
+      }
+      body.appendChild(table);
+    }
+
+    card.appendChild(body);
+    debugPanel.appendChild(card);
+  }
+
+  // Copy full debug JSON button
+  let copyBtn = document.getElementById('copy-debug-json');
+  if (!copyBtn) {
+    copyBtn = document.createElement('button');
+    copyBtn.id = 'copy-debug-json';
+    copyBtn.className = 'btn btn-secondary';
+    copyBtn.textContent = 'Copy Debug JSON';
+    copyBtn.style.marginTop = '0.5rem';
+    debugPanel.appendChild(copyBtn);
+  }
+  copyBtn.onclick = () => {
+    const output = { anonymized, legend, debug };
+    navigator.clipboard.writeText(JSON.stringify(output, null, 2));
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => { copyBtn.textContent = 'Copy Debug JSON'; }, 2000);
+  };
+}
+
+function makeEntityTable(label, entities) {
+  const h = document.createElement('h5');
+  h.textContent = `${label} (${entities.length})`;
+  const table = document.createElement('table');
+  table.className = 'debug-table';
+  const thead = document.createElement('tr');
+  thead.innerHTML = '<th>Type</th><th>Text</th><th>Span</th><th>Score</th>';
+  table.appendChild(thead);
+  for (const e of entities) {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${escHtml(e.entity_group)}</td><td>${escHtml(e.text)}</td><td>${e.start}-${e.end}</td><td>${e.score?.toFixed(3) ?? ''}</td>`;
+    table.appendChild(row);
+  }
+  const frag = document.createDocumentFragment();
+  frag.appendChild(h);
+  frag.appendChild(table);
+  return frag;
+}
+
+function escHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
 }
 
 // --- Copy anonymized ---

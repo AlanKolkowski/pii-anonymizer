@@ -18,12 +18,9 @@ describe('normalizeWhitespace', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = normalizeWhitespace(ctx);
     expect(result.text).toBe('  hello\n\nworld  ');
-    expect(result.debug).toHaveLength(1);
-    expect(result.debug[0].step).toBe('normalizeWhitespace');
   });
 });
 
@@ -35,17 +32,12 @@ describe('segmentStep', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = segmentStep(ctx);
     expect(result.segments).toEqual([{ text: 'short text', offset: 0 }]);
-    expect(result.debug).toHaveLength(1);
-    expect(result.debug[0].step).toBe('segment');
-    expect(result.debug[0].out.segmentCount).toBe(1);
   });
 
   it('chunks long text into multiple segments', () => {
-    // Two 700-char paragraphs — second break at 1404 exceeds maxChars from start
     const para1 = 'A'.repeat(700);
     const para2 = 'B'.repeat(700);
     const para3 = 'C'.repeat(700);
@@ -56,11 +48,9 @@ describe('segmentStep', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = segmentStep(ctx);
     expect(result.segments.length).toBeGreaterThan(1);
-    // Each segment should have correct offset
     for (const seg of result.segments) {
       expect(text.slice(seg.offset, seg.offset + seg.text.length)).toBe(seg.text);
     }
@@ -69,7 +59,6 @@ describe('segmentStep', () => {
 
 describe('snapStep', () => {
   it('snaps entity boundaries to word boundaries', () => {
-    // "Jan" is already at word boundaries
     const text = 'notariusz Jan Kowalski';
     const ctx = {
       text,
@@ -79,13 +68,10 @@ describe('snapStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = snapStep(ctx);
     expect(result.entities[0].start).toBe(10);
     expect(result.entities[0].end).toBe(13);
-    expect(result.debug).toHaveLength(1);
-    expect(result.debug[0].step).toBe('snap');
   });
 });
 
@@ -100,12 +86,10 @@ describe('filterStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = filterStep(ctx);
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].end).toBe(10);
-    expect(result.debug[0].step).toBe('filter');
   });
 });
 
@@ -120,12 +104,10 @@ describe('dedupStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = dedupStep(ctx);
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].score).toBe(0.95);
-    expect(result.debug[0].step).toBe('dedup');
   });
 });
 
@@ -141,14 +123,12 @@ describe('mergeStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = mergeStep(ctx);
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
     expect(result.entities[0].start).toBe(0);
     expect(result.entities[0].end).toBe(24);
-    expect(result.debug[0].step).toBe('merge');
   });
 });
 
@@ -163,15 +143,12 @@ describe('regexStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = regexStep(ctx);
-    // Should have original entity + the email
     expect(result.entities.length).toBe(2);
     const email = result.entities.find(e => e.entity_group === 'EMAIL_ADDRESS');
     expect(email).toBeDefined();
     expect(email.score).toBe(1.0);
-    expect(result.debug[0].step).toBe('regex');
   });
 });
 
@@ -187,38 +164,32 @@ describe('tokenizeStep', () => {
       ],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = tokenizeStep(ctx);
     expect(result.anonymized).toContain('[PERSON_NAME_1]');
     expect(result.anonymized).toContain('[LOCATION_1]');
     expect(result.anonymized).not.toContain('Jan Kowalski');
     expect(result.legend['[PERSON_NAME_1]']).toBe('Jan Kowalski');
-    expect(result.debug[0].step).toBe('tokenize');
   });
 });
 
 describe('rescanStep', () => {
   it('catches remaining PII in anonymized text', () => {
-    // Simulate: tokenize found "Jan Kowalski" but missed "Jana Kowalskiego" (declined form)
     const ctx = {
       text: 'original text',
       segments: [],
       entities: [],
       anonymized: 'Pismo od Jana Kowalskiego do sądu',
       legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
-      debug: [],
     };
     const result = rescanStep(ctx);
     expect(result.anonymized).toContain('[PERSON_NAME_1]');
     expect(result.anonymized).not.toContain('Jana Kowalskiego');
-    expect(result.debug[0].step).toBe('rescan');
   });
 });
 
 describe('createNerStep', () => {
   it('runs model inference on segments and produces entities', async () => {
-    // Mock model that returns fake B-PERSON_NAME tokens
     const mockLoadModel = async () => ({
       infer: async (text) => [
         { word: 'Jan', entity: 'B-PERSON_NAME', score: 0.95, index: 0 },
@@ -234,12 +205,10 @@ describe('createNerStep', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = await step(ctx);
     expect(result.entities.length).toBeGreaterThan(0);
     expect(result.entities[0].entity_group).toBe('PERSON_NAME');
-    expect(result.debug[0].step).toBe('ner');
   });
 
   it('offsets entities by segment offset', async () => {
@@ -257,12 +226,9 @@ describe('createNerStep', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = await step(ctx);
-    // Entity start should be offset by 13
     expect(result.entities[0].start).toBeGreaterThanOrEqual(13);
-    expect(result.debug[0].step).toBe('ner');
   });
 
   it('merges entities from multiple models', async () => {
@@ -288,7 +254,6 @@ describe('createNerStep', () => {
       entities: [],
       anonymized: '',
       legend: {},
-      debug: [],
     };
     const result = await step(ctx);
     expect(result.entities.length).toBe(2);

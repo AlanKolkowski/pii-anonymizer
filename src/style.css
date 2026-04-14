@@ -216,3 +216,73 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
+
+/* --- Debug panel --- */
+.debug-step {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  background: #fff;
+}
+
+.debug-step summary {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.debug-step summary:hover {
+  background: #f0f1f3;
+}
+
+.debug-step[open] summary {
+  border-bottom: 1px solid #d1d5db;
+  border-radius: 6px 6px 0 0;
+}
+
+.debug-phase {
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.debug-step-body {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.debug-step-body h5 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.82rem;
+  color: #374151;
+}
+
+.debug-step-body h5:first-child {
+  margin-top: 0;
+}
+
+.debug-table {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.debug-table th,
+.debug-table td {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.debug-step-body ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.debug-step-body li {
+  padding: 0.15rem 0;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.78rem;
+  color: #555;
+}

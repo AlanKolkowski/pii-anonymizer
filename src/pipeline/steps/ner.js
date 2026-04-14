@@ -31,17 +31,6 @@ export function createNerStep(models, loadModel) {
       await ner.dispose();
     }
 
-    return {
-      ...ctx,
-      entities: [...ctx.entities, ...allEntities],
-      debug: [...ctx.debug, {
-        step: 'ner',
-        phase: 'ner',
-        out: {
-          entityCount: allEntities.length,
-          modelsUsed: models.map(m => m.id),
-        },
-      }],
-    };
+    return { ...ctx, entities: [...ctx.entities, ...allEntities] };
   };
 }
