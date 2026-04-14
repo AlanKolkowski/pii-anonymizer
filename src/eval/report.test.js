@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { buildAnnotatedText, classifyEntities, humanizeDocName } from './report.js';
+import {
+  buildAnnotatedText, classifyEntities, humanizeDocName,
+  ENTITY_COLORS, buildLegend,
+} from './report.js';
 
 describe('classifyEntities', () => {
   it('classifies matched entities as TP, unmatched expected as FN, unmatched predicted as FP', () => {
@@ -64,6 +67,32 @@ describe('buildAnnotatedText', () => {
     // Both types should appear in output
     expect(html).toContain('PERSON_NAME');
     expect(html).toContain('LOCATION');
+  });
+});
+
+describe('ENTITY_COLORS', () => {
+  it('has a color for PERSON_NAME', () => {
+    expect(ENTITY_COLORS['PERSON_NAME']).toBeDefined();
+  });
+
+  it('has at least 15 entity type colors', () => {
+    expect(Object.keys(ENTITY_COLORS).length).toBeGreaterThanOrEqual(15);
+  });
+});
+
+describe('buildLegend', () => {
+  it('generates a legend table with only types that appear in spans', () => {
+    const spans = [
+      { entity_group: 'PERSON_NAME', status: 'tp' },
+      { entity_group: 'PERSON_NAME', status: 'fp' },
+      { entity_group: 'LOCATION', status: 'fn' },
+    ];
+    const html = buildLegend(spans);
+    expect(html).toContain('PERSON_NAME');
+    expect(html).toContain('LOCATION');
+    expect(html).not.toContain('PHONE_NUMBER');
+    // TP count for PERSON_NAME
+    expect(html).toContain('<td>1</td>');
   });
 });
 
