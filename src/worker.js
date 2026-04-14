@@ -1,9 +1,6 @@
 import { pipeline } from '@huggingface/transformers';
 import { aggregateEntities, chunkText, deduplicateEntities, filterOversizedEntities, findRegexEntities, mergeAdjacentEntities, snapToWordBoundaries } from './anonymizer.js';
 
-let nerMultilang = null;
-let nerPl = null;
-
 const MAX_CHUNK_CHARS = 1200;
 
 const MODELS = [
@@ -11,13 +8,18 @@ const MODELS = [
   'bardsai/eu-pii-anonimization',
 ];
 
+let loadedDtype = 'q8';
+let availableModels = [];
+
 self.onmessage = async (e) => {
   const { type } = e.data;
 
   if (type === 'load') {
     try {
       const dtype = e.data.dtype || 'q8';
-      console.log('[worker] Loading dual models with dtype:', dtype);
+      loadedDtype = dtype;
+      availableModels = [];
+      console.log('[worker] Preloading models with dtype:', dtype);
 
       const makeOpts = () => ({
         dtype,
@@ -32,21 +34,34 @@ self.onmessage = async (e) => {
         },
       });
 
-      nerMultilang = await pipeline('token-classification', MODELS[0], makeOpts());
-      console.log('[worker] Multilang model loaded');
+      // Preload models one at a time — load, verify, dispose.
+      // Keeps only one model in WASM memory at a time (fp32 ≈ 1.4GB each).
+      for (const model of MODELS) {
+        try {
+          const ner = await pipeline('token-classification', model, makeOpts());
+          await ner.dispose();
+          availableModels.push(model);
+          console.log(`[worker] ${model} preloaded and cached`);
+        } catch (err) {
+          console.warn(`[worker] ${model} failed to preload:`, err);
+        }
+      }
 
-      nerPl = await pipeline('token-classification', MODELS[1], makeOpts());
-      console.log('[worker] PL model loaded');
+      if (availableModels.length === 0) {
+        self.postMessage({ type: 'error', message: 'No models could be loaded' });
+        return;
+      }
 
+      console.log(`[worker] ${availableModels.length} model(s) ready`);
       self.postMessage({ type: 'loaded' });
     } catch (err) {
-      console.error('[worker] Pipeline load failed:', err);
+      console.error('[worker] Preload failed:', err);
       self.postMessage({ type: 'error', message: err.message });
     }
   }
 
   if (type === 'classify') {
-    if (!nerMultilang || !nerPl) {
+    if (availableModels.length === 0) {
       self.postMessage({ type: 'error', message: 'Models not loaded' });
       return;
     }
@@ -54,7 +69,7 @@ self.onmessage = async (e) => {
       const text = e.data.text;
       const chunks = chunkText(text, MAX_CHUNK_CHARS);
 
-      console.log(`[worker] Text length: ${text.length}, Chunks: ${chunks.length}`);
+      console.log(`[worker] Text length: ${text.length}, Chunks: ${chunks.length}, Models: ${availableModels.length}`);
       for (let i = 0; i < chunks.length; i++) {
         const c = chunks[i];
         const preview = c.text.slice(0, 60).replace(/\n/g, '\\n');
@@ -64,14 +79,13 @@ self.onmessage = async (e) => {
 
       const allEntities = [];
 
-      for (const chunk of chunks) {
-        // Run both models on each chunk
-        const [rawMulti, rawPl] = await Promise.all([
-          nerMultilang(chunk.text),
-          nerPl(chunk.text),
-        ]);
+      // Run each model sequentially: load from cache → infer all chunks → dispose.
+      // Only one model in WASM memory at a time — allows fp32 to work.
+      for (const model of availableModels) {
+        const ner = await pipeline('token-classification', model, { dtype: loadedDtype });
 
-        for (const raw of [rawMulti, rawPl]) {
+        for (const chunk of chunks) {
+          const raw = await ner(chunk.text);
           const chunkEntities = raw[0]?.entity_group
             ? raw
             : aggregateEntities(raw, chunk.text);
@@ -84,6 +98,8 @@ self.onmessage = async (e) => {
             });
           }
         }
+
+        await ner.dispose();
       }
 
       // Snap NER entities to word boundaries (fixes partial-word detections
