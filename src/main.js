@@ -1,4 +1,4 @@
-import { anonymizeText, deanonymizeText, rescanForKnownPii } from './anonymizer.js';
+import { deanonymizeText } from './anonymizer.js';
 import './style.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
@@ -48,7 +48,7 @@ worker.onmessage = (e) => {
       anonymizeBtn.textContent = 'Anonymize';
       break;
     case 'result':
-      handleAnonymizationResult(msg.data);
+      handleAnonymizationResult(msg);
       break;
   }
 };
@@ -69,13 +69,11 @@ anonymizeBtn.addEventListener('click', () => {
   worker.postMessage({ type: 'classify', text });
 });
 
-function handleAnonymizationResult(entities) {
-  const text = inputText.value.trim();
-  const { anonymized, legend } = anonymizeText(text, entities);
-  const rescanned = rescanForKnownPii(anonymized, legend);
+function handleAnonymizationResult(msg) {
+  const { anonymized, legend, debug } = msg;
   currentLegend = legend;
 
-  anonymizedOutput.textContent = rescanned;
+  anonymizedOutput.textContent = anonymized;
 
   legendTableBody.innerHTML = '';
   for (const [token, value] of Object.entries(legend)) {
@@ -112,8 +110,11 @@ function handleAnonymizationResult(entities) {
       const legendText = Object.entries(legend)
         .map(([tok, val]) => `${tok}\t${val}`)
         .join('\n');
-      const debug = `=== ANONYMIZED TEXT ===\n${rescanned}\n\n=== LEGEND ===\n${legendText}`;
-      navigator.clipboard.writeText(debug);
+      const debugSteps = debug
+        .map((d) => `[${d.phase}] ${d.step}: ${JSON.stringify(d.out || d.in || {})}`)
+        .join('\n');
+      const debugOutput = `=== ANONYMIZED TEXT ===\n${anonymized}\n\n=== LEGEND ===\n${legendText}\n\n=== PIPELINE DEBUG ===\n${debugSteps}`;
+      navigator.clipboard.writeText(debugOutput);
       debugBtn.textContent = 'Copied!';
       setTimeout(() => {
         debugBtn.textContent = 'Copy Debug (text + legend)';
