@@ -295,7 +295,10 @@ export function deduplicateEntities(entities) {
     const curr = entities[i];
 
     if (curr.start < prev.end) {
-      if (curr.score > prev.score) {
+      // Prefer wider span, then higher score
+      const prevSpan = prev.end - prev.start;
+      const currSpan = curr.end - curr.start;
+      if (currSpan > prevSpan || (currSpan === prevSpan && curr.score > prev.score)) {
         result[result.length - 1] = curr;
       }
     } else {

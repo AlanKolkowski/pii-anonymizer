@@ -266,10 +266,22 @@ describe('deduplicateEntities', () => {
     expect(deduplicateEntities(entities)).toHaveLength(2);
   });
 
-  it('keeps higher-score entity when overlapping', () => {
+  it('keeps wider-span entity when overlapping', () => {
     const entities = [
       { start: 0, end: 10, score: 0.7, entity_group: 'PERSON_NAME' },
       { start: 5, end: 12, score: 0.9, entity_group: 'PERSON_NAME' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    // First entity spans 10 chars, second 7 — wider wins
+    expect(result[0].start).toBe(0);
+    expect(result[0].end).toBe(10);
+  });
+
+  it('keeps higher-score entity when same span size', () => {
+    const entities = [
+      { start: 0, end: 10, score: 0.7, entity_group: 'PERSON_NAME' },
+      { start: 2, end: 12, score: 0.9, entity_group: 'PERSON_NAME' },
     ];
     const result = deduplicateEntities(entities);
     expect(result).toHaveLength(1);
