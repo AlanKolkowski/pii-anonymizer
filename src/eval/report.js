@@ -292,6 +292,101 @@ export function buildLegend(spans) {
   </table>`;
 }
 
+// ── Historical data loading ────────────────────────────────────────
+
+export async function loadHistoricalScores(currentRunId) {
+  const entries = await readdir(RESULTS_DIR);
+  const runs = [];
+
+  for (const entry of entries) {
+    if (entry === 'latest' || entry === currentRunId) continue;
+    try {
+      const raw = await readFile(join(RESULTS_DIR, entry, 'scores.json'), 'utf-8');
+      const scores = JSON.parse(raw);
+      const summaryRaw = await readFile(join(RESULTS_DIR, entry, 'summary.json'), 'utf-8');
+      const summary = JSON.parse(summaryRaw);
+      runs.push({ runId: entry, label: summary.label || null, scores });
+    } catch {
+      // No scores.json — skip
+    }
+  }
+
+  runs.sort((a, b) => a.runId.localeCompare(b.runId));
+
+  // Take last 5 (excluding current)
+  const recent = runs.filter(r => r.runId !== 'baseline').slice(-5);
+
+  // Add baseline if not already in recent
+  const baseline = runs.find(r => r.runId === 'baseline');
+  if (baseline && !recent.some(r => r.runId === 'baseline')) {
+    recent.unshift(baseline);
+  }
+
+  return recent;
+}
+
+// ── Comparison table ───────────────────────────────────────────────
+
+function pct(v) { return (v * 100).toFixed(1) + '%'; }
+
+export function formatDelta(oldVal, newVal) {
+  const diff = (newVal - oldVal) * 100;
+  if (Math.abs(diff) < 0.05) return `<span class="delta-zero">=</span>`;
+  const sign = diff > 0 ? '+' : '';
+  const cls = diff > 0 ? 'delta-pos' : 'delta-neg';
+  return `<span class="${cls}">${sign}${diff.toFixed(1)}pp</span>`;
+}
+
+export function buildComparisonTable(columns, currentRunId, { docRows = null, typeRows = null } = {}) {
+  const currentIdx = columns.findIndex(c => c.runId === currentRunId);
+  const prevIdx = currentIdx > 0 ? currentIdx - 1 : -1;
+
+  function metricRow(label, getValue) {
+    const cells = columns.map((col, i) => {
+      const val = getValue(col);
+      let content = val != null ? pct(val) : '–';
+      if (i === currentIdx && prevIdx >= 0) {
+        const prevVal = getValue(columns[prevIdx]);
+        if (val != null && prevVal != null) {
+          content += ` ${formatDelta(prevVal, val)}`;
+        }
+      }
+      return `<td>${content}</td>`;
+    }).join('');
+    return `<tr><td><strong>${label}</strong></td>${cells}</tr>`;
+  }
+
+  const headerCells = columns.map(c => {
+    const label = c.label ? `${c.runId}<br><small>${c.label}</small>` : c.runId;
+    const highlight = c.runId === currentRunId ? ' style="background:#e3f2fd"' : '';
+    return `<th${highlight}>${label}</th>`;
+  }).join('');
+
+  let rows = '';
+  rows += metricRow('F1', c => c.f1);
+  rows += metricRow('Precision', c => c.precision);
+  rows += metricRow('Recall', c => c.recall);
+
+  if (docRows) {
+    rows += `<tr><td colspan="${columns.length + 1}" style="padding:0.6rem;font-weight:600;background:#f5f5f5">Per Document F1</td></tr>`;
+    for (const doc of docRows) {
+      rows += metricRow(humanizeDocName(doc), c => c.documents?.[doc]?.f1 ?? null);
+    }
+  }
+
+  if (typeRows) {
+    rows += `<tr><td colspan="${columns.length + 1}" style="padding:0.6rem;font-weight:600;background:#f5f5f5">Per Type F1</td></tr>`;
+    for (const type of typeRows) {
+      rows += metricRow(type, c => c.byType?.[type]?.f1 ?? null);
+    }
+  }
+
+  return `<table class="comparison-table">
+    <thead><tr><th>Metric</th>${headerCells}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
 // ── Document name humanization ─────────────────────────────────────
 
 export function humanizeDocName(filename) {

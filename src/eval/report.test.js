@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildAnnotatedText, classifyEntities, humanizeDocName,
   ENTITY_COLORS, buildLegend,
+  buildComparisonTable, formatDelta,
 } from './report.js';
 
 describe('classifyEntities', () => {
@@ -93,6 +94,39 @@ describe('buildLegend', () => {
     expect(html).not.toContain('PHONE_NUMBER');
     // TP count for PERSON_NAME
     expect(html).toContain('<td>1</td>');
+  });
+});
+
+describe('formatDelta', () => {
+  it('shows positive delta in green', () => {
+    const html = formatDelta(0.85, 0.90);
+    expect(html).toContain('+5.0pp');
+    expect(html).toContain('delta-pos');
+  });
+
+  it('shows negative delta in red', () => {
+    const html = formatDelta(0.90, 0.85);
+    expect(html).toContain('-5.0pp');
+    expect(html).toContain('delta-neg');
+  });
+
+  it('shows no change for tiny difference', () => {
+    const html = formatDelta(0.90, 0.9004);
+    expect(html).toContain('delta-zero');
+  });
+});
+
+describe('buildComparisonTable', () => {
+  it('renders a table with run columns and metric rows', () => {
+    const runs = [
+      { runId: 'baseline', label: 'baseline', f1: 0.80, precision: 0.75, recall: 0.85 },
+      { runId: 'current', label: null, f1: 0.85, precision: 0.80, recall: 0.90 },
+    ];
+    const html = buildComparisonTable(runs, 'current');
+    expect(html).toContain('baseline');
+    expect(html).toContain('current');
+    expect(html).toContain('80.0%');
+    expect(html).toContain('85.0%');
   });
 });
 
