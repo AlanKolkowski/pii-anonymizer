@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities, rescanForKnownPii } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -499,6 +499,30 @@ describe('findRegexEntities', () => {
     expect(phone).toBeDefined();
     expect(text.slice(phone.start, phone.end)).toBe('48 600 123 45 67');
   });
+
+  it('detects mobile phone in 3+3+3 format', () => {
+    const text = 'tel.: +48 722 334 556';
+    const entities = findRegexEntities(text);
+    const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
+    expect(phone).toBeDefined();
+    expect(text.slice(phone.start, phone.end)).toBe('+48 722 334 556');
+  });
+
+  it('detects mobile 3+3+3 without plus sign', () => {
+    const text = 'tel.: 48 722 334 556';
+    const entities = findRegexEntities(text);
+    const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
+    expect(phone).toBeDefined();
+    expect(text.slice(phone.start, phone.end)).toBe('48 722 334 556');
+  });
+
+  it('detects mobile 3+3+3 with dashes', () => {
+    const text = 'tel.: +48-722-334-556';
+    const entities = findRegexEntities(text);
+    const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
+    expect(phone).toBeDefined();
+    expect(text.slice(phone.start, phone.end)).toBe('+48-722-334-556');
+  });
 });
 
 describe('filterOversizedEntities', () => {
@@ -523,9 +547,26 @@ describe('filterOversizedEntities', () => {
     const entities = [
       { entity_group: 'PERSON_NAME', start: 0, end: 20, score: 0.9 },
       { entity_group: 'PERSON_ROLE_OR_TITLE', start: 25, end: 60, score: 0.85 },
-      { entity_group: 'ORGANIZATION_NAME', start: 70, end: 200, score: 0.8 },
+      { entity_group: 'ORGANIZATION_NAME', start: 70, end: 180, score: 0.8 },
     ];
     expect(filterOversizedEntities(entities)).toHaveLength(3);
+  });
+
+  it('drops ORGANIZATION_NAME exceeding 120 chars', () => {
+    const entities = [
+      { entity_group: 'ORGANIZATION_NAME', start: 0, end: 200, score: 0.7 },
+      { entity_group: 'ORGANIZATION_NAME', start: 300, end: 400, score: 0.9 },
+    ];
+    const result = filterOversizedEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe(300);
+  });
+
+  it('drops VEHICLE_IDENTIFIER exceeding 40 chars', () => {
+    const entities = [
+      { entity_group: 'VEHICLE_IDENTIFIER', start: 0, end: 300, score: 0.8 },
+    ];
+    expect(filterOversizedEntities(entities)).toHaveLength(0);
   });
 
   it('does not filter types without limits', () => {
@@ -579,6 +620,72 @@ describe('findRegexEntities — financial amounts', () => {
     const text = '200,00 zł';
     const amount = findRegexEntities(text).find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
     expect(amount.score).toBe(1.0);
+  });
+});
+
+describe('rescanForKnownPii', () => {
+  it('replaces exact legend values still present in anonymized text', () => {
+    const anonymized = 'Podpis: Sebastian Grabowski';
+    const legend = { '[PERSON_NAME_1]': 'Sebastian Grabowski' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
+  });
+
+  it('replaces declined name forms via fuzzy matching', () => {
+    // Legend has genitive form, text has nominative
+    const anonymized = 'Podpis: Marcin Jabłoński';
+    const legend = { '[PERSON_NAME_1]': 'Marcina Jabłońskiego' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
+  });
+
+  it('replaces addresses by exact match', () => {
+    const anonymized = 'Adres: ul. Ułańska 7/11, 60-748 Poznań';
+    const legend = { '[POSTAL_ADDRESS_1]': 'ul. Ułańska 7/11, 60-748 Poznań' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Adres: [POSTAL_ADDRESS_1]');
+  });
+
+  it('does not replace text already tokenized', () => {
+    const anonymized = 'Podpis: [PERSON_NAME_1]';
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
+  });
+
+  it('replaces multiple occurrences of same value', () => {
+    const anonymized = 'Jan Kowalski i potem Jan Kowalski';
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe(
+      '[PERSON_NAME_1] i potem [PERSON_NAME_1]',
+    );
+  });
+
+  it('does not fuzzy-match single-word sequences', () => {
+    // Single capitalized word should NOT be fuzzy-matched (too risky)
+    const anonymized = 'Mówił Kowalski że tak';
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    // "Kowalski" alone (1 word) should not be matched by fuzzy phase
+    // But exact match won't match either since legend has "Jan Kowalski"
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Mówił Kowalski że tak');
+  });
+
+  it('handles hyphenated surnames', () => {
+    const anonymized = 'Podpis: Marta Lewandowska-Ostrów';
+    const legend = { '[PERSON_NAME_1]': 'Marta Lewandowska-Ostrów' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
+  });
+
+  it('replaces longer values before shorter ones', () => {
+    const anonymized = 'ul. Długa 22, 80-828 Gdańsk jest ok';
+    const legend = {
+      '[POSTAL_ADDRESS_1]': 'ul. Długa 22, 80-828 Gdańsk',
+      '[LOCATION_1]': 'Gdańsk',
+    };
+    const result = rescanForKnownPii(anonymized, legend);
+    expect(result).toBe('[POSTAL_ADDRESS_1] jest ok');
+  });
+
+  it('returns text unchanged when no matches', () => {
+    const anonymized = 'Brak danych osobowych tutaj.';
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    expect(rescanForKnownPii(anonymized, legend)).toBe(anonymized);
   });
 });
 

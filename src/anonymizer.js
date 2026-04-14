@@ -209,6 +209,7 @@ export function findRegexEntities(text) {
     { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
     { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
     { regex: /\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
     { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
@@ -231,6 +232,9 @@ export function findRegexEntities(text) {
 const MAX_ENTITY_LENGTH = {
   PERSON_NAME: 50,
   PERSON_ROLE_OR_TITLE: 70,
+  ORGANIZATION_NAME: 120,
+  VEHICLE_IDENTIFIER: 40,
+  PROPER_NAME: 50,
 };
 
 export function filterOversizedEntities(entities) {
@@ -323,6 +327,37 @@ export function deduplicateEntities(entities) {
   }
 
   return result;
+}
+
+// Capitalized Polish word, possibly hyphenated (e.g. "Lewandowska-Ostrów")
+const CAP_WORD = '[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:-[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)*';
+const NAME_CANDIDATE = new RegExp(`(${CAP_WORD}(?:\\s+${CAP_WORD})+)`, 'g');
+
+export function rescanForKnownPii(anonymizedText, legend) {
+  let text = anonymizedText;
+
+  // Sort by value length desc — replace longest matches first
+  const entries = Object.entries(legend)
+    .sort((a, b) => b[1].length - a[1].length);
+
+  // Phase 1: exact replacement for all entity types
+  for (const [token, value] of entries) {
+    if (value.length < 3) continue;
+    text = text.replaceAll(value, token);
+  }
+
+  // Phase 2: fuzzy replacement for person names (handles Polish declension)
+  const nameEntries = entries.filter(([t]) => t.startsWith('[PERSON_NAME_'));
+  if (nameEntries.length > 0) {
+    text = text.replace(NAME_CANDIDATE, (match) => {
+      for (const [token, value] of nameEntries) {
+        if (couldBeSamePerson(match, value)) return token;
+      }
+      return match;
+    });
+  }
+
+  return text;
 }
 
 export function deanonymizeText(text, legend) {

@@ -1,4 +1,4 @@
-import { anonymizeText, deanonymizeText } from './anonymizer.js';
+import { anonymizeText, deanonymizeText, rescanForKnownPii } from './anonymizer.js';
 import './style.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
@@ -55,13 +55,9 @@ worker.onmessage = (e) => {
 
 // --- Download model ---
 downloadBtn.addEventListener('click', () => {
-  const dtype = document.querySelector('input[name="backend"]:checked').value;
   downloadBtn.disabled = true;
-  document.querySelectorAll('input[name="backend"]').forEach((r) => {
-    r.disabled = true;
-  });
   modelStatus.textContent = 'Initializing...';
-  worker.postMessage({ type: 'load', dtype });
+  worker.postMessage({ type: 'load' });
 });
 
 // --- Anonymize ---
@@ -76,9 +72,10 @@ anonymizeBtn.addEventListener('click', () => {
 function handleAnonymizationResult(entities) {
   const text = inputText.value.trim();
   const { anonymized, legend } = anonymizeText(text, entities);
+  const rescanned = rescanForKnownPii(anonymized, legend);
   currentLegend = legend;
 
-  anonymizedOutput.textContent = anonymized;
+  anonymizedOutput.textContent = rescanned;
 
   legendTableBody.innerHTML = '';
   for (const [token, value] of Object.entries(legend)) {
@@ -115,7 +112,7 @@ function handleAnonymizationResult(entities) {
       const legendText = Object.entries(legend)
         .map(([tok, val]) => `${tok}\t${val}`)
         .join('\n');
-      const debug = `=== ANONYMIZED TEXT ===\n${anonymized}\n\n=== LEGEND ===\n${legendText}`;
+      const debug = `=== ANONYMIZED TEXT ===\n${rescanned}\n\n=== LEGEND ===\n${legendText}`;
       navigator.clipboard.writeText(debug);
       debugBtn.textContent = 'Copied!';
       setTimeout(() => {
