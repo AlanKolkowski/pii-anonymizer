@@ -66,8 +66,12 @@ export function buildTokenMap(entities, originalText) {
   for (const entity of entities) {
     const value = originalText.slice(entity.start, entity.end);
     const type = entity.entity_group;
-    const normalizedValue =
-      type === 'PERSON_NAME' ? normalizeName(value) : value;
+    let normalizedValue = value;
+    if (type === 'PERSON_NAME') {
+      normalizedValue = normalizeName(value);
+    } else if (type === 'ORGANIZATION_NAME') {
+      normalizedValue = value.toLowerCase();
+    }
     const canonicalKey = `${type}::${normalizedValue}`;
 
     if (!seen[canonicalKey]) {
@@ -165,80 +169,132 @@ export function aggregateEntities(rawTokens, originalText) {
 export function chunkText(text, maxChars) {
   if (text.length <= maxChars) return [{ text, offset: 0 }];
 
-  // Prefer paragraph boundaries (\n\n+), fall back to lines (\n), then characters
-  const paraBreaks = [0];
+  // Find break points: prefer paragraph boundaries (\n\n), fallback to lines (\n)
+  const breaks = [];
   for (const m of text.matchAll(/\n\n+/g)) {
-    paraBreaks.push(m.index + m[0].length);
+    breaks.push(m.index + m[0].length);
   }
-  paraBreaks.push(text.length);
-
-  if (paraBreaks.length >= 3) { // need at least one real \n\n break (not just 0 + text.length)
-    const chunks = [];
-    let from = 0;
-    let fromIdx = 0;
-
-    for (let i = 1; i < paraBreaks.length; i++) {
-      if (paraBreaks[i] - from > maxChars) {
-        if (i > fromIdx + 1) {
-          chunks.push({ text: text.slice(from, paraBreaks[i - 1]), offset: from });
-          from = paraBreaks[i - 1];
-          fromIdx = i - 1;
-        } else {
-          // Single paragraph exceeds maxChars — include it as-is
-          chunks.push({ text: text.slice(from, paraBreaks[i]), offset: from });
-          from = paraBreaks[i];
-          fromIdx = i;
-        }
-      }
+  if (breaks.length === 0) {
+    for (const m of text.matchAll(/\n/g)) {
+      breaks.push(m.index + 1);
     }
-    if (from < text.length) {
-      chunks.push({ text: text.slice(from, text.length), offset: from });
-    }
-    return chunks;
   }
 
-  // Fallback: line-based
-  const lineBreaks = [0];
-  for (const m of text.matchAll(/\n/g)) {
-    lineBreaks.push(m.index + 1);
-  }
-
-  if (lineBreaks.length >= 2) {
-    const chunks = [];
-    let from = 0;
-
-    for (let i = 1; i < lineBreaks.length; i++) {
-      if (lineBreaks[i] - from > maxChars && lineBreaks[i - 1] > from) {
-        chunks.push({ text: text.slice(from, lineBreaks[i - 1]), offset: from });
-        from = lineBreaks[i - 1];
-      }
-    }
-    if (from < text.length) {
-      chunks.push({ text: text.slice(from, text.length), offset: from });
-    }
-    return chunks;
-  }
-
-  // Fallback: character-based
+  // Greedily pack complete segments into chunks
   const chunks = [];
-  for (let pos = 0; pos < text.length; pos += maxChars) {
-    const end = Math.min(pos + maxChars, text.length);
-    chunks.push({ text: text.slice(pos, end), offset: pos });
+  let from = 0;
+  let lastFit = 0;
+
+  for (const bp of breaks) {
+    if (bp - from > maxChars) {
+      const splitAt = lastFit > from ? lastFit : bp;
+      chunks.push({ text: text.slice(from, splitAt), offset: from });
+      from = splitAt;
+    }
+    lastFit = bp;
   }
+
+  // Emit remaining text
+  if (from < text.length) {
+    chunks.push({ text: text.slice(from, text.length), offset: from });
+  }
+
   return chunks;
 }
 
 export function findRegexEntities(text) {
+  const patterns = [
+    { regex: /[\w.+-]+@[\w.-]+\.\w{2,}/g, entity_group: 'EMAIL_ADDRESS' },
+    { regex: /\b\d{11}\b/g, entity_group: 'PERSON_IDENTIFIER' },
+    { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
+    { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
+    { regex: /\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
+  ];
+
   const entities = [];
-  for (const m of text.matchAll(/[\w.+-]+@[\w.-]+\.\w{2,}/g)) {
-    entities.push({
-      entity_group: 'EMAIL_ADDRESS',
-      start: m.index,
-      end: m.index + m[0].length,
-      score: 1.0,
-    });
+  for (const { regex, entity_group } of patterns) {
+    for (const m of text.matchAll(regex)) {
+      entities.push({
+        entity_group,
+        start: m.index,
+        end: m.index + m[0].length,
+        score: 1.0,
+      });
+    }
   }
   return entities;
+}
+
+// Max entity length per type — filters hallucinated oversized entities
+// where the model labels entire sentences/paragraphs as a single entity
+const MAX_ENTITY_LENGTH = {
+  PERSON_NAME: 50,
+  PERSON_ROLE_OR_TITLE: 70,
+  ORGANIZATION_NAME: 120,
+  VEHICLE_IDENTIFIER: 40,
+  PROPER_NAME: 50,
+};
+
+export function filterOversizedEntities(entities) {
+  return entities.filter((entity) => {
+    const maxLen = MAX_ENTITY_LENGTH[entity.entity_group];
+    return !maxLen || (entity.end - entity.start) <= maxLen;
+  });
+}
+
+const WORD_BOUNDARY = /[\s,;:()„""–\-]/;
+const MAX_SNAP = 6; // max chars to expand in either direction
+
+export function snapToWordBoundaries(entities, text) {
+  return entities.map((entity) => {
+    let { start, end } = entity;
+
+    // Expand start to the beginning of the word (max MAX_SNAP chars)
+    const minStart = Math.max(0, start - MAX_SNAP);
+    while (start > minStart && !WORD_BOUNDARY.test(text[start - 1])) start--;
+
+    // Expand end to the end of the word (max MAX_SNAP chars)
+    const maxEnd = Math.min(text.length, end + MAX_SNAP);
+    while (end < maxEnd && !WORD_BOUNDARY.test(text[end])) end++;
+
+    if (start === entity.start && end === entity.end) return entity;
+    return { ...entity, start, end };
+  });
+}
+
+const ADDRESS_TYPES = new Set(['POSTAL_ADDRESS', 'LOCATION']);
+
+export function mergeAdjacentEntities(entities, text) {
+  if (entities.length <= 1) return entities;
+
+  // Sort by position
+  const sorted = [...entities].sort((a, b) => a.start - b.start);
+  const result = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = sorted[i];
+
+    if (ADDRESS_TYPES.has(prev.entity_group) && ADDRESS_TYPES.has(curr.entity_group)) {
+      const gap = text.slice(prev.end, curr.start);
+      if (gap.length <= 3 && /^[\s,\n]*$/.test(gap)) {
+        // Merge into one POSTAL_ADDRESS
+        result[result.length - 1] = {
+          entity_group: 'POSTAL_ADDRESS',
+          start: prev.start,
+          end: curr.end,
+          score: Math.max(prev.score, curr.score),
+        };
+        continue;
+      }
+    }
+
+    result.push(curr);
+  }
+
+  return result;
 }
 
 export function deduplicateEntities(entities) {
@@ -252,8 +308,18 @@ export function deduplicateEntities(entities) {
     const curr = entities[i];
 
     if (curr.start < prev.end) {
-      if (curr.score > prev.score) {
-        result[result.length - 1] = curr;
+      // Perfect-score (regex) entities are precise — prefer them over wider NER
+      const prevPerfect = prev.score === 1.0;
+      const currPerfect = curr.score === 1.0;
+      if (prevPerfect !== currPerfect) {
+        if (currPerfect) result[result.length - 1] = curr;
+      } else {
+        // Same precision tier: prefer wider span, then higher score
+        const prevSpan = prev.end - prev.start;
+        const currSpan = curr.end - curr.start;
+        if (currSpan > prevSpan || (currSpan === prevSpan && curr.score > prev.score)) {
+          result[result.length - 1] = curr;
+        }
       }
     } else {
       result.push(curr);
@@ -261,6 +327,37 @@ export function deduplicateEntities(entities) {
   }
 
   return result;
+}
+
+// Capitalized Polish word, possibly hyphenated (e.g. "Lewandowska-Ostrów")
+const CAP_WORD = '[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:-[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)*';
+const NAME_CANDIDATE = new RegExp(`(${CAP_WORD}(?:\\s+${CAP_WORD})+)`, 'g');
+
+export function rescanForKnownPii(anonymizedText, legend) {
+  let text = anonymizedText;
+
+  // Sort by value length desc — replace longest matches first
+  const entries = Object.entries(legend)
+    .sort((a, b) => b[1].length - a[1].length);
+
+  // Phase 1: exact replacement for all entity types
+  for (const [token, value] of entries) {
+    if (value.length < 3) continue;
+    text = text.replaceAll(value, token);
+  }
+
+  // Phase 2: fuzzy replacement for person names (handles Polish declension)
+  const nameEntries = entries.filter(([t]) => t.startsWith('[PERSON_NAME_'));
+  if (nameEntries.length > 0) {
+    text = text.replace(NAME_CANDIDATE, (match) => {
+      for (const [token, value] of nameEntries) {
+        if (couldBeSamePerson(match, value)) return token;
+      }
+      return match;
+    });
+  }
+
+  return text;
 }
 
 export function deanonymizeText(text, legend) {

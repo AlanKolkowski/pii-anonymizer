@@ -1,4 +1,4 @@
-import { anonymizeText, deanonymizeText } from './anonymizer.js';
+import { anonymizeText, deanonymizeText, rescanForKnownPii } from './anonymizer.js';
 import './style.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
@@ -55,13 +55,9 @@ worker.onmessage = (e) => {
 
 // --- Download model ---
 downloadBtn.addEventListener('click', () => {
-  const dtype = document.querySelector('input[name="backend"]:checked').value;
   downloadBtn.disabled = true;
-  document.querySelectorAll('input[name="backend"]').forEach((r) => {
-    r.disabled = true;
-  });
   modelStatus.textContent = 'Initializing...';
-  worker.postMessage({ type: 'load', dtype });
+  worker.postMessage({ type: 'load' });
 });
 
 // --- Anonymize ---
@@ -76,9 +72,10 @@ anonymizeBtn.addEventListener('click', () => {
 function handleAnonymizationResult(entities) {
   const text = inputText.value.trim();
   const { anonymized, legend } = anonymizeText(text, entities);
+  const rescanned = rescanForKnownPii(anonymized, legend);
   currentLegend = legend;
 
-  anonymizedOutput.textContent = anonymized;
+  anonymizedOutput.textContent = rescanned;
 
   legendTableBody.innerHTML = '';
   for (const [token, value] of Object.entries(legend)) {
@@ -99,6 +96,30 @@ function handleAnonymizationResult(entities) {
   deanonymizeResultSection.hidden = true;
   anonymizeBtn.disabled = false;
   anonymizeBtn.textContent = 'Anonymize';
+
+  // Debug: show "Copy Debug" button if ?debug=1
+  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    let debugBtn = document.getElementById('copy-debug');
+    if (!debugBtn) {
+      debugBtn = document.createElement('button');
+      debugBtn.id = 'copy-debug';
+      debugBtn.className = 'btn btn-secondary';
+      debugBtn.textContent = 'Copy Debug (text + legend)';
+      debugBtn.style.marginLeft = '0.5rem';
+      copyAnonymizedBtn.parentElement.appendChild(debugBtn);
+    }
+    debugBtn.onclick = () => {
+      const legendText = Object.entries(legend)
+        .map(([tok, val]) => `${tok}\t${val}`)
+        .join('\n');
+      const debug = `=== ANONYMIZED TEXT ===\n${rescanned}\n\n=== LEGEND ===\n${legendText}`;
+      navigator.clipboard.writeText(debug);
+      debugBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        debugBtn.textContent = 'Copy Debug (text + legend)';
+      }, 2000);
+    };
+  }
 }
 
 // --- Copy anonymized ---
