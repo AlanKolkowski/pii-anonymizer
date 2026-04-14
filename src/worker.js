@@ -1,5 +1,5 @@
 import { pipeline } from '@huggingface/transformers';
-import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities, mergeAdjacentEntities } from './anonymizer.js';
+import { aggregateEntities, chunkText, deduplicateEntities, findRegexEntities, mergeAdjacentEntities, snapToWordBoundaries } from './anonymizer.js';
 
 let nerMultilang = null;
 let nerPl = null;
@@ -54,6 +54,14 @@ self.onmessage = async (e) => {
       const text = e.data.text;
       const chunks = chunkText(text, MAX_CHUNK_CHARS);
 
+      console.log(`[worker] Text length: ${text.length}, Chunks: ${chunks.length}`);
+      for (let i = 0; i < chunks.length; i++) {
+        const c = chunks[i];
+        const preview = c.text.slice(0, 60).replace(/\n/g, '\\n');
+        const ending = c.text.slice(-40).replace(/\n/g, '\\n');
+        console.log(`[worker] Chunk ${i}: offset=${c.offset} len=${c.text.length} "${preview}..." ..."${ending}"`);
+      }
+
       const allEntities = [];
 
       for (const chunk of chunks) {
@@ -78,10 +86,14 @@ self.onmessage = async (e) => {
         }
       }
 
-      // Add regex-detected entities
-      allEntities.push(...findRegexEntities(text));
+      // Snap NER entities to word boundaries (fixes partial-word detections
+      // like "not" from "notariusz" or "N" from "Nadawca")
+      const snapped = snapToWordBoundaries(allEntities, text);
 
-      const deduped = deduplicateEntities(allEntities);
+      // Add regex-detected entities
+      snapped.push(...findRegexEntities(text));
+
+      const deduped = deduplicateEntities(snapped);
       const data = mergeAdjacentEntities(deduped, text);
       self.postMessage({ type: 'result', data });
     } catch (err) {

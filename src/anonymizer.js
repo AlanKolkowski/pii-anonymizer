@@ -66,8 +66,12 @@ export function buildTokenMap(entities, originalText) {
   for (const entity of entities) {
     const value = originalText.slice(entity.start, entity.end);
     const type = entity.entity_group;
-    const normalizedValue =
-      type === 'PERSON_NAME' ? normalizeName(value) : value;
+    let normalizedValue = value;
+    if (type === 'PERSON_NAME') {
+      normalizedValue = normalizeName(value);
+    } else if (type === 'ORGANIZATION_NAME') {
+      normalizedValue = value.toLowerCase();
+    }
     const canonicalKey = `${type}::${normalizedValue}`;
 
     if (!seen[canonicalKey]) {
@@ -165,66 +169,36 @@ export function aggregateEntities(rawTokens, originalText) {
 export function chunkText(text, maxChars) {
   if (text.length <= maxChars) return [{ text, offset: 0 }];
 
-  // Prefer paragraph boundaries (\n\n+), fall back to lines (\n), then characters
-  const paraBreaks = [0];
+  // Find break points: prefer paragraph boundaries (\n\n), fallback to lines (\n)
+  const breaks = [];
   for (const m of text.matchAll(/\n\n+/g)) {
-    paraBreaks.push(m.index + m[0].length);
+    breaks.push(m.index + m[0].length);
   }
-  paraBreaks.push(text.length);
-
-  if (paraBreaks.length >= 3) { // need at least one real \n\n break (not just 0 + text.length)
-    const chunks = [];
-    let from = 0;
-    let fromIdx = 0;
-
-    for (let i = 1; i < paraBreaks.length; i++) {
-      if (paraBreaks[i] - from > maxChars) {
-        if (i > fromIdx + 1) {
-          chunks.push({ text: text.slice(from, paraBreaks[i - 1]), offset: from });
-          from = paraBreaks[i - 1];
-          fromIdx = i - 1;
-        } else {
-          // Single paragraph exceeds maxChars — include it as-is
-          chunks.push({ text: text.slice(from, paraBreaks[i]), offset: from });
-          from = paraBreaks[i];
-          fromIdx = i;
-        }
-      }
+  if (breaks.length === 0) {
+    for (const m of text.matchAll(/\n/g)) {
+      breaks.push(m.index + 1);
     }
-    if (from < text.length) {
-      chunks.push({ text: text.slice(from, text.length), offset: from });
-    }
-    return chunks;
   }
 
-  // Fallback: line-based
-  const lineBreaks = [0];
-  for (const m of text.matchAll(/\n/g)) {
-    lineBreaks.push(m.index + 1);
-  }
-
-  if (lineBreaks.length >= 2) {
-    const chunks = [];
-    let from = 0;
-
-    for (let i = 1; i < lineBreaks.length; i++) {
-      if (lineBreaks[i] - from > maxChars && lineBreaks[i - 1] > from) {
-        chunks.push({ text: text.slice(from, lineBreaks[i - 1]), offset: from });
-        from = lineBreaks[i - 1];
-      }
-    }
-    if (from < text.length) {
-      chunks.push({ text: text.slice(from, text.length), offset: from });
-    }
-    return chunks;
-  }
-
-  // Fallback: character-based
+  // Greedily pack complete segments into chunks
   const chunks = [];
-  for (let pos = 0; pos < text.length; pos += maxChars) {
-    const end = Math.min(pos + maxChars, text.length);
-    chunks.push({ text: text.slice(pos, end), offset: pos });
+  let from = 0;
+  let lastFit = 0;
+
+  for (const bp of breaks) {
+    if (bp - from > maxChars) {
+      const splitAt = lastFit > from ? lastFit : bp;
+      chunks.push({ text: text.slice(from, splitAt), offset: from });
+      from = splitAt;
+    }
+    lastFit = bp;
   }
+
+  // Emit remaining text
+  if (from < text.length) {
+    chunks.push({ text: text.slice(from, text.length), offset: from });
+  }
+
   return chunks;
 }
 
@@ -249,6 +223,21 @@ export function findRegexEntities(text) {
     }
   }
   return entities;
+}
+
+export function snapToWordBoundaries(entities, text) {
+  return entities.map((entity) => {
+    let { start, end } = entity;
+
+    // Expand start to the beginning of the word
+    while (start > 0 && !/\s/.test(text[start - 1])) start--;
+
+    // Expand end to the end of the word
+    while (end < text.length && !/\s/.test(text[end])) end++;
+
+    if (start === entity.start && end === entity.end) return entity;
+    return { ...entity, start, end };
+  });
 }
 
 const ADDRESS_TYPES = new Set(['POSTAL_ADDRESS', 'LOCATION']);

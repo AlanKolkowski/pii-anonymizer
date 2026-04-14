@@ -193,29 +193,31 @@ describe('chunkText', () => {
     expect(chunks).toEqual([{ text: 'hello world', offset: 0 }]);
   });
 
-  it('splits text without newlines by character boundary', () => {
+  it('keeps text without newlines as single chunk', () => {
     const text = 'a'.repeat(100);
     const chunks = chunkText(text, 40);
-    expect(chunks.length).toBe(3);
-    expect(chunks[0]).toEqual({ text: 'a'.repeat(40), offset: 0 });
-    expect(chunks[2].offset + chunks[2].text.length).toBe(100);
+    // No newlines = no split points, single chunk
+    expect(chunks.length).toBe(1);
+    expect(chunks[0].text).toBe(text);
   });
 
-  it('splits at paragraph boundaries when available', () => {
-    const text = 'para1 content\n\npara2 content\n\npara3 content';
-    // 14 + 2 + 14 + 2 + 14 = 46 chars
-    const chunks = chunkText(text, 20);
-    // Each paragraph (~14 chars) fits in 20, so should split at \n\n
-    expect(chunks.length).toBe(3);
-    expect(chunks[0].text).toBe('para1 content\n\n');
-    expect(chunks[1].text).toBe('para2 content\n\n');
-    expect(chunks[2].text).toBe('para3 content');
+  it('splits at line boundaries', () => {
+    const text = 'line1\nline2\nline3\nline4\nline5\n';
+    const chunks = chunkText(text, 14);
+    // Every chunk starts at a line boundary
+    for (const chunk of chunks) {
+      if (chunk.offset > 0) {
+        expect(text[chunk.offset - 1]).toBe('\n');
+      }
+    }
+    // All text covered
+    const last = chunks[chunks.length - 1];
+    expect(last.offset + last.text.length).toBe(text.length);
   });
 
-  it('falls back to line breaks when no paragraphs', () => {
+  it('packs complete lines into chunks', () => {
     const text = 'aaaa\nbbbb\ncccc\ndddd\neeee\n';
     const chunks = chunkText(text, 12);
-    // Should split at \n boundaries
     for (const chunk of chunks) {
       if (chunk.offset > 0) {
         expect(text[chunk.offset - 1]).toBe('\n');
@@ -241,13 +243,12 @@ describe('chunkText', () => {
     expect(last.offset + last.text.length).toBe(text.length);
   });
 
-  it('handles oversized paragraph gracefully', () => {
-    const text = 'a'.repeat(50) + '\n\nshort\n\nother';
+  it('handles oversized line gracefully', () => {
+    const text = 'a'.repeat(50) + '\nshort\nother';
     const chunks = chunkText(text, 30);
-    // The 50-char paragraph exceeds maxChars but gets included as one chunk
-    expect(chunks[0].text).toBe('a'.repeat(50) + '\n\n');
+    // First line exceeds maxChars but no newline to split at yet
     expect(chunks[0].offset).toBe(0);
-    // Remaining paragraphs follow
+    // All text is covered
     const last = chunks[chunks.length - 1];
     expect(last.offset + last.text.length).toBe(text.length);
   });

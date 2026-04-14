@@ -99,6 +99,30 @@ function handleAnonymizationResult(entities) {
   deanonymizeResultSection.hidden = true;
   anonymizeBtn.disabled = false;
   anonymizeBtn.textContent = 'Anonymize';
+
+  // Debug: show "Copy Debug" button if ?debug=1
+  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    let debugBtn = document.getElementById('copy-debug');
+    if (!debugBtn) {
+      debugBtn = document.createElement('button');
+      debugBtn.id = 'copy-debug';
+      debugBtn.className = 'btn btn-secondary';
+      debugBtn.textContent = 'Copy Debug (text + legend)';
+      debugBtn.style.marginLeft = '0.5rem';
+      copyAnonymizedBtn.parentElement.appendChild(debugBtn);
+    }
+    debugBtn.onclick = () => {
+      const legendText = Object.entries(legend)
+        .map(([tok, val]) => `${tok}\t${val}`)
+        .join('\n');
+      const debug = `=== ANONYMIZED TEXT ===\n${anonymized}\n\n=== LEGEND ===\n${legendText}`;
+      navigator.clipboard.writeText(debug);
+      debugBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        debugBtn.textContent = 'Copy Debug (text + legend)';
+      }, 2000);
+    };
+  }
 }
 
 // --- Copy anonymized ---
