@@ -8,6 +8,7 @@ import { mergeStep } from './merge.js';
 import { regexStep } from './regex.js';
 import { rescanStep } from './rescan.js';
 import { tokenizeStep } from './tokenize.js';
+import { createNerStep } from './ner.js';
 
 describe('normalizeWhitespace', () => {
   it('passes text through unchanged (no-op)', () => {
@@ -212,5 +213,84 @@ describe('rescanStep', () => {
     expect(result.anonymized).toContain('[PERSON_NAME_1]');
     expect(result.anonymized).not.toContain('Jana Kowalskiego');
     expect(result.debug[0].step).toBe('rescan');
+  });
+});
+
+describe('createNerStep', () => {
+  it('runs model inference on segments and produces entities', async () => {
+    // Mock model that returns fake B-PERSON_NAME tokens
+    const mockLoadModel = async () => ({
+      infer: async (text) => [
+        { word: 'Jan', entity: 'B-PERSON_NAME', score: 0.95, index: 0 },
+        { word: 'Kowalski', entity: 'I-PERSON_NAME', score: 0.93, index: 1 },
+      ],
+      dispose: async () => {},
+    });
+
+    const step = createNerStep([{ id: 'mock-model', dtype: 'q8' }], mockLoadModel);
+    const ctx = {
+      text: 'Jan Kowalski jest notariuszem',
+      segments: [{ text: 'Jan Kowalski jest notariuszem', offset: 0 }],
+      entities: [],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = await step(ctx);
+    expect(result.entities.length).toBeGreaterThan(0);
+    expect(result.entities[0].entity_group).toBe('PERSON_NAME');
+    expect(result.debug[0].step).toBe('ner');
+  });
+
+  it('offsets entities by segment offset', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => [
+        { word: 'Anna', entity: 'B-PERSON_NAME', score: 0.9, index: 0 },
+      ],
+      dispose: async () => {},
+    });
+
+    const step = createNerStep([{ id: 'mock-model', dtype: 'q8' }], mockLoadModel);
+    const ctx = {
+      text: 'Prefix text. Anna Nowak lives here',
+      segments: [{ text: 'Anna Nowak lives here', offset: 13 }],
+      entities: [],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = await step(ctx);
+    // Entity start should be offset by 13
+    expect(result.entities[0].start).toBeGreaterThanOrEqual(13);
+    expect(result.debug[0].step).toBe('ner');
+  });
+
+  it('merges entities from multiple models', async () => {
+    let callCount = 0;
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        callCount++;
+        if (callCount === 1) {
+          return [{ word: 'Jan', entity: 'B-PERSON_NAME', score: 0.9, index: 0 }];
+        }
+        return [{ word: 'Warszawa', entity: 'B-LOCATION', score: 0.85, index: 0 }];
+      },
+      dispose: async () => {},
+    });
+
+    const step = createNerStep(
+      [{ id: 'model-a', dtype: 'q8' }, { id: 'model-b', dtype: 'q8' }],
+      mockLoadModel,
+    );
+    const ctx = {
+      text: 'Jan z Warszawa',
+      segments: [{ text: 'Jan z Warszawa', offset: 0 }],
+      entities: [],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    const result = await step(ctx);
+    expect(result.entities.length).toBe(2);
   });
 });
