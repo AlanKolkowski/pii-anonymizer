@@ -1,0 +1,103 @@
+# Entity Categories — PII Anonymizer
+
+Source: https://eu-pii.bards.ai/docs/entity-categories/
+
+The model detects **35 entity types** organised into **8 categories**. Each category maps to specific GDPR provisions. Categories marked with Art. 9(1) are special-category data subject to additional processing restrictions.
+
+---
+
+## 1. Personal Identity
+
+**GDPR Art. 4(1)** — identifiers of a natural person: name, identification number, factors specific to physical, physiological, genetic, mental, economic, cultural or social identity.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| PERSON_NAME | Full name, first/last name | Jan Kowalski |
+| DATE_OF_BIRTH | Date of birth | 15 marca 1985 |
+| PERSON_ATTRIBUTE | Age, gender, nationality, physical description | 35 lat, mężczyzna |
+| PERSON_ALIAS | Nicknames, usernames, aliases | Janek, kowal85 |
+| PERSON_IDENTIFIER | National ID, passport, driver's license, tax ID, insurance number | 85031512345, EP1234567 |
+| PERSON_ROLE_OR_TITLE | Job title, role, professional designation | dyrektor IT, lekarz prowadzący |
+
+## 2. Organizations
+
+**GDPR Art. 4(1)** — when organizational identifiers are linked to natural persons, they constitute personal data.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| ORGANIZATION_NAME | Company, institution, or entity name | PKO Bank Polski, Szpital Kliniczny |
+| ORGANIZATION_IDENTIFIER | NIP, KRS, REGON, organizational IDs | 527-020-1234, KRS 0000012345 |
+
+## 3. Contact & Location
+
+**GDPR Art. 4(1)** — location data and online identifiers. GDPR Recital 30 notes that online identifiers (IP addresses, cookies) may be combined with other information to identify individuals.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| EMAIL_ADDRESS | Email address | jan.kowalski@example.com |
+| PHONE_NUMBER | Phone number (any format) | +48 600 123 456 |
+| CONTACT_HANDLE | Social media handle, messaging ID | @jankowalski |
+| POSTAL_ADDRESS | Street address, postal code | ul. Marszałkowska 10/5, 00-001 Warszawa |
+| LOCATION | City, region, country | Warszawa, Mazowieckie |
+| GEO_LOCATION | GPS coordinates, geolocation data | 52.2297° N, 21.0122° E |
+
+## 4. Technical Identifiers
+
+**GDPR Recital 30** — online identifiers such as IP addresses, cookie identifiers, or other identifiers such as RFID tags may leave traces which, when combined with unique identifiers and other information, may be used to create profiles and identify natural persons.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| IP_ADDRESS | IPv4 or IPv6 address | 192.168.1.105 |
+| DEVICE_IDENTIFIER | MAC address, IMEI, device serial | 00:1B:44:11:3A:B7 |
+| COOKIE_IDENTIFIER | Cookie ID, tracking pixel ID | _ga=GA1.2.123456789 |
+| ACCOUNT_IDENTIFIER | User ID, account number | USR-2024-00142 |
+| AUTH_SECRET | Password, API key, token | sk-abc123… |
+
+## 5. Financial
+
+**GDPR Art. 4(1)** — economic identity factors. Financial identifiers (IBANs, card numbers) are personal data when linked to an identifiable person.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| BANK_ACCOUNT_IDENTIFIER | IBAN, bank account number | PL61 1090 1014 0000 0712 1981 2874 |
+| PAYMENT_CARD | Credit/debit card number | 4111 1111 1111 1111 |
+| PAYMENT_CARD_SECURITY | Card expiry, CVV, security codes | ważna do 12/25, CVV 123 |
+| DOCUMENT_REFERENCE | Transaction ID, invoice number, reference | FV/2024/03/0892 |
+| FINANCIAL_AMOUNT | Monetary amounts in context | 12 500 PLN |
+| INCOME_COMPENSATION | Salary, bonus, compensation | wynagrodzenie 12 500 PLN brutto |
+| VEHICLE_IDENTIFIER | License plate, VIN | WA 12345, VIN: WBA3A5C55CF256789 |
+
+## 6. Health & Biometric
+
+**GDPR Art. 9(1)** — special category. Processing prohibited by default unless an Art. 9(2) exemption applies. EU AI Act Art. 10(5) additionally requires "state-of-the-art pseudonymisation" when these categories are processed for AI bias detection.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| HEALTH_DATA | Diagnosis, treatment, medical condition | cukrzyca typu 2 |
+| GENETIC_DATA | Genetic test results, DNA data | mutacja BRCA1 |
+| BIOMETRIC_DATA | Fingerprint, facial recognition data | odcisk palca, skan twarzy |
+
+> EU AI Act Annex III, §1 classifies remote biometric identification systems as high-risk AI.
+
+## 7. Special Categories
+
+**GDPR Art. 9(1)** — data revealing racial or ethnic origin, political opinions, religious or philosophical beliefs, trade union membership, and data concerning sex life or sexual orientation. Processing is prohibited unless an explicit Art. 9(2) exemption applies.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| RELIGION_OR_BELIEF | Religious affiliation, beliefs | katolicyzm |
+| POLITICAL_OPINION | Political views, party membership | sympatyk PiS |
+| SEXUAL_ORIENTATION | Sexual orientation information | orientacja homoseksualna |
+| TRADE_UNION_MEMBERSHIP | Union affiliation | NSZZ |
+| ETHNIC_ORIGIN | Ethnic or racial origin | pochodzenie romskie |
+| CRIMINAL_OFFENCE_DATA | Criminal records, convictions (Art. 10) | wyrok za kradzież |
+
+> EU AI Act Art. 5(1)(g) prohibits AI systems that categorise individuals based on biometric data to infer race, political opinions, trade union membership, religious beliefs, sex life, or sexual orientation.
+
+## 8. Employment
+
+**GDPR Art. 88** — Member States may provide more specific rules for processing employee personal data in the employment context, including conditions for consent and monitoring.
+
+| Entity | Description | Example |
+|--------|-------------|---------|
+| PERSON_ROLE_OR_TITLE | Job title, role, department, professional designation | dyrektor IT, zatrudniona w dziale HR |
