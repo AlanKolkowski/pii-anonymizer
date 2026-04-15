@@ -2,6 +2,7 @@ import { normalizeWhitespace } from '../steps/preprocess.js';
 import { createSentencexSegmentStep } from '../steps/segment-sentencex.js';
 import { createNerStep } from '../steps/ner.js';
 import { regexStep } from '../steps/regex.js';
+import { allowedTypesStep } from '../steps/allowed-types.js';
 import { snapStep } from '../steps/snap.js';
 import { filterStep } from '../steps/filter.js';
 import { dedupStep } from '../steps/dedup.js';
@@ -25,6 +26,6 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries) {
     { phase: 'preprocess', steps: [normalizeWhitespace] },
     { phase: 'segment', steps: [createSentencexSegmentStep(getSentenceBoundaries)] },
     { phase: 'ner', steps: [createNerStep(MODELS, loadModel), regexStep] },
-    { phase: 'postprocess', steps: [snapStep, filterStep, dedupStep, mergeStep, tokenizeStep, rescanStep] },
+    { phase: 'postprocess', steps: [allowedTypesStep, snapStep, filterStep, dedupStep, mergeStep, tokenizeStep, rescanStep] },
   ];
 }
