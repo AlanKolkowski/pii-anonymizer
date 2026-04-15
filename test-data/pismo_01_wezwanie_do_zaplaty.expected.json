@@ -36,6 +36,12 @@
     "text": "0000412873"
   },
   {
+    "entity_group": "LOCATION",
+    "start": 489,
+    "end": 497,
+    "text": "Warszawa"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 533,
     "end": 548,
@@ -100,6 +106,12 @@
     "start": 1154,
     "end": 1173,
     "text": "Rep. A nr 1042/2025"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1175,
+    "end": 1184,
+    "text": "notariusz"
   },
   {
     "entity_group": "PERSON_NAME",

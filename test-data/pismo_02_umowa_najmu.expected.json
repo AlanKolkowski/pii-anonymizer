@@ -1,5 +1,11 @@
 [
   {
+    "entity_group": "LOCATION",
+    "start": 296,
+    "end": 303,
+    "text": "Wrocław"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 343,
     "end": 362,
@@ -202,12 +208,6 @@
     "start": 6587,
     "end": 6603,
     "text": "Piotr Malinowski"
-  },
-  {
-    "entity_group": "PERSON_ATTRIBUTE",
-    "start": 6604,
-    "end": 6622,
-    "text": "(syn Wynajmującej)"
   },
   {
     "entity_group": "PHONE_NUMBER",

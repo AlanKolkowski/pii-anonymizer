@@ -1,5 +1,17 @@
 [
   {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 122,
+    "end": 153,
+    "text": "ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 291,
+    "end": 295,
+    "text": "Łódź"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 337,
     "end": 354,
@@ -49,6 +61,12 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
+    "start": 602,
+    "end": 621,
+    "text": "ZUS Oddział w Łodzi"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
     "start": 627,
     "end": 692,
     "text": "Sąd Okręgowy w Łodzi\nVIII Wydział Pracy i Ubezpieczeń Społecznych"
@@ -60,10 +78,22 @@
     "text": "ul. Pomorska 37\n91-408 Łódź"
   },
   {
-    "entity_group": "DOCUMENT_IDENTIFIER",
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 740,
+    "end": 743,
+    "text": "ZUS"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
     "start": 745,
     "end": 769,
     "text": "DEC/O/ŁD/2025/01/0034521"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 982,
+    "end": 985,
+    "text": "ZUS"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -79,6 +109,12 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
+    "start": 1427,
+    "end": 1430,
+    "text": "ZUS"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
     "start": 1517,
     "end": 1539,
     "text": "Komisji Lekarskiej ZUS"
@@ -90,10 +126,34 @@
     "text": "KL/2025/ŁD/00291"
   },
   {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 1659,
+    "end": 1677,
+    "text": "Komisji Lekarskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1731,
+    "end": 1741,
+    "text": "dr n. med."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 1742,
     "end": 1761,
     "text": "Janusza Kowalskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1763,
+    "end": 1785,
+    "text": "przewodniczący komisji"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1792,
+    "end": 1794,
+    "text": "dr"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -102,10 +162,28 @@
     "text": "Martę Pietrzak"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1811,
+    "end": 1825,
+    "text": "lekarz komisji"
+  },
+  {
     "entity_group": "POSTAL_ADDRESS",
     "start": 1833,
     "end": 1865,
     "text": "ul. Kilińskiego 7/9, 90-119 Łódź"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 2033,
+    "end": 2065,
+    "text": "Funduszu Ubezpieczeń Społecznych"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 2196,
+    "end": 2214,
+    "text": "Komisji Lekarskiej"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -120,16 +198,28 @@
     "text": "ul. Żeromskiego 113, 90-549 Łódź"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2388,
+    "end": 2395,
+    "text": "dr hab."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 2396,
     "end": 2420,
     "text": "Andrzej\n       Rutkowski"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 2440,
     "end": 2459,
     "text": "USK/2022/ORT/009871"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2534,
+    "end": 2536,
+    "text": "dr"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -162,10 +252,22 @@
     "text": "725-198-34-12"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2818,
+    "end": 2827,
+    "text": "lek. rad."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 2828,
     "end": 2845,
     "text": "Pawła Sikorskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 3276,
+    "end": 3307,
+    "text": "ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH"
   },
   {
     "entity_group": "DATE_OF_BIRTH",
@@ -180,6 +282,12 @@
     "text": "Skierniewicach"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 3498,
+    "end": 3521,
+    "text": "pielęgniarka oddziałowa"
+  },
+  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 3524,
     "end": 3549,
@@ -192,28 +300,40 @@
     "text": "Łodzi,\nul. Kniaziewicza 1/5, 91-347 Łódź"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 3609,
     "end": 3620,
     "text": "SB/00234/PN"
   },
   {
     "entity_group": "HEALTH_DATA",
-    "start": 3821,
-    "end": 3831,
-    "text": "kręgosłupa"
+    "start": 3795,
+    "end": 3843,
+    "text": "wielopoziomową dyskopatię kręgosłupa lędźwiowego"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 3865,
+    "end": 3898,
+    "text": "zespół bólowy kręgosłupa szyjnego"
   },
   {
     "entity_group": "HEALTH_DATA",
     "start": 3940,
-    "end": 3948,
-    "text": "cukrzycę"
+    "end": 3955,
+    "text": "cukrzycę typu 2"
   },
   {
     "entity_group": "HEALTH_DATA",
     "start": 3992,
-    "end": 4013,
-    "text": "nadciśnienie tętnicze"
+    "end": 4025,
+    "text": "nadciśnienie tętnicze III stopnia"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 4303,
+    "end": 4306,
+    "text": "ZUS"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -238,6 +358,12 @@
     "start": 4882,
     "end": 4898,
     "text": "+48 42 678 91 23"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5140,
+    "end": 5143,
+    "text": "ZUS"
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",
@@ -265,6 +391,18 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
+    "start": 5826,
+    "end": 5857,
+    "text": "ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 5987,
+    "end": 5990,
+    "text": "ZUS"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
     "start": 6040,
     "end": 6062,
     "text": "Komisji Lekarskiej ZUS"
@@ -282,10 +420,10 @@
     "text": "Nowakowskiej-Wróbel"
   },
   {
-    "entity_group": "HEALTH_DATA",
-    "start": 6255,
-    "end": 6265,
-    "text": "kręgosłupa"
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6354,
+    "end": 6356,
+    "text": "dr"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -310,6 +448,12 @@
     "start": 6459,
     "end": 6484,
     "text": "Szpitala im. Biegańskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 6556,
+    "end": 6559,
+    "text": "ZUS"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -364,6 +508,18 @@
     "start": 7107,
     "end": 7130,
     "text": "Sądem Okręgowym w Łodzi"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7136,
+    "end": 7139,
+    "text": "ZUS"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 7273,
+    "end": 7277,
+    "text": "Łódź"
   },
   {
     "entity_group": "PERSON_NAME",

@@ -1,5 +1,11 @@
 [
   {
+    "entity_group": "LOCATION",
+    "start": 292,
+    "end": 301,
+    "text": "Białystok"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 349,
     "end": 364,
@@ -72,13 +78,7 @@
     "text": "801 234 567"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
-    "start": 720,
-    "end": 734,
-    "text": "WW90T984DSH/S3"
-  },
-  {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "DEVICE_IDENTIFIER",
     "start": 768,
     "end": 787,
     "text": "WW90-2024-081234-PL"
@@ -94,12 +94,6 @@
     "start": 902,
     "end": 913,
     "text": "3 299,00 zł"
-  },
-  {
-    "entity_group": "DOCUMENT_REFERENCE",
-    "start": 1226,
-    "end": 1240,
-    "text": "WW90T984DSH/S3"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
@@ -126,12 +120,6 @@
     "text": "3 299,00 zł"
   },
   {
-    "entity_group": "ACCOUNT_IDENTIFIER",
-    "start": 1519,
-    "end": 1523,
-    "text": "4821"
-  },
-  {
     "entity_group": "DOCUMENT_REFERENCE",
     "start": 1549,
     "end": 1572,
@@ -156,6 +144,12 @@
     "text": "801 234 567"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2468,
+    "end": 2478,
+    "text": "konsultant"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 2479,
     "end": 2495,
@@ -166,6 +160,12 @@
     "start": 2547,
     "end": 2565,
     "text": "ZGL/2025/04/012543"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2593,
+    "end": 2613,
+    "text": "technika serwisowego"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -246,6 +246,12 @@
     "text": "EM-POS3-20241014-008723"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 5917,
+    "end": 5937,
+    "text": "technika serwisowego"
+  },
+  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 6272,
     "end": 6295,
@@ -280,12 +286,6 @@
     "start": 6438,
     "end": 6472,
     "text": "ul. Lipowej 34/6,\n15-427 Białystok"
-  },
-  {
-    "entity_group": "DOCUMENT_REFERENCE",
-    "start": 6637,
-    "end": 6651,
-    "text": "WW90T984DSH/S3"
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",

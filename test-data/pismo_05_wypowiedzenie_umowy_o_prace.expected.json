@@ -1,5 +1,11 @@
 [
   {
+    "entity_group": "LOCATION",
+    "start": 288,
+    "end": 296,
+    "text": "Katowice"
+  },
+  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 331,
     "end": 353,
@@ -36,6 +42,12 @@
     "text": "Agnieszkę Rutkowską"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 490,
+    "end": 501,
+    "text": "Dyrektor HR"
+  },
+  {
     "entity_group": "PHONE_NUMBER",
     "start": 508,
     "end": 524,
@@ -66,10 +78,22 @@
     "text": "91030456789"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 668,
     "end": 681,
     "text": "PT/2019/00341"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 694,
+    "end": 727,
+    "text": "Starszy Specjalista ds. Logistyki"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 786,
+    "end": 795,
+    "text": "Kierownik"
   },
   {
     "entity_group": "PERSON_NAME",
@@ -82,6 +106,18 @@
     "start": 998,
     "end": 1020,
     "text": "POLTECH SOLUTIONS S.A."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1034,
+    "end": 1044,
+    "text": "Katowicach"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1463,
+    "end": 1498,
+    "text": "Starszego\nSpecjalisty ds. Logistyki"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -102,13 +138,13 @@
     "text": "Michała Olejniczaka"
   },
   {
-    "entity_group": "DOCUMENT_IDENTIFIER",
+    "entity_group": "DEVICE_IDENTIFIER",
     "start": 2312,
     "end": 2322,
     "text": "5CD3001XYZ"
   },
   {
-    "entity_group": "DOCUMENT_IDENTIFIER",
+    "entity_group": "DEVICE_IDENTIFIER",
     "start": 2367,
     "end": 2382,
     "text": "354871234567890"
@@ -180,6 +216,12 @@
     "text": "Agnieszka Rutkowska"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 4781,
+    "end": 4792,
+    "text": "Dyrektor HR"
+  },
+  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 4794,
     "end": 4816,
@@ -192,7 +234,7 @@
     "text": "Michał Olejniczak"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 4964,
     "end": 4977,
     "text": "PT/2019/00341"
@@ -210,7 +252,7 @@
     "text": "Michał Olejniczak"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 5775,
     "end": 5788,
     "text": "PT/2019/00341"
@@ -252,10 +294,16 @@
     "text": "Agnieszka Rutkowska"
   },
   {
-    "entity_group": "DOCUMENT_REFERENCE",
+    "entity_group": "ACCOUNT_IDENTIFIER",
     "start": 6648,
     "end": 6655,
     "text": "PT-0341"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6761,
+    "end": 6765,
+    "text": "mec."
   },
   {
     "entity_group": "PERSON_NAME",
@@ -280,6 +328,12 @@
     "start": 7110,
     "end": 7125,
     "text": "iodo@poltech.pl"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 7483,
+    "end": 7495,
+    "text": "Prezesa UODO"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
