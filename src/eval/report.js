@@ -12,13 +12,67 @@ export function classifyEntities(expected, predicted) {
   const spans = [];
 
   for (const m of matched) {
-    spans.push({
-      start: m.predicted.start,
-      end: m.predicted.end,
-      entity_group: m.predicted.entity_group,
-      status: 'tp',
-      score: m.predicted.score ?? null,
-    });
+    const pStart = m.predicted.start;
+    const pEnd = m.predicted.end;
+    const eStart = m.expected.start;
+    const eEnd = m.expected.end;
+    const exact = pStart === eStart && pEnd === eEnd;
+
+    if (exact) {
+      spans.push({
+        start: pStart, end: pEnd,
+        entity_group: m.predicted.entity_group,
+        status: 'tp',
+        score: m.predicted.score ?? null,
+      });
+    } else {
+      // Partial match — counts as FP+FN in strict scoring
+      const ovStart = Math.max(pStart, eStart);
+      const ovEnd = Math.min(pEnd, eEnd);
+      // Overlap region — detected but wrong boundary
+      if (ovStart < ovEnd) {
+        spans.push({
+          start: ovStart, end: ovEnd,
+          entity_group: m.predicted.entity_group,
+          status: 'partial',
+          score: m.predicted.score ?? null,
+        });
+      }
+      // Expected-only region — model missed this part
+      if (eStart < ovStart) {
+        spans.push({
+          start: eStart, end: ovStart,
+          entity_group: m.expected.entity_group,
+          status: 'partial-missed',
+          score: null,
+        });
+      }
+      if (eEnd > ovEnd) {
+        spans.push({
+          start: ovEnd, end: eEnd,
+          entity_group: m.expected.entity_group,
+          status: 'partial-missed',
+          score: null,
+        });
+      }
+      // Model-only region — model over-extended
+      if (pStart < ovStart) {
+        spans.push({
+          start: pStart, end: ovStart,
+          entity_group: m.predicted.entity_group,
+          status: 'partial-extra',
+          score: m.predicted.score ?? null,
+        });
+      }
+      if (pEnd > ovEnd) {
+        spans.push({
+          start: ovEnd, end: pEnd,
+          entity_group: m.predicted.entity_group,
+          status: 'partial-extra',
+          score: m.predicted.score ?? null,
+        });
+      }
+    }
   }
 
   for (const e of missed) {
@@ -42,14 +96,59 @@ export function classifyEntities(expected, predicted) {
   }
 
   for (const m of typeMismatched) {
-    spans.push({
-      start: m.predicted.start,
-      end: m.predicted.end,
-      entity_group: m.predicted.entity_group,
-      expected_entity_group: m.expected.entity_group,
-      status: 'mismatch',
-      score: m.predicted.score ?? null,
-    });
+    const pStart = m.predicted.start;
+    const pEnd = m.predicted.end;
+    const eStart = m.expected.start;
+    const eEnd = m.expected.end;
+    const ovStart = Math.max(pStart, eStart);
+    const ovEnd = Math.min(pEnd, eEnd);
+
+    // Overlap region — detected but wrong type
+    if (ovStart < ovEnd) {
+      spans.push({
+        start: ovStart, end: ovEnd,
+        entity_group: m.predicted.entity_group,
+        expected_entity_group: m.expected.entity_group,
+        status: 'mismatch',
+        score: m.predicted.score ?? null,
+      });
+    }
+    // Expected-only region
+    if (eStart < ovStart) {
+      spans.push({
+        start: eStart, end: ovStart,
+        entity_group: m.expected.entity_group,
+        expected_entity_group: m.expected.entity_group,
+        status: 'partial-missed',
+        score: null,
+      });
+    }
+    if (eEnd > ovEnd) {
+      spans.push({
+        start: ovEnd, end: eEnd,
+        entity_group: m.expected.entity_group,
+        expected_entity_group: m.expected.entity_group,
+        status: 'partial-missed',
+        score: null,
+      });
+    }
+    // Model-only region
+    if (pStart < ovStart) {
+      spans.push({
+        start: pStart, end: ovStart,
+        entity_group: m.predicted.entity_group,
+        status: 'partial-extra',
+        score: m.predicted.score ?? null,
+      });
+    }
+    if (pEnd > ovEnd) {
+      spans.push({
+        start: ovEnd, end: pEnd,
+        entity_group: m.predicted.entity_group,
+        status: 'partial-extra',
+        score: m.predicted.score ?? null,
+      });
+    }
   }
 
   return spans;
@@ -96,9 +195,18 @@ export function buildAnnotatedText(text, spans) {
       });
       const span = covering[0];
       const scoreStr = span.score != null ? ` score: ${span.score.toFixed(3)}` : '';
+      const statusLabels = {
+        tp: 'TP — exact match',
+        partial: 'PARTIAL — detected, wrong boundary',
+        'partial-missed': 'PARTIAL — model missed this part',
+        'partial-extra': 'PARTIAL — model over-extended here',
+        fp: 'FP',
+        fn: 'FN',
+        mismatch: 'MISMATCH',
+      };
       const title = span.status === 'mismatch'
         ? `assigned: ${span.entity_group}, expected: ${span.expected_entity_group} (MISMATCH)${scoreStr}`
-        : `${span.entity_group} (${span.status.toUpperCase()})${scoreStr}`;
+        : `${span.entity_group} (${statusLabels[span.status] || span.status.toUpperCase()})${scoreStr}`;
       const extraAttrs = span.expected_entity_group ? ` data-expected-type="${span.expected_entity_group}"` : '';
       html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}"${extraAttrs} title="${escapeHtml(title)}">${chunk}</span>`;
     }
@@ -225,6 +333,9 @@ export function buildCss() {
       cursor: help;
     }
     .entity.tp { background: rgba(var(--entity-rgb), 0.3); }
+    .entity.partial { background: rgba(var(--entity-rgb), 0.2); border-bottom: 2px dotted #FF6F00; }
+    .entity.partial-missed { border: 1px dashed #E65100; background: rgba(255, 111, 0, 0.08); }
+    .entity.partial-extra { background: rgba(255, 0, 0, 0.06); text-decoration: wavy underline red; text-underline-offset: 3px; }
     .entity.fp { background: rgba(var(--entity-rgb), 0.3); text-decoration: wavy underline red; text-underline-offset: 3px; }
     .entity.fn { border: 1px dashed; background: rgba(var(--entity-rgb), 0.1); }
     .entity.mismatch { background: rgba(var(--entity-rgb), 0.2); border: 2px solid #FF6F00; border-radius: 3px; }
@@ -284,8 +395,13 @@ export function buildCss() {
 export function buildLegend(spans) {
   const types = {};
   for (const s of spans) {
-    if (!types[s.entity_group]) types[s.entity_group] = { tp: 0, fp: 0, fn: 0, mismatch: 0 };
-    types[s.entity_group][s.status]++;
+    if (!types[s.entity_group]) types[s.entity_group] = { tp: 0, fp: 0, fn: 0, mismatch: 0, partial: 0 };
+    // partial zones are sub-parts of a single partial match
+    if (s.status === 'partial' || s.status === 'partial-missed' || s.status === 'partial-extra') {
+      types[s.entity_group].partial++;
+    } else {
+      types[s.entity_group][s.status]++;
+    }
   }
 
   const hasMismatches = spans.some(s => s.status === 'mismatch');
@@ -321,10 +437,25 @@ export function buildLegend(spans) {
     mismatchDetails = detailRows;
   }
 
+  const styleLegend = `<div style="font-size:0.82rem;color:#555;margin-top:0.5rem">
+    <strong>Visual guide:</strong>
+    <span style="background:rgba(76,175,80,0.3);padding:0 4px;border-radius:2px">solid bg</span> = TP (exact match)
+    &nbsp;&nbsp;
+    <span style="background:rgba(76,175,80,0.2);border-bottom:2px dotted #FF6F00;padding:0 4px;border-radius:2px">orange dotted</span> = partial overlap
+    &nbsp;&nbsp;
+    <span style="border:1px dashed #E65100;background:rgba(255,111,0,0.08);padding:0 4px;border-radius:2px">orange dashed</span> = missed part of partial
+    &nbsp;&nbsp;
+    <span style="background:rgba(255,0,0,0.06);text-decoration:wavy underline red;text-underline-offset:3px;padding:0 4px;border-radius:2px">red wavy</span> = over-extended / FP
+    &nbsp;&nbsp;
+    <span style="border:1px dashed #999;background:rgba(158,158,158,0.1);padding:0 4px;border-radius:2px">gray dashed</span> = FN (fully missed)
+    &nbsp;&nbsp;
+    <span style="background:rgba(158,158,158,0.2);border:2px solid #FF6F00;padding:0 4px;border-radius:3px">orange border</span> = type mismatch
+  </div>`;
+
   return `<table class="legend-table">
     <thead><tr><th></th><th>Entity Type</th><th>TP</th><th>FP</th><th>FN</th>${hasMismatches ? '<th>Mis</th>' : ''}</tr></thead>
     <tbody>${rows}${mismatchDetails}</tbody>
-  </table>`;
+  </table>${styleLegend}`;
 }
 
 // ── Historical data loading ────────────────────────────────────────
@@ -449,17 +580,21 @@ function buildScoringSection(docScores) {
       <td>${pct(m.recall)}</td>
       <td>${pct(m.f1)}</td>
       <td>${m.tp}</td>
-      <td>${m.fp}</td>
-      <td>${m.fn}</td>
+      <td>${m.fp}${m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : ''}</td>
+      <td>${m.fn}${m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : ''}</td>
     </tr>`)
     .join('\n');
+
+  const partialNote = docScores.tpPartial
+    ? ` &nbsp;|&nbsp; <span style="color:#E65100">${docScores.tpPartial} partial → FP+FN</span>`
+    : '';
 
   return `
     <div class="section-title">Scoring</div>
     <p>Precision: <strong>${pct(docScores.precision)}</strong> &nbsp;
        Recall: <strong>${pct(docScores.recall)}</strong> &nbsp;
        F1: <strong>${pct(docScores.f1)}</strong> &nbsp;
-       TP: ${docScores.tp} &nbsp; FP: ${docScores.fp} &nbsp; FN: ${docScores.fn}</p>
+       TP: ${docScores.tp} &nbsp; FP: ${docScores.fp} &nbsp; FN: ${docScores.fn}${partialNote}</p>
     <table class="scoring-table">
       <thead><tr><th>Type</th><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -614,6 +749,10 @@ export async function generateReport(runId, scoresData) {
       <div class="label">Recall</div>
     </div>
   </div>
+  <p style="font-size:0.85rem;color:#666;margin-top:-1rem;margin-bottom:1.5rem">
+    Strict scoring: only exact boundary matches count as TP. Partial overlaps count as FP+FN.
+    ${scoresData.overall.tpPartial ? `(${scoresData.overall.tpPartial} partial matches penalized)` : ''}
+  </p>
 
   <div class="section-title">Overall Comparison</div>
   ${overallComparisonHtml}

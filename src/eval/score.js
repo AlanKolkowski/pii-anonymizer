@@ -11,15 +11,21 @@ const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 function computeMetrics(expected, predicted, options) {
   const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted, options);
 
-  const tp = matched.length;
-  const fp = spurious.length + typeMismatched.length;
-  const fn = missed.length + typeMismatched.length;
+  // Strict scoring: only exact boundary matches count as TP
+  const exactMatches = matched.filter(m => m.predicted.start === m.expected.start && m.predicted.end === m.expected.end);
+  const partialMatches = matched.filter(m => m.predicted.start !== m.expected.start || m.predicted.end !== m.expected.end);
+
+  const tp = exactMatches.length;
+  const tpPartial = partialMatches.length;
+  // Partial matches count as both FP (wrong boundary) and FN (not fully found)
+  const fp = spurious.length + typeMismatched.length + partialMatches.length;
+  const fn = missed.length + typeMismatched.length + partialMatches.length;
 
   const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
   const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
   const f1 = precision + recall > 0 ? 2 * precision * recall / (precision + recall) : 0;
 
-  return { tp, fp, fn, precision, recall, f1, matched, missed, spurious, typeMismatched };
+  return { tp, fp, fn, tpPartial, precision, recall, f1, matched, missed, spurious, typeMismatched };
 }
 
 function computeByType(expected, predicted, options) {
@@ -29,8 +35,8 @@ function computeByType(expected, predicted, options) {
   for (const type of [...types].sort()) {
     const expOfType = expected.filter(e => e.entity_group === type);
     const predOfType = predicted.filter(e => e.entity_group === type);
-    const { tp, fp, fn, precision, recall, f1 } = computeMetrics(expOfType, predOfType, options);
-    byType[type] = { tp, fp, fn, precision, recall, f1 };
+    const { tp, fp, fn, tpPartial, precision, recall, f1 } = computeMetrics(expOfType, predOfType, options);
+    byType[type] = { tp, fp, fn, tpPartial, precision, recall, f1 };
   }
 
   return byType;
@@ -139,6 +145,7 @@ async function main() {
       tp: metrics.tp,
       fp: metrics.fp,
       fn: metrics.fn,
+      tpPartial: metrics.tpPartial,
       byType,
     };
 
@@ -150,14 +157,14 @@ async function main() {
   const overall = computeMetrics(allExpected, allPredicted, options);
   const overallByType = computeByType(allExpected, allPredicted, options);
 
-  console.log('\n=== OVERALL (micro-averaged) ===');
+  console.log('\n=== OVERALL (micro-averaged, strict exact matching) ===');
   console.log(`  Precision: ${pct(overall.precision)}   Recall: ${pct(overall.recall)}   F1: ${pct(overall.f1)}`);
-  console.log(`  TP: ${overall.tp}  FP: ${overall.fp}  FN: ${overall.fn}`);
+  console.log(`  TP: ${overall.tp}  FP: ${overall.fp}  FN: ${overall.fn}  (${overall.tpPartial} partial → counted as FP+FN)`);
 
   console.log(`\n  Per type:`);
-  console.log(`    ${pad('TYPE', 28)} ${' P'.padStart(6)} ${' R'.padStart(6)} ${'F1'.padStart(6)}  TP  FP  FN`);
+  console.log(`    ${pad('TYPE', 34)} ${' P'.padStart(6)} ${' R'.padStart(6)} ${'F1'.padStart(6)}  TP  FP  FN`);
   for (const [type, m] of Object.entries(overallByType)) {
-    console.log(`    ${pad(type, 28)} ${pct(m.precision)} ${pct(m.recall)} ${pct(m.f1)}  ${String(m.tp).padStart(2)}  ${String(m.fp).padStart(2)}  ${String(m.fn).padStart(2)}`);
+    console.log(`    ${pad(type, 34)} ${pct(m.precision)} ${pct(m.recall)} ${pct(m.f1)}  ${String(m.tp).padStart(2)}  ${String(m.fp).padStart(2)}  ${String(m.fn).padStart(2)}`);
   }
 
   // Save scores to run directory
@@ -171,6 +178,7 @@ async function main() {
       tp: overall.tp,
       fp: overall.fp,
       fn: overall.fn,
+      tpPartial: overall.tpPartial,
       byType: overallByType,
     },
     documents: docScores,
