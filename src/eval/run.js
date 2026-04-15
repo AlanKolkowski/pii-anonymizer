@@ -6,6 +6,7 @@ import { runPipeline } from '../pipeline/runner.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
+const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 
 function makeRunId() {
@@ -76,14 +77,14 @@ async function main() {
   if (args.length > 0 && !args[0].startsWith('--')) {
     files = args.filter(a => !a.startsWith('--'));
   } else {
-    const entries = await readdir(TEST_DATA_DIR);
+    const entries = await readdir(DOCS_DIR);
     files = entries
       .filter(f => f.endsWith('.txt'))
-      .map(f => join(TEST_DATA_DIR, f));
+      .map(f => join(DOCS_DIR, f));
   }
 
   if (files.length === 0) {
-    console.log('No .txt files found in test-data/');
+    console.log('No .txt files found in test-data/synthetic/');
     process.exit(1);
   }
 

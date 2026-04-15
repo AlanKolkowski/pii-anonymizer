@@ -4,6 +4,7 @@ import { matchEntities } from './matching.js';
 import { generateReport } from './report.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
+const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 
 // ── Metrics ─────────────────────────────────────────────────────────
@@ -98,11 +99,11 @@ async function main() {
   console.log(`Scoring run: ${runId}\n`);
 
   // Find expected files
-  const entries = await readdir(TEST_DATA_DIR);
+  const entries = await readdir(DOCS_DIR);
   const expectedFiles = entries.filter(f => f.endsWith('.expected.json'));
 
   if (expectedFiles.length === 0) {
-    console.log('No .expected.json files found in test-data/. Create ground truth first.');
+    console.log('No .expected.json files found in test-data/synthetic/. Create ground truth first.');
     process.exit(1);
   }
 
@@ -113,7 +114,7 @@ async function main() {
 
   for (const expFile of expectedFiles.sort()) {
     const name = basename(expFile, '.expected.json');
-    const expected = JSON.parse(await readFile(join(TEST_DATA_DIR, expFile), 'utf-8'));
+    const expected = JSON.parse(await readFile(join(DOCS_DIR, expFile), 'utf-8'));
 
     let predicted;
     try {
@@ -127,7 +128,7 @@ async function main() {
     // Add text to predicted for nicer output
     let sourceText;
     try {
-      sourceText = await readFile(join(TEST_DATA_DIR, `${name}.txt`), 'utf-8');
+      sourceText = await readFile(join(DOCS_DIR, `${name}.txt`), 'utf-8');
       for (const e of predicted) {
         if (!e.text) e.text = sourceText.slice(e.start, e.end);
       }

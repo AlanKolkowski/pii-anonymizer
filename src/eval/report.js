@@ -3,6 +3,7 @@ import { join, basename } from 'node:path';
 import { matchEntities } from './matching.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
+const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 
 // ── Entity classification ──────────────────────────────────────────
@@ -658,7 +659,7 @@ export async function generateReport(runId, scoresData) {
     // Load source text
     let sourceText;
     try {
-      sourceText = await readFile(join(TEST_DATA_DIR, `${docName}.txt`), 'utf-8');
+      sourceText = await readFile(join(DOCS_DIR, `${docName}.txt`), 'utf-8');
     } catch {
       sourceText = `(source text not found for ${docName})`;
     }
@@ -677,7 +678,7 @@ export async function generateReport(runId, scoresData) {
     // Load expected entities
     let expected = [];
     try {
-      const raw = await readFile(join(TEST_DATA_DIR, `${docName}.expected.json`), 'utf-8');
+      const raw = await readFile(join(DOCS_DIR, `${docName}.expected.json`), 'utf-8');
       expected = JSON.parse(raw);
     } catch {}
 
