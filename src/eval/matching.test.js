@@ -43,12 +43,25 @@ describe('matchEntities', () => {
     expect(spurious).toHaveLength(1);
   });
 
-  it('does not match different types when requireTypeMatch is true', () => {
+  it('detects type mismatch for overlapping entities with different types', () => {
     const expected = [{ entity_group: 'PERSON_NAME', start: 0, end: 10 }];
     const predicted = [{ entity_group: 'LOCATION', start: 0, end: 10, score: 0.9 }];
-    const { matched, missed, spurious } = matchEntities(expected, predicted);
+    const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted);
+    expect(matched).toHaveLength(0);
+    expect(missed).toHaveLength(0);
+    expect(spurious).toHaveLength(0);
+    expect(typeMismatched).toHaveLength(1);
+    expect(typeMismatched[0].expected.entity_group).toBe('PERSON_NAME');
+    expect(typeMismatched[0].predicted.entity_group).toBe('LOCATION');
+  });
+
+  it('does not detect type mismatch for non-overlapping entities with different types', () => {
+    const expected = [{ entity_group: 'PERSON_NAME', start: 0, end: 10 }];
+    const predicted = [{ entity_group: 'LOCATION', start: 50, end: 60, score: 0.9 }];
+    const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted);
     expect(matched).toHaveLength(0);
     expect(missed).toHaveLength(1);
     expect(spurious).toHaveLength(1);
+    expect(typeMismatched).toHaveLength(0);
   });
 });

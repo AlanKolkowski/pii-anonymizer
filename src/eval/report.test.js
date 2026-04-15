@@ -22,6 +22,23 @@ describe('classifyEntities', () => {
     expect(result.filter(e => e.status === 'fn')).toHaveLength(1);
     expect(result.filter(e => e.status === 'fp')).toHaveLength(1);
   });
+
+  it('classifies overlapping entities with different types as mismatch', () => {
+    const expected = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 10, text: 'John Smith' },
+    ];
+    const predicted = [
+      { entity_group: 'LOCATION', start: 0, end: 10, score: 0.9 },
+    ];
+    const result = classifyEntities(expected, predicted);
+
+    expect(result.filter(e => e.status === 'mismatch')).toHaveLength(1);
+    const mismatch = result.find(e => e.status === 'mismatch');
+    expect(mismatch.entity_group).toBe('LOCATION');
+    expect(mismatch.expected_entity_group).toBe('PERSON_NAME');
+    expect(result.filter(e => e.status === 'fn')).toHaveLength(0);
+    expect(result.filter(e => e.status === 'fp')).toHaveLength(0);
+  });
 });
 
 describe('buildAnnotatedText', () => {

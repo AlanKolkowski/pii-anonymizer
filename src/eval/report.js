@@ -8,7 +8,7 @@ const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 // ── Entity classification ──────────────────────────────────────────
 
 export function classifyEntities(expected, predicted) {
-  const { matched, missed, spurious } = matchEntities(expected, predicted);
+  const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted);
   const spans = [];
 
   for (const m of matched) {
@@ -38,6 +38,17 @@ export function classifyEntities(expected, predicted) {
       entity_group: e.entity_group,
       status: 'fp',
       score: e.score ?? null,
+    });
+  }
+
+  for (const m of typeMismatched) {
+    spans.push({
+      start: m.predicted.start,
+      end: m.predicted.end,
+      entity_group: m.predicted.entity_group,
+      expected_entity_group: m.expected.entity_group,
+      status: 'mismatch',
+      score: m.predicted.score ?? null,
     });
   }
 
@@ -75,17 +86,21 @@ export function buildAnnotatedText(text, spans) {
     if (covering.length === 0) {
       html += chunk;
     } else {
-      // Pick the most specific span (smallest range), prefer FP > FN > TP for visibility
-      const statusPriority = { fp: 0, fn: 1, tp: 2 };
+      // Pick the most specific span (smallest range), prefer FP > mismatch > FN > TP for visibility
+      const statusPriority = { fp: 0, mismatch: 1, fn: 2, tp: 3 };
       covering.sort((a, b) => {
         const sizeA = a.end - a.start;
         const sizeB = b.end - b.start;
         if (sizeA !== sizeB) return sizeA - sizeB;
-        return (statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3);
+        return (statusPriority[a.status] ?? 4) - (statusPriority[b.status] ?? 4);
       });
       const span = covering[0];
-      const title = `${span.entity_group} (${span.status.toUpperCase()})${span.score != null ? ` score: ${span.score.toFixed(3)}` : ''}`;
-      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}" title="${escapeHtml(title)}">${chunk}</span>`;
+      const scoreStr = span.score != null ? ` score: ${span.score.toFixed(3)}` : '';
+      const title = span.status === 'mismatch'
+        ? `assigned: ${span.entity_group}, expected: ${span.expected_entity_group} (MISMATCH)${scoreStr}`
+        : `${span.entity_group} (${span.status.toUpperCase()})${scoreStr}`;
+      const extraAttrs = span.expected_entity_group ? ` data-expected-type="${span.expected_entity_group}"` : '';
+      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}"${extraAttrs} title="${escapeHtml(title)}">${chunk}</span>`;
     }
   }
 
@@ -212,6 +227,7 @@ export function buildCss() {
     .entity.tp { background: rgba(var(--entity-rgb), 0.3); }
     .entity.fp { background: rgba(var(--entity-rgb), 0.3); text-decoration: wavy underline red; text-underline-offset: 3px; }
     .entity.fn { border: 1px dashed; background: rgba(var(--entity-rgb), 0.1); }
+    .entity.mismatch { background: rgba(var(--entity-rgb), 0.2); border: 2px solid #FF6F00; border-radius: 3px; }
 
     ${Object.entries(ENTITY_COLORS).map(([type, color]) => {
       const r = parseInt(color.slice(1, 3), 16);
@@ -268,9 +284,11 @@ export function buildCss() {
 export function buildLegend(spans) {
   const types = {};
   for (const s of spans) {
-    if (!types[s.entity_group]) types[s.entity_group] = { tp: 0, fp: 0, fn: 0 };
+    if (!types[s.entity_group]) types[s.entity_group] = { tp: 0, fp: 0, fn: 0, mismatch: 0 };
     types[s.entity_group][s.status]++;
   }
+
+  const hasMismatches = spans.some(s => s.status === 'mismatch');
 
   const rows = Object.entries(types)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -282,13 +300,30 @@ export function buildLegend(spans) {
         <td>${counts.tp}</td>
         <td>${counts.fp}</td>
         <td>${counts.fn}</td>
+        ${hasMismatches ? `<td>${counts.mismatch}</td>` : ''}
       </tr>`;
     })
     .join('\n');
 
+  // Build mismatch detail rows: show each "predicted → expected" pair
+  let mismatchDetails = '';
+  if (hasMismatches) {
+    const pairs = {};
+    for (const s of spans) {
+      if (s.status !== 'mismatch') continue;
+      const key = `${s.entity_group} → ${s.expected_entity_group}`;
+      pairs[key] = (pairs[key] || 0) + 1;
+    }
+    const detailRows = Object.entries(pairs)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([pair, count]) => `<tr><td></td><td colspan="${hasMismatches ? 5 : 4}" style="color:#E65100;font-size:0.82rem">⚠ ${pair} (×${count})</td></tr>`)
+      .join('\n');
+    mismatchDetails = detailRows;
+  }
+
   return `<table class="legend-table">
-    <thead><tr><th></th><th>Entity Type</th><th>TP</th><th>FP</th><th>FN</th></tr></thead>
-    <tbody>${rows}</tbody>
+    <thead><tr><th></th><th>Entity Type</th><th>TP</th><th>FP</th><th>FN</th>${hasMismatches ? '<th>Mis</th>' : ''}</tr></thead>
+    <tbody>${rows}${mismatchDetails}</tbody>
   </table>`;
 }
 

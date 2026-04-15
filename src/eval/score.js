@@ -9,17 +9,17 @@ const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 // ── Metrics ─────────────────────────────────────────────────────────
 
 function computeMetrics(expected, predicted, options) {
-  const { matched, missed, spurious } = matchEntities(expected, predicted, options);
+  const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted, options);
 
   const tp = matched.length;
-  const fp = spurious.length;
-  const fn = missed.length;
+  const fp = spurious.length + typeMismatched.length;
+  const fn = missed.length + typeMismatched.length;
 
   const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
   const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
   const f1 = precision + recall > 0 ? 2 * precision * recall / (precision + recall) : 0;
 
-  return { tp, fp, fn, precision, recall, f1, matched, missed, spurious };
+  return { tp, fp, fn, precision, recall, f1, matched, missed, spurious, typeMismatched };
 }
 
 function computeByType(expected, predicted, options) {
@@ -58,6 +58,14 @@ function printDocScores(name, metrics, byType) {
     for (const e of metrics.spurious) {
       const text = e.text || `[${e.start}:${e.end}]`;
       console.log(`    ${pad(e.entity_group, 28)} "${text}"`);
+    }
+  }
+
+  if (metrics.typeMismatched.length > 0) {
+    console.log(`\n  Type mismatches (${metrics.typeMismatched.length}):`);
+    for (const m of metrics.typeMismatched) {
+      const text = m.predicted.text || m.expected.text || `[${m.predicted.start}:${m.predicted.end}]`;
+      console.log(`    "${text}"  predicted: ${pad(m.predicted.entity_group, 28)} expected: ${m.expected.entity_group}`);
     }
   }
 
