@@ -5,6 +5,7 @@ import { createNerStep } from '../steps/ner.js';
 import { regexStep } from '../steps/regex.js';
 import { allowedTypesStep } from '../steps/allowed-types.js';
 import { snapStep } from '../steps/snap.js';
+import { trimTrailingDotStep } from '../steps/trim-trailing-dot.js';
 import { filterStep } from '../steps/filter.js';
 import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
@@ -30,6 +31,6 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries) {
         mergeAbbreviationsStep,
     ] },
     { phase: 'ner', steps: [createNerStep(MODELS, loadModel), regexStep] },
-    { phase: 'postprocess', steps: [allowedTypesStep, snapStep, filterStep, dedupStep, mergeStep, tokenizeStep, rescanStep] },
+    { phase: 'postprocess', steps: [allowedTypesStep, snapStep, trimTrailingDotStep, filterStep, dedupStep, mergeStep, tokenizeStep, rescanStep] },
   ];
 }
