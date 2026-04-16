@@ -38,4 +38,23 @@ describe('default pipeline (with mock NER)', () => {
     // Debug should have entries for each step
     expect(result.debug.length).toBeGreaterThan(0);
   });
+
+  it('merges Polish abbreviations in segment phase (adw., ul., r.)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async () => [],
+      dispose: async () => {},
+    });
+
+    const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries);
+    const text = 'W dniu 10 września 2023 r. pomiędzy Panem Kowalskim a firmą sp. z o.o. zawarto umowę. adw. Nowak reprezentuje stronę.';
+    const result = await runPipeline(text, pipeline);
+
+    const segmentDebug = result.debug.filter(d => d.phase === 'segment');
+    expect(segmentDebug.length).toBe(2);
+    expect(segmentDebug[1].step).toBe('mergeAbbreviationsStep');
+
+    const before = segmentDebug[0].changes.segments.count.after;
+    const after = segmentDebug[1].changes.segments.count.after;
+    expect(after).toBeLessThan(before);
+  });
 });
