@@ -9,6 +9,8 @@ export const CAT_A = new Set([
   // Adresowe
   'ul.', 'al.', 'pl.', 'os.', 'gm.', 'pow.', 'woj.', 'm.st.',
   'im.', 'pn.',
+  // Łączniki do rzeczownika (nigdy nie kończą zdania)
+  'ds.', 'm.in.', 'tj.', 'tzw.', 'tzn.', 'np.',
 ]);
 
 // Skróty, które mogą legalnie kończyć zdanie.
@@ -22,8 +24,8 @@ export const CAT_B = new Set([
   'godz.', 'min.', 'sek.', 'ok.',
   'pon.', 'wt.', 'czw.', 'pt.', 'sob.', 'niedz.',
   // Ogólne
-  'tj.', 'tzn.', 'tzw.', 'np.', 'm.in.', 'itp.', 'itd.',
-  'ww.', 'cd.', 'cdn.', 'br.', 'bm.', 'ub.r.', 'ds.',
+  'itp.', 'itd.',
+  'ww.', 'cd.', 'cdn.', 'br.', 'bm.', 'ub.r.',
   // Firmy
   'sp.', 'z o.o.', 'o.o.', 's.a.', 'p.p.', 'p.o.', 'spółdz.',
   // Inne

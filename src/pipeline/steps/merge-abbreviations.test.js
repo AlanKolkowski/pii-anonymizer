@@ -123,6 +123,78 @@ describe('mergeAbbreviationsStep', () => {
       expect(result.segments).toEqual([{ text: 'r.pr. Jan Nowak', offset: 0 }]);
     });
 
+    it('merges "ds." followed by uppercase noun (never sentence-final)', () => {
+      const text = 'Kierownik ds. Marketingu odpowiada';
+      const ctx = makeCtx(text, [
+        { text: 'Kierownik ds. ', offset: 0 },
+        { text: 'Marketingu odpowiada', offset: 14 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'Kierownik ds. Marketingu odpowiada', offset: 0 },
+      ]);
+    });
+
+    it('merges "m.in." followed by uppercase (never sentence-final)', () => {
+      const text = 'dotyczy m.in. Jana Kowalskiego';
+      const ctx = makeCtx(text, [
+        { text: 'dotyczy m.in. ', offset: 0 },
+        { text: 'Jana Kowalskiego', offset: 14 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'dotyczy m.in. Jana Kowalskiego', offset: 0 },
+      ]);
+    });
+
+    it('merges "tj." followed by uppercase', () => {
+      const text = 'należność tj. Pozostałą kwotę';
+      const ctx = makeCtx(text, [
+        { text: 'należność tj. ', offset: 0 },
+        { text: 'Pozostałą kwotę', offset: 14 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'należność tj. Pozostałą kwotę', offset: 0 },
+      ]);
+    });
+
+    it('merges "tzw." followed by uppercase', () => {
+      const text = 'tzw. Klauzula abuzywna';
+      const ctx = makeCtx(text, [
+        { text: 'tzw. ', offset: 0 },
+        { text: 'Klauzula abuzywna', offset: 5 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'tzw. Klauzula abuzywna', offset: 0 },
+      ]);
+    });
+
+    it('merges "tzn." followed by uppercase', () => {
+      const text = 'sygnatura tzn. Dział I';
+      const ctx = makeCtx(text, [
+        { text: 'sygnatura tzn. ', offset: 0 },
+        { text: 'Dział I', offset: 15 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'sygnatura tzn. Dział I', offset: 0 },
+      ]);
+    });
+
+    it('merges "np." followed by uppercase', () => {
+      const text = 'dokumenty np. Umowa sprzedaży';
+      const ctx = makeCtx(text, [
+        { text: 'dokumenty np. ', offset: 0 },
+        { text: 'Umowa sprzedaży', offset: 14 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'dokumenty np. Umowa sprzedaży', offset: 0 },
+      ]);
+    });
+
     it('does NOT merge when paragraph break is present', () => {
       const text = 'ul.\n\nKowalski';
       const ctx = makeCtx(text, [

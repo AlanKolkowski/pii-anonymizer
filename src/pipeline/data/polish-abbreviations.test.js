@@ -13,7 +13,16 @@ describe('polish-abbreviations dictionary', () => {
     expect(CAT_B.has('sp.')).toBe(true);
     expect(CAT_B.has('z o.o.')).toBe(true);
     expect(CAT_B.has('art.')).toBe(true);
-    expect(CAT_B.has('m.in.')).toBe(true);
+    expect(CAT_B.has('itp.')).toBe(true);
+  });
+
+  it('CAT_A contains never-sentence-final connectors', () => {
+    expect(CAT_A.has('ds.')).toBe(true);
+    expect(CAT_A.has('m.in.')).toBe(true);
+    expect(CAT_A.has('tj.')).toBe(true);
+    expect(CAT_A.has('tzw.')).toBe(true);
+    expect(CAT_A.has('tzn.')).toBe(true);
+    expect(CAT_A.has('np.')).toBe(true);
   });
 
   it('all tokens are lowercase', () => {
