@@ -32,11 +32,25 @@ function sliceMerged(originalText, segA, segB) {
   return { text: originalText.slice(start, end), offset: start };
 }
 
+const LOWERCASE_POLISH_RE = /[a-ząćęłńóśźż]/;
+const DIGIT_RE = /[0-9]/;
+
+function firstNonWhitespaceChar(s) {
+  const trimmed = s.trimStart();
+  return trimmed.length > 0 ? trimmed[0] : '';
+}
+
+function startsWithLowercaseOrDigit(s) {
+  const ch = firstNonWhitespaceChar(s);
+  return LOWERCASE_POLISH_RE.test(ch) || DIGIT_RE.test(ch);
+}
+
 function shouldMerge(prev, next, originalText) {
   if (hasParagraphBreakBetween(prev, next, originalText)) return null;
   if (isListMarker(prev.text)) return 'R3';
   const cat = matchDictionarySuffix(prev.text);
   if (cat === 'A') return 'R1a';
+  if (cat === 'B' && startsWithLowercaseOrDigit(next.text)) return 'R1b';
   return null;
 }
 

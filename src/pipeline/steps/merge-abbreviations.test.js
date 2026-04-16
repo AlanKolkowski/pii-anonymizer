@@ -134,6 +134,69 @@ describe('mergeAbbreviationsStep', () => {
     });
   });
 
+  describe('R1b: dictionary Cat B (merge only if lowercase follows)', () => {
+    it('merges "r." when followed by lowercase', () => {
+      const text = '12 września 2023 r. na rachunek';
+      const ctx = makeCtx(text, [
+        { text: '12 września 2023 r. ', offset: 0 },
+        { text: 'na rachunek', offset: 20 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: '12 września 2023 r. na rachunek', offset: 0 },
+      ]);
+    });
+
+    it('does NOT merge "r." when followed by uppercase (real sentence end)', () => {
+      const text = 'Zmarł w 2020 r. Jego syn odziedziczył';
+      const ctx = makeCtx(text, [
+        { text: 'Zmarł w 2020 r. ', offset: 0 },
+        { text: 'Jego syn odziedziczył', offset: 16 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+
+    it('merges "ust." followed by digit', () => {
+      const text = '§ 4 ust. 1 umowy';
+      const ctx = makeCtx(text, [
+        { text: '§ 4 ust. ', offset: 0 },
+        { text: '1 umowy', offset: 9 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: '§ 4 ust. 1 umowy', offset: 0 },
+      ]);
+    });
+
+    it('merges "sp." with "z o.o." (lowercase z follows)', () => {
+      const text = 'firma ABC sp. z o.o. powstała';
+      const ctx = makeCtx(text, [
+        { text: 'firma ABC sp. ', offset: 0 },
+        { text: 'z o.o. ', offset: 14 },
+        { text: 'powstała', offset: 21 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'firma ABC sp. z o.o. powstała', offset: 0 },
+      ]);
+    });
+
+    it('does NOT merge "sp. z o.o." when uppercase sentence follows', () => {
+      const text = 'firma ABC sp. z o.o. Następnie zatrudnił';
+      const ctx = makeCtx(text, [
+        { text: 'firma ABC sp. ', offset: 0 },
+        { text: 'z o.o. ', offset: 14 },
+        { text: 'Następnie zatrudnił', offset: 21 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: 'firma ABC sp. z o.o. ', offset: 0 },
+        { text: 'Następnie zatrudnił', offset: 21 },
+      ]);
+    });
+  });
+
   describe('empty/single segment passthrough', () => {
     it('returns empty segments unchanged', () => {
       const ctx = makeCtx('', []);
