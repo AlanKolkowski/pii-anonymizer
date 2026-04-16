@@ -42,6 +42,12 @@
     "text": "Warszawa"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 528,
+    "end": 532,
+    "text": "adw."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 533,
     "end": 548,
@@ -295,9 +301,9 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
-    "start": 3944,
+    "start": 3943,
     "end": 3967,
-    "text": "Finanse Pro\" sp. z o.o."
+    "text": "„Finanse Pro\" sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -450,6 +456,12 @@
     "text": "Krajowego Rejestru Długów Biuro Informacji Gospodarczej S.A."
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6400,
+    "end": 6409,
+    "text": "apl. adw."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 6410,
     "end": 6427,
@@ -486,6 +498,12 @@
     "text": "Rep. A nr 1042/2025"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 7375,
+    "end": 7379,
+    "text": "adw."
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 7380,
     "end": 7395,
@@ -502,6 +520,12 @@
     "start": 7518,
     "end": 7553,
     "text": "Okręgowa Rada Adwokacka w Warszawie"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 7544,
+    "end": 7553,
+    "text": "Warszawie"
   },
   {
     "entity_group": "PHONE_NUMBER",

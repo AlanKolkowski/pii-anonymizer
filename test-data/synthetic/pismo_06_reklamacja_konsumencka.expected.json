@@ -230,8 +230,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 5012,
-    "end": 5058,
-    "text": "Sądu Rejonowego w Białymstoku, Wydział Cywilny"
+    "end": 5041,
+    "text": "Sądu Rejonowego w Białymstoku"
   },
   {
     "entity_group": "PERSON_NAME",

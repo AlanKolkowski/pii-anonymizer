@@ -192,6 +192,12 @@
     "text": "Kliniki Ortopedii i Traumatologii USK im. WAM"
   },
   {
+    "entity_group": "LOCATION",
+    "start": 2321,
+    "end": 2326,
+    "text": "Łodzi"
+  },
+  {
     "entity_group": "POSTAL_ADDRESS",
     "start": 2335,
     "end": 2367,
@@ -414,6 +420,12 @@
     "text": "Kliniki Ortopedii USK"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 6198,
+    "end": 6200,
+    "text": "dr"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 6201,
     "end": 6220,
@@ -448,6 +460,12 @@
     "start": 6459,
     "end": 6484,
     "text": "Szpitala im. Biegańskiego"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 6487,
+    "end": 6492,
+    "text": "Łodzi"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
