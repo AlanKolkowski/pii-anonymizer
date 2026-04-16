@@ -60,3 +60,4 @@ Ground truth lives in `test-data/synthetic/` as paired `.txt` + `.expected.json`
 - No TypeScript, no linter configured
 - Pipeline steps are named functions (name appears in debug output)
 - Entity format: `{ entity_group, start, end, score, word }`
+- **Always tag eval runs** with `--label=<short-descriptive-slug>` (e.g. `npm run eval -- --label=trim-trailing-dot`) so `eval:list` stays navigable and `eval:compare` is meaningful.
