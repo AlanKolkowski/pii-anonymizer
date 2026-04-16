@@ -197,6 +197,38 @@ describe('mergeAbbreviationsStep', () => {
     });
   });
 
+  describe('R2: unknown-abbreviation heuristic', () => {
+    it('merges unknown "xyz." followed by lowercase', () => {
+      const text = 'skrót xyz. niski';
+      const ctx = makeCtx(text, [
+        { text: 'skrót xyz. ', offset: 0 },
+        { text: 'niski', offset: 11 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: 'skrót xyz. niski', offset: 0 }]);
+    });
+
+    it('does NOT merge unknown "xyz." followed by uppercase', () => {
+      const text = 'skrót xyz. Wielkie';
+      const ctx = makeCtx(text, [
+        { text: 'skrót xyz. ', offset: 0 },
+        { text: 'Wielkie', offset: 11 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+
+    it('does NOT merge when previous segment does not end with word+dot', () => {
+      const text = 'Pierwsze zdanie? drugie';
+      const ctx = makeCtx(text, [
+        { text: 'Pierwsze zdanie? ', offset: 0 },
+        { text: 'drugie', offset: 17 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+  });
+
   describe('empty/single segment passthrough', () => {
     it('returns empty segments unchanged', () => {
       const ctx = makeCtx('', []);

@@ -45,12 +45,19 @@ function startsWithLowercaseOrDigit(s) {
   return LOWERCASE_POLISH_RE.test(ch) || DIGIT_RE.test(ch);
 }
 
+const WORD_DOT_END_RE = /\w\.\s*$/u;
+
+function endsWithWordDot(segText) {
+  return WORD_DOT_END_RE.test(segText);
+}
+
 function shouldMerge(prev, next, originalText) {
   if (hasParagraphBreakBetween(prev, next, originalText)) return null;
   if (isListMarker(prev.text)) return 'R3';
   const cat = matchDictionarySuffix(prev.text);
   if (cat === 'A') return 'R1a';
   if (cat === 'B' && startsWithLowercaseOrDigit(next.text)) return 'R1b';
+  if (endsWithWordDot(prev.text) && startsWithLowercaseOrDigit(next.text)) return 'R2';
   return null;
 }
 
