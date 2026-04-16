@@ -1,6 +1,29 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { matchEntities } from './matching.js';
+import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sources.js';
+
+function sourceMarker(source) {
+  return SOURCE_MARKERS[source] || '?';
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABELS[source] || source;
+}
+
+function renderSourceSup(source) {
+  const sources = sourcesToArray(source);
+  if (sources.length === 0) return '';
+  const markers = sources.map(sourceMarker).join('');
+  const label = sources.map(sourceLabel).join(', ');
+  return `<sup class="src" aria-hidden="true" title="Source: ${escapeHtml(label)}">${markers}</sup>`;
+}
+
+function sourceTitleSuffix(source) {
+  const sources = sourcesToArray(source);
+  if (sources.length === 0) return '';
+  return ` • source: ${sources.map(sourceLabel).join(', ')}`;
+}
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -25,6 +48,7 @@ export function classifyEntities(expected, predicted) {
         entity_group: m.predicted.entity_group,
         status: 'tp',
         score: m.predicted.score ?? null,
+        source: m.predicted.source ?? null,
       });
     } else {
       // Partial match — counts as FP+FN in strict scoring
@@ -37,6 +61,7 @@ export function classifyEntities(expected, predicted) {
           entity_group: m.predicted.entity_group,
           status: 'partial',
           score: m.predicted.score ?? null,
+          source: m.predicted.source ?? null,
         });
       }
       // Expected-only region — model missed this part
@@ -63,6 +88,7 @@ export function classifyEntities(expected, predicted) {
           entity_group: m.predicted.entity_group,
           status: 'partial-extra',
           score: m.predicted.score ?? null,
+          source: m.predicted.source ?? null,
         });
       }
       if (pEnd > ovEnd) {
@@ -71,6 +97,7 @@ export function classifyEntities(expected, predicted) {
           entity_group: m.predicted.entity_group,
           status: 'partial-extra',
           score: m.predicted.score ?? null,
+          source: m.predicted.source ?? null,
         });
       }
     }
@@ -93,6 +120,7 @@ export function classifyEntities(expected, predicted) {
       entity_group: e.entity_group,
       status: 'fp',
       score: e.score ?? null,
+      source: e.source ?? null,
     });
   }
 
@@ -112,6 +140,7 @@ export function classifyEntities(expected, predicted) {
         expected_entity_group: m.expected.entity_group,
         status: 'mismatch',
         score: m.predicted.score ?? null,
+        source: m.predicted.source ?? null,
       });
     }
     // Expected-only region
@@ -140,6 +169,7 @@ export function classifyEntities(expected, predicted) {
         entity_group: m.predicted.entity_group,
         status: 'partial-extra',
         score: m.predicted.score ?? null,
+        source: m.predicted.source ?? null,
       });
     }
     if (pEnd > ovEnd) {
@@ -148,6 +178,7 @@ export function classifyEntities(expected, predicted) {
         entity_group: m.predicted.entity_group,
         status: 'partial-extra',
         score: m.predicted.score ?? null,
+        source: m.predicted.source ?? null,
       });
     }
   }
@@ -205,11 +236,14 @@ export function buildAnnotatedText(text, spans) {
         fn: 'FN',
         mismatch: 'MISMATCH',
       };
-      const title = span.status === 'mismatch'
+      const title = (span.status === 'mismatch'
         ? `assigned: ${span.entity_group}, expected: ${span.expected_entity_group} (MISMATCH)${scoreStr}`
-        : `${span.entity_group} (${statusLabels[span.status] || span.status.toUpperCase()})${scoreStr}`;
+        : `${span.entity_group} (${statusLabels[span.status] || span.status.toUpperCase()})${scoreStr}`)
+        + sourceTitleSuffix(span.source);
       const extraAttrs = span.expected_entity_group ? ` data-expected-type="${span.expected_entity_group}"` : '';
-      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}" data-start="${span.start}" data-end="${span.end}"${extraAttrs} title="${escapeHtml(title)}">${chunk}</span>`;
+      const isLastChunkOfSpan = span.end === to;
+      const srcHtml = isLastChunkOfSpan ? renderSourceSup(span.source) : '';
+      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}" data-start="${span.start}" data-end="${span.end}"${extraAttrs} title="${escapeHtml(title)}">${chunk}${srcHtml}</span>`;
     }
   }
 
@@ -332,6 +366,17 @@ export function buildCss() {
       padding: 0.1rem 0;
       border-radius: 2px;
       cursor: copy;
+    }
+
+    .entity .src {
+      font-size: 0.75em;
+      opacity: 0.55;
+      margin-left: 0.1em;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+      color: #444;
+      font-family: inherit;
     }
 
     .toast {
@@ -473,10 +518,22 @@ export function buildLegend(spans) {
     <span style="background:rgba(158,158,158,0.2);border:2px solid #FF6F00;padding:0 4px;border-radius:3px">orange border</span> = type mismatch
   </div>`;
 
+  const presentSources = new Set();
+  for (const s of spans) {
+    for (const src of sourcesToArray(s.source)) presentSources.add(src);
+  }
+  let sourceLegend = '';
+  if (presentSources.size > 0) {
+    const items = [...presentSources]
+      .map(src => `<span><strong>${sourceMarker(src)}</strong> ${escapeHtml(sourceLabel(src))}</span>`)
+      .join(' &nbsp; ');
+    sourceLegend = `<div style="font-size:0.82rem;color:#555;margin-top:0.35rem"><strong>Sources:</strong> ${items}</div>`;
+  }
+
   return `<table class="legend-table">
     <thead><tr><th></th><th>Entity Type</th><th>TP</th><th>FP</th><th>FN</th>${hasMismatches ? '<th>Mis</th>' : ''}</tr></thead>
     <tbody>${rows}${mismatchDetails}</tbody>
-  </table>${styleLegend}`;
+  </table>${styleLegend}${sourceLegend}`;
 }
 
 // ── Click-to-copy script ───────────────────────────────────────────

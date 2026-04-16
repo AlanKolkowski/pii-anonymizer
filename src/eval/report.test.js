@@ -23,6 +23,31 @@ describe('classifyEntities', () => {
     expect(result.filter(e => e.status === 'fp')).toHaveLength(1);
   });
 
+  it('carries source from predicted entities into TP/FP/mismatch spans', () => {
+    const expected = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 10, text: 'John Smith' },
+      { entity_group: 'PERSON_NAME', start: 40, end: 50, text: 'Jane Doe' },
+    ];
+    const predicted = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.95, source: 'bardsai/eu-pii-anonimization-multilang' },
+      { entity_group: 'EMAIL_ADDRESS', start: 60, end: 80, score: 1.0, source: 'regex' },
+      { entity_group: 'LOCATION', start: 40, end: 50, score: 0.9, source: 'bardsai/eu-pii-anonimization' },
+    ];
+    const result = classifyEntities(expected, predicted);
+
+    const tp = result.find(e => e.status === 'tp');
+    expect(tp.source).toBe('bardsai/eu-pii-anonimization-multilang');
+
+    const fp = result.find(e => e.status === 'fp');
+    expect(fp.source).toBe('regex');
+
+    const mismatch = result.find(e => e.status === 'mismatch');
+    expect(mismatch.source).toBe('bardsai/eu-pii-anonimization');
+
+    const fn = result.find(e => e.status === 'fn');
+    if (fn) expect(fn.source ?? null).toBeNull();
+  });
+
   it('classifies overlapping entities with different types as mismatch', () => {
     const expected = [
       { entity_group: 'PERSON_NAME', start: 0, end: 10, text: 'John Smith' },
@@ -74,6 +99,43 @@ describe('buildAnnotatedText', () => {
     const html = buildAnnotatedText(text, spans);
     expect(html).toContain('data-type="PERSON_NAME"');
     expect(html).toContain('data-type="LOCATION"');
+  });
+
+  it('emits a <sup class="src"> marker for entities with a known source', () => {
+    const text = 'Hello John Smith world';
+    const spans = [
+      { start: 6, end: 16, entity_group: 'PERSON_NAME', status: 'tp', score: 0.95, source: 'bardsai/eu-pii-anonimization-multilang' },
+    ];
+    const html = buildAnnotatedText(text, spans);
+    expect(html).toContain('<sup class="src"');
+    expect(html).toContain('¹');
+  });
+
+  it('concatenates markers when source is an array (merged entity)', () => {
+    const text = 'Jan Kowalski mieszka w Krakowie';
+    const spans = [
+      { start: 0, end: 13, entity_group: 'POSTAL_ADDRESS', status: 'tp', score: 0.9, source: ['bardsai/eu-pii-anonimization-multilang', 'bardsai/eu-pii-anonimization'] },
+    ];
+    const html = buildAnnotatedText(text, spans);
+    expect(html).toContain('¹²');
+  });
+
+  it('shows regex marker ʳ for regex-sourced entities', () => {
+    const text = 'Email: a@b.pl done';
+    const spans = [
+      { start: 7, end: 12, entity_group: 'EMAIL_ADDRESS', status: 'tp', score: 1.0, source: 'regex' },
+    ];
+    const html = buildAnnotatedText(text, spans);
+    expect(html).toContain('ʳ');
+  });
+
+  it('omits the <sup class="src"> marker when source is null or missing', () => {
+    const text = 'Jan Kowalski here';
+    const spans = [
+      { start: 0, end: 12, entity_group: 'PERSON_NAME', status: 'fn', score: null, source: null },
+    ];
+    const html = buildAnnotatedText(text, spans);
+    expect(html).not.toContain('<sup class="src"');
   });
 
   it('handles overlapping spans by splitting at boundaries', () => {
