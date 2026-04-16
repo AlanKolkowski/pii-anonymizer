@@ -35,20 +35,20 @@ worker.onmessage = (e) => {
   switch (msg.type) {
     case 'progress': {
       const pct = Math.round(msg.progress ?? 0);
-      modelStatus.textContent = `Downloading model... ${pct}%`;
+      modelStatus.textContent = `Pobieranie modelu... ${pct}%`;
       break;
     }
     case 'loaded':
-      modelStatus.textContent = 'Model ready.';
+      modelStatus.textContent = 'Model gotowy.';
       downloadBtn.disabled = true;
-      downloadBtn.textContent = 'Model Loaded';
+      downloadBtn.textContent = 'Model załadowany';
       anonymizeBtn.disabled = false;
       break;
     case 'error':
-      modelStatus.textContent = `Error: ${msg.message}`;
+      modelStatus.textContent = `Błąd: ${msg.message}`;
       downloadBtn.disabled = false;
       anonymizeBtn.disabled = false;
-      anonymizeBtn.textContent = 'Anonymize';
+      anonymizeBtn.textContent = 'Anonimizuj';
       break;
     case 'result':
       handleAnonymizationResult(msg);
@@ -59,7 +59,7 @@ worker.onmessage = (e) => {
 // --- Download model ---
 downloadBtn.addEventListener('click', () => {
   downloadBtn.disabled = true;
-  modelStatus.textContent = 'Initializing...';
+  modelStatus.textContent = 'Inicjalizacja...';
   worker.postMessage({ type: 'load' });
 });
 
@@ -68,7 +68,7 @@ anonymizeBtn.addEventListener('click', () => {
   const text = inputText.value.trim();
   if (!text) return;
   anonymizeBtn.disabled = true;
-  anonymizeBtn.textContent = 'Analyzing...';
+  anonymizeBtn.textContent = 'Analizowanie...';
   worker.postMessage({ type: 'classify', text });
 });
 
@@ -96,7 +96,7 @@ function handleAnonymizationResult(msg) {
   deanonymizeSection.hidden = false;
   deanonymizeResultSection.hidden = true;
   anonymizeBtn.disabled = false;
-  anonymizeBtn.textContent = 'Anonymize';
+  anonymizeBtn.textContent = 'Anonimizuj';
 
   // Debug panel
   if (isDebug && debug) {
@@ -117,19 +117,19 @@ function renderDebugPanel(debug, anonymized, legend) {
     const c = entry.changes;
     const parts = [`<strong>${entry.step}</strong> <span class="debug-phase">${entry.phase}</span>`];
 
-    if (c.segments) parts.push(`segments +${c.segments.added.length}`);
+    if (c.segments) parts.push(`segmenty +${c.segments.added.length}`);
     if (c.entities) {
       const { added, removed, count } = c.entities;
       const bits = [];
       if (added.length) bits.push(`+${added.length}`);
       if (removed.length) bits.push(`-${removed.length}`);
       bits.push(`(${count.before}\u2192${count.after})`);
-      parts.push(`entities ${bits.join(' ')}`);
+      parts.push(`encje ${bits.join(' ')}`);
     }
-    if (c.anonymized) parts.push('anonymized changed');
-    if (c.legend) parts.push(`legend +${Object.keys(c.legend.added).length}`);
-    if (c.text) parts.push('text changed');
-    if (Object.keys(c).length === 0) parts.push('<em>no changes</em>');
+    if (c.anonymized) parts.push('tekst zanonimizowany zmieniony');
+    if (c.legend) parts.push(`legenda +${Object.keys(c.legend.added).length}`);
+    if (c.text) parts.push('tekst zmieniony');
+    if (Object.keys(c).length === 0) parts.push('<em>brak zmian</em>');
 
     summary.innerHTML = parts.join(' &middot; ');
     card.appendChild(summary);
@@ -139,21 +139,21 @@ function renderDebugPanel(debug, anonymized, legend) {
 
     if (c.entities) {
       if (c.entities.added.length > 0) {
-        body.appendChild(makeEntityTable('Added', c.entities.added));
+        body.appendChild(makeEntityTable('Dodane', c.entities.added));
       }
       if (c.entities.removed.length > 0) {
-        body.appendChild(makeEntityTable('Removed', c.entities.removed));
+        body.appendChild(makeEntityTable('Usunięte', c.entities.removed));
       }
     }
 
     if (c.segments) {
       const h = document.createElement('h5');
-      h.textContent = `Segments (${c.segments.count.after})`;
+      h.textContent = `Segmenty (${c.segments.count.after})`;
       body.appendChild(h);
       const ul = document.createElement('ul');
       for (const seg of c.segments.added) {
         const li = document.createElement('li');
-        li.textContent = `offset ${seg.offset}, ${seg.length} chars: "${seg.preview}..."`;
+        li.textContent = `offset ${seg.offset}, ${seg.length} znaków: "${seg.preview}..."`;
         ul.appendChild(li);
       }
       body.appendChild(ul);
@@ -161,7 +161,7 @@ function renderDebugPanel(debug, anonymized, legend) {
 
     if (c.legend) {
       const h = document.createElement('h5');
-      h.textContent = `Legend (+${Object.keys(c.legend.added).length})`;
+      h.textContent = `Legenda (+${Object.keys(c.legend.added).length})`;
       body.appendChild(h);
       const table = document.createElement('table');
       table.className = 'debug-table';
@@ -183,15 +183,15 @@ function renderDebugPanel(debug, anonymized, legend) {
     copyBtn = document.createElement('button');
     copyBtn.id = 'copy-debug-json';
     copyBtn.className = 'btn btn-secondary';
-    copyBtn.textContent = 'Copy Debug JSON';
+    copyBtn.textContent = 'Kopiuj JSON debug';
     copyBtn.style.marginTop = '0.5rem';
     debugPanel.appendChild(copyBtn);
   }
   copyBtn.onclick = () => {
     const output = { anonymized, legend, debug };
     navigator.clipboard.writeText(JSON.stringify(output, null, 2));
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => { copyBtn.textContent = 'Copy Debug JSON'; }, 2000);
+    copyBtn.textContent = 'Skopiowano!';
+    setTimeout(() => { copyBtn.textContent = 'Kopiuj JSON debug'; }, 2000);
   };
 }
 
@@ -201,7 +201,7 @@ function makeEntityTable(label, entities) {
   const table = document.createElement('table');
   table.className = 'debug-table';
   const thead = document.createElement('tr');
-  thead.innerHTML = '<th>Type</th><th>Text</th><th>Span</th><th>Score</th>';
+  thead.innerHTML = '<th>Typ</th><th>Tekst</th><th>Zakres</th><th>Pewność</th>';
   table.appendChild(thead);
   for (const e of entities) {
     const row = document.createElement('tr');
@@ -223,9 +223,9 @@ function escHtml(s) {
 // --- Copy anonymized ---
 copyAnonymizedBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(anonymizedOutput.textContent);
-  copyAnonymizedBtn.textContent = 'Copied!';
+  copyAnonymizedBtn.textContent = 'Skopiowano!';
   setTimeout(() => {
-    copyAnonymizedBtn.textContent = 'Copy to Clipboard';
+    copyAnonymizedBtn.textContent = 'Kopiuj do schowka';
   }, 2000);
 });
 
@@ -241,8 +241,8 @@ deanonymizeBtn.addEventListener('click', () => {
 // --- Copy de-anonymized ---
 copyDeanonymizedBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(deanonymizedOutput.textContent);
-  copyDeanonymizedBtn.textContent = 'Copied!';
+  copyDeanonymizedBtn.textContent = 'Skopiowano!';
   setTimeout(() => {
-    copyDeanonymizedBtn.textContent = 'Copy to Clipboard';
+    copyDeanonymizedBtn.textContent = 'Kopiuj do schowka';
   }, 2000);
 });

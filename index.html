@@ -1,46 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PII Anonymizer</title>
+  <title>Anonimizator PII</title>
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>PII Anonymizer</h1>
+      <h1>Anonimizator PII</h1>
       <p class="subtitle">
-        Anonymize personal data locally in your browser using
+        Anonimizuj dane osobowe lokalnie w przeglądarce przy użyciu
         <a href="https://huggingface.co/bardsai/eu-pii-anonimization" target="_blank" rel="noopener">bardsai/eu-pii-anonimization</a>.
-        No data leaves your device.
+        Żadne dane nie opuszczają Twojego urządzenia.
       </p>
     </header>
 
     <section id="model-section">
-      <button id="download-btn" class="btn btn-primary">Download Model</button>
+      <button id="download-btn" class="btn btn-primary">Pobierz model</button>
       <p id="model-status"></p>
     </section>
 
     <section id="input-section">
-      <label for="input-text">1. Paste your document</label>
-      <textarea id="input-text" rows="10" placeholder="Paste text containing personal data..."></textarea>
-      <button id="anonymize-btn" class="btn btn-primary" disabled>Anonymize</button>
+      <label for="input-text">1. Wklej swój dokument</label>
+      <textarea id="input-text" rows="10" placeholder="Wklej tekst zawierający dane osobowe..."></textarea>
+      <button id="anonymize-btn" class="btn btn-primary" disabled>Anonimizuj</button>
     </section>
 
     <section id="result-section" hidden>
-      <h2>Anonymized Text</h2>
+      <h2>Zanonimizowany tekst</h2>
       <div class="output-wrapper">
         <pre id="anonymized-output" class="output-box"></pre>
-        <button id="copy-anonymized" class="btn btn-secondary">Copy to Clipboard</button>
+        <button id="copy-anonymized" class="btn btn-secondary">Kopiuj do schowka</button>
       </div>
 
-      <h3>Legend</h3>
+      <h3>Legenda</h3>
       <table id="legend-table">
         <thead>
           <tr>
             <th>Token</th>
-            <th>Original Value</th>
+            <th>Oryginalna wartość</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -48,21 +48,21 @@
     </section>
 
     <section id="debug-section" hidden>
-      <h3>Pipeline Debug</h3>
+      <h3>Debug pipeline'u</h3>
       <div id="debug-panel"></div>
     </section>
 
     <section id="deanonymize-section" hidden>
-      <label for="deanonymize-input">2. Paste LLM output containing tokens</label>
-      <textarea id="deanonymize-input" rows="10" placeholder="Paste text with [PERSON_NAME_1] style tokens..."></textarea>
-      <button id="deanonymize-btn" class="btn btn-primary">De-anonymize</button>
+      <label for="deanonymize-input">2. Wklej odpowiedź LLM zawierającą tokeny</label>
+      <textarea id="deanonymize-input" rows="10" placeholder="Wklej tekst z tokenami w stylu [PERSON_NAME_1]..."></textarea>
+      <button id="deanonymize-btn" class="btn btn-primary">Deanonimizuj</button>
     </section>
 
     <section id="deanonymize-result-section" hidden>
-      <h2>De-anonymized Text</h2>
+      <h2>Zdeanonimizowany tekst</h2>
       <div class="output-wrapper">
         <pre id="deanonymized-output" class="output-box"></pre>
-        <button id="copy-deanonymized" class="btn btn-secondary">Copy to Clipboard</button>
+        <button id="copy-deanonymized" class="btn btn-secondary">Kopiuj do schowka</button>
       </div>
     </section>
 
@@ -70,7 +70,7 @@
       <p>
         Model: <a href="https://huggingface.co/bardsai/eu-pii-anonimization" target="_blank" rel="noopener">bardsai/eu-pii-anonimization</a>
         &middot; Apache 2.0
-        &middot; Powered by <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
+        &middot; Napędzane przez <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
       </p>
     </footer>
   </div>
