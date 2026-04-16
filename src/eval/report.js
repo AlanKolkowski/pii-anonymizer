@@ -209,7 +209,7 @@ export function buildAnnotatedText(text, spans) {
         ? `assigned: ${span.entity_group}, expected: ${span.expected_entity_group} (MISMATCH)${scoreStr}`
         : `${span.entity_group} (${statusLabels[span.status] || span.status.toUpperCase()})${scoreStr}`;
       const extraAttrs = span.expected_entity_group ? ` data-expected-type="${span.expected_entity_group}"` : '';
-      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}"${extraAttrs} title="${escapeHtml(title)}">${chunk}</span>`;
+      html += `<span class="entity ${span.entity_group} ${span.status}" data-type="${span.entity_group}" data-status="${span.status}" data-start="${span.start}" data-end="${span.end}"${extraAttrs} title="${escapeHtml(title)}">${chunk}</span>`;
     }
   }
 
@@ -331,7 +331,27 @@ export function buildCss() {
     .entity {
       padding: 0.1rem 0;
       border-radius: 2px;
-      cursor: help;
+      cursor: copy;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: #333;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      z-index: 1000;
+      font-size: 0.85rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: toastFade 1.1s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translateY(6px); }
+      15%, 80% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(0); }
     }
     .entity.tp { background: rgba(var(--entity-rgb), 0.3); }
     .entity.partial { background: rgba(var(--entity-rgb), 0.2); border-bottom: 2px dotted #FF6F00; }
@@ -457,6 +477,80 @@ export function buildLegend(spans) {
     <thead><tr><th></th><th>Entity Type</th><th>TP</th><th>FP</th><th>FN</th>${hasMismatches ? '<th>Mis</th>' : ''}</tr></thead>
     <tbody>${rows}${mismatchDetails}</tbody>
   </table>${styleLegend}`;
+}
+
+// ── Click-to-copy script ───────────────────────────────────────────
+
+export function buildScript() {
+  return `
+    (function () {
+      const STATUS_LABELS = {
+        tp: (t) => 'TP (' + t + ')',
+        fp: (t) => 'FP (' + t + ')',
+        fn: (t) => 'FN (' + t + ')',
+        partial: (t) => 'PARTIAL overlap (' + t + ')',
+        'partial-missed': (t) => 'PARTIAL missed (' + t + ')',
+        'partial-extra': (t) => 'PARTIAL extra (' + t + ')',
+      };
+
+      function formatStatus(status, type, expectedType) {
+        if (status === 'mismatch') {
+          return 'MISMATCH (assigned: ' + type + ', expected: ' + expectedType + ')';
+        }
+        const fn = STATUS_LABELS[status];
+        return fn ? fn(type) : status.toUpperCase() + ' (' + type + ')';
+      }
+
+      function showToast(msg) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1100);
+      }
+
+      async function copyPlaceholder(entity) {
+        const details = entity.closest('[data-doc]');
+        if (!details) return;
+        const docName = details.dataset.doc;
+        const start = parseInt(entity.dataset.start, 10);
+        const end = parseInt(entity.dataset.end, 10);
+        const status = entity.dataset.status;
+        const type = entity.dataset.type;
+        const expectedType = entity.dataset.expectedType;
+        const source = (window.__evalSources || {})[docName] || '';
+        const text = source.slice(start, end);
+
+        const block = [
+          'Dokument: ' + docName,
+          'Pozycja: ' + start + '-' + end,
+          'Status: ' + formatStatus(status, type, expectedType),
+          'Tekst: ' + text,
+          'Uwaga: ',
+          '',
+        ].join('\\n');
+
+        try {
+          await navigator.clipboard.writeText(block);
+          showToast('Skopiowano (' + start + '-' + end + ')');
+        } catch (err) {
+          console.error('Clipboard write failed:', err);
+          showToast('Błąd kopiowania — zobacz konsolę');
+        }
+      }
+
+      document.addEventListener('click', (e) => {
+        const entity = e.target.closest('.entity');
+        if (!entity) return;
+        // Skip if user is selecting text (non-empty selection across entity)
+        const sel = window.getSelection();
+        if (sel && sel.toString().length > 0 && sel.containsNode(entity, true)) return;
+        copyPlaceholder(entity);
+      });
+    })();
+  `;
 }
 
 // ── Historical data loading ────────────────────────────────────────
@@ -653,6 +747,7 @@ export async function generateReport(runId, scoresData) {
 
   // Build per-document sections
   const docSections = [];
+  const sourceTextsByDoc = {};
   for (const docName of docNames) {
     const docScores = scoresData.documents[docName];
 
@@ -663,6 +758,7 @@ export async function generateReport(runId, scoresData) {
     } catch {
       sourceText = `(source text not found for ${docName})`;
     }
+    sourceTextsByDoc[docName] = sourceText;
 
     // Load predicted entities
     let predicted = [];
@@ -702,7 +798,7 @@ export async function generateReport(runId, scoresData) {
     });
 
     docSections.push(`
-      <details>
+      <details data-doc="${docName}">
         <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
         <div>
           <div class="section-title">Annotated Text</div>
@@ -759,6 +855,9 @@ export async function generateReport(runId, scoresData) {
   ${overallComparisonHtml}
 
   ${docSections.join('\n')}
+
+  <script>window.__evalSources = ${JSON.stringify(sourceTextsByDoc).replace(/</g, '\\u003c')};</script>
+  <script>${buildScript()}</script>
 </body>
 </html>`;
 
