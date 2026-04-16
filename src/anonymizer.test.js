@@ -440,6 +440,15 @@ describe('findRegexEntities', () => {
     expect(findRegexEntities('no emails here')).toEqual([]);
   });
 
+  it('tags every entity with source="regex"', () => {
+    const text = 'email a@b.pl, PESEL 92071314764, phone +48 601 234 567';
+    const entities = findRegexEntities(text);
+    expect(entities.length).toBeGreaterThan(0);
+    for (const e of entities) {
+      expect(e.source).toBe('regex');
+    }
+  });
+
   it('detects PESEL (11-digit identifier)', () => {
     const text = 'PESEL: 92071314764';
     const entities = findRegexEntities(text);
@@ -757,5 +766,29 @@ describe('mergeAdjacentEntities', () => {
     ];
     const result = mergeAdjacentEntities(entities, text);
     expect(result).toHaveLength(2);
+  });
+
+  it('unions sources when merging entities from different origins', () => {
+    const text = 'ul. Marszałkowska 47/12, 00-648 Warszawa';
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 23, score: 0.85, source: 'bardsai/eu-pii-anonimization-multilang' },
+      { entity_group: 'LOCATION', start: 25, end: 40, score: 0.90, source: 'bardsai/eu-pii-anonimization' },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result).toHaveLength(1);
+    expect(result[0].source).toEqual([
+      'bardsai/eu-pii-anonimization-multilang',
+      'bardsai/eu-pii-anonimization',
+    ]);
+  });
+
+  it('keeps a single source (not an array) when both merged entities share it', () => {
+    const text = 'ul. Marszałkowska 47/12, 00-648 Warszawa';
+    const entities = [
+      { entity_group: 'POSTAL_ADDRESS', start: 0, end: 23, score: 0.85, source: 'bardsai/eu-pii-anonimization' },
+      { entity_group: 'LOCATION', start: 25, end: 40, score: 0.90, source: 'bardsai/eu-pii-anonimization' },
+    ];
+    const result = mergeAdjacentEntities(entities, text);
+    expect(result[0].source).toBe('bardsai/eu-pii-anonimization');
   });
 });

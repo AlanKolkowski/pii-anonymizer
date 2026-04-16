@@ -24,6 +24,7 @@ export function createNerStep(models, loadModel) {
             ...entity,
             start: entity.start + segment.offset,
             end: entity.end + segment.offset,
+            source: model.id,
           });
         }
       }

@@ -1,3 +1,5 @@
+import { unionSources } from './pipeline/sources.js';
+
 function commonPrefixLength(a, b) {
   let i = 0;
   while (i < a.length && i < b.length && a[i] === b[i]) i++;
@@ -221,6 +223,7 @@ export function findRegexEntities(text) {
         start: m.index,
         end: m.index + m[0].length,
         score: 1.0,
+        source: 'regex',
       });
     }
   }
@@ -284,11 +287,15 @@ export function mergeAdjacentEntities(entities, text) {
       const gap = text.slice(prev.end, curr.start);
       if (gap.length <= 3 && /^[\s,\n]*$/.test(gap)) {
         // Merge into one POSTAL_ADDRESS
+        const mergedSources = unionSources(prev.source, curr.source);
         result[result.length - 1] = {
           entity_group: 'POSTAL_ADDRESS',
           start: prev.start,
           end: curr.end,
           score: Math.max(prev.score, curr.score),
+          ...(mergedSources.length > 0 && {
+            source: mergedSources.length === 1 ? mergedSources[0] : mergedSources,
+          }),
         };
         continue;
       }
