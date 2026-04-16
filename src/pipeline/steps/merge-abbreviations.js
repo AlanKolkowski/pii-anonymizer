@@ -1,7 +1,15 @@
 const LIST_MARKER_RE = /^(\d+|[IVXLCDM]+|[a-z])\.$/;
+const PARAGRAPH_BREAK_RE = /\n\s*\n/;
 
 function isListMarker(segText) {
   return LIST_MARKER_RE.test(segText.trim());
+}
+
+function hasParagraphBreakBetween(prev, next, originalText) {
+  const start = prev.offset + prev.text.length;
+  const end = next.offset;
+  if (end <= start) return false;
+  return PARAGRAPH_BREAK_RE.test(originalText.slice(start, end));
 }
 
 function sliceMerged(originalText, segA, segB) {
@@ -11,6 +19,7 @@ function sliceMerged(originalText, segA, segB) {
 }
 
 function shouldMerge(prev, next, originalText) {
+  if (hasParagraphBreakBetween(prev, next, originalText)) return null;
   if (isListMarker(prev.text)) return 'R3';
   return null;
 }

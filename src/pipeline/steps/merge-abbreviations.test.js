@@ -57,6 +57,31 @@ describe('mergeAbbreviationsStep', () => {
     });
   });
 
+  describe('Block: paragraph boundary', () => {
+    it('blocks R3 merge when there is a double newline between segments', () => {
+      const text = '1.\n\nPismo z dnia.';
+      const ctx = makeCtx(text, [
+        { text: '1.', offset: 0 },
+        { text: 'Pismo z dnia.', offset: 4 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: '1.', offset: 0 },
+        { text: 'Pismo z dnia.', offset: 4 },
+      ]);
+    });
+
+    it('blocks merge when double newline has whitespace between newlines', () => {
+      const text = '1. \n \n Pismo.';
+      const ctx = makeCtx(text, [
+        { text: '1. ', offset: 0 },
+        { text: 'Pismo.', offset: 7 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+  });
+
   describe('empty/single segment passthrough', () => {
     it('returns empty segments unchanged', () => {
       const ctx = makeCtx('', []);
