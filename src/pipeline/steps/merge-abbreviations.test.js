@@ -82,6 +82,58 @@ describe('mergeAbbreviationsStep', () => {
     });
   });
 
+  describe('R1a: dictionary Cat A (always merge)', () => {
+    it('merges "adw." followed by uppercase name', () => {
+      const text = 'adw. Kowalski';
+      const ctx = makeCtx(text, [
+        { text: 'adw. ', offset: 0 },
+        { text: 'Kowalski', offset: 5 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: 'adw. Kowalski', offset: 0 }]);
+    });
+
+    it('merges "ul." followed by a street name', () => {
+      const text = 'ul. Mickiewicza 5';
+      const ctx = makeCtx(text, [
+        { text: 'ul. ', offset: 0 },
+        { text: 'Mickiewicza 5', offset: 4 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: 'ul. Mickiewicza 5', offset: 0 }]);
+    });
+
+    it('matches case-insensitively', () => {
+      const text = 'Ul. Różana';
+      const ctx = makeCtx(text, [
+        { text: 'Ul. ', offset: 0 },
+        { text: 'Różana', offset: 4 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: 'Ul. Różana', offset: 0 }]);
+    });
+
+    it('matches multi-word suffix "r.pr."', () => {
+      const text = 'r.pr. Jan Nowak';
+      const ctx = makeCtx(text, [
+        { text: 'r.pr. ', offset: 0 },
+        { text: 'Jan Nowak', offset: 6 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: 'r.pr. Jan Nowak', offset: 0 }]);
+    });
+
+    it('does NOT merge when paragraph break is present', () => {
+      const text = 'ul.\n\nKowalski';
+      const ctx = makeCtx(text, [
+        { text: 'ul.', offset: 0 },
+        { text: 'Kowalski', offset: 5 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+  });
+
   describe('empty/single segment passthrough', () => {
     it('returns empty segments unchanged', () => {
       const ctx = makeCtx('', []);
