@@ -233,7 +233,7 @@ describe('createNerStep', () => {
       dispose: async () => {},
     });
 
-    const step = createNerStep([{ id: 'mock-model', dtype: 'q8' }], mockLoadModel);
+    const step = createNerStep([{ alias: 'mock', id: 'mock-model', dtype: 'q8' }], mockLoadModel);
     const ctx = {
       text: 'Jan Kowalski jest notariuszem',
       segments: [{ text: 'Jan Kowalski jest notariuszem', offset: 0 }],
@@ -254,7 +254,7 @@ describe('createNerStep', () => {
       dispose: async () => {},
     });
 
-    const step = createNerStep([{ id: 'mock-model', dtype: 'q8' }], mockLoadModel);
+    const step = createNerStep([{ alias: 'mock', id: 'mock-model', dtype: 'q8' }], mockLoadModel);
     const ctx = {
       text: 'Prefix text. Anna Nowak lives here',
       segments: [{ text: 'Anna Nowak lives here', offset: 13 }],
@@ -280,7 +280,7 @@ describe('createNerStep', () => {
     });
 
     const step = createNerStep(
-      [{ id: 'model-a', dtype: 'q8' }, { id: 'model-b', dtype: 'q8' }],
+      [{ alias: 'a', id: 'model-a', dtype: 'q8' }, { alias: 'b', id: 'model-b', dtype: 'q8' }],
       mockLoadModel,
     );
     const ctx = {
@@ -292,5 +292,28 @@ describe('createNerStep', () => {
     };
     const result = await step(ctx);
     expect(result.entities.length).toBe(2);
+  });
+
+  it('writes entity.source = alias (not raw HF id)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async () => [
+        { word: 'Jan', entity: 'B-PERSON_NAME', score: 0.9, index: 0 },
+      ],
+      dispose: async () => {},
+    });
+
+    const step = createNerStep(
+      [{ alias: 'multilang-q8', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' }],
+      mockLoadModel,
+    );
+    const ctx = {
+      text: 'Jan',
+      segments: [{ text: 'Jan', offset: 0 }],
+      entities: [],
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    expect(result.entities[0].source).toBe('multilang-q8');
   });
 });

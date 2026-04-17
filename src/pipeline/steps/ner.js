@@ -3,15 +3,15 @@ import { aggregateEntities } from '../../anonymizer.js';
 /**
  * Factory that creates a NER pipeline step.
  *
- * @param {Array<{id: string, dtype: string}>} models - Model configs to run
- * @param {Function} loadModel - async (modelConfig) => { infer(text), dispose() }
+ * @param {Array<{alias: string, id: string, dtype: string}>} sources - Active HF sources
+ * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
  */
-export function createNerStep(models, loadModel) {
+export function createNerStep(sources, loadModel) {
   return async function nerStep(ctx) {
     const allEntities = [];
 
-    for (const model of models) {
-      const ner = await loadModel(model);
+    for (const source of sources) {
+      const ner = await loadModel({ id: source.id, dtype: source.dtype });
 
       for (const segment of ctx.segments) {
         const raw = await ner.infer(segment.text);
@@ -24,7 +24,7 @@ export function createNerStep(models, loadModel) {
             ...entity,
             start: entity.start + segment.offset,
             end: entity.end + segment.offset,
-            source: model.id,
+            source: source.alias,
           });
         }
       }
