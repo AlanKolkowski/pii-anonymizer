@@ -2,8 +2,8 @@ import { normalizeWhitespace } from '../steps/preprocess.js';
 import { createSentencexSegmentStep } from '../steps/segment-sentencex.js';
 import { mergeAbbreviationsStep } from '../steps/merge-abbreviations.js';
 import { createNerStep } from '../steps/ner.js';
-import { regexStep } from '../steps/regex.js';
-import { allowedTypesStep } from '../steps/allowed-types.js';
+import { createRegexStep } from '../steps/regex.js';
+import { createSourceFilterStep } from '../steps/source-filter.js';
 import { snapStep } from '../steps/snap.js';
 import { trimTrailingDotStep } from '../steps/trim-trailing-dot.js';
 import { filterStep } from '../steps/filter.js';
@@ -11,26 +11,50 @@ import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
 import { rescanStep } from '../steps/rescan.js';
 import { tokenizeStep } from '../steps/tokenize.js';
+import { ENTITY_SOURCES, SOURCES, requiredSources } from './entity-sources.js';
 
-export const MODELS = [
-  { id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' },
-  { id: 'bardsai/eu-pii-anonimization', dtype: 'q8' },
-];
+function resolveActiveSources({ enabledEntities, entitySources, sources }) {
+  const needed = requiredSources(enabledEntities);
+  const hf = [];
+  let regexActive = false;
+  for (const alias of needed) {
+    const def = sources[alias];
+    if (!def) continue;
+    if (def.kind === 'hf') hf.push({ alias, id: def.id, dtype: def.dtype });
+    else if (def.kind === 'regex') regexActive = true;
+  }
+  return { hf, regexActive };
+}
 
 /**
  * Creates the default PII anonymization pipeline.
  *
- * @param {Function} loadModel - async (modelConfig) => { infer(text), dispose() }
+ * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
  * @param {Function} getSentenceBoundaries - (lang, text) => [{start_index, end_index, text}, ...]
+ * @param {object} options - { enabledEntities, entitySources?, sources? }
  */
-export function createDefaultPipeline(loadModel, getSentenceBoundaries) {
+export function createDefaultPipeline(loadModel, getSentenceBoundaries, options) {
+  const entitySources = options.entitySources ?? ENTITY_SOURCES;
+  const sources = options.sources ?? SOURCES;
+  const enabledEntities = options.enabledEntities;
+  const { hf, regexActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
+
   return [
     { phase: 'preprocess', steps: [normalizeWhitespace] },
     { phase: 'segment', steps: [
-        createSentencexSegmentStep(getSentenceBoundaries),
-        mergeAbbreviationsStep,
+      createSentencexSegmentStep(getSentenceBoundaries),
+      mergeAbbreviationsStep,
     ] },
-    { phase: 'ner', steps: [createNerStep(MODELS, loadModel), regexStep] },
-    { phase: 'postprocess', steps: [allowedTypesStep, snapStep, trimTrailingDotStep, filterStep, dedupStep, mergeStep, tokenizeStep, rescanStep] },
+    { phase: 'ner', steps: [createNerStep(hf, loadModel), createRegexStep(regexActive)] },
+    { phase: 'postprocess', steps: [
+      createSourceFilterStep({ enabledEntities, entitySources }),
+      snapStep,
+      trimTrailingDotStep,
+      filterStep,
+      dedupStep,
+      mergeStep,
+      tokenizeStep,
+      rescanStep,
+    ] },
   ];
 }

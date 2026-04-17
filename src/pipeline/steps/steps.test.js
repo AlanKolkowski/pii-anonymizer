@@ -9,7 +9,6 @@ import { createRegexStep } from './regex.js';
 import { rescanStep } from './rescan.js';
 import { tokenizeStep } from './tokenize.js';
 import { createNerStep } from './ner.js';
-import { allowedTypesStep } from './allowed-types.js';
 
 describe('normalizeWhitespace', () => {
   it('passes text through unchanged (no-op)', () => {
@@ -205,40 +204,6 @@ describe('rescanStep', () => {
     const result = rescanStep(ctx);
     expect(result.anonymized).toContain('[PERSON_NAME_1]');
     expect(result.anonymized).not.toContain('Jana Kowalskiego');
-  });
-});
-
-describe('allowedTypesStep', () => {
-  it('keeps entities with known types', () => {
-    const ctx = {
-      text: '',
-      segments: [],
-      entities: [
-        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9 },
-        { entity_group: 'EMAIL_ADDRESS', start: 20, end: 35, score: 1.0 },
-      ],
-      anonymized: '',
-      legend: {},
-    };
-    const result = allowedTypesStep(ctx);
-    expect(result.entities).toHaveLength(2);
-  });
-
-  it('drops entities with unknown types', () => {
-    const ctx = {
-      text: '',
-      segments: [],
-      entities: [
-        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9 },
-        { entity_group: 'UNKNOWN_TYPE', start: 20, end: 30, score: 0.7 },
-        { entity_group: 'MISC', start: 40, end: 50, score: 0.6 },
-      ],
-      anonymized: '',
-      legend: {},
-    };
-    const result = allowedTypesStep(ctx);
-    expect(result.entities).toHaveLength(1);
-    expect(result.entities[0].entity_group).toBe('PERSON_NAME');
   });
 });
 
