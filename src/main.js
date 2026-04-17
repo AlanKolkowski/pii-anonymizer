@@ -1,4 +1,10 @@
 import { deanonymizeText } from './anonymizer.js';
+import { createEntitySelector } from './ui/entity-selector.js';
+import {
+  ENTITY_CATEGORIES,
+  ENTITY_LABELS,
+  defaultEnabledEntities,
+} from './pipeline/configs/entity-sources.js';
 import './style.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
@@ -6,10 +12,11 @@ const worker = new Worker(new URL('./worker.js', import.meta.url), {
 });
 
 let currentLegend = null;
+let configuredOnce = false;
+let classifyInFlight = false;
 const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
+const LS_KEY = 'pii.selected-entities';
 
-// --- DOM refs ---
-const downloadBtn = document.getElementById('download-btn');
 const modelStatus = document.getElementById('model-status');
 const inputText = document.getElementById('input-text');
 const anonymizeBtn = document.getElementById('anonymize-btn');
@@ -22,53 +29,89 @@ const debugPanel = document.getElementById('debug-panel');
 const deanonymizeSection = document.getElementById('deanonymize-section');
 const deanonymizeInput = document.getElementById('deanonymize-input');
 const deanonymizeBtn = document.getElementById('deanonymize-btn');
-const deanonymizeResultSection = document.getElementById(
-  'deanonymize-result-section',
-);
+const deanonymizeResultSection = document.getElementById('deanonymize-result-section');
 const deanonymizedOutput = document.getElementById('deanonymized-output');
 const copyDeanonymizedBtn = document.getElementById('copy-deanonymized');
+const selectorRoot = document.getElementById('entity-selector-root');
 
-// --- Worker message handler ---
+function loadSelectionFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter((e) => typeof e === 'string');
+  } catch {
+    return null;
+  }
+}
+
+const initialSelection = loadSelectionFromStorage() ?? defaultEnabledEntities();
+
+let configureTimer = null;
+function scheduleConfigure(enabledEntities) {
+  clearTimeout(configureTimer);
+  configureTimer = setTimeout(() => {
+    worker.postMessage({ type: 'configure', enabledEntities });
+  }, 300);
+}
+
+const selector = createEntitySelector(selectorRoot, {
+  categories: ENTITY_CATEGORIES,
+  labels: ENTITY_LABELS,
+  initial: initialSelection,
+  onChange(selected) {
+    localStorage.setItem(LS_KEY, JSON.stringify(selected));
+    updateAnonymizeButton();
+    scheduleConfigure(selected);
+  },
+});
+
+worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected() });
+
+function updateAnonymizeButton() {
+  const hasSelection = selector.getSelected().length > 0;
+  anonymizeBtn.disabled = !hasSelection || !configuredOnce || classifyInFlight;
+  if (!hasSelection) {
+    modelStatus.textContent = 'Wybierz przynajmniej jedną encję.';
+  } else if (!classifyInFlight) {
+    modelStatus.textContent = '';
+  }
+}
+
 worker.onmessage = (e) => {
   const msg = e.data;
-
   switch (msg.type) {
     case 'progress': {
       const pct = Math.round(msg.progress ?? 0);
-      modelStatus.textContent = `Pobieranie modelu... ${pct}%`;
+      modelStatus.textContent = `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`;
       break;
     }
-    case 'loaded':
-      modelStatus.textContent = 'Model gotowy.';
-      downloadBtn.disabled = true;
-      downloadBtn.textContent = 'Model załadowany';
-      anonymizeBtn.disabled = false;
-      break;
-    case 'error':
-      modelStatus.textContent = `Błąd: ${msg.message}`;
-      downloadBtn.disabled = false;
-      anonymizeBtn.disabled = false;
-      anonymizeBtn.textContent = 'Anonimizuj';
+    case 'configured':
+      configuredOnce = true;
+      updateAnonymizeButton();
       break;
     case 'result':
+      classifyInFlight = false;
       handleAnonymizationResult(msg);
+      updateAnonymizeButton();
+      break;
+    case 'error':
+      classifyInFlight = false;
+      modelStatus.textContent = `Błąd: ${msg.message}`;
+      anonymizeBtn.textContent = 'Anonimizuj';
+      updateAnonymizeButton();
       break;
   }
 };
 
-// --- Download model ---
-downloadBtn.addEventListener('click', () => {
-  downloadBtn.disabled = true;
-  modelStatus.textContent = 'Inicjalizacja...';
-  worker.postMessage({ type: 'load' });
-});
-
-// --- Anonymize ---
 anonymizeBtn.addEventListener('click', () => {
   const text = inputText.value.trim();
   if (!text) return;
-  anonymizeBtn.disabled = true;
+  classifyInFlight = true;
+  modelStatus.textContent = 'Analizowanie...';
   anonymizeBtn.textContent = 'Analizowanie...';
+  anonymizeBtn.disabled = true;
   worker.postMessage({ type: 'classify', text });
 });
 
@@ -95,17 +138,14 @@ function handleAnonymizationResult(msg) {
   resultSection.hidden = false;
   deanonymizeSection.hidden = false;
   deanonymizeResultSection.hidden = true;
-  anonymizeBtn.disabled = false;
   anonymizeBtn.textContent = 'Anonimizuj';
 
-  // Debug panel
   if (isDebug && debug) {
     renderDebugPanel(debug, anonymized, legend);
     debugSection.hidden = false;
   }
 }
 
-// --- Debug panel ---
 function renderDebugPanel(debug, anonymized, legend) {
   debugPanel.innerHTML = '';
 
@@ -177,7 +217,6 @@ function renderDebugPanel(debug, anonymized, legend) {
     debugPanel.appendChild(card);
   }
 
-  // Copy full debug JSON button
   let copyBtn = document.getElementById('copy-debug-json');
   if (!copyBtn) {
     copyBtn = document.createElement('button');
@@ -221,16 +260,12 @@ function escHtml(s) {
   return div.innerHTML;
 }
 
-// --- Copy anonymized ---
 copyAnonymizedBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(anonymizedOutput.textContent);
   copyAnonymizedBtn.textContent = 'Skopiowano!';
-  setTimeout(() => {
-    copyAnonymizedBtn.textContent = 'Kopiuj do schowka';
-  }, 2000);
+  setTimeout(() => { copyAnonymizedBtn.textContent = 'Kopiuj do schowka'; }, 2000);
 });
 
-// --- De-anonymize ---
 deanonymizeBtn.addEventListener('click', () => {
   const text = deanonymizeInput.value.trim();
   if (!text || !currentLegend) return;
@@ -239,11 +274,10 @@ deanonymizeBtn.addEventListener('click', () => {
   deanonymizeResultSection.hidden = false;
 });
 
-// --- Copy de-anonymized ---
 copyDeanonymizedBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(deanonymizedOutput.textContent);
   copyDeanonymizedBtn.textContent = 'Skopiowano!';
-  setTimeout(() => {
-    copyDeanonymizedBtn.textContent = 'Kopiuj do schowka';
-  }, 2000);
+  setTimeout(() => { copyDeanonymizedBtn.textContent = 'Kopiuj do schowka'; }, 2000);
 });
+
+updateAnonymizeButton();
