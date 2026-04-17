@@ -10,7 +10,8 @@
     "eval": "node src/eval/run.js",
     "eval:compare": "node src/eval/compare.js",
     "eval:list": "node src/eval/compare.js --list",
-    "eval:score": "node src/eval/score.js"
+    "eval:score": "node src/eval/score.js",
+    "eval:view": "node src/eval/viewer.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",
