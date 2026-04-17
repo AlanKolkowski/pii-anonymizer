@@ -5,7 +5,7 @@ import { snapStep } from './snap.js';
 import { filterStep } from './filter.js';
 import { dedupStep } from './dedup.js';
 import { mergeStep } from './merge.js';
-import { regexStep } from './regex.js';
+import { createRegexStep } from './regex.js';
 import { rescanStep } from './rescan.js';
 import { tokenizeStep } from './tokenize.js';
 import { createNerStep } from './ner.js';
@@ -133,23 +133,42 @@ describe('mergeStep', () => {
   });
 });
 
-describe('regexStep', () => {
-  it('adds regex-detected entities to existing entities', () => {
+describe('createRegexStep', () => {
+  it('adds regex-detected entities when active', () => {
     const text = 'Contact jan@test.com for details';
+    const step = createRegexStep(true);
     const ctx = {
       text,
       segments: [],
       entities: [
-        { entity_group: 'PERSON_NAME', start: 0, end: 7, score: 0.9 },
+        { entity_group: 'PERSON_NAME', start: 0, end: 7, score: 0.9, source: 'multilang-q8' },
       ],
       anonymized: '',
       legend: {},
     };
-    const result = regexStep(ctx);
+    const result = step(ctx);
     expect(result.entities.length).toBe(2);
     const email = result.entities.find(e => e.entity_group === 'EMAIL_ADDRESS');
     expect(email).toBeDefined();
     expect(email.score).toBe(1.0);
+    expect(email.source).toBe('regex');
+  });
+
+  it('is a no-op when inactive', () => {
+    const text = 'Contact jan@test.com for details';
+    const step = createRegexStep(false);
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 7, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].entity_group).toBe('PERSON_NAME');
   });
 });
 

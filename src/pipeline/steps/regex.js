@@ -1,7 +1,9 @@
 import { findRegexEntities } from '../../anonymizer.js';
 
-export function regexStep(ctx) {
-  const regexEntities = findRegexEntities(ctx.text);
-  const combined = [...ctx.entities, ...regexEntities];
-  return { ...ctx, entities: combined };
+export function createRegexStep(active) {
+  return function regexStep(ctx) {
+    if (!active) return ctx;
+    const regexEntities = findRegexEntities(ctx.text);
+    return { ...ctx, entities: [...ctx.entities, ...regexEntities] };
+  };
 }
