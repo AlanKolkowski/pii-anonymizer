@@ -4,13 +4,17 @@ export const CAT_A = new Set([
   // Tytuły/zawody
   'adw.', 'apl.', 'mec.', 'prof.', 'inż.', 'lek.', 'med.',
   'por.', 'kpt.', 'ks.', 'o.', 'św.', 'p.',
+  'rad.',
   // Wielowyrazowe
   'r.pr.',
   // Adresowe
   'ul.', 'al.', 'pl.', 'os.', 'gm.', 'pow.', 'woj.', 'm.st.',
   'im.', 'pn.',
+  'zam.',
   // Łączniki do rzeczownika (nigdy nie kończą zdania)
   'ds.', 'm.in.', 'tj.', 'tzw.', 'tzn.', 'np.',
+  // Label-only (zawsze poprzedzają wartość, nigdy końca zdania)
+  'tel.', 'sygn.', 'rep.',
 ]);
 
 // Skróty, które mogą legalnie kończyć zdanie.
@@ -18,7 +22,8 @@ export const CAT_A = new Set([
 export const CAT_B = new Set([
   // Prawne
   'art.', 'ust.', 'pkt.', 'lit.', 'par.', 'rozdz.', 'zał.',
-  'dz.u.', 'dz.urz.', 'rep.', 'poz.', 'sygn.', 'zob.',
+  'dz.u.', 'dz.urz.', 'poz.', 'zob.',
+  'k.c.', 'k.k.', 'k.p.', 'k.p.c.', 'k.p.k.',
   // Daty/czas
   'r.', 'w.', 'p.n.e.', 'n.e.',
   'godz.', 'min.', 'sek.', 'ok.',
@@ -26,8 +31,9 @@ export const CAT_B = new Set([
   // Ogólne
   'itp.', 'itd.',
   'ww.', 'cd.', 'cdn.', 'br.', 'bm.', 'ub.r.',
+  'obr.',
   // Firmy
   'sp.', 'z o.o.', 'o.o.', 's.a.', 'p.p.', 'p.o.', 'spółdz.',
   // Inne
-  'tel.', 'ob.', 'zw.',
+  'ob.', 'zw.',
 ]);

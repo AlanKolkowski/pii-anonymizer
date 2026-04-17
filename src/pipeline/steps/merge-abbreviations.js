@@ -1,11 +1,16 @@
 import { CAT_A, CAT_B } from '../data/polish-abbreviations.js';
 
 const LIST_MARKER_RE = /^(\d+|[IVXLCDM]+|[a-z])\.$/;
+const TRAILING_LIST_MARKER_RE = /(?:^|\n)\s*(?:\d+|[IVXLCDM]+|[a-z]|§\s*\d+)\.\s*$/;
 const PARAGRAPH_BREAK_RE = /\n\s*\n/;
 const MAX_SUFFIX_WORDS = 3;
 
 function isListMarker(segText) {
   return LIST_MARKER_RE.test(segText.trim());
+}
+
+function endsWithListMarker(segText) {
+  return TRAILING_LIST_MARKER_RE.test(segText);
 }
 
 function hasParagraphBreakBetween(prev, next, originalText) {
@@ -34,6 +39,7 @@ function sliceMerged(originalText, segA, segB) {
 
 const LOWERCASE_POLISH_RE = /[a-ząćęłńóśźż]/;
 const DIGIT_RE = /[0-9]/;
+const CONTINUATION_PUNCT_RE = /[:,(\-–—/]/;
 
 function firstNonWhitespaceChar(s) {
   const trimmed = s.trimStart();
@@ -45,19 +51,53 @@ function startsWithLowercaseOrDigit(s) {
   return LOWERCASE_POLISH_RE.test(ch) || DIGIT_RE.test(ch);
 }
 
+function startsWithContinuation(s) {
+  const ch = firstNonWhitespaceChar(s);
+  if (!ch) return false;
+  return (
+    LOWERCASE_POLISH_RE.test(ch) ||
+    DIGIT_RE.test(ch) ||
+    CONTINUATION_PUNCT_RE.test(ch)
+  );
+}
+
 const WORD_DOT_END_RE = /\w\.\s*$/u;
 
 function endsWithWordDot(segText) {
   return WORD_DOT_END_RE.test(segText);
 }
 
+const SINGLE_UPPER_DOT_END_RE = /(?:^|[^A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż])[A-ZĄĆĘŁŃÓŚŹŻ]\.\s*$/u;
+const SINGLE_UPPER_DOT_START_RE = /^\s*[A-ZĄĆĘŁŃÓŚŹŻ]\.(?:[^A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]|$)/u;
+const INITIAL_AFTER_DASH_END_RE = /[–—-]\s+[A-ZĄĆĘŁŃÓŚŹŻ]\.\s*$/u;
+const UPPERCASE_WORD_START_RE = /^\s*[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]/u;
+
+function endsWithSingleUpperDot(s) {
+  return SINGLE_UPPER_DOT_END_RE.test(s);
+}
+
+function startsWithSingleUpperDot(s) {
+  return SINGLE_UPPER_DOT_START_RE.test(s);
+}
+
+function endsWithInitialAfterDash(s) {
+  return INITIAL_AFTER_DASH_END_RE.test(s);
+}
+
+function startsWithUppercaseWord(s) {
+  return UPPERCASE_WORD_START_RE.test(s);
+}
+
 function shouldMerge(prev, next, originalText) {
   if (hasParagraphBreakBetween(prev, next, originalText)) return null;
   if (isListMarker(prev.text)) return 'R3';
+  if (endsWithListMarker(prev.text)) return 'R3';
   const cat = matchDictionarySuffix(prev.text);
   if (cat === 'A') return 'R1a';
-  if (cat === 'B' && startsWithLowercaseOrDigit(next.text)) return 'R1b';
-  if (endsWithWordDot(prev.text) && startsWithLowercaseOrDigit(next.text)) return 'R2';
+  if (cat === 'B' && startsWithContinuation(next.text)) return 'R1b';
+  if (endsWithSingleUpperDot(prev.text) && startsWithSingleUpperDot(next.text)) return 'R4';
+  if (endsWithInitialAfterDash(prev.text) && startsWithUppercaseWord(next.text)) return 'R5';
+  if (endsWithWordDot(prev.text) && startsWithContinuation(next.text)) return 'R2';
   return null;
 }
 
