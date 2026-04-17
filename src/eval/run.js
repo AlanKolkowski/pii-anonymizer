@@ -4,6 +4,7 @@ import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
 import { runPipeline } from '../pipeline/runner.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
+import { ENTITY_SOURCES, SOURCES, allEntityTypes } from '../pipeline/configs/entity-sources.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -91,11 +92,32 @@ async function main() {
   const runId = makeRunId();
   const runDir = join(RESULTS_DIR, runId);
 
+  const entitiesArg = args.find(a => a.startsWith('--entities='))?.slice('--entities='.length);
+  let enabledEntities;
+  if (entitiesArg) {
+    const requested = entitiesArg.split(',').map(s => s.trim()).filter(Boolean);
+    const known = new Set(allEntityTypes());
+    const unknown = requested.filter(e => !known.has(e));
+    if (unknown.length > 0) {
+      console.error(`Unknown entity types: ${unknown.join(', ')}`);
+      console.error(`Valid: ${[...known].sort().join(', ')}`);
+      process.exit(1);
+    }
+    enabledEntities = requested;
+  } else {
+    enabledEntities = allEntityTypes();
+  }
+
   console.log(`Eval: ${files.length} document(s)`);
   console.log(`Run:  ${runId}${label ? ` (${label})` : ''}`);
+  console.log(`Entities: ${enabledEntities.length === allEntityTypes().length ? 'all' : enabledEntities.join(', ')}`);
   console.log('Loading models...');
 
-  const pipelineConfig = createDefaultPipeline(loadModelNode, get_sentence_boundaries);
+  const pipelineConfig = createDefaultPipeline(
+    loadModelNode,
+    get_sentence_boundaries,
+    { enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES },
+  );
   await mkdir(runDir, { recursive: true });
 
   const results = [];
@@ -124,6 +146,7 @@ async function main() {
     runId,
     timestamp: new Date().toISOString(),
     ...(label && { label }),
+    enabledEntities,
     totals: {
       documents: results.length,
       entities: totalEntities,
