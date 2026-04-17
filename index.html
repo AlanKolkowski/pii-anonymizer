@@ -17,15 +17,16 @@
       </p>
     </header>
 
-    <section id="model-section">
-      <button id="download-btn" class="btn btn-primary">Pobierz model</button>
-      <p id="model-status"></p>
+    <section id="entity-selector-section">
+      <label>1. Wybierz dane do anonimizacji</label>
+      <div id="entity-selector-root"></div>
     </section>
 
     <section id="input-section">
-      <label for="input-text">1. Wklej swój dokument</label>
+      <label for="input-text">2. Wklej swój dokument</label>
       <textarea id="input-text" rows="10" placeholder="Wklej tekst zawierający dane osobowe..."></textarea>
       <button id="anonymize-btn" class="btn btn-primary" disabled>Anonimizuj</button>
+      <p id="model-status"></p>
     </section>
 
     <section id="result-section" hidden>
@@ -53,7 +54,7 @@
     </section>
 
     <section id="deanonymize-section" hidden>
-      <label for="deanonymize-input">2. Wklej odpowiedź LLM zawierającą tokeny</label>
+      <label for="deanonymize-input">3. Wklej odpowiedź LLM zawierającą tokeny</label>
       <textarea id="deanonymize-input" rows="10" placeholder="Wklej tekst z tokenami w stylu [PERSON_NAME_1]..."></textarea>
       <button id="deanonymize-btn" class="btn btn-primary">Deanonimizuj</button>
     </section>
