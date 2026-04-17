@@ -15,6 +15,7 @@ function diffEntities(before, after, text) {
       start: e.start,
       end: e.end,
       score: e.score,
+      source: e.source,
       text: text.slice(e.start, e.end),
     }));
 
@@ -25,6 +26,7 @@ function diffEntities(before, after, text) {
       start: e.start,
       end: e.end,
       score: e.score,
+      source: e.source,
       text: text.slice(e.start, e.end),
     }));
 
