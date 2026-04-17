@@ -201,11 +201,12 @@ function makeEntityTable(label, entities) {
   const table = document.createElement('table');
   table.className = 'debug-table';
   const thead = document.createElement('tr');
-  thead.innerHTML = '<th>Typ</th><th>Tekst</th><th>Zakres</th><th>Pewność</th>';
+  thead.innerHTML = '<th>Typ</th><th>Tekst</th><th>Zakres</th><th>Pewność</th><th>Źródło</th>';
   table.appendChild(thead);
   for (const e of entities) {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${escHtml(e.entity_group)}</td><td>${escHtml(e.text)}</td><td>${e.start}-${e.end}</td><td>${e.score?.toFixed(3) ?? ''}</td>`;
+    const src = Array.isArray(e.source) ? e.source.join(', ') : (e.source ?? '');
+    row.innerHTML = `<td>${escHtml(e.entity_group)}</td><td>${escHtml(e.text)}</td><td>${e.start}-${e.end}</td><td>${e.score?.toFixed(3) ?? ''}</td><td>${escHtml(src)}</td>`;
     table.appendChild(row);
   }
   const frag = document.createDocumentFragment();
