@@ -9,7 +9,7 @@ import { trimTrailingDotStep } from '../steps/trim-trailing-dot.js';
 import { filterStep } from '../steps/filter.js';
 import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
-import { rescanStep } from '../steps/rescan.js';
+import { backfillOccurrencesStep } from '../steps/backfill.js';
 import { tokenizeStep } from '../steps/tokenize.js';
 import { ENTITY_SOURCES, SOURCES, requiredSources } from './entity-sources.js';
 
@@ -52,9 +52,9 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
       trimTrailingDotStep,
       filterStep,
       dedupStep,
+      backfillOccurrencesStep,
       mergeStep,
       tokenizeStep,
-      rescanStep,
     ] },
   ];
 }

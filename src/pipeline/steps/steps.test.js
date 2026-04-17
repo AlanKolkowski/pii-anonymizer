@@ -6,7 +6,7 @@ import { filterStep } from './filter.js';
 import { dedupStep } from './dedup.js';
 import { mergeStep } from './merge.js';
 import { createRegexStep } from './regex.js';
-import { rescanStep } from './rescan.js';
+import { backfillOccurrencesStep } from './backfill.js';
 import { tokenizeStep } from './tokenize.js';
 import { createNerStep } from './ner.js';
 
@@ -192,18 +192,102 @@ describe('tokenizeStep', () => {
   });
 });
 
-describe('rescanStep', () => {
-  it('catches remaining PII in anonymized text', () => {
+describe('backfillOccurrencesStep', () => {
+  it('adds exact-word-boundary occurrences of known non-name entity values', () => {
+    const text = 'Adw. Nowak pisał. Adw. Nowak podpisał.';
     const ctx = {
-      text: 'original text',
+      text,
       segments: [],
-      entities: [],
-      anonymized: 'Pismo od Jana Kowalskiego do sądu',
-      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 5, end: 10, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
     };
-    const result = rescanStep(ctx);
-    expect(result.anonymized).toContain('[PERSON_NAME_1]');
-    expect(result.anonymized).not.toContain('Jana Kowalskiego');
+    const result = backfillOccurrencesStep(ctx);
+    const added = result.entities.filter(e => e.source === 'rescan');
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({ entity_group: 'PERSON_NAME', start: 23, end: 28, score: 1.0 });
+  });
+
+  it('does not match inside larger words (word-boundary respected)', () => {
+    const text = 'Szanowny Panie, Pan przyszedł.';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_ROLE_OR_TITLE', start: 16, end: 19, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = backfillOccurrencesStep(ctx);
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('does not duplicate entities that already exist at the same position', () => {
+    const text = 'Nowak i Nowak';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.9, source: 'multilang-q8' },
+        { entity_group: 'PERSON_NAME', start: 8, end: 13, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = backfillOccurrencesStep(ctx);
+    expect(result.entities).toHaveLength(2);
+  });
+
+  it('fuzzy-matches declined PERSON_NAME forms', () => {
+    const text = 'pisał Jan Kowalski do Jana Kowalskiego.';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 6, end: 18, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = backfillOccurrencesStep(ctx);
+    const added = result.entities.filter(e => e.source === 'rescan');
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({ entity_group: 'PERSON_NAME', start: 22, end: 38 });
+  });
+
+  it('skips occurrences that overlap an existing wider entity', () => {
+    const text = 'Napisano w Warszawie. ul. Marszałkowska 47/12, 00-648 Warszawa to adres.';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'LOCATION', start: 11, end: 20, score: 0.9, source: 'multilang-q8' },
+        { entity_group: 'POSTAL_ADDRESS', start: 22, end: 61, score: 0.85, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = backfillOccurrencesStep(ctx);
+    const added = result.entities.filter(e => e.source === 'rescan');
+    expect(added).toHaveLength(0);
+  });
+
+  it('returns ctx unchanged when no new occurrences found', () => {
+    const text = 'Jan Kowalski tylko raz';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = backfillOccurrencesStep(ctx);
+    expect(result.entities).toHaveLength(1);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities, rescanForKnownPii } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -629,72 +629,6 @@ describe('findRegexEntities — financial amounts', () => {
     const text = '200,00 zł';
     const amount = findRegexEntities(text).find((e) => e.entity_group === 'FINANCIAL_AMOUNT');
     expect(amount.score).toBe(1.0);
-  });
-});
-
-describe('rescanForKnownPii', () => {
-  it('replaces exact legend values still present in anonymized text', () => {
-    const anonymized = 'Podpis: Sebastian Grabowski';
-    const legend = { '[PERSON_NAME_1]': 'Sebastian Grabowski' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
-  });
-
-  it('replaces declined name forms via fuzzy matching', () => {
-    // Legend has genitive form, text has nominative
-    const anonymized = 'Podpis: Marcin Jabłoński';
-    const legend = { '[PERSON_NAME_1]': 'Marcina Jabłońskiego' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
-  });
-
-  it('replaces addresses by exact match', () => {
-    const anonymized = 'Adres: ul. Ułańska 7/11, 60-748 Poznań';
-    const legend = { '[POSTAL_ADDRESS_1]': 'ul. Ułańska 7/11, 60-748 Poznań' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Adres: [POSTAL_ADDRESS_1]');
-  });
-
-  it('does not replace text already tokenized', () => {
-    const anonymized = 'Podpis: [PERSON_NAME_1]';
-    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
-  });
-
-  it('replaces multiple occurrences of same value', () => {
-    const anonymized = 'Jan Kowalski i potem Jan Kowalski';
-    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe(
-      '[PERSON_NAME_1] i potem [PERSON_NAME_1]',
-    );
-  });
-
-  it('does not fuzzy-match single-word sequences', () => {
-    // Single capitalized word should NOT be fuzzy-matched (too risky)
-    const anonymized = 'Mówił Kowalski że tak';
-    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
-    // "Kowalski" alone (1 word) should not be matched by fuzzy phase
-    // But exact match won't match either since legend has "Jan Kowalski"
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Mówił Kowalski że tak');
-  });
-
-  it('handles hyphenated surnames', () => {
-    const anonymized = 'Podpis: Marta Lewandowska-Ostrów';
-    const legend = { '[PERSON_NAME_1]': 'Marta Lewandowska-Ostrów' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe('Podpis: [PERSON_NAME_1]');
-  });
-
-  it('replaces longer values before shorter ones', () => {
-    const anonymized = 'ul. Długa 22, 80-828 Gdańsk jest ok';
-    const legend = {
-      '[POSTAL_ADDRESS_1]': 'ul. Długa 22, 80-828 Gdańsk',
-      '[LOCATION_1]': 'Gdańsk',
-    };
-    const result = rescanForKnownPii(anonymized, legend);
-    expect(result).toBe('[POSTAL_ADDRESS_1] jest ok');
-  });
-
-  it('returns text unchanged when no matches', () => {
-    const anonymized = 'Brak danych osobowych tutaj.';
-    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
-    expect(rescanForKnownPii(anonymized, legend)).toBe(anonymized);
   });
 });
 
