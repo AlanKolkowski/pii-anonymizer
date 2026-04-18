@@ -480,6 +480,30 @@ export function buildCss() {
     details.section[open] > summary { border-bottom: 1px solid #eee; }
     details.section > div.section-body { padding: 0.75rem; }
 
+    .segmentation-view .seg-view-toolbar {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .segmentation-view .seg-view-btn {
+      padding: 0.3rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+    }
+    .segmentation-view .seg-view-btn:hover { background: #eee; }
+    .segmentation-view .seg-view-btn.active {
+      background: white;
+      border-color: #1976d2;
+      color: #1976d2;
+      font-weight: 600;
+    }
+    .segmentation-view .seg-view-body { display: none; }
+    .segmentation-view .seg-view-body.active { display: block; }
+
     .segmented-text {
       white-space: pre-wrap;
       font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
@@ -650,6 +674,16 @@ export function buildScript() {
       }
 
       document.addEventListener('click', (e) => {
+        const segBtn = e.target.closest('.seg-view-btn');
+        if (segBtn) {
+          const container = segBtn.closest('.segmentation-view');
+          if (!container) return;
+          const view = segBtn.dataset.view;
+          container.querySelectorAll('.seg-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+          container.querySelectorAll('.seg-view-body').forEach(d => d.classList.toggle('active', d.dataset.view === view));
+          return;
+        }
+
         const entity = e.target.closest('.entity');
         if (!entity) return;
         // Skip if user is selecting text (non-empty selection across entity)
@@ -856,6 +890,7 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
   const predictedEnds = new Set(predicted.map(s => s.end));
 
   const sortedExpected = [...expected].sort((a, b) => a.start - b.start);
+  const sortedPredicted = [...predicted].sort((a, b) => a.start - b.start);
 
   // Collect all boundary positions from both segmentations and classify each.
   // A position present in both sets is a correct boundary (not marked).
@@ -879,12 +914,19 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
   }
   markers.sort((a, b) => a.pos - b.pos);
 
-  const renderHtml = renderSegmentedText(sourceText, sortedExpected, markers);
+  const expectedHtml = renderSegmentedText(sourceText, sortedExpected, markers);
+  const predictedHtml = renderSegmentedText(sourceText, sortedPredicted, markers);
 
   const m = metrics || { precision: 0, recall: 0, f1: 0, tp: 0, fp: 0, fn: 0, tpPartial: 0 };
   const partialNote = m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : '';
 
-  return `<div class="segmented-text">${renderHtml}</div>
+  return `<div class="segmentation-view">
+    <div class="seg-view-toolbar" role="tablist">
+      <button type="button" class="seg-view-btn active" data-view="expected">Expected</button>
+      <button type="button" class="seg-view-btn" data-view="predicted">Predicted</button>
+    </div>
+    <div class="segmented-text seg-view-body active" data-view="expected">${expectedHtml}</div>
+    <div class="segmented-text seg-view-body" data-view="predicted">${predictedHtml}</div>
     <table class="scoring-table segmentation-metrics">
       <thead><tr><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th><th>Partial</th></tr></thead>
       <tbody><tr>
@@ -901,7 +943,8 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
       <span style="color:#c62828">▼</span> missed split &nbsp;
       <span style="color:#E65100">▲</span> extra split &nbsp;
       (exact matches are not marked)
-    </p>`;
+    </p>
+  </div>`;
 }
 
 function renderSegmentedText(sourceText, sortedExpected, markers) {
