@@ -462,6 +462,80 @@ export function buildCss() {
       font-weight: 600;
       margin: 1rem 0 0.5rem;
     }
+
+    details.section {
+      margin: 0.5rem 0;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      box-shadow: none;
+    }
+    details.section > summary {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      list-style: revert;
+    }
+    details.section[open] > summary { border-bottom: 1px solid #eee; }
+    details.section > div.section-body { padding: 0.75rem; }
+
+    .segmentation-view .seg-view-toolbar {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fafafa;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .segmentation-view .seg-view-btn {
+      padding: 0.3rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+    }
+    .segmentation-view .seg-view-btn:hover { background: #eee; }
+    .segmentation-view .seg-view-btn.active {
+      background: white;
+      border-color: #1976d2;
+      color: #1976d2;
+      font-weight: 600;
+    }
+    .segmentation-view .seg-view-body { display: none; }
+    .segmentation-view .seg-view-body.active { display: block; }
+
+    .segmented-text {
+      white-space: pre-wrap;
+      font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      line-height: 1.9;
+      padding: 1rem;
+      background: #fdfdfd;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      overflow-x: auto;
+    }
+    .segmented-text .segment.seg-a { background: #BBDEFB; }
+    .segmented-text .segment.seg-b { background: #FFF9C4; }
+    .segmented-text .boundary-marker {
+      display: inline-block;
+      font-weight: bold;
+      font-size: 0.9em;
+      vertical-align: middle;
+      padding: 0 1px;
+      cursor: help;
+    }
+    .segmented-text .boundary-marker.missed { color: #c62828; }
+    .segmented-text .boundary-marker.extra { color: #E65100; }
+    .segmentation-metrics { margin-top: 0.5rem; width: auto; }
+    .segmentation-metrics th, .segmentation-metrics td { white-space: nowrap; }
   `;
 }
 
@@ -606,6 +680,16 @@ export function buildScript() {
       }
 
       document.addEventListener('click', (e) => {
+        const segBtn = e.target.closest('.seg-view-btn');
+        if (segBtn) {
+          const container = segBtn.closest('.segmentation-view');
+          if (!container) return;
+          const view = segBtn.dataset.view;
+          container.querySelectorAll('.seg-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+          container.querySelectorAll('.seg-view-body').forEach(d => d.classList.toggle('active', d.dataset.view === view));
+          return;
+        }
+
         const entity = e.target.closest('.entity');
         if (!entity) return;
         // Skip if user is selecting text (non-empty selection across entity)
@@ -693,10 +777,18 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
     return `<th${highlight}>${label}</th>`;
   }).join('');
 
+  const hasSegMetrics = columns.some(c => c.segF1 != null);
+  const segRows = hasSegMetrics
+    ? metricRow('Seg F1', c => c.segF1) +
+      metricRow('Seg Precision', c => c.segPrecision) +
+      metricRow('Seg Recall', c => c.segRecall)
+    : '';
+
   const mainRows =
     metricRow('F1', c => c.f1) +
     metricRow('Precision', c => c.precision) +
-    metricRow('Recall', c => c.recall);
+    metricRow('Recall', c => c.recall) +
+    segRows;
 
   const mainTable = `<table class="comparison-table">
     <thead><tr><th>Metric</th>${headerCells}</tr></thead>
@@ -727,6 +819,16 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
         entries,
         (col, docKey) => col.documents?.[docKey]?.[metricKey] ?? null,
       );
+    }
+    if (hasSegMetrics) {
+      for (const { key: metricKey, label: metricLabel } of METRIC_VARIANTS) {
+        breakdowns += breakdownBlock(
+          `Per Document Seg ${metricLabel}`,
+          'Document',
+          entries,
+          (col, docKey) => col.documents?.[docKey]?.segments?.[metricKey] ?? null,
+        );
+      }
     }
   }
   if (typeRows && typeRows.length) {
@@ -781,7 +883,6 @@ function buildScoringSection(docScores) {
     : '';
 
   return `
-    <div class="section-title">Scoring</div>
     <p>Precision: <strong>${pct(docScores.precision)}</strong> &nbsp;
        Recall: <strong>${pct(docScores.recall)}</strong> &nbsp;
        F1: <strong>${pct(docScores.f1)}</strong> &nbsp;
@@ -790,6 +891,129 @@ function buildScoringSection(docScores) {
       <thead><tr><th>Type</th><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// ── Segmentation section ───────────────────────────────────────────
+
+export function buildSegmentationSection(sourceText, expected, predicted, metrics) {
+  if (!expected) {
+    return `<p style="font-size:0.85rem;color:#666">No <code>expected-segments.json</code> for this document — run <code>npm run eval:snapshot-segments</code> and review.</p>`;
+  }
+
+  const expectedStarts = new Set(expected.map(s => s.start));
+  const expectedEnds = new Set(expected.map(s => s.end));
+  const predictedStarts = new Set(predicted.map(s => s.start));
+  const predictedEnds = new Set(predicted.map(s => s.end));
+
+  const sortedExpected = [...expected].sort((a, b) => a.start - b.start);
+  const sortedPredicted = [...predicted].sort((a, b) => a.start - b.start);
+
+  // Collect all boundary positions from both segmentations and classify each.
+  // A position present in both sets is a correct boundary (not marked).
+  const allBoundaries = new Set([
+    ...expectedStarts, ...expectedEnds,
+    ...predictedStarts, ...predictedEnds,
+  ]);
+  allBoundaries.delete(0);
+  allBoundaries.delete(sourceText.length);
+
+  const markers = [];
+  for (const pos of allBoundaries) {
+    const inExpected = expectedStarts.has(pos) || expectedEnds.has(pos);
+    const inPredicted = predictedStarts.has(pos) || predictedEnds.has(pos);
+    if (inExpected && inPredicted) continue;
+    if (inExpected && !inPredicted) {
+      markers.push({ pos, kind: 'missed', char: '▼' });
+    } else {
+      markers.push({ pos, kind: 'extra', char: '▲' });
+    }
+  }
+  markers.sort((a, b) => a.pos - b.pos);
+
+  const expectedHtml = renderSegmentedText(sourceText, sortedExpected, markers);
+  const predictedHtml = renderSegmentedText(sourceText, sortedPredicted, markers);
+
+  const m = metrics || { precision: 0, recall: 0, f1: 0, tp: 0, fp: 0, fn: 0, tpPartial: 0 };
+  const partialNote = m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : '';
+
+  return `<div class="segmentation-view">
+    <div class="seg-view-toolbar" role="tablist">
+      <button type="button" class="seg-view-btn" data-view="expected">Expected</button>
+      <button type="button" class="seg-view-btn active" data-view="predicted">Predicted</button>
+    </div>
+    <div class="segmented-text seg-view-body" data-view="expected">${expectedHtml}</div>
+    <div class="segmented-text seg-view-body active" data-view="predicted">${predictedHtml}</div>
+    <table class="scoring-table segmentation-metrics">
+      <thead><tr><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th><th>Partial</th></tr></thead>
+      <tbody><tr>
+        <td>${pct(m.precision)}</td>
+        <td>${pct(m.recall)}</td>
+        <td>${pct(m.f1)}</td>
+        <td>${m.tp}</td>
+        <td>${m.fp}${partialNote}</td>
+        <td>${m.fn}${partialNote}</td>
+        <td>${m.tpPartial}</td>
+      </tr></tbody>
+    </table>
+    <p style="font-size:0.82rem;color:#666;margin-top:0.5rem">
+      <span style="color:#c62828">▼</span> missed split &nbsp;
+      <span style="color:#E65100">▲</span> extra split &nbsp;
+      (exact matches are not marked)
+    </p>
+  </div>`;
+}
+
+function renderSegmentedText(sourceText, sortedSegments, markers) {
+  // Assign alternating shade per segment, skipping whitespace-only segments
+  // so visible content always alternates even when the pipeline emits tiny
+  // \n\n segments between sentences.
+  const shadeOf = new Map();
+  let visibleIdx = 0;
+  for (const s of sortedSegments) {
+    const text = sourceText.slice(s.start, s.end);
+    if (text.replace(/\s/g, '').length === 0) {
+      shadeOf.set(s, null);
+    } else {
+      shadeOf.set(s, visibleIdx % 2 === 0 ? 'seg-a' : 'seg-b');
+      visibleIdx++;
+    }
+  }
+
+  // Collect split points: every segment start/end and every marker pos.
+  const points = new Set([0, sourceText.length]);
+  for (const s of sortedSegments) { points.add(s.start); points.add(s.end); }
+  for (const m of markers) { points.add(m.pos); }
+  const sorted = [...points].sort((a, b) => a - b);
+
+  let html = '';
+  const segAt = (pos) => sortedSegments.find(s => s.start <= pos && pos < s.end);
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const from = sorted[i];
+    const to = sorted[i + 1];
+
+    // Marker at `from` (if any). Render before the text chunk.
+    const markerHere = markers.find(m => m.pos === from);
+    if (markerHere) {
+      html += `<span class="boundary-marker ${markerHere.kind}" title="${markerHere.kind} boundary at char ${markerHere.pos}">${markerHere.char}</span>`;
+    }
+
+    const chunk = escapeHtml(sourceText.slice(from, to));
+    const seg = segAt(from);
+    const shade = seg ? shadeOf.get(seg) : null;
+    if (seg && shade) {
+      html += `<span class="segment ${shade}" data-start="${seg.start}" data-end="${seg.end}">${chunk}</span>`;
+    } else {
+      html += chunk;
+    }
+  }
+  // Final marker at last position, if any.
+  const last = sorted[sorted.length - 1];
+  const tailMarker = markers.find(m => m.pos === last);
+  if (tailMarker) {
+    html += `<span class="boundary-marker ${tailMarker.kind}" title="${tailMarker.kind} boundary at char ${tailMarker.pos}">${tailMarker.char}</span>`;
+  }
+  return html;
 }
 
 // ── F1 badge ───────────────────────────────────────────────────────
@@ -819,6 +1043,9 @@ export async function generateReport(runId, scoresData) {
       f1: r.scores.overall.f1,
       precision: r.scores.overall.precision,
       recall: r.scores.overall.recall,
+      segF1: r.scores.overallSegments?.f1 ?? null,
+      segPrecision: r.scores.overallSegments?.precision ?? null,
+      segRecall: r.scores.overallSegments?.recall ?? null,
       documents: r.scores.documents,
       byType: r.scores.overall.byType,
     })),
@@ -828,6 +1055,9 @@ export async function generateReport(runId, scoresData) {
       f1: scoresData.overall.f1,
       precision: scoresData.overall.precision,
       recall: scoresData.overall.recall,
+      segF1: scoresData.overallSegments?.f1 ?? null,
+      segPrecision: scoresData.overallSegments?.precision ?? null,
+      segRecall: scoresData.overallSegments?.recall ?? null,
       documents: scoresData.documents,
       byType: scoresData.overall.byType,
     },
@@ -880,12 +1110,35 @@ export async function generateReport(runId, scoresData) {
     const legendHtml = buildLegend(spans);
     const scoringHtml = buildScoringSection(docScores);
 
+    // Load segments for segmentation view
+    let expectedSegs = null;
+    let predictedSegs = [];
+    try {
+      expectedSegs = JSON.parse(
+        await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8'),
+      );
+    } catch {}
+    try {
+      predictedSegs = JSON.parse(
+        await readFile(join(runDir, docName, 'segments.json'), 'utf-8'),
+      );
+    } catch {}
+    const segmentationHtml = buildSegmentationSection(
+      sourceText,
+      expectedSegs,
+      predictedSegs,
+      docScores.segments ?? null,
+    );
+
     // Per-document comparison table
     const docComparisonColumns = comparisonColumns.map(col => ({
       ...col,
       f1: col.documents?.[docName]?.f1 ?? null,
       precision: col.documents?.[docName]?.precision ?? null,
       recall: col.documents?.[docName]?.recall ?? null,
+      segF1: col.documents?.[docName]?.segments?.f1 ?? null,
+      segPrecision: col.documents?.[docName]?.segments?.precision ?? null,
+      segRecall: col.documents?.[docName]?.segments?.recall ?? null,
       byType: col.documents?.[docName]?.byType ?? {},
     }));
     const docTypes = Object.keys(docScores.byType).sort();
@@ -897,12 +1150,13 @@ export async function generateReport(runId, scoresData) {
       <details data-doc="${docName}">
         <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
         <div>
-          <div class="section-title">Annotated Text</div>
-          <div class="annotated-text">${annotatedHtml}</div>
-          ${legendHtml}
-          ${scoringHtml}
-          <div class="section-title">Comparison</div>
-          ${docComparisonHtml}
+          <details class="section"><summary>Annotated Text</summary><div class="section-body">
+            <div class="annotated-text">${annotatedHtml}</div>
+            ${legendHtml}
+          </div></details>
+          <details class="section" open><summary>Scoring</summary><div class="section-body">${scoringHtml}</div></details>
+          <details class="section"><summary>Segmentation</summary><div class="section-body">${segmentationHtml}</div></details>
+          <details class="section"><summary>Comparison</summary><div class="section-body">${docComparisonHtml}</div></details>
         </div>
       </details>
     `);
