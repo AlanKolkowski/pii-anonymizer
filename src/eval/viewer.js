@@ -8,6 +8,7 @@ import {
   buildCss,
   buildScript,
   humanizeDocName,
+  buildSegmentationSection,
 } from './report.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
@@ -78,12 +79,21 @@ async function loadPredicted(runId, docName) {
   } catch { return null; }
 }
 
+async function loadPredictedSegments(runId, docName) {
+  try {
+    const raw = await readFile(join(RESULTS_DIR, runId, docName, 'segments.json'), 'utf-8');
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
 async function loadSource(docName) {
   let text = '';
   let expected = [];
+  let expectedSegments = null;
   try { text = await readFile(join(DOCS_DIR, `${docName}.txt`), 'utf-8'); } catch {}
   try { expected = JSON.parse(await readFile(join(DOCS_DIR, `${docName}.expected.json`), 'utf-8')); } catch {}
-  return { text, expected };
+  try { expectedSegments = JSON.parse(await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8')); } catch {}
+  return { text, expected, expectedSegments };
 }
 
 // ── Comparison table with baseline-relative deltas ────────────────
@@ -220,7 +230,7 @@ async function renderReport(runIds, baselineId) {
   const sourceTextsByDoc = {};
 
   for (const docName of docNames) {
-    const { text, expected } = await loadSource(docName);
+    const { text, expected, expectedSegments } = await loadSource(docName);
     sourceTextsByDoc[docName] = text;
 
     const tabs = [];
@@ -229,6 +239,7 @@ async function renderReport(runIds, baselineId) {
     for (const r of selectedRuns) {
       const isBase = r.runId === baselineId;
       const predicted = await loadPredicted(r.runId, docName);
+      const predictedSegments = await loadPredictedSegments(r.runId, docName);
       const docScore = r.scores.documents?.[docName];
 
       let paneBody;
@@ -243,7 +254,18 @@ async function renderReport(runIds, baselineId) {
         const scoringLine = docScore
           ? `<p style="margin-bottom:0.75rem">P: <strong>${pct(docScore.precision)}</strong> &nbsp; R: <strong>${pct(docScore.recall)}</strong> &nbsp; F1: <strong>${pct(docScore.f1)}</strong> &nbsp; TP: ${docScore.tp} &nbsp; FP: ${docScore.fp} &nbsp; FN: ${docScore.fn}${docScore.tpPartial ? ` &nbsp; <span style="color:#E65100">${docScore.tpPartial} partial</span>` : ''}</p>`
           : '';
-        paneBody = `${scoringLine}<div class="annotated-text">${annotated}</div>${legend}`;
+        const segmentationHtml = buildSegmentationSection(
+          text,
+          expectedSegments,
+          predictedSegments || [],
+          docScore?.segments ?? null,
+        );
+        paneBody = `${scoringLine}
+          <details class="section" open><summary>Annotated Text</summary><div class="section-body">
+            <div class="annotated-text">${annotated}</div>
+            ${legend}
+          </div></details>
+          <details class="section"><summary>Segmentation</summary><div class="section-body">${segmentationHtml}</div></details>`;
       }
 
       const tabInner = r.label
@@ -276,8 +298,7 @@ async function renderReport(runIds, baselineId) {
         <div>
           <div class="tabs-bar">${tabs.join('')}</div>
           <div class="tab-panes">${panes.join('')}</div>
-          <div class="section-title">Comparison</div>
-          ${docComparison}
+          <details class="section"><summary>Comparison</summary><div class="section-body">${docComparison}</div></details>
         </div>
       </details>
     `);

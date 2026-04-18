@@ -463,6 +463,23 @@ export function buildCss() {
       margin: 1rem 0 0.5rem;
     }
 
+    details.section {
+      margin: 0.5rem 0;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      box-shadow: none;
+    }
+    details.section > summary {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      list-style: revert;
+    }
+    details.section[open] > summary { border-bottom: 1px solid #eee; }
+    details.section > div.section-body { padding: 0.75rem; }
+
     .segmented-text {
       white-space: pre-wrap;
       font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
@@ -475,8 +492,8 @@ export function buildCss() {
       margin-bottom: 0.75rem;
       overflow-x: auto;
     }
-    .segmented-text .segment.seg-a { background: rgba(0, 0, 0, 0.035); }
-    .segmented-text .segment.seg-b { background: rgba(0, 0, 0, 0.075); }
+    .segmented-text .segment.seg-a { background: #BBDEFB; }
+    .segmented-text .segment.seg-b { background: #FFF9C4; }
     .segmented-text .boundary-marker {
       display: inline-block;
       font-weight: bold;
@@ -808,7 +825,6 @@ function buildScoringSection(docScores) {
     : '';
 
   return `
-    <div class="section-title">Scoring</div>
     <p>Precision: <strong>${pct(docScores.precision)}</strong> &nbsp;
        Recall: <strong>${pct(docScores.recall)}</strong> &nbsp;
        F1: <strong>${pct(docScores.f1)}</strong> &nbsp;
@@ -823,8 +839,7 @@ function buildScoringSection(docScores) {
 
 export function buildSegmentationSection(sourceText, expected, predicted, metrics) {
   if (!expected) {
-    return `<div class="section-title">Segmentation</div>
-      <p style="font-size:0.85rem;color:#666">No <code>expected-segments.json</code> for this document — run <code>npm run eval:snapshot-segments</code> and review.</p>`;
+    return `<p style="font-size:0.85rem;color:#666">No <code>expected-segments.json</code> for this document — run <code>npm run eval:snapshot-segments</code> and review.</p>`;
   }
 
   const expectedStarts = new Set(expected.map(s => s.start));
@@ -861,8 +876,7 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
   const m = metrics || { precision: 0, recall: 0, f1: 0, tp: 0, fp: 0, fn: 0, tpPartial: 0 };
   const partialNote = m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : '';
 
-  return `<div class="section-title">Segmentation</div>
-    <div class="segmented-text">${renderHtml}</div>
+  return `<div class="segmented-text">${renderHtml}</div>
     <table class="scoring-table segmentation-metrics">
       <thead><tr><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th><th>Partial</th></tr></thead>
       <tbody><tr>
@@ -1047,13 +1061,13 @@ export async function generateReport(runId, scoresData) {
       <details data-doc="${docName}">
         <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
         <div>
-          <div class="section-title">Annotated Text</div>
-          <div class="annotated-text">${annotatedHtml}</div>
-          ${legendHtml}
-          ${scoringHtml}
-          ${segmentationHtml}
-          <div class="section-title">Comparison</div>
-          ${docComparisonHtml}
+          <details class="section" open><summary>Annotated Text</summary><div class="section-body">
+            <div class="annotated-text">${annotatedHtml}</div>
+            ${legendHtml}
+          </div></details>
+          <details class="section" open><summary>Scoring</summary><div class="section-body">${scoringHtml}</div></details>
+          <details class="section"><summary>Segmentation</summary><div class="section-body">${segmentationHtml}</div></details>
+          <details class="section"><summary>Comparison</summary><div class="section-body">${docComparisonHtml}</div></details>
         </div>
       </details>
     `);
