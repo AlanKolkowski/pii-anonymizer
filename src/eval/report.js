@@ -737,10 +737,18 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
     return `<th${highlight}>${label}</th>`;
   }).join('');
 
+  const hasSegMetrics = columns.some(c => c.segF1 != null);
+  const segRows = hasSegMetrics
+    ? metricRow('Seg F1', c => c.segF1) +
+      metricRow('Seg Precision', c => c.segPrecision) +
+      metricRow('Seg Recall', c => c.segRecall)
+    : '';
+
   const mainRows =
     metricRow('F1', c => c.f1) +
     metricRow('Precision', c => c.precision) +
-    metricRow('Recall', c => c.recall);
+    metricRow('Recall', c => c.recall) +
+    segRows;
 
   const mainTable = `<table class="comparison-table">
     <thead><tr><th>Metric</th>${headerCells}</tr></thead>
@@ -963,6 +971,9 @@ export async function generateReport(runId, scoresData) {
       f1: r.scores.overall.f1,
       precision: r.scores.overall.precision,
       recall: r.scores.overall.recall,
+      segF1: r.scores.overallSegments?.f1 ?? null,
+      segPrecision: r.scores.overallSegments?.precision ?? null,
+      segRecall: r.scores.overallSegments?.recall ?? null,
       documents: r.scores.documents,
       byType: r.scores.overall.byType,
     })),
@@ -972,6 +983,9 @@ export async function generateReport(runId, scoresData) {
       f1: scoresData.overall.f1,
       precision: scoresData.overall.precision,
       recall: scoresData.overall.recall,
+      segF1: scoresData.overallSegments?.f1 ?? null,
+      segPrecision: scoresData.overallSegments?.precision ?? null,
+      segRecall: scoresData.overallSegments?.recall ?? null,
       documents: scoresData.documents,
       byType: scoresData.overall.byType,
     },
@@ -1050,6 +1064,9 @@ export async function generateReport(runId, scoresData) {
       f1: col.documents?.[docName]?.f1 ?? null,
       precision: col.documents?.[docName]?.precision ?? null,
       recall: col.documents?.[docName]?.recall ?? null,
+      segF1: col.documents?.[docName]?.segments?.f1 ?? null,
+      segPrecision: col.documents?.[docName]?.segments?.precision ?? null,
+      segRecall: col.documents?.[docName]?.segments?.recall ?? null,
       byType: col.documents?.[docName]?.byType ?? {},
     }));
     const docTypes = Object.keys(docScores.byType).sort();
