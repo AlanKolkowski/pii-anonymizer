@@ -53,8 +53,9 @@ describe('default pipeline (with mock NER)', () => {
     const result = await runPipeline(text, pipeline);
 
     const segmentDebug = result.debug.filter(d => d.phase === 'segment');
-    expect(segmentDebug.length).toBe(2);
+    expect(segmentDebug.length).toBe(3);
     expect(segmentDebug[1].step).toBe('mergeAbbreviationsStep');
+    expect(segmentDebug[2].step).toBe('tightenSegmentsStep');
 
     const before = segmentDebug[0].changes.segments.count.after;
     const after = segmentDebug[1].changes.segments.count.after;

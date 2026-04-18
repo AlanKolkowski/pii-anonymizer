@@ -1,6 +1,7 @@
 import { normalizeWhitespace } from '../steps/preprocess.js';
 import { createSentencexSegmentStep } from '../steps/segment-sentencex.js';
 import { mergeAbbreviationsStep } from '../steps/merge-abbreviations.js';
+import { tightenSegmentsStep } from '../steps/tighten-segments.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
@@ -44,6 +45,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
     { phase: 'segment', steps: [
       createSentencexSegmentStep(getSentenceBoundaries),
       mergeAbbreviationsStep,
+      tightenSegmentsStep,
     ] },
     { phase: 'ner', steps: [createNerStep(hf, loadModel), createRegexStep(regexActive)] },
     { phase: 'postprocess', steps: [
