@@ -2,6 +2,7 @@ import { CAT_A, CAT_B } from '../data/polish-abbreviations.js';
 
 const LIST_MARKER_RE = /^(\d+|[IVXLCDM]+|[a-z])\.$/;
 const TRAILING_LIST_MARKER_RE = /(?:^|\n)\s*(?:\d+|[IVXLCDM]+|[a-z]|§\s*\d+)\.\s*$/;
+const LEADING_LIST_MARKER_RE = /^\s*(?:\d+|[IVXLCDM]+|[a-z])[.)](?:\s|$)/u;
 const PARAGRAPH_BREAK_RE = /\n\s*\n/;
 const MAX_SUFFIX_WORDS = 3;
 
@@ -11,6 +12,10 @@ function isListMarker(segText) {
 
 function endsWithListMarker(segText) {
   return TRAILING_LIST_MARKER_RE.test(segText);
+}
+
+function startsWithListMarker(segText) {
+  return LEADING_LIST_MARKER_RE.test(segText);
 }
 
 function hasParagraphBreakBetween(prev, next, originalText) {
@@ -90,6 +95,7 @@ function startsWithUppercaseWord(s) {
 
 function shouldMerge(prev, next, originalText) {
   if (hasParagraphBreakBetween(prev, next, originalText)) return null;
+  if (startsWithListMarker(next.text)) return null;
   if (isListMarker(prev.text)) return 'R3';
   if (endsWithListMarker(prev.text)) return 'R3';
   const cat = matchDictionarySuffix(prev.text);

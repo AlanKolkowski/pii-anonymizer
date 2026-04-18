@@ -82,6 +82,76 @@ describe('mergeAbbreviationsStep', () => {
     });
   });
 
+  describe('Block: next segment starts a new list item', () => {
+    it('does NOT merge when prev ends with Cat A abbreviation but next starts with a numbered marker', () => {
+      const text = '1. Kopia umowy z dnia 1 marca 2022 r.\n  2. Zestawienie zaległości.';
+      const ctx = makeCtx(text, [
+        { text: '1. Kopia umowy z dnia 1 marca 2022 r.', offset: 0 },
+        { text: '  2. Zestawienie zaległości.', offset: 38 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([
+        { text: '1. Kopia umowy z dnia 1 marca 2022 r.', offset: 0 },
+        { text: '  2. Zestawienie zaległości.', offset: 38 },
+      ]);
+    });
+
+    it('does NOT merge when next is a lone list marker like "2. " (after sentencex splits markers standalone)', () => {
+      // Sentencex often emits standalone markers "2. ", "3. ". With a Cat-A
+      // abbreviation at the tail of the previous item, R1a would otherwise
+      // pull them in.
+      const text = 'Kopia umowy z dnia 1 marca 2022 r.\n  2. ';
+      const ctx = makeCtx(text, [
+        { text: 'Kopia umowy z dnia 1 marca 2022 r.\n  ', offset: 0 },
+        { text: '2. ', offset: 37 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+
+    it('does NOT merge when prev ends with word-dot but next starts with a numbered marker', () => {
+      const text = '2. Zestawienie (wyciąg).\n  3. Kopia wezwania.';
+      const ctx = makeCtx(text, [
+        { text: '2. Zestawienie (wyciąg).', offset: 0 },
+        { text: '  3. Kopia wezwania.', offset: 25 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+
+    it('does NOT merge when next starts with a letter marker like "a)"', () => {
+      const text = 'Wynagrodzenie: 100 zł.\n  a) netto,\n  b) brutto.';
+      const ctx = makeCtx(text, [
+        { text: 'Wynagrodzenie: 100 zł.', offset: 0 },
+        { text: '  a) netto,', offset: 23 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments.length).toBe(2);
+    });
+
+    it('still allows R3 merge when prev IS a lone list marker (next does not start with a marker)', () => {
+      const text = '1. Kopia umowy.';
+      const ctx = makeCtx(text, [
+        { text: '1. ', offset: 0 },
+        { text: 'Kopia umowy.', offset: 3 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      expect(result.segments).toEqual([{ text: '1. Kopia umowy.', offset: 0 }]);
+    });
+
+    it('does not misfire on mid-text numeric tokens like "2.10.2024" (not a list marker)', () => {
+      const text = 'Data wpłaty. 2.10.2024 – rozmowa telefoniczna.';
+      const ctx = makeCtx(text, [
+        { text: 'Data wpłaty.', offset: 0 },
+        { text: '2.10.2024 – rozmowa telefoniczna.', offset: 13 },
+      ]);
+      const result = mergeAbbreviationsStep(ctx);
+      // "2.10.2024" has "2." followed by "1" (no whitespace) → NOT treated as list marker;
+      // the existing R2 (word-dot + digit-start continuation) still merges them.
+      expect(result.segments.length).toBe(1);
+    });
+  });
+
   describe('R1a: dictionary Cat A (always merge)', () => {
     it('merges "adw." followed by uppercase name', () => {
       const text = 'adw. Kowalski';
