@@ -307,6 +307,8 @@ export function mergeAdjacentEntities(entities, text) {
   return result;
 }
 
+const DEDUP_SCORE_EPSILON = 0.1;
+
 export function deduplicateEntities(entities) {
   if (entities.length <= 1) return entities;
 
@@ -324,10 +326,16 @@ export function deduplicateEntities(entities) {
       if (prevPerfect !== currPerfect) {
         if (currPerfect) result[result.length - 1] = curr;
       } else {
-        // Same precision tier: prefer wider span, then higher score
+        // Same precision tier: when scores are close (within epsilon), prefer
+        // wider span; when scores differ meaningfully, trust the higher score
+        // (NER emitting a greedy wider candidate with much lower confidence
+        // usually means it's over-extending into punctuation or context).
         const prevSpan = prev.end - prev.start;
         const currSpan = curr.end - curr.start;
-        if (currSpan > prevSpan || (currSpan === prevSpan && curr.score > prev.score)) {
+        const scoresClose = Math.abs(curr.score - prev.score) <= DEDUP_SCORE_EPSILON;
+        if (scoresClose) {
+          if (currSpan > prevSpan) result[result.length - 1] = curr;
+        } else if (curr.score > prev.score) {
           result[result.length - 1] = curr;
         }
       }

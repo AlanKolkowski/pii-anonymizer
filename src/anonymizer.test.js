@@ -267,16 +267,30 @@ describe('deduplicateEntities', () => {
     expect(deduplicateEntities(entities)).toHaveLength(2);
   });
 
-  it('keeps wider-span entity when overlapping', () => {
+  it('keeps wider-span entity when overlapping and scores are close', () => {
     const entities = [
-      { start: 0, end: 10, score: 0.7, entity_group: 'PERSON_NAME' },
+      { start: 0, end: 10, score: 0.87, entity_group: 'PERSON_NAME' },
       { start: 5, end: 12, score: 0.9, entity_group: 'PERSON_NAME' },
     ];
     const result = deduplicateEntities(entities);
     expect(result).toHaveLength(1);
-    // First entity spans 10 chars, second 7 — wider wins
+    // Scores within epsilon (0.05) — wider (span 10) beats narrower (span 7)
     expect(result[0].start).toBe(0);
     expect(result[0].end).toBe(10);
+  });
+
+  it('keeps higher-score narrower entity when wider has meaningfully lower score', () => {
+    // Regression: NER sometimes emits a greedy wider candidate with lower
+    // confidence (e.g. including trailing punctuation). Score gap > epsilon
+    // means the narrower, higher-confidence span wins.
+    const entities = [
+      { start: 5865, end: 5879, score: 0.999, entity_group: 'PERSON_ROLE_OR_TITLE' },
+      { start: 5865, end: 5880, score: 0.871, entity_group: 'PERSON_ROLE_OR_TITLE' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result).toHaveLength(1);
+    expect(result[0].end).toBe(5879);
+    expect(result[0].score).toBe(0.999);
   });
 
   it('keeps higher-score entity when same span size', () => {
@@ -328,15 +342,16 @@ describe('deduplicateEntities', () => {
     expect(result[0].end).toBe(30);
   });
 
-  it('keeps wider span when both are NER (non-perfect score)', () => {
+  it('keeps higher-score narrower span when the wider NER candidate is much less confident', () => {
     const entities = [
       { start: 0, end: 30, score: 0.7, entity_group: 'PERSON_NAME' },
       { start: 5, end: 20, score: 0.9, entity_group: 'PERSON_NAME' },
     ];
     const result = deduplicateEntities(entities);
     expect(result).toHaveLength(1);
-    expect(result[0].start).toBe(0);
-    expect(result[0].end).toBe(30);
+    // Score gap 0.2 > epsilon (0.05) — narrower wins
+    expect(result[0].start).toBe(5);
+    expect(result[0].end).toBe(20);
   });
 });
 
