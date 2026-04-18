@@ -339,6 +339,13 @@ export function buildCss() {
     details[open] summary { border-bottom: 1px solid #eee; }
     details > div { padding: 1rem; }
 
+    .comparison-section > .comparison-table { margin-bottom: 0.5rem; }
+    details.breakdown { margin: 0.4rem 0 0; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; box-shadow: none; }
+    details.breakdown > summary { padding: 0.4rem 0.75rem; font-size: 0.82rem; font-weight: 600; color: #444; }
+    details.breakdown[open] > summary { border-bottom: 1px solid #eee; }
+    details.breakdown > div.breakdown-body { padding: 0.25rem 0.5rem 0.5rem; }
+    details.breakdown .comparison-table { margin-bottom: 0; font-size: 0.82rem; }
+
     .f1-badge {
       font-size: 0.8rem;
       padding: 0.15rem 0.5rem;
@@ -655,6 +662,12 @@ export function formatDelta(oldVal, newVal) {
   return `<span class="${cls}">${sign}${diff.toFixed(1)}pp</span>`;
 }
 
+const METRIC_VARIANTS = [
+  { key: 'f1', label: 'F1' },
+  { key: 'precision', label: 'Precision' },
+  { key: 'recall', label: 'Recall' },
+];
+
 export function buildComparisonTable(columns, currentRunId, { docRows = null, typeRows = null } = {}) {
   const currentIdx = columns.findIndex(c => c.runId === currentRunId);
   const prevIdx = currentIdx > 0 ? currentIdx - 1 : -1;
@@ -680,29 +693,55 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
     return `<th${highlight}>${label}</th>`;
   }).join('');
 
-  let rows = '';
-  rows += metricRow('F1', c => c.f1);
-  rows += metricRow('Precision', c => c.precision);
-  rows += metricRow('Recall', c => c.recall);
+  const mainRows =
+    metricRow('F1', c => c.f1) +
+    metricRow('Precision', c => c.precision) +
+    metricRow('Recall', c => c.recall);
 
-  if (docRows) {
-    rows += `<tr><td colspan="${columns.length + 1}" style="padding:0.6rem;font-weight:600;background:#f5f5f5">Per Document F1</td></tr>`;
-    for (const doc of docRows) {
-      rows += metricRow(humanizeDocName(doc), c => c.documents?.[doc]?.f1 ?? null);
-    }
-  }
-
-  if (typeRows) {
-    rows += `<tr><td colspan="${columns.length + 1}" style="padding:0.6rem;font-weight:600;background:#f5f5f5">Per Type F1</td></tr>`;
-    for (const type of typeRows) {
-      rows += metricRow(type, c => c.byType?.[type]?.f1 ?? null);
-    }
-  }
-
-  return `<table class="comparison-table">
+  const mainTable = `<table class="comparison-table">
     <thead><tr><th>Metric</th>${headerCells}</tr></thead>
-    <tbody>${rows}</tbody>
+    <tbody>${mainRows}</tbody>
   </table>`;
+
+  function breakdownBlock(title, rowHeader, entries, getValueFor) {
+    if (!entries || !entries.length) return '';
+    const body = entries.map(e => metricRow(e.label, col => getValueFor(col, e.key))).join('');
+    return `<details class="breakdown">
+      <summary>${title}</summary>
+      <div class="breakdown-body">
+        <table class="comparison-table">
+          <thead><tr><th>${rowHeader}</th>${headerCells}</tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </details>`;
+  }
+
+  let breakdowns = '';
+  if (docRows && docRows.length) {
+    const entries = docRows.map(d => ({ key: d, label: humanizeDocName(d) }));
+    for (const { key: metricKey, label: metricLabel } of METRIC_VARIANTS) {
+      breakdowns += breakdownBlock(
+        `Per Document ${metricLabel}`,
+        'Document',
+        entries,
+        (col, docKey) => col.documents?.[docKey]?.[metricKey] ?? null,
+      );
+    }
+  }
+  if (typeRows && typeRows.length) {
+    const entries = typeRows.map(t => ({ key: t, label: t }));
+    for (const { key: metricKey, label: metricLabel } of METRIC_VARIANTS) {
+      breakdowns += breakdownBlock(
+        `Per Type ${metricLabel}`,
+        'Type',
+        entries,
+        (col, typeKey) => col.byType?.[typeKey]?.[metricKey] ?? null,
+      );
+    }
+  }
+
+  return `<div class="comparison-section">${mainTable}${breakdowns}</div>`;
 }
 
 // ── Document name humanization ─────────────────────────────────────
