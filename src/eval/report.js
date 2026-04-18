@@ -462,6 +462,33 @@ export function buildCss() {
       font-weight: 600;
       margin: 1rem 0 0.5rem;
     }
+
+    .segmented-text {
+      white-space: pre-wrap;
+      font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      line-height: 1.9;
+      padding: 1rem;
+      background: #fdfdfd;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      overflow-x: auto;
+    }
+    .segmented-text .segment.seg-a { background: rgba(0, 0, 0, 0.035); }
+    .segmented-text .segment.seg-b { background: rgba(0, 0, 0, 0.075); }
+    .segmented-text .boundary-marker {
+      display: inline-block;
+      font-weight: bold;
+      font-size: 0.9em;
+      vertical-align: middle;
+      padding: 0 1px;
+      cursor: help;
+    }
+    .segmented-text .boundary-marker.missed { color: #c62828; }
+    .segmented-text .boundary-marker.extra { color: #E65100; }
+    .segmentation-metrics { margin-top: 0.5rem; width: auto; }
+    .segmentation-metrics th, .segmentation-metrics td { white-space: nowrap; }
   `;
 }
 
@@ -792,6 +819,109 @@ function buildScoringSection(docScores) {
     </table>`;
 }
 
+// ── Segmentation section ───────────────────────────────────────────
+
+export function buildSegmentationSection(sourceText, expected, predicted, metrics) {
+  if (!expected) {
+    return `<div class="section-title">Segmentation</div>
+      <p style="font-size:0.85rem;color:#666">No <code>expected-segments.json</code> for this document — run <code>npm run eval:snapshot-segments</code> and review.</p>`;
+  }
+
+  const expectedStarts = new Set(expected.map(s => s.start));
+  const expectedEnds = new Set(expected.map(s => s.end));
+  const predictedStarts = new Set(predicted.map(s => s.start));
+  const predictedEnds = new Set(predicted.map(s => s.end));
+
+  const sortedExpected = [...expected].sort((a, b) => a.start - b.start);
+
+  // Collect all boundary positions from both segmentations and classify each.
+  // A position present in both sets is a correct boundary (not marked).
+  const allBoundaries = new Set([
+    ...expectedStarts, ...expectedEnds,
+    ...predictedStarts, ...predictedEnds,
+  ]);
+  allBoundaries.delete(0);
+  allBoundaries.delete(sourceText.length);
+
+  const markers = [];
+  for (const pos of allBoundaries) {
+    const inExpected = expectedStarts.has(pos) || expectedEnds.has(pos);
+    const inPredicted = predictedStarts.has(pos) || predictedEnds.has(pos);
+    if (inExpected && inPredicted) continue;
+    if (inExpected && !inPredicted) {
+      markers.push({ pos, kind: 'missed', char: '▼' });
+    } else {
+      markers.push({ pos, kind: 'extra', char: '▲' });
+    }
+  }
+  markers.sort((a, b) => a.pos - b.pos);
+
+  const renderHtml = renderSegmentedText(sourceText, sortedExpected, markers);
+
+  const m = metrics || { precision: 0, recall: 0, f1: 0, tp: 0, fp: 0, fn: 0, tpPartial: 0 };
+  const partialNote = m.tpPartial ? ` <small style="color:#E65100">(${m.tpPartial}p)</small>` : '';
+
+  return `<div class="section-title">Segmentation</div>
+    <div class="segmented-text">${renderHtml}</div>
+    <table class="scoring-table segmentation-metrics">
+      <thead><tr><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th><th>Partial</th></tr></thead>
+      <tbody><tr>
+        <td>${pct(m.precision)}</td>
+        <td>${pct(m.recall)}</td>
+        <td>${pct(m.f1)}</td>
+        <td>${m.tp}</td>
+        <td>${m.fp}${partialNote}</td>
+        <td>${m.fn}${partialNote}</td>
+        <td>${m.tpPartial}</td>
+      </tr></tbody>
+    </table>
+    <p style="font-size:0.82rem;color:#666;margin-top:0.5rem">
+      <span style="color:#c62828">▼</span> missed split &nbsp;
+      <span style="color:#E65100">▲</span> extra split &nbsp;
+      (exact matches are not marked)
+    </p>`;
+}
+
+function renderSegmentedText(sourceText, sortedExpected, markers) {
+  // Collect split points: every segment start/end and every marker pos.
+  const points = new Set([0, sourceText.length]);
+  for (const s of sortedExpected) { points.add(s.start); points.add(s.end); }
+  for (const m of markers) { points.add(m.pos); }
+  const sorted = [...points].sort((a, b) => a - b);
+
+  let html = '';
+  const segAt = (pos) => sortedExpected.find(s => s.start <= pos && pos < s.end);
+  const indexOfSeg = (seg) => sortedExpected.indexOf(seg);
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const from = sorted[i];
+    const to = sorted[i + 1];
+
+    // Marker at `from` (if any). Render before the text chunk.
+    const markerHere = markers.find(m => m.pos === from);
+    if (markerHere) {
+      html += `<span class="boundary-marker ${markerHere.kind}" title="${markerHere.kind} boundary at char ${markerHere.pos}">${markerHere.char}</span>`;
+    }
+
+    const chunk = escapeHtml(sourceText.slice(from, to));
+    const seg = segAt(from);
+    if (seg) {
+      const idx = indexOfSeg(seg);
+      const shade = idx % 2 === 0 ? 'seg-a' : 'seg-b';
+      html += `<span class="segment ${shade}" data-start="${seg.start}" data-end="${seg.end}">${chunk}</span>`;
+    } else {
+      html += chunk;
+    }
+  }
+  // Final marker at last position, if any.
+  const last = sorted[sorted.length - 1];
+  const tailMarker = markers.find(m => m.pos === last);
+  if (tailMarker) {
+    html += `<span class="boundary-marker ${tailMarker.kind}" title="${tailMarker.kind} boundary at char ${tailMarker.pos}">${tailMarker.char}</span>`;
+  }
+  return html;
+}
+
 // ── F1 badge ───────────────────────────────────────────────────────
 
 function f1Badge(f1) {
@@ -880,6 +1010,26 @@ export async function generateReport(runId, scoresData) {
     const legendHtml = buildLegend(spans);
     const scoringHtml = buildScoringSection(docScores);
 
+    // Load segments for segmentation view
+    let expectedSegs = null;
+    let predictedSegs = [];
+    try {
+      expectedSegs = JSON.parse(
+        await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8'),
+      );
+    } catch {}
+    try {
+      predictedSegs = JSON.parse(
+        await readFile(join(runDir, docName, 'segments.json'), 'utf-8'),
+      );
+    } catch {}
+    const segmentationHtml = buildSegmentationSection(
+      sourceText,
+      expectedSegs,
+      predictedSegs,
+      docScores.segments ?? null,
+    );
+
     // Per-document comparison table
     const docComparisonColumns = comparisonColumns.map(col => ({
       ...col,
@@ -901,6 +1051,7 @@ export async function generateReport(runId, scoresData) {
           <div class="annotated-text">${annotatedHtml}</div>
           ${legendHtml}
           ${scoringHtml}
+          ${segmentationHtml}
           <div class="section-title">Comparison</div>
           ${docComparisonHtml}
         </div>

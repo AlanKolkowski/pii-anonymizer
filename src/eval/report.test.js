@@ -4,6 +4,7 @@ import {
   ENTITY_COLORS, buildLegend,
   buildComparisonTable, formatDelta,
   generateReport,
+  buildSegmentationSection,
 } from './report.js';
 
 describe('classifyEntities', () => {
@@ -227,5 +228,47 @@ describe('humanizeDocName', () => {
 describe('generateReport', () => {
   it('exports a function', () => {
     expect(typeof generateReport).toBe('function');
+  });
+});
+
+describe('buildSegmentationSection', () => {
+  const text = 'Alpha. Beta gamma. Delta epsilon.';
+  // 0          7          19
+  // Alpha. Beta gamma. Delta epsilon.
+
+  it('renders an empty placeholder when no expected segments are available', () => {
+    const html = buildSegmentationSection(text, null, [], null);
+    expect(html).toMatch(/No.*expected-segments\.json/);
+  });
+
+  it('renders segment blocks and metrics when both are provided', () => {
+    const expected = [
+      { start: 0, end: 6, text: 'Alpha.' },
+      { start: 7, end: 18, text: 'Beta gamma.' },
+      { start: 19, end: 33, text: 'Delta epsilon.' },
+    ];
+    const predicted = [
+      { start: 0, end: 6, text: 'Alpha.' },
+      { start: 7, end: 18, text: 'Beta gamma.' },
+      // third expected segment missed entirely
+    ];
+    const metrics = { precision: 1, recall: 2/3, f1: 0.8, tp: 2, fp: 0, fn: 1, tpPartial: 0 };
+    const html = buildSegmentationSection(text, expected, predicted, metrics);
+    expect(html).toContain('class="segment');
+    expect(html).toContain('boundary-marker missed'); // the missing third segment's boundary
+    expect(html).toMatch(/F1.*?80\.0%/s);
+  });
+
+  it('renders orange caret for an extra predicted boundary', () => {
+    const expected = [
+      { start: 0, end: 33, text: 'Alpha. Beta gamma. Delta epsilon.' },
+    ];
+    const predicted = [
+      { start: 0, end: 6, text: 'Alpha.' },
+      { start: 7, end: 33, text: 'Beta gamma. Delta epsilon.' },
+    ];
+    const metrics = { precision: 0, recall: 0, f1: 0, tp: 0, fp: 2, fn: 1, tpPartial: 0 };
+    const html = buildSegmentationSection(text, expected, predicted, metrics);
+    expect(html).toContain('boundary-marker extra');
   });
 });
