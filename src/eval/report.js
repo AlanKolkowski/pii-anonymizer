@@ -947,16 +947,30 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
   </div>`;
 }
 
-function renderSegmentedText(sourceText, sortedExpected, markers) {
+function renderSegmentedText(sourceText, sortedSegments, markers) {
+  // Assign alternating shade per segment, skipping whitespace-only segments
+  // so visible content always alternates even when the pipeline emits tiny
+  // \n\n segments between sentences.
+  const shadeOf = new Map();
+  let visibleIdx = 0;
+  for (const s of sortedSegments) {
+    const text = sourceText.slice(s.start, s.end);
+    if (text.replace(/\s/g, '').length === 0) {
+      shadeOf.set(s, null);
+    } else {
+      shadeOf.set(s, visibleIdx % 2 === 0 ? 'seg-a' : 'seg-b');
+      visibleIdx++;
+    }
+  }
+
   // Collect split points: every segment start/end and every marker pos.
   const points = new Set([0, sourceText.length]);
-  for (const s of sortedExpected) { points.add(s.start); points.add(s.end); }
+  for (const s of sortedSegments) { points.add(s.start); points.add(s.end); }
   for (const m of markers) { points.add(m.pos); }
   const sorted = [...points].sort((a, b) => a - b);
 
   let html = '';
-  const segAt = (pos) => sortedExpected.find(s => s.start <= pos && pos < s.end);
-  const indexOfSeg = (seg) => sortedExpected.indexOf(seg);
+  const segAt = (pos) => sortedSegments.find(s => s.start <= pos && pos < s.end);
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const from = sorted[i];
@@ -970,9 +984,8 @@ function renderSegmentedText(sourceText, sortedExpected, markers) {
 
     const chunk = escapeHtml(sourceText.slice(from, to));
     const seg = segAt(from);
-    if (seg) {
-      const idx = indexOfSeg(seg);
-      const shade = idx % 2 === 0 ? 'seg-a' : 'seg-b';
+    const shade = seg ? shadeOf.get(seg) : null;
+    if (seg && shade) {
       html += `<span class="segment ${shade}" data-start="${seg.start}" data-end="${seg.end}">${chunk}</span>`;
     } else {
       html += chunk;
