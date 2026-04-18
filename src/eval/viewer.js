@@ -35,11 +35,6 @@ function formatDelta(baseVal, newVal) {
   return ` <span class="${cls}">${sign}${diff.toFixed(1)}pp</span>`;
 }
 
-function f1Badge(f1) {
-  const cls = f1 >= 0.9 ? 'green' : f1 >= 0.7 ? 'yellow' : 'red';
-  return `<span class="f1-badge ${cls}">F1: ${pct(f1)}</span>`;
-}
-
 // ── Data loading ───────────────────────────────────────────────────
 
 async function listRuns() {
@@ -237,14 +232,42 @@ async function renderReport(runIds, baselineId) {
 
   const overallTable = buildComparisonTable(columns, baselineId, { docRows: docNames, typeRows: allTypes });
   const baselineRun = selectedRuns.find(r => r.runId === baselineId);
-  const overall = baselineRun.scores.overall;
+  const currentRun = selectedRuns[selectedRuns.length - 1];
+  const baseOverall = baselineRun.scores.overall;
+  const curOverall = currentRun.scores.overall;
+  const sameRun = baselineRun.runId === currentRun.runId;
 
-  const bigMetrics = `
-    <div class="big-metrics">
-      <div class="big-metric"><div class="value">${pct(overall.f1)}</div><div class="label">F1 (baseline)</div></div>
-      <div class="big-metric"><div class="value">${pct(overall.precision)}</div><div class="label">Precision</div></div>
-      <div class="big-metric"><div class="value">${pct(overall.recall)}</div><div class="label">Recall</div></div>
+  function metricTile(label, baseVal, curVal, showDelta) {
+    const deltaHtml = showDelta ? formatDelta(baseVal, curVal) : '';
+    return `<div class="big-metric"><div class="value">${pct(curVal)}${deltaHtml}</div><div class="label">${label}</div></div>`;
+  }
+
+  function groupHeader(prefix, run) {
+    const labelHtml = run.label ? ` <span class="big-metric-group-label">${escapeHtml(run.label)}</span>` : '';
+    return `${prefix} · <code>${escapeHtml(run.runId)}</code>${labelHtml}`;
+  }
+
+  const baselineGroup = `
+    <div class="big-metric-group">
+      <div class="big-metric-group-header">${groupHeader('Baseline', baselineRun)}</div>
+      <div class="big-metrics">
+        ${metricTile('F1', null, baseOverall.f1, false)}
+        ${metricTile('Precision', null, baseOverall.precision, false)}
+        ${metricTile('Recall', null, baseOverall.recall, false)}
+      </div>
     </div>`;
+
+  const currentGroup = sameRun ? '' : `
+    <div class="big-metric-group">
+      <div class="big-metric-group-header">${groupHeader('Current', currentRun)}</div>
+      <div class="big-metrics">
+        ${metricTile('F1', baseOverall.f1, curOverall.f1, true)}
+        ${metricTile('Precision', baseOverall.precision, curOverall.precision, true)}
+        ${metricTile('Recall', baseOverall.recall, curOverall.recall, true)}
+      </div>
+    </div>`;
+
+  const bigMetrics = `<div class="big-metrics-wrapper">${baselineGroup}${currentGroup}</div>`;
 
   // Per-document sections with per-run tabs
   const sections = [];
@@ -318,10 +341,9 @@ async function renderReport(runIds, baselineId) {
     }
     const docComparison = buildComparisonTable(docColumns, baselineId, { typeRows: [...docTypeSet].sort() });
 
-    const baselineF1 = baselineRun.scores.documents?.[docName]?.f1 ?? 0;
     sections.push(`
       <details data-doc="${escapeHtml(docName)}">
-        <summary>${humanizeDocName(docName)} ${f1Badge(baselineF1)}</summary>
+        <summary>${humanizeDocName(docName)}</summary>
         <div>
           <div class="tabs-bar">${tabs.join('')}</div>
           <div class="tab-panes">${panes.join('')}</div>
@@ -353,12 +375,17 @@ function buildShell(runs, baselineId, latestId) {
   const runItems = runs.map(r => {
     const defaultChecked = recent5.has(r.runId) || r.runId === baselineId;
     const isBaseline = r.runId === initialBaseline;
+    const isSymlinkLatest = r.runId === latestId;
     const tsShort = r.timestamp ? new Date(r.timestamp).toISOString().slice(0, 16).replace('T', ' ') : '';
+    const badges = [
+      '<span class="run-badge baseline" title="current baseline">baseline</span>',
+      isSymlinkLatest ? '<span class="run-badge latest" title="latest symlink">latest</span>' : '',
+    ].filter(Boolean).join('');
     return `<label class="run-item">
       <input type="checkbox" class="run-check" value="${escapeHtml(r.runId)}"${defaultChecked ? ' checked' : ''}>
       <input type="radio" name="baseline" class="run-baseline" value="${escapeHtml(r.runId)}"${isBaseline ? ' checked' : ''}>
       <span class="run-info">
-        <span class="run-id">${escapeHtml(r.runId)}</span>
+        <span class="run-id-row"><span class="run-id">${escapeHtml(r.runId)}</span>${badges}</span>
         ${r.label ? `<span class="run-label">${escapeHtml(r.label)}</span>` : ''}
         ${tsShort ? `<span class="run-ts">${escapeHtml(tsShort)}</span>` : ''}
       </span>
@@ -399,6 +426,19 @@ function buildShell(runs, baselineId, latestId) {
     details.breakdown[open] > summary { border-bottom: 1px solid #eee; }
     details.breakdown > div.breakdown-body { padding: 0.25rem 0.5rem 0.5rem; }
     details.breakdown .comparison-table { margin-bottom: 0; font-size: 0.82rem; }
+    .big-metrics-wrapper { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 1rem 0 2rem; }
+    .big-metric-group { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 8px; padding: 0.75rem 1rem 1rem; flex: 1; min-width: 280px; }
+    .big-metric-group-header { font-size: 0.75rem; text-transform: uppercase; color: #666; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .big-metric-group-header code { background: #fff; padding: 0 0.3rem; border-radius: 2px; font-size: 0.78rem; text-transform: none; letter-spacing: 0; }
+    .big-metric-group .big-metrics { margin: 0; gap: 0.75rem; }
+    .big-metric-group .big-metric { padding: 0.6rem 0.9rem; box-shadow: none; border: 1px solid #eee; flex: 1; }
+    .big-metric .value .delta-pos, .big-metric .value .delta-neg, .big-metric .value .delta-zero { font-size: 0.8rem; margin-left: 0.35rem; font-weight: 500; }
+    .run-id-row { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+    .run-badge { font-size: 0.6rem; text-transform: uppercase; padding: 0.05rem 0.3rem; border-radius: 2px; font-weight: 600; letter-spacing: 0.03em; }
+    .run-badge.baseline { background: #fff3e0; color: #E65100; display: none; }
+    .run-item:has(.run-baseline:checked) .run-badge.baseline { display: inline; }
+    .run-badge.latest { background: #e3f2fd; color: #1565C0; }
+    .big-metric-group-label { color: #1976d2; font-style: italic; font-size: 0.75rem; letter-spacing: 0; text-transform: none; margin-left: 0.2rem; }
   `;
 
   return `<!DOCTYPE html>
