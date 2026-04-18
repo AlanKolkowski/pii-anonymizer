@@ -484,6 +484,12 @@ export function buildCss() {
       display: flex;
       gap: 0.25rem;
       margin-bottom: 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fafafa;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #eee;
     }
     .segmentation-view .seg-view-btn {
       padding: 0.3rem 0.75rem;
@@ -814,6 +820,16 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
         (col, docKey) => col.documents?.[docKey]?.[metricKey] ?? null,
       );
     }
+    if (hasSegMetrics) {
+      for (const { key: metricKey, label: metricLabel } of METRIC_VARIANTS) {
+        breakdowns += breakdownBlock(
+          `Per Document Seg ${metricLabel}`,
+          'Document',
+          entries,
+          (col, docKey) => col.documents?.[docKey]?.segments?.[metricKey] ?? null,
+        );
+      }
+    }
   }
   if (typeRows && typeRows.length) {
     const entries = typeRows.map(t => ({ key: t, label: t }));
@@ -922,11 +938,11 @@ export function buildSegmentationSection(sourceText, expected, predicted, metric
 
   return `<div class="segmentation-view">
     <div class="seg-view-toolbar" role="tablist">
-      <button type="button" class="seg-view-btn active" data-view="expected">Expected</button>
-      <button type="button" class="seg-view-btn" data-view="predicted">Predicted</button>
+      <button type="button" class="seg-view-btn" data-view="expected">Expected</button>
+      <button type="button" class="seg-view-btn active" data-view="predicted">Predicted</button>
     </div>
-    <div class="segmented-text seg-view-body active" data-view="expected">${expectedHtml}</div>
-    <div class="segmented-text seg-view-body" data-view="predicted">${predictedHtml}</div>
+    <div class="segmented-text seg-view-body" data-view="expected">${expectedHtml}</div>
+    <div class="segmented-text seg-view-body active" data-view="predicted">${predictedHtml}</div>
     <table class="scoring-table segmentation-metrics">
       <thead><tr><th>P</th><th>R</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th><th>Partial</th></tr></thead>
       <tbody><tr>
@@ -1134,7 +1150,7 @@ export async function generateReport(runId, scoresData) {
       <details data-doc="${docName}">
         <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
         <div>
-          <details class="section" open><summary>Annotated Text</summary><div class="section-body">
+          <details class="section"><summary>Annotated Text</summary><div class="section-body">
             <div class="annotated-text">${annotatedHtml}</div>
             ${legendHtml}
           </div></details>

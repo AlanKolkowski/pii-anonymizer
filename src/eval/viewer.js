@@ -173,6 +173,16 @@ function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = 
         (col, docKey) => col.documents?.[docKey]?.[metricKey] ?? null,
       );
     }
+    if (hasSegMetrics) {
+      for (const { key: metricKey, label: metricLabel } of METRIC_VARIANTS) {
+        breakdowns += breakdownBlock(
+          `Per Document Seg ${metricLabel}`,
+          'Document',
+          entries,
+          (col, docKey) => col.documents?.[docKey]?.segments?.[metricKey] ?? null,
+        );
+      }
+    }
   }
   if (typeRows && typeRows.length) {
     const entries = typeRows.map(t => ({ key: t, label: t }));
@@ -240,6 +250,8 @@ async function renderReport(runIds, baselineId) {
   const sections = [];
   const sourceTextsByDoc = {};
 
+  const defaultTabId = selectedRuns[selectedRuns.length - 1].runId;
+
   for (const docName of docNames) {
     const { text, expected, expectedSegments } = await loadSource(docName);
     sourceTextsByDoc[docName] = text;
@@ -249,6 +261,7 @@ async function renderReport(runIds, baselineId) {
 
     for (const r of selectedRuns) {
       const isBase = r.runId === baselineId;
+      const isActive = r.runId === defaultTabId;
       const predicted = await loadPredicted(r.runId, docName);
       const predictedSegments = await loadPredictedSegments(r.runId, docName);
       const docScore = r.scores.documents?.[docName];
@@ -272,7 +285,7 @@ async function renderReport(runIds, baselineId) {
           docScore?.segments ?? null,
         );
         paneBody = `${scoringLine}
-          <details class="section" open><summary>Annotated Text</summary><div class="section-body">
+          <details class="section"><summary>Annotated Text</summary><div class="section-body">
             <div class="annotated-text">${annotated}</div>
             ${legend}
           </div></details>
@@ -283,8 +296,8 @@ async function renderReport(runIds, baselineId) {
         ? `<span class="tab-id">${escapeHtml(r.runId)}</span><span class="tab-label">${escapeHtml(r.label)}</span>`
         : `<span class="tab-id">${escapeHtml(r.runId)}</span>`;
       const star = isBase ? '<span class="tab-star">★</span>' : '';
-      tabs.push(`<button class="tab-btn${isBase ? ' active' : ''}" data-run="${escapeHtml(r.runId)}" type="button">${tabInner}${star}</button>`);
-      panes.push(`<div class="tab-pane${isBase ? ' active' : ''}" data-run="${escapeHtml(r.runId)}">${paneBody}</div>`);
+      tabs.push(`<button class="tab-btn${isActive ? ' active' : ''}" data-run="${escapeHtml(r.runId)}" type="button">${tabInner}${star}</button>`);
+      panes.push(`<div class="tab-pane${isActive ? ' active' : ''}" data-run="${escapeHtml(r.runId)}">${paneBody}</div>`);
     }
 
     // Per-doc comparison table
