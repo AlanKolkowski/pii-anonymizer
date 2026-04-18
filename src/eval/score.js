@@ -29,6 +29,36 @@ function computeMetrics(expected, predicted, options) {
   return { tp, fp, fn, tpPartial, precision, recall, f1, matched, missed, spurious, typeMismatched };
 }
 
+export function computeSegmentMetrics(expected, predicted) {
+  const normalized = {
+    exp: expected.map(s => ({ ...s, entity_group: 'SEGMENT' })),
+    pred: predicted.map(s => ({ ...s, entity_group: 'SEGMENT' })),
+  };
+  const { matched, missed, spurious } = matchEntities(
+    normalized.exp,
+    normalized.pred,
+    { overlapThreshold: 0.5, requireTypeMatch: false },
+  );
+
+  const exactMatches = matched.filter(
+    m => m.predicted.start === m.expected.start && m.predicted.end === m.expected.end,
+  );
+  const partialMatches = matched.filter(
+    m => m.predicted.start !== m.expected.start || m.predicted.end !== m.expected.end,
+  );
+
+  const tp = exactMatches.length;
+  const tpPartial = partialMatches.length;
+  const fp = spurious.length + partialMatches.length;
+  const fn = missed.length + partialMatches.length;
+
+  const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
+  const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
+  const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
+
+  return { tp, fp, fn, tpPartial, precision, recall, f1, matched, missed, spurious };
+}
+
 function computeByType(expected, predicted, options) {
   const types = new Set([...expected.map(e => e.entity_group), ...predicted.map(e => e.entity_group)]);
   const byType = {};
@@ -83,6 +113,13 @@ function printDocScores(name, metrics, byType) {
   }
 }
 
+function printSegmentScores(_name, m) {
+  const partialNote = m.tpPartial ? `  (${m.tpPartial} partial → FP+FN)` : '';
+  console.log(`\n  Segmentation:`);
+  console.log(`    P: ${pct(m.precision)}  R: ${pct(m.recall)}  F1: ${pct(m.f1)}`);
+  console.log(`    TP: ${m.tp}  FP: ${m.fp}  FN: ${m.fn}${partialNote}`);
+}
+
 // ── Main ────────────────────────────────────────────────────────────
 
 async function main() {
@@ -110,6 +147,8 @@ async function main() {
   const options = { overlapThreshold: 0.5, requireTypeMatch: true };
   const allExpected = [];
   const allPredicted = [];
+  const allExpectedSegments = [];
+  const allPredictedSegments = [];
   const docScores = {};
 
   for (const expFile of expectedFiles.sort()) {
@@ -137,7 +176,28 @@ async function main() {
     const metrics = computeMetrics(expected, predicted, options);
     const byType = computeByType(expected, predicted, options);
 
+    // Segmentation scoring — optional (skipped if no expected-segments file)
+    let segmentMetrics = null;
+    let expectedSegments = null;
+    let predictedSegments = null;
+    try {
+      expectedSegments = JSON.parse(
+        await readFile(join(DOCS_DIR, `${name}.expected-segments.json`), 'utf-8'),
+      );
+    } catch {}
+    try {
+      predictedSegments = JSON.parse(
+        await readFile(join(runDir, name, 'segments.json'), 'utf-8'),
+      );
+    } catch {}
+    if (expectedSegments && predictedSegments) {
+      segmentMetrics = computeSegmentMetrics(expectedSegments, predictedSegments);
+      allExpectedSegments.push(...expectedSegments);
+      allPredictedSegments.push(...predictedSegments);
+    }
+
     printDocScores(name, metrics, byType);
+    if (segmentMetrics) printSegmentScores(name, segmentMetrics);
 
     docScores[name] = {
       precision: metrics.precision,
@@ -148,6 +208,17 @@ async function main() {
       fn: metrics.fn,
       tpPartial: metrics.tpPartial,
       byType,
+      ...(segmentMetrics && {
+        segments: {
+          precision: segmentMetrics.precision,
+          recall: segmentMetrics.recall,
+          f1: segmentMetrics.f1,
+          tp: segmentMetrics.tp,
+          fp: segmentMetrics.fp,
+          fn: segmentMetrics.fn,
+          tpPartial: segmentMetrics.tpPartial,
+        },
+      }),
     };
 
     allExpected.push(...expected);
@@ -168,6 +239,17 @@ async function main() {
     console.log(`    ${pad(type, 34)} ${pct(m.precision)} ${pct(m.recall)} ${pct(m.f1)}  ${String(m.tp).padStart(2)}  ${String(m.fp).padStart(2)}  ${String(m.fn).padStart(2)}`);
   }
 
+  const overallSegments = (allExpectedSegments.length > 0 || allPredictedSegments.length > 0)
+    ? computeSegmentMetrics(allExpectedSegments, allPredictedSegments)
+    : null;
+
+  if (overallSegments) {
+    console.log('\n=== OVERALL SEGMENTATION ===');
+    console.log(`  Precision: ${pct(overallSegments.precision)}   Recall: ${pct(overallSegments.recall)}   F1: ${pct(overallSegments.f1)}`);
+    const partialNote = overallSegments.tpPartial ? `  (${overallSegments.tpPartial} partial → FP+FN)` : '';
+    console.log(`  TP: ${overallSegments.tp}  FP: ${overallSegments.fp}  FN: ${overallSegments.fn}${partialNote}`);
+  }
+
   // Save scores to run directory
   const scoresData = {
     runId,
@@ -182,6 +264,17 @@ async function main() {
       tpPartial: overall.tpPartial,
       byType: overallByType,
     },
+    ...(overallSegments && {
+      overallSegments: {
+        precision: overallSegments.precision,
+        recall: overallSegments.recall,
+        f1: overallSegments.f1,
+        tp: overallSegments.tp,
+        fp: overallSegments.fp,
+        fn: overallSegments.fn,
+        tpPartial: overallSegments.tpPartial,
+      },
+    }),
     documents: docScores,
   };
 
