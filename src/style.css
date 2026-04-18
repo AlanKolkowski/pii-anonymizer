@@ -288,22 +288,47 @@ footer a:hover {
 }
 
 .entity-selector {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-top: 0.5rem;
 }
 
 .entity-selector .entity-category {
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  padding: 0;
   margin: 0;
 }
 
-.entity-selector .entity-category legend {
-  padding: 0 0.25rem;
+.entity-selector .entity-category-summary {
+  list-style: none;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
+}
+
+.entity-selector .entity-category-summary::-webkit-details-marker {
+  display: none;
+}
+
+.entity-selector .entity-category-summary::before {
+  content: '›';
+  display: inline-block;
+  font-size: 1.1em;
+  line-height: 1;
+  color: #666;
+  transition: transform 0.15s ease;
+  width: 0.9em;
+  text-align: center;
+}
+
+.entity-selector .entity-category[open] > .entity-category-summary::before {
+  transform: rotate(90deg);
 }
 
 .entity-selector .entity-category-label {
@@ -323,7 +348,7 @@ footer a:hover {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  margin-top: 0.25rem;
+  padding: 0 0.75rem 0.5rem 0.75rem;
 }
 
 .entity-selector .entity-row {
@@ -337,10 +362,4 @@ footer a:hover {
 .entity-selector .entity-row code {
   color: #888;
   font-size: 0.85em;
-}
-
-@media (max-width: 640px) {
-  .entity-selector {
-    grid-template-columns: 1fr;
-  }
 }

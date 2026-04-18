@@ -7,13 +7,17 @@ export function createEntitySelector(container, { categories, labels, initial, o
   container.classList.add('entity-selector');
 
   for (const cat of categories) {
-    const fs = document.createElement('fieldset');
-    fs.className = 'entity-category';
-    fs.dataset.categoryId = cat.id;
+    const details = document.createElement('details');
+    details.className = 'entity-category';
+    details.dataset.categoryId = cat.id;
 
-    const legend = document.createElement('legend');
+    const summary = document.createElement('summary');
+    summary.className = 'entity-category-summary';
+
     const catLabel = document.createElement('label');
     catLabel.className = 'entity-category-label';
+    catLabel.addEventListener('click', (e) => e.stopPropagation());
+
     const catInput = document.createElement('input');
     catInput.type = 'checkbox';
     catInput.addEventListener('change', () => {
@@ -35,8 +39,8 @@ export function createEntitySelector(container, { categories, labels, initial, o
     catLabel.appendChild(catInput);
     catLabel.append(` ${cat.label} `);
     catLabel.appendChild(catCount);
-    legend.appendChild(catLabel);
-    fs.appendChild(legend);
+    summary.appendChild(catLabel);
+    details.appendChild(summary);
 
     const list = document.createElement('div');
     list.className = 'entity-category-list';
@@ -62,8 +66,8 @@ export function createEntitySelector(container, { categories, labels, initial, o
       row.appendChild(code);
       list.appendChild(row);
     }
-    fs.appendChild(list);
-    container.appendChild(fs);
+    details.appendChild(list);
+    container.appendChild(details);
 
     refreshCategoryState(cat.id);
   }
