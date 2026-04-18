@@ -40,7 +40,7 @@ async function processDocument(filePath, pipelineConfig, runDir) {
   const ctx = await runPipeline(text, pipelineConfig);
 
   const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-  console.log(`  Done in ${elapsed}s — ${ctx.entities.length} entities, ${Object.keys(ctx.legend).length} tokens`);
+  console.log(`  Done in ${elapsed}s — ${ctx.segments.length} segments, ${ctx.entities.length} entities, ${Object.keys(ctx.legend).length} tokens`);
 
   const outDir = join(runDir, name);
   await mkdir(outDir, { recursive: true });
@@ -53,10 +53,17 @@ async function processDocument(filePath, pipelineConfig, runDir) {
     JSON.stringify(ctx.legend, null, 2),
     'utf-8',
   );
+  const segmentsJson = ctx.segments.map(s => ({
+    start: s.offset,
+    end: s.offset + s.text.length,
+    text: s.text,
+  }));
+  await writeFile(join(outDir, 'segments.json'), JSON.stringify(segmentsJson, null, 2), 'utf-8');
 
   console.log(`  Results: ${outDir}/`);
   return {
     name,
+    segmentCount: ctx.segments.length,
     entityCount: ctx.entities.length,
     tokenCount: Object.keys(ctx.legend).length,
     entitiesByType: countByType(ctx.entities),
@@ -132,6 +139,7 @@ async function main() {
   let totalElapsed = 0;
   for (const r of results) {
     documents[r.name] = {
+      segmentCount: r.segmentCount,
       entityCount: r.entityCount,
       tokenCount: r.tokenCount,
       entitiesByType: r.entitiesByType,
@@ -161,7 +169,7 @@ async function main() {
 
   console.log('\n=== Summary ===');
   for (const r of results) {
-    console.log(`  ${r.name}: ${r.entityCount} entities, ${r.tokenCount} tokens (${r.elapsed}s)`);
+    console.log(`  ${r.name}: ${r.segmentCount} segments, ${r.entityCount} entities, ${r.tokenCount} tokens (${r.elapsed}s)`);
   }
   console.log(`  TOTAL: ${totalEntities} entities, ${totalTokens} tokens (${totalElapsed.toFixed(2)}s)`);
   console.log(`\nResults: ${runDir}/`);
