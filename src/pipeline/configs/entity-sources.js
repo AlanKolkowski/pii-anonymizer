@@ -1,18 +1,19 @@
 export const SOURCES = {
   'multilang-q8': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' },
+  'multilang-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'fp32' },
   'polish-q8':    { kind: 'hf', id: 'bardsai/eu-pii-anonimization', dtype: 'q8' },
   'regex':        { kind: 'regex' },
 };
 
 export const ENTITY_SOURCES = {
-  PERSON_NAME:              ['multilang-q8', 'polish-q8'],
+  PERSON_NAME:              ['multilang-q8'],
   DATE_OF_BIRTH:            ['multilang-q8', 'polish-q8'],
   PERSON_ATTRIBUTE:         ['multilang-q8', 'polish-q8'],
   PERSON_ALIAS:             ['multilang-q8', 'polish-q8'],
   PERSON_IDENTIFIER:        ['multilang-q8', 'polish-q8', 'regex'],
   PERSON_ROLE_OR_TITLE:     ['multilang-q8', 'polish-q8'],
   ORGANIZATION_NAME:        ['multilang-q8', 'polish-q8'],
-  ORGANIZATION_IDENTIFIER:  ['multilang-q8', 'polish-q8', 'regex'],
+  ORGANIZATION_IDENTIFIER:  ['multilang-q8', 'regex'],
   EMAIL_ADDRESS:            ['multilang-q8', 'polish-q8', 'regex'],
   PHONE_NUMBER:             ['multilang-q8', 'polish-q8', 'regex'],
   CONTACT_HANDLE:           ['multilang-q8', 'polish-q8'],
@@ -31,7 +32,7 @@ export const ENTITY_SOURCES = {
   FINANCIAL_AMOUNT:         ['multilang-q8', 'polish-q8', 'regex'],
   INCOME_COMPENSATION:      ['multilang-q8', 'polish-q8'],
   VEHICLE_IDENTIFIER:       ['multilang-q8', 'polish-q8'],
-  HEALTH_DATA:              ['multilang-q8', 'polish-q8'],
+  HEALTH_DATA:              ['multilang-fp32'],
   GENETIC_DATA:             ['multilang-q8', 'polish-q8'],
   BIOMETRIC_DATA:           ['multilang-q8', 'polish-q8'],
   RELIGION_OR_BELIEF:       ['multilang-q8', 'polish-q8'],
