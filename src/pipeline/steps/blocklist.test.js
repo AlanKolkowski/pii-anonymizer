@@ -88,4 +88,32 @@ describe('blocklistStep', () => {
     expect(result.entities[0].start).toBe(0);
     expect(result.entities[0].end).toBe(18);
   });
+
+  it('trims leading blocklisted word followed by punctuation + whitespace', () => {
+    const text = 'Nadawca:\nadw.';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 13, score: 0.9, source: 'polish-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].start).toBe(9);
+    expect(result.entities[0].end).toBe(13);
+  });
+
+  it('trims trailing blocklisted word preceded by punctuation only', () => {
+    const text = 'Kowalski, Pan';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 13, score: 0.9, source: 'polish-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].start).toBe(0);
+    expect(result.entities[0].end).toBe(8);
+  });
+
+  it('drops entity that is a blocklisted word plus trailing punctuation', () => {
+    const text = 'Nadawca:';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 8, score: 0.9, source: 'polish-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
 });

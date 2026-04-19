@@ -1,7 +1,9 @@
 import { rulesFor } from '../configs/entity-rules.js';
+import { TRIM_CHARS } from './trim-trailing-punctuation.js';
 
-const LEADING_WS = /^\s+/;
-const TRAILING_WS = /\s+$/;
+const SEPARATOR_CLASS = `[\\s${[...TRIM_CHARS].join('')}]`;
+const LEADING_SEP = new RegExp(`^${SEPARATOR_CLASS}+`);
+const TRAILING_SEP = new RegExp(`${SEPARATOR_CLASS}+$`);
 
 function matchesBlocklist(slice, blocklistLower) {
   return blocklistLower.includes(slice.trim().toLowerCase());
@@ -19,9 +21,9 @@ function trimEdges(text, start, end, blocklistLower) {
       if (slice.length <= blocked.length) continue;
       if (slice.slice(0, blocked.length).toLowerCase() !== blocked) continue;
       const after = slice.slice(blocked.length);
-      const wsMatch = after.match(LEADING_WS);
-      if (!wsMatch) continue;
-      curStart += blocked.length + wsMatch[0].length;
+      const sepMatch = after.match(LEADING_SEP);
+      if (!sepMatch) continue;
+      curStart += blocked.length + sepMatch[0].length;
       changed = true;
       break;
     }
@@ -33,9 +35,9 @@ function trimEdges(text, start, end, blocklistLower) {
       const tail = text.slice(curStart, curEnd);
       if (tail.slice(-blocked.length).toLowerCase() !== blocked) continue;
       const before = tail.slice(0, -blocked.length);
-      const wsMatch = before.match(TRAILING_WS);
-      if (!wsMatch) continue;
-      curEnd -= blocked.length + wsMatch[0].length;
+      const sepMatch = before.match(TRAILING_SEP);
+      if (!sepMatch) continue;
+      curEnd -= blocked.length + sepMatch[0].length;
       changed = true;
       break;
     }

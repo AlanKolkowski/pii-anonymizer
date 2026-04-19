@@ -1,7 +1,7 @@
 import { CAT_A, CAT_B } from '../data/polish-abbreviations.js';
 import { rulesFor } from '../configs/entity-rules.js';
 
-const TRIM_CHARS = new Set(['.', ',', ';', ':', '!', '?']);
+export const TRIM_CHARS = new Set(['.', ',', ';', ':', '!', '?']);
 const TRAILING_WHITESPACE_RE = /^\s*$/;
 const LAST_TOKEN_RE = /(\S+)\s*$/;
 
