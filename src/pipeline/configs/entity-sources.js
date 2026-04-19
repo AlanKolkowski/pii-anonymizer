@@ -2,6 +2,7 @@ export const SOURCES = {
   'multilang-q8': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' },
   'multilang-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'fp32' },
   'polish-q8':    { kind: 'hf', id: 'bardsai/eu-pii-anonimization', dtype: 'q8' },
+  'polish-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization', dtype: 'fp32' },
   'regex':        { kind: 'regex' },
 };
 
@@ -11,7 +12,7 @@ export const ENTITY_SOURCES = {
   PERSON_ATTRIBUTE:         ['multilang-q8', 'polish-q8'],
   PERSON_ALIAS:             ['multilang-q8', 'polish-q8'],
   PERSON_IDENTIFIER:        ['multilang-q8', 'polish-q8', 'regex'],
-  PERSON_ROLE_OR_TITLE:     ['multilang-q8', 'polish-q8'],
+  PERSON_ROLE_OR_TITLE:     ['polish-q8', 'polish-fp32', 'multilang-fp32'],
   ORGANIZATION_NAME:        ['multilang-q8', 'polish-q8'],
   ORGANIZATION_IDENTIFIER:  ['multilang-q8', 'regex'],
   EMAIL_ADDRESS:            ['multilang-q8', 'polish-q8', 'regex'],
