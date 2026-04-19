@@ -128,10 +128,12 @@ Two gates:
 
 #### `merge.js` (modified)
 `ADDRESS_TYPES` set removed from `anonymizer.js`. New predicate for "these two can merge":
-- Same type: implicit — always mergeable (covers today's two-address → one-address case).
-- Cross-type: `rulesFor(prev.entity_group).mergeWithAdjacent.includes(curr.entity_group)` (or symmetric).
+- **Same type:** always mergeable (covers today's two-address → one-address case). Merged result keeps that type.
+- **Cross-type:** mergeable iff either side's `mergeWithAdjacent` lists the other:
+  `prev.mergeWithAdjacent.includes(curr.type) || curr.mergeWithAdjacent.includes(prev.type)`.
+  Merged result type = the side whose list contained the other ("host"). If both declare each other, `prev` wins (deterministic by scan order).
 
-Merged type: if same-type, that type. If cross-type, the "host" is the type whose `mergeWithAdjacent` listed the other.
+Example: with `POSTAL_ADDRESS.mergeWithAdjacent = ['LOCATION']`, a `LOCATION` next to a `POSTAL_ADDRESS` (in either order) merges into a `POSTAL_ADDRESS` — matching today's behavior.
 
 The existing gap/whitespace constraint (≤ 3 chars matching `/^[\s,\n]*$/`) is preserved.
 
