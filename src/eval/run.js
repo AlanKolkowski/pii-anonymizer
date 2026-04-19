@@ -4,7 +4,8 @@ import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
 import { runPipeline } from '../pipeline/runner.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
-import { ENTITY_SOURCES, SOURCES, allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import { ENTITY_SOURCES, SOURCES, allEntityTypes, requiredSources } from '../pipeline/configs/entity-sources.js';
+import { rulesFor } from '../pipeline/configs/entity-rules.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -20,6 +21,44 @@ function countByType(entities) {
     counts[e.entity_group] = (counts[e.entity_group] || 0) + 1;
   }
   return counts;
+}
+
+function serializeRule(rule) {
+  const out = {};
+  for (const [key, value] of Object.entries(rule)) {
+    if (Array.isArray(value) && value.some(v => v instanceof RegExp)) {
+      out[key] = value.map(v => v instanceof RegExp ? v.toString() : v);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+function snapshotConfig({ pipelineConfig, enabledEntities, entitySources, sources }) {
+  const pipeline = pipelineConfig.map(({ phase, steps }) => ({
+    phase,
+    steps: steps.map(s => s.name || 'anonymous'),
+  }));
+
+  const filteredEntitySources = {};
+  const filteredRules = {};
+  for (const type of enabledEntities) {
+    if (entitySources[type]) filteredEntitySources[type] = entitySources[type];
+    filteredRules[type] = serializeRule(rulesFor(type));
+  }
+
+  const activeSources = {};
+  for (const alias of requiredSources(enabledEntities)) {
+    if (sources[alias]) activeSources[alias] = sources[alias];
+  }
+
+  return {
+    pipeline,
+    entitySources: filteredEntitySources,
+    sources: activeSources,
+    entityRules: filteredRules,
+  };
 }
 
 async function loadModelNode(model) {
@@ -150,11 +189,19 @@ async function main() {
     totalElapsed += parseFloat(r.elapsed);
   }
 
+  const config = snapshotConfig({
+    pipelineConfig,
+    enabledEntities,
+    entitySources: ENTITY_SOURCES,
+    sources: SOURCES,
+  });
+
   const summary = {
     runId,
     timestamp: new Date().toISOString(),
     ...(label && { label }),
     enabledEntities,
+    config,
     totals: {
       documents: results.length,
       entities: totalEntities,
