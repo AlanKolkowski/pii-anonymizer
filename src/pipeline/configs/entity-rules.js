@@ -23,7 +23,7 @@ export const ENTITY_RULES = {
       /(?:ujący|ująca|ującej|ującego|ującemu|ującą|ujące|ujących|ującym|ującymi)$/iu,
     ],
   },
-  ORGANIZATION_NAME:        { maxLength: 120 },
+  ORGANIZATION_NAME:        { maxLength: 120, threshold: 0.6, thresholdBySource: { 'multilang-fp32': 0.95 } },
   VEHICLE_IDENTIFIER:       { maxLength: 40 },
   LOCATION:                 { maxLength: 100 },
   POSTAL_ADDRESS:           { maxLength: 100, mergeWithAdjacent: ['LOCATION'] },

@@ -13,7 +13,7 @@ export const ENTITY_SOURCES = {
   PERSON_ALIAS:             ['multilang-q8', 'polish-q8'],
   PERSON_IDENTIFIER:        ['multilang-q8', 'polish-q8', 'regex'],
   PERSON_ROLE_OR_TITLE:     ['polish-q8', 'polish-fp32', 'multilang-fp32'],
-  ORGANIZATION_NAME:        ['multilang-q8', 'polish-q8'],
+  ORGANIZATION_NAME:        ['polish-q8', 'polish-fp32', 'multilang-fp32'],
   ORGANIZATION_IDENTIFIER:  ['multilang-q8', 'regex'],
   EMAIL_ADDRESS:            ['multilang-q8', 'polish-q8', 'regex'],
   PHONE_NUMBER:             ['multilang-q8', 'polish-q8', 'regex'],
