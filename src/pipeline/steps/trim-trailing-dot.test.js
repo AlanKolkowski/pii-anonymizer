@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { trimTrailingDotStep } from './trim-trailing-dot.js';
+
+const mockRules = { trimTrailingDot: true };
+vi.mock('../configs/entity-rules.js', () => ({
+  rulesFor: () => mockRules,
+}));
+
+beforeEach(() => {
+  mockRules.trimTrailingDot = true;
+});
 
 function makeCtx({ text, entities, segments }) {
   return { text, entities, segments, anonymized: '', legend: {} };
@@ -126,5 +135,19 @@ describe('trimTrailingDotStep', () => {
     });
     const result = trimTrailingDotStep(ctx);
     expect(result.entities[0].end).toBe(20);
+  });
+
+  it('leaves entities untouched when rules.trimTrailingDot is false', () => {
+    mockRules.trimTrailingDot = false;
+    const text = 'Pozdrawia Jan Kowalski.';
+    const result = trimTrailingDotStep(makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 10, end: 23, score: 0.9, word: 'Jan Kowalski.' },
+      ],
+    }));
+    expect(result.entities[0].end).toBe(23);
+    expect(result.entities[0].word).toBe('Jan Kowalski.');
   });
 });

@@ -1,4 +1,5 @@
 import { CAT_A, CAT_B } from '../data/polish-abbreviations.js';
+import { rulesFor } from '../configs/entity-rules.js';
 
 const TRAILING_WHITESPACE_RE = /^\s*$/;
 const LAST_TOKEN_RE = /(\S+)\s*$/;
@@ -25,6 +26,7 @@ export function trimTrailingDotStep(ctx) {
   if (!segments || segments.length === 0) return ctx;
 
   const trimmed = entities.map((entity) => {
+    if (!rulesFor(entity.entity_group).trimTrailingDot) return entity;
     if (text[entity.end - 1] !== '.') return entity;
     const seg = findContainingSegment(segments, entity.end);
     if (!seg) return entity;
