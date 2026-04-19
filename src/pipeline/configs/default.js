@@ -5,8 +5,10 @@ import { tightenSegmentsStep } from '../steps/tighten-segments.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
+import { thresholdStep } from '../steps/threshold.js';
 import { snapStep } from '../steps/snap.js';
 import { trimTrailingDotStep } from '../steps/trim-trailing-dot.js';
+import { blocklistStep } from '../steps/blocklist.js';
 import { maxLengthStep } from '../steps/max-length.js';
 import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
@@ -50,8 +52,10 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
     { phase: 'ner', steps: [createNerStep(hf, loadModel), createRegexStep(regexActive)] },
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
+      thresholdStep,
       snapStep,
       trimTrailingDotStep,
+      blocklistStep,
       maxLengthStep,
       dedupStep,
       backfillOccurrencesStep,
