@@ -2,8 +2,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 105,
-    "end": 142,
-    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+    "end": 141,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -56,8 +56,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 549,
-    "end": 586,
-    "text": "Kancelaria Prawna „Nowak & Wspólnicy\""
+    "end": 585,
+    "text": "Kancelaria Prawna „Nowak & Wspólnicy"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -242,8 +242,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 2959,
-    "end": 2996,
-    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+    "end": 2995,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -301,9 +301,9 @@
   },
   {
     "entity_group": "ORGANIZATION_NAME",
-    "start": 3943,
+    "start": 3944,
     "end": 3967,
-    "text": "„Finanse Pro\" sp. z o.o."
+    "text": "Finanse Pro\" sp. z o.o."
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -416,8 +416,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 5326,
-    "end": 5363,
-    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY\""
+    "end": 5362,
+    "text": "KANCELARIA PRAWNA „NOWAK & WSPÓLNICY"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
