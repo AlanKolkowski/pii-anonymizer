@@ -30,12 +30,12 @@ export function trimTrailingPunctuationStep(ctx) {
     if (!rulesFor(entity.entity_group).trimTrailingPunctuation) return entity;
     const lastChar = text[entity.end - 1];
     if (!TRIM_CHARS.has(lastChar)) return entity;
-    const seg = findContainingSegment(segments, entity.end);
-    if (!seg) return entity;
-    const segEnd = seg.offset + seg.text.length;
-    const after = text.slice(entity.end, segEnd);
-    if (!TRAILING_WHITESPACE_RE.test(after)) return entity;
     if (lastChar === '.') {
+      const seg = findContainingSegment(segments, entity.end);
+      if (!seg) return entity;
+      const segEnd = seg.offset + seg.text.length;
+      const after = text.slice(entity.end, segEnd);
+      if (!TRAILING_WHITESPACE_RE.test(after)) return entity;
       const entityText = text.slice(entity.start, entity.end);
       if (endsWithKnownAbbreviation(entityText)) return entity;
     }

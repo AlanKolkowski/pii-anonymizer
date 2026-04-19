@@ -171,6 +171,20 @@ describe('trimTrailingPunctuationStep', () => {
     expect(result.entities[0].word).toBe('Jan Kowalski');
   });
 
+  it('trims trailing comma even when followed by more text in the same segment', () => {
+    const text = 'Prezes Zarządu, ARCHON STUDIO sp. z o.o.';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 15, score: 0.9, word: 'Prezes Zarządu,' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].end).toBe(14);
+    expect(result.entities[0].word).toBe('Prezes Zarządu');
+  });
+
   it('does NOT invoke abbreviation check for non-period punctuation', () => {
     const text = 'Firma XYZ sp,';
     const ctx = makeCtx({
