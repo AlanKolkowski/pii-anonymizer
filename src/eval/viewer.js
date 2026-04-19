@@ -9,6 +9,7 @@ import {
   buildScript,
   humanizeDocName,
   buildSegmentationSection,
+  ENTITY_COLORS,
 } from './report.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
@@ -194,6 +195,37 @@ function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = 
   return `<div class="comparison-section">${mainTable}${breakdowns}</div>`;
 }
 
+// ── Entity filter chip bar ─────────────────────────────────────────
+
+function buildEntityFilterBar(unionTypes, preds, expected, docName) {
+  if (!unionTypes.length) return '';
+
+  const predCounts = {};
+  for (const p of preds) predCounts[p.entity_group] = (predCounts[p.entity_group] || 0) + 1;
+  const expCounts = {};
+  for (const e of expected) expCounts[e.entity_group] = (expCounts[e.entity_group] || 0) + 1;
+
+  const chips = unionTypes.map(type => {
+    const count = (predCounts[type] || 0) + (expCounts[type] || 0);
+    const color = ENTITY_COLORS[type] || '#9E9E9E';
+    const zeroClass = count === 0 ? ' zero' : '';
+    return `<label class="entity-filter-chip${zeroClass}" data-type="${escapeHtml(type)}">
+      <input type="checkbox" checked>
+      <span class="chip-swatch" style="background:${color}"></span>
+      <span class="chip-label">${escapeHtml(type)}</span>
+      <span class="chip-count">${count}</span>
+    </label>`;
+  }).join('');
+
+  return `<div class="entity-filter-bar" data-doc="${escapeHtml(docName)}">
+    <div class="entity-filter-actions">
+      <button type="button" class="entity-filter-btn" data-action="all">All</button>
+      <button type="button" class="entity-filter-btn" data-action="none">None</button>
+    </div>
+    ${chips}
+  </div>`;
+}
+
 // ── Dynamic report rendering ───────────────────────────────────────
 
 async function renderReport(runIds, baselineId) {
@@ -279,25 +311,45 @@ async function renderReport(runIds, baselineId) {
     const { text, expected, expectedSegments } = await loadSource(docName);
     sourceTextsByDoc[docName] = text;
 
-    const tabs = [];
-    const panes = [];
-
+    // Pre-compute per-run span data so we can derive the union of entity types
+    // across runs before rendering individual tab panes.
+    const runData = [];
     for (const r of selectedRuns) {
-      const isBase = r.runId === baselineId;
-      const isActive = r.runId === defaultTabId;
       const predicted = await loadPredicted(r.runId, docName);
       const predictedSegments = await loadPredictedSegments(r.runId, docName);
       const docScore = r.scores.documents?.[docName];
+      const preds = predicted || [];
+      for (const e of preds) if (!e.text) e.text = text.slice(e.start, e.end);
+      const spans = predicted != null ? classifyEntities(expected, preds) : null;
+      runData.push({ r, predicted, preds, predictedSegments, docScore, spans });
+    }
+
+    // Union of entity types visible in any run's annotated text for this doc
+    // (includes mismatch's expected side so filtering by either type reveals it).
+    const typeUnion = new Set();
+    for (const { spans } of runData) {
+      if (!spans) continue;
+      for (const s of spans) {
+        if (s.entity_group) typeUnion.add(s.entity_group);
+        if (s.expected_entity_group) typeUnion.add(s.expected_entity_group);
+      }
+    }
+    const unionTypes = [...typeUnion].sort();
+
+    const tabs = [];
+    const panes = [];
+
+    for (const { r, predicted, preds, predictedSegments, docScore, spans } of runData) {
+      const isBase = r.runId === baselineId;
+      const isActive = r.runId === defaultTabId;
 
       let paneBody;
       if (predicted == null && !docScore) {
         paneBody = `<p><em>No data for this document in this run.</em></p>`;
       } else {
-        const preds = predicted || [];
-        for (const e of preds) if (!e.text) e.text = text.slice(e.start, e.end);
-        const spans = classifyEntities(expected, preds);
-        const annotated = buildAnnotatedText(text, spans);
-        const legend = buildLegend(spans);
+        const annotated = buildAnnotatedText(text, spans || []);
+        const legend = buildLegend(spans || []);
+        const filterBar = buildEntityFilterBar(unionTypes, preds, expected, docName);
         const scoringLine = docScore
           ? `<p style="margin-bottom:0.75rem">P: <strong>${pct(docScore.precision)}</strong> &nbsp; R: <strong>${pct(docScore.recall)}</strong> &nbsp; F1: <strong>${pct(docScore.f1)}</strong> &nbsp; TP: ${docScore.tp} &nbsp; FP: ${docScore.fp} &nbsp; FN: ${docScore.fn}${docScore.tpPartial ? ` &nbsp; <span style="color:#E65100">${docScore.tpPartial} partial</span>` : ''}</p>`
           : '';
@@ -309,6 +361,7 @@ async function renderReport(runIds, baselineId) {
         );
         paneBody = `${scoringLine}
           <details class="section"><summary>Annotated Text</summary><div class="section-body">
+            ${filterBar}
             <div class="annotated-text">${annotated}</div>
             ${legend}
           </div></details>
@@ -439,6 +492,66 @@ function buildShell(runs, baselineId, latestId) {
     .run-item:has(.run-baseline:checked) .run-badge.baseline { display: inline; }
     .run-badge.latest { background: #e3f2fd; color: #1565C0; }
     .big-metric-group-label { color: #1976d2; font-style: italic; font-size: 0.75rem; letter-spacing: 0; text-transform: none; margin-left: 0.2rem; }
+
+    .entity-filter-bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.5rem 0.6rem;
+      margin: -0.75rem -0.75rem 0.75rem -0.75rem;
+      background: #fdfdfd;
+      border-bottom: 1px solid #eee;
+    }
+    .entity-filter-actions { display: flex; gap: 0.25rem; margin-right: 0.25rem; }
+    .entity-filter-btn {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: white;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .entity-filter-btn:hover { background: #f0f0f0; }
+    .entity-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem 0.15rem 0.35rem;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      background: white;
+      cursor: pointer;
+      user-select: none;
+      font-family: inherit;
+    }
+    .entity-filter-chip:hover { background: #f5f5f5; }
+    .entity-filter-chip input { margin: 0; cursor: pointer; }
+    .entity-filter-chip .chip-swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+    .entity-filter-chip .chip-label { font-family: "SF Mono", Menlo, monospace; font-size: 0.7rem; }
+    .entity-filter-chip .chip-count { color: #888; font-variant-numeric: tabular-nums; }
+    .entity-filter-chip.zero { opacity: 0.45; }
+    .entity-filter-chip:has(input:not(:checked)) { background: #f5f5f5; color: #999; }
+    .entity-filter-chip:has(input:not(:checked)) .chip-swatch { opacity: 0.25; }
+
+    .entity.entity-dimmed {
+      background: transparent !important;
+      border: none !important;
+      text-decoration: none !important;
+      padding: 0;
+      cursor: auto;
+    }
+    .entity.entity-dimmed .src { display: none; }
   `;
 
   return `<!DOCTYPE html>
@@ -469,6 +582,41 @@ function buildShell(runs, baselineId, latestId) {
   </main>
   <script>
     const content = document.getElementById('content');
+
+    // Entity-type filter: per-doc set of types the user has unchecked.
+    // We persist the "unchecked" side so newly-seen types default to visible.
+    window.__entityFilterState = window.__entityFilterState || {};
+
+    function applyEntityFilter(docName) {
+      const unchecked = window.__entityFilterState[docName];
+      if (!unchecked) return;
+      const docEl = document.querySelector('details[data-doc="' + CSS.escape(docName) + '"]');
+      if (!docEl) return;
+      docEl.querySelectorAll('.annotated-text').forEach(at => {
+        at.querySelectorAll('.entity').forEach(ent => {
+          const type = ent.dataset.type;
+          const expType = ent.dataset.expectedType;
+          const allowed = !unchecked.has(type) || (expType && !unchecked.has(expType));
+          ent.classList.toggle('entity-dimmed', !allowed);
+        });
+      });
+      docEl.querySelectorAll('.entity-filter-bar').forEach(bar => {
+        bar.querySelectorAll('.entity-filter-chip').forEach(chip => {
+          const cb = chip.querySelector('input');
+          if (cb) cb.checked = !unchecked.has(chip.dataset.type);
+        });
+      });
+    }
+
+    function initAllEntityFilters() {
+      document.querySelectorAll('.entity-filter-bar').forEach(bar => {
+        const docName = bar.dataset.doc;
+        if (!window.__entityFilterState[docName]) {
+          window.__entityFilterState[docName] = new Set();
+        }
+        applyEntityFilter(docName);
+      });
+    }
 
     function ensureBaselineChecked() {
       const baselineRadio = document.querySelector('.run-baseline:checked');
@@ -509,6 +657,7 @@ function buildShell(runs, baselineId, latestId) {
         window.__evalSources = data.sourceTextsByDoc || {};
         content.className = '';
         content.innerHTML = data.html;
+        initAllEntityFilters();
       } catch (err) {
         content.className = 'empty';
         content.innerHTML = '<p style="color:#c62828">Error: ' + err.message + '</p>';
@@ -516,10 +665,40 @@ function buildShell(runs, baselineId, latestId) {
     }
 
     document.addEventListener('change', (e) => {
-      if (e.target.matches('.run-check, .run-baseline')) refresh();
+      if (e.target.matches('.run-check, .run-baseline')) {
+        refresh();
+        return;
+      }
+      if (e.target.matches('.entity-filter-chip input')) {
+        const chip = e.target.closest('.entity-filter-chip');
+        const bar = e.target.closest('.entity-filter-bar');
+        if (!chip || !bar) return;
+        const docName = bar.dataset.doc;
+        const type = chip.dataset.type;
+        const unchecked = window.__entityFilterState[docName] = window.__entityFilterState[docName] || new Set();
+        if (e.target.checked) unchecked.delete(type);
+        else unchecked.add(type);
+        applyEntityFilter(docName);
+      }
     });
 
     document.addEventListener('click', (e) => {
+      const filterBtn = e.target.closest('.entity-filter-btn');
+      if (filterBtn) {
+        const bar = filterBtn.closest('.entity-filter-bar');
+        if (!bar) return;
+        const docName = bar.dataset.doc;
+        const action = filterBtn.dataset.action;
+        const types = [...bar.querySelectorAll('.entity-filter-chip')].map(c => c.dataset.type);
+        if (action === 'all') {
+          window.__entityFilterState[docName] = new Set();
+        } else if (action === 'none') {
+          window.__entityFilterState[docName] = new Set(types);
+        }
+        applyEntityFilter(docName);
+        return;
+      }
+
       if (e.target.matches('#select-all')) {
         document.querySelectorAll('.run-check').forEach(i => i.checked = true);
         refresh();
