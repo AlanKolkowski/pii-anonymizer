@@ -230,26 +230,6 @@ export function findRegexEntities(text) {
   return entities;
 }
 
-// Max entity length per type — filters hallucinated oversized entities
-// where the model labels entire sentences/paragraphs as a single entity
-const MAX_ENTITY_LENGTH = {
-  PERSON_NAME: 50,
-  PERSON_ROLE_OR_TITLE: 70,
-  ORGANIZATION_NAME: 120,
-  VEHICLE_IDENTIFIER: 40,
-  PROPER_NAME: 50,
-  LOCATION: 100,
-  POSTAL_ADDRESS: 100,
-  PERSON_ATTRIBUTE: 80,
-};
-
-export function filterOversizedEntities(entities) {
-  return entities.filter((entity) => {
-    const maxLen = MAX_ENTITY_LENGTH[entity.entity_group];
-    return !maxLen || (entity.end - entity.start) <= maxLen;
-  });
-}
-
 const WORD_BOUNDARY = /[\s,;:()„""–\-]/;
 const MAX_SNAP = 6; // max chars to expand in either direction
 

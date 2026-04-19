@@ -7,7 +7,7 @@ import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
 import { snapStep } from '../steps/snap.js';
 import { trimTrailingDotStep } from '../steps/trim-trailing-dot.js';
-import { filterStep } from '../steps/filter.js';
+import { maxLengthStep } from '../steps/max-length.js';
 import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
 import { backfillOccurrencesStep } from '../steps/backfill.js';
@@ -52,7 +52,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
       createSourceFilterStep({ enabledEntities, entitySources }),
       snapStep,
       trimTrailingDotStep,
-      filterStep,
+      maxLengthStep,
       dedupStep,
       backfillOccurrencesStep,
       mergeStep,

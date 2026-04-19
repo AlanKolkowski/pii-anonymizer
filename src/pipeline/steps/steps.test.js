@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { normalizeWhitespace } from './preprocess.js';
 import { segmentStep } from './segment.js';
 import { snapStep } from './snap.js';
-import { filterStep } from './filter.js';
+import { maxLengthStep } from './max-length.js';
 import { dedupStep } from './dedup.js';
 import { mergeStep } from './merge.js';
 import { createRegexStep } from './regex.js';
@@ -75,7 +75,7 @@ describe('snapStep', () => {
   });
 });
 
-describe('filterStep', () => {
+describe('maxLengthStep', () => {
   it('removes oversized entities', () => {
     const ctx = {
       text: '',
@@ -87,7 +87,7 @@ describe('filterStep', () => {
       anonymized: '',
       legend: {},
     };
-    const result = filterStep(ctx);
+    const result = maxLengthStep(ctx);
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].end).toBe(10);
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, filterOversizedEntities, mergeAdjacentEntities } from './anonymizer.js';
+import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities, mergeAdjacentEntities } from './anonymizer.js';
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -546,66 +546,6 @@ describe('findRegexEntities', () => {
     const phone = entities.find((e) => e.entity_group === 'PHONE_NUMBER');
     expect(phone).toBeDefined();
     expect(text.slice(phone.start, phone.end)).toBe('+48-722-334-556');
-  });
-});
-
-describe('filterOversizedEntities', () => {
-  it('drops PERSON_NAME exceeding 50 chars', () => {
-    const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 65, score: 0.8 },
-      { entity_group: 'PERSON_NAME', start: 100, end: 115, score: 0.9 },
-    ];
-    const result = filterOversizedEntities(entities);
-    expect(result).toHaveLength(1);
-    expect(result[0].start).toBe(100);
-  });
-
-  it('drops PERSON_ROLE_OR_TITLE exceeding 70 chars', () => {
-    const entities = [
-      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 155, score: 0.7 },
-    ];
-    expect(filterOversizedEntities(entities)).toHaveLength(0);
-  });
-
-  it('keeps entities within limits', () => {
-    const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 20, score: 0.9 },
-      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 25, end: 60, score: 0.85 },
-      { entity_group: 'ORGANIZATION_NAME', start: 70, end: 180, score: 0.8 },
-    ];
-    expect(filterOversizedEntities(entities)).toHaveLength(3);
-  });
-
-  it('drops ORGANIZATION_NAME exceeding 120 chars', () => {
-    const entities = [
-      { entity_group: 'ORGANIZATION_NAME', start: 0, end: 200, score: 0.7 },
-      { entity_group: 'ORGANIZATION_NAME', start: 300, end: 400, score: 0.9 },
-    ];
-    const result = filterOversizedEntities(entities);
-    expect(result).toHaveLength(1);
-    expect(result[0].start).toBe(300);
-  });
-
-  it('drops VEHICLE_IDENTIFIER exceeding 40 chars', () => {
-    const entities = [
-      { entity_group: 'VEHICLE_IDENTIFIER', start: 0, end: 300, score: 0.8 },
-    ];
-    expect(filterOversizedEntities(entities)).toHaveLength(0);
-  });
-
-  it('does not filter types without limits', () => {
-    const entities = [
-      { entity_group: 'FINANCIAL_AMOUNT', start: 0, end: 200, score: 0.9 },
-      { entity_group: 'DATE_OF_BIRTH', start: 300, end: 500, score: 0.8 },
-    ];
-    expect(filterOversizedEntities(entities)).toHaveLength(2);
-  });
-
-  it('keeps entities exactly at the limit', () => {
-    const entities = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 50, score: 0.9 },
-    ];
-    expect(filterOversizedEntities(entities)).toHaveLength(1);
   });
 });
 
