@@ -152,8 +152,8 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 4324,
-    "end": 4382,
-    "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia,\nWydział Cywilny"
+    "end": 4365,
+    "text": "Sądu Rejonowego dla Wrocławia-Śródmieścia"
   },
   {
     "entity_group": "FINANCIAL_AMOUNT",
