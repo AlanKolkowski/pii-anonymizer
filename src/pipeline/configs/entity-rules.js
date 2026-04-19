@@ -3,7 +3,7 @@ export const DEFAULT_RULE = {
   thresholdBySource: {},
   maxLength: null,
   snap: true,
-  trimTrailingDot: true,
+  trimTrailingPunctuation: true,
   backfill: true,
   blocklist: [],
   mergeWithAdjacent: [],

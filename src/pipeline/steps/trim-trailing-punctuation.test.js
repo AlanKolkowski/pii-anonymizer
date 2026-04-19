@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { trimTrailingDotStep } from './trim-trailing-dot.js';
+import { trimTrailingPunctuationStep } from './trim-trailing-punctuation.js';
 
-const mockRules = { trimTrailingDot: true };
+const mockRules = { trimTrailingPunctuation: true };
 vi.mock('../configs/entity-rules.js', () => ({
   rulesFor: () => mockRules,
 }));
 
 beforeEach(() => {
-  mockRules.trimTrailingDot = true;
+  mockRules.trimTrailingPunctuation = true;
 });
 
 function makeCtx({ text, entities, segments }) {
   return { text, entities, segments, anonymized: '', legend: {} };
 }
 
-describe('trimTrailingDotStep', () => {
+describe('trimTrailingPunctuationStep', () => {
   it('trims trailing period when entity ends at segment end', () => {
     const text = 'Pozdrawia Jan Kowalski.';
     const ctx = makeCtx({
@@ -24,7 +24,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'PERSON_NAME', start: 10, end: 23, score: 0.9, word: 'Jan Kowalski.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(22);
     expect(result.entities[0].word).toBe('Jan Kowalski');
   });
@@ -38,12 +38,12 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'PERSON_NAME', start: 9, end: 23, score: 0.9, word: 'J. Kowalskiego' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(23);
     expect(result.entities[0].word).toBe('J. Kowalskiego');
   });
 
-  it('leaves entity unchanged when it does not end with a period', () => {
+  it('leaves entity unchanged when it does not end with trim punctuation', () => {
     const text = 'Jan Kowalski mieszka tu';
     const ctx = makeCtx({
       text,
@@ -52,7 +52,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9, word: 'Jan Kowalski' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(12);
   });
 
@@ -65,7 +65,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'PERSON_NAME', start: 0, end: 13, score: 0.9, word: 'Jan Kowalski.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(12);
     expect(result.entities[0].word).toBe('Jan Kowalski');
   });
@@ -82,7 +82,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'PERSON_NAME', start: 17, end: 30, score: 0.9, word: 'Jan Kowalski.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(29);
     expect(result.entities[0].word).toBe('Jan Kowalski');
   });
@@ -93,7 +93,7 @@ describe('trimTrailingDotStep', () => {
       segments: [{ text: 'Hello.', offset: 0 }],
       entities: [],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities).toEqual([]);
   });
 
@@ -106,7 +106,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'ORGANIZATION_NAME', start: 6, end: 20, score: 0.9, word: 'XYZ sp. z o.o.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(20);
     expect(result.entities[0].word).toBe('XYZ sp. z o.o.');
   });
@@ -120,7 +120,7 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'DATE', start: 8, end: 15, score: 0.9, word: '2020 r.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(15);
   });
 
@@ -133,14 +133,14 @@ describe('trimTrailingDotStep', () => {
         { entity_group: 'ORGANIZATION', start: 6, end: 20, score: 0.9, word: 'XYZ sp. z o.o.' },
       ],
     });
-    const result = trimTrailingDotStep(ctx);
+    const result = trimTrailingPunctuationStep(ctx);
     expect(result.entities[0].end).toBe(20);
   });
 
-  it('leaves entities untouched when rules.trimTrailingDot is false', () => {
-    mockRules.trimTrailingDot = false;
+  it('leaves entities untouched when rules.trimTrailingPunctuation is false', () => {
+    mockRules.trimTrailingPunctuation = false;
     const text = 'Pozdrawia Jan Kowalski.';
-    const result = trimTrailingDotStep(makeCtx({
+    const result = trimTrailingPunctuationStep(makeCtx({
       text,
       segments: [{ text, offset: 0 }],
       entities: [
@@ -149,5 +149,39 @@ describe('trimTrailingDotStep', () => {
     }));
     expect(result.entities[0].end).toBe(23);
     expect(result.entities[0].word).toBe('Jan Kowalski.');
+  });
+
+  it.each([
+    { char: ',', label: 'comma' },
+    { char: ';', label: 'semicolon' },
+    { char: ':', label: 'colon' },
+    { char: '!', label: 'exclamation' },
+    { char: '?', label: 'question mark' },
+  ])('trims trailing $label', ({ char }) => {
+    const text = `Jan Kowalski${char}`;
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: text.length, score: 0.9, word: `Jan Kowalski${char}` },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].end).toBe(text.length - 1);
+    expect(result.entities[0].word).toBe('Jan Kowalski');
+  });
+
+  it('does NOT invoke abbreviation check for non-period punctuation', () => {
+    const text = 'Firma XYZ sp,';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 13, score: 0.9, word: 'XYZ sp,' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].end).toBe(12);
+    expect(result.entities[0].word).toBe('XYZ sp');
   });
 });

@@ -13,7 +13,7 @@ describe('rulesFor', () => {
     expect(rules.thresholdBySource['polish-q8']).toBe(0.75);
     expect(rules.blocklist).toEqual(['Pan', 'Pani', 'Nadawca']);
     expect(rules.snap).toBe(true);
-    expect(rules.trimTrailingDot).toBe(true);
+    expect(rules.trimTrailingPunctuation).toBe(true);
   });
 
   it('preserves DEFAULT_RULE.maxLength = null for unconfigured types', () => {
