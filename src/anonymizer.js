@@ -1,5 +1,3 @@
-import { unionSources } from './pipeline/sources.js';
-
 function commonPrefixLength(a, b) {
   let i = 0;
   while (i < a.length && i < b.length && a[i] === b[i]) i++;
@@ -250,42 +248,6 @@ export function snapToWordBoundaries(entities, text) {
   });
 }
 
-const ADDRESS_TYPES = new Set(['POSTAL_ADDRESS', 'LOCATION']);
-
-export function mergeAdjacentEntities(entities, text) {
-  if (entities.length <= 1) return entities;
-
-  // Sort by position
-  const sorted = [...entities].sort((a, b) => a.start - b.start);
-  const result = [sorted[0]];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = result[result.length - 1];
-    const curr = sorted[i];
-
-    if (ADDRESS_TYPES.has(prev.entity_group) && ADDRESS_TYPES.has(curr.entity_group)) {
-      const gap = text.slice(prev.end, curr.start);
-      if (gap.length <= 3 && /^[\s,\n]*$/.test(gap)) {
-        // Merge into one POSTAL_ADDRESS
-        const mergedSources = unionSources(prev.source, curr.source);
-        result[result.length - 1] = {
-          entity_group: 'POSTAL_ADDRESS',
-          start: prev.start,
-          end: curr.end,
-          score: Math.max(prev.score, curr.score),
-          ...(mergedSources.length > 0 && {
-            source: mergedSources.length === 1 ? mergedSources[0] : mergedSources,
-          }),
-        };
-        continue;
-      }
-    }
-
-    result.push(curr);
-  }
-
-  return result;
-}
 
 const DEDUP_SCORE_EPSILON = 0.1;
 
