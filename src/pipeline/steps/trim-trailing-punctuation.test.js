@@ -185,6 +185,82 @@ describe('trimTrailingPunctuationStep', () => {
     expect(result.entities[0].word).toBe('Prezes Zarządu');
   });
 
+  it('trims leading Polish opening quote „ only (no trailing quote)', () => {
+    const text = 'marki „Lumina Home jest';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 18, score: 0.9, word: '„Lumina Home' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(7);
+    expect(result.entities[0].end).toBe(18);
+    expect(result.entities[0].word).toBe('Lumina Home');
+  });
+
+  it('trims surrounding ASCII double quotes', () => {
+    const text = 'firma "ACME" istnieje';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 12, score: 0.9, word: '"ACME"' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(7);
+    expect(result.entities[0].end).toBe(11);
+    expect(result.entities[0].word).toBe('ACME');
+  });
+
+  it('trims curly closing quote at the end', () => {
+    const text = 'marki \u201CLumina\u201D widać';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 14, score: 0.9, word: '\u201CLumina\u201D' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(7);
+    expect(result.entities[0].end).toBe(13);
+    expect(result.entities[0].word).toBe('Lumina');
+  });
+
+  it('trims quote after trimming trailing period at segment end', () => {
+    const text = 'firma "ACME".';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 13, score: 0.9, word: '"ACME".' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(7);
+    expect(result.entities[0].end).toBe(11);
+    expect(result.entities[0].word).toBe('ACME');
+  });
+
+  it('leaves quotes untouched when rule is disabled', () => {
+    mockRules.trimTrailingPunctuation = false;
+    const text = 'firma "ACME"';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'ORGANIZATION_NAME', start: 6, end: 12, score: 0.9, word: '"ACME"' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(6);
+    expect(result.entities[0].end).toBe(12);
+    expect(result.entities[0].word).toBe('"ACME"');
+  });
+
   it('does NOT invoke abbreviation check for non-period punctuation', () => {
     const text = 'Firma XYZ sp,';
     const ctx = makeCtx({
