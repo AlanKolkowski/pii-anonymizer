@@ -53,16 +53,17 @@ export function backfillOccurrencesStep(ctx) {
     }
   }
 
-  const nameValues = byType.get('PERSON_NAME');
-  if (nameValues && nameValues.size > 0 && rulesFor('PERSON_NAME').backfill) {
+  for (const [type, values] of byType) {
+    const rules = rulesFor(type);
+    if (!rules.fuzzyBackfill) continue;
     for (const m of text.matchAll(NAME_CANDIDATE)) {
       const start = m.index;
       const end = start + m[0].length;
       if (overlapsAny(start, end, entities)) continue;
       if (overlapsAny(start, end, additions)) continue;
-      for (const value of nameValues) {
+      for (const value of values) {
         if (couldBeSamePerson(m[0], value)) {
-          addIfFree('PERSON_NAME', start, end);
+          addIfFree(type, start, end);
           break;
         }
       }

@@ -5,16 +5,18 @@ export const DEFAULT_RULE = {
   snap: true,
   trimTrailingPunctuation: true,
   backfill: true,
+  fuzzyBackfill: false,
   blocklist: [],
   blocklistPatterns: [],
   mergeWithAdjacent: [],
 };
 
 export const ENTITY_RULES = {
-  PERSON_NAME:              { maxLength: 50, threshold: 0.5 },
+  PERSON_NAME:              { maxLength: 50, threshold: 0.5, fuzzyBackfill: true },
   PERSON_ROLE_OR_TITLE:     {
     maxLength: 70,
     threshold: 0.9,
+    fuzzyBackfill: true,
     blocklist: ['Pan', 'Pani', 'Nadawca'],
     blocklistPatterns: [
       /(?:awca|biorca)$/iu,

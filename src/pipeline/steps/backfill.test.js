@@ -8,10 +8,12 @@ function ctx(text, entities) {
 vi.mock('../configs/entity-rules.js', () => ({
   rulesFor: (type) => {
     const map = {
-      PERSON_NAME: { backfill: true },
-      ORGANIZATION_NAME: { backfill: false },
+      PERSON_NAME: { backfill: true, fuzzyBackfill: true },
+      PERSON_ROLE_OR_TITLE: { backfill: true, fuzzyBackfill: true },
+      ORGANIZATION_NAME: { backfill: false, fuzzyBackfill: false },
+      DOCUMENT_REFERENCE: { backfill: true, fuzzyBackfill: false },
     };
-    return map[type] || { backfill: true };
+    return map[type] || { backfill: true, fuzzyBackfill: false };
   },
 }));
 
@@ -34,5 +36,31 @@ describe('backfillOccurrencesStep', () => {
     ]));
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].start).toBe(0);
+  });
+
+  it('fuzzy-backfills a declined form of a PERSON_ROLE_OR_TITLE', () => {
+    const text = 'Pełni rolę Prezesa Zarządu. Jan, Prezes Zarządu, podpisał.';
+    const detected = { entity_group: 'PERSON_ROLE_OR_TITLE', start: 33, end: 47, score: 0.9, source: 'multilang-fp32' };
+    const result = backfillOccurrencesStep(ctx(text, [detected]));
+    const roles = result.entities.filter((e) => e.entity_group === 'PERSON_ROLE_OR_TITLE');
+    expect(roles).toHaveLength(2);
+    const backfilled = roles.find((e) => e.source === 'rescan');
+    expect(text.slice(backfilled.start, backfilled.end)).toBe('Prezesa Zarządu');
+  });
+
+  it('does not fuzzy-backfill when fuzzyBackfill=false even if backfill=true', () => {
+    const text = 'Faktura FV/2024/001 oraz Faktury FV/2024/002.';
+    const detected = { entity_group: 'DOCUMENT_REFERENCE', start: 8, end: 19, score: 0.9, source: 'regex' };
+    const result = backfillOccurrencesStep(ctx(text, [detected]));
+    const refs = result.entities.filter((e) => e.entity_group === 'DOCUMENT_REFERENCE');
+    expect(refs).toHaveLength(1);
+  });
+
+  it('fuzzy-backfill does not match different role stems', () => {
+    const text = 'Jan, Prezes Zarządu, oraz Anna, Prezes Banku, byli obecni.';
+    const detected = { entity_group: 'PERSON_ROLE_OR_TITLE', start: 5, end: 19, score: 0.9, source: 'multilang-fp32' };
+    const result = backfillOccurrencesStep(ctx(text, [detected]));
+    const roles = result.entities.filter((e) => e.entity_group === 'PERSON_ROLE_OR_TITLE');
+    expect(roles).toHaveLength(1);
   });
 });

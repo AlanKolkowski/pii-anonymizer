@@ -211,12 +211,12 @@ describe('backfillOccurrencesStep', () => {
   });
 
   it('does not match inside larger words (word-boundary respected)', () => {
-    const text = 'Szanowny Panie, Pan przyszedł.';
+    const text = 'Faktura VAT dotyczy VATowca.';
     const ctx = {
       text,
       segments: [],
       entities: [
-        { entity_group: 'PERSON_ROLE_OR_TITLE', start: 16, end: 19, score: 0.9, source: 'multilang-q8' },
+        { entity_group: 'DOCUMENT_REFERENCE', start: 8, end: 11, score: 0.9, source: 'multilang-q8' },
       ],
       anonymized: '',
       legend: {},
