@@ -240,6 +240,12 @@
     "text": "ul. Wólczańska 45/2, 90-608 Łódź"
   },
   {
+    "entity_group": "HEALTH_DATA",
+    "start": 2635,
+    "end": 2657,
+    "text": "kręgosłupa lędźwiowego"
+  },
+  {
     "entity_group": "ORGANIZATION_NAME",
     "start": 2719,
     "end": 2740,
@@ -268,6 +274,18 @@
     "start": 2828,
     "end": 2845,
     "text": "Pawła Sikorskiego"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 2868,
+    "end": 2907,
+    "text": "wielopoziomową dyskopatię L3/L4 i L4/L5"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 2922,
+    "end": 2941,
+    "text": "korzeń\n     nerwowy"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -316,6 +334,12 @@
     "start": 3795,
     "end": 3843,
     "text": "wielopoziomową dyskopatię kręgosłupa lędźwiowego"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 3845,
+    "end": 3857,
+    "text": "L3/L4, L4/L5"
   },
   {
     "entity_group": "HEALTH_DATA",
@@ -430,6 +454,12 @@
     "start": 6201,
     "end": 6220,
     "text": "Nowakowskiej-Wróbel"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 6255,
+    "end": 6277,
+    "text": "kręgosłupa lędźwiowego"
   },
   {
     "entity_group": "PERSON_ROLE_OR_TITLE",
