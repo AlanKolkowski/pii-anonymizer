@@ -205,9 +205,9 @@
   },
   {
     "entity_group": "PERSON_ROLE_OR_TITLE",
-    "start": 2388,
+    "start": 2369,
     "end": 2395,
-    "text": "dr hab."
+    "text": "lekarz prowadzący: dr hab."
   },
   {
     "entity_group": "PERSON_NAME",
