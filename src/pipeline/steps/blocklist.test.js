@@ -8,7 +8,13 @@ function ctx(text, entities) {
 vi.mock('../configs/entity-rules.js', () => ({
   rulesFor: (type) => {
     const map = {
-      PERSON_ROLE_OR_TITLE: { blocklist: ['Pan', 'Pani', 'Nadawca'] },
+      PERSON_ROLE_OR_TITLE: {
+        blocklist: ['Pan', 'Pani', 'Nadawca'],
+        blocklistPatterns: [/(?:awca|biorca)$/iu],
+      },
+      ORGANIZATION_NAME: {
+        blocklistPatterns: [/^(?:sp\. z o\.o\.|s\.a\.)$/iu],
+      },
     };
     return map[type] || { blocklist: [] };
   },
@@ -115,5 +121,46 @@ describe('blocklistStep', () => {
       { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 8, score: 0.9, source: 'polish-q8' },
     ]));
     expect(result.entities).toHaveLength(0);
+  });
+
+  it('drops entity whose final slice matches a blocklist pattern', () => {
+    const text = 'Pożyczkobiorca zobowiązuje się';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 14, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  it('drops entity whose final slice matches a blocklist pattern after word trimming', () => {
+    const text = 'Pan Pożyczkodawca';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 17, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  it('keeps entity whose final slice does not match any pattern', () => {
+    const text = 'Kierownik';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 9, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('applies patterns even when exact blocklist is empty', () => {
+    const text = 'Sp. z o.o.';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'ORGANIZATION_NAME', start: 0, end: 10, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  it('skips entity type with empty blocklist and empty patterns', () => {
+    const text = 'Pan Kowalski';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.9, source: 'polish-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].start).toBe(0);
   });
 });

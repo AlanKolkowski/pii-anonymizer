@@ -6,6 +6,7 @@ export const DEFAULT_RULE = {
   trimTrailingPunctuation: true,
   backfill: true,
   blocklist: [],
+  blocklistPatterns: [],
   mergeWithAdjacent: [],
 };
 
@@ -13,9 +14,12 @@ export const ENTITY_RULES = {
   PERSON_NAME:              { maxLength: 50, threshold: 0.5 },
   PERSON_ROLE_OR_TITLE:     {
     maxLength: 70,
-    threshold: 0.6,
-    thresholdBySource: { 'polish-q8': 0.75 },
+    threshold: 0.9,
     blocklist: ['Pan', 'Pani', 'Nadawca'],
+    blocklistPatterns: [
+      /(?:awca|biorca)$/iu,
+      /(?:ujący|ująca|ującej|ującego|ującemu|ującą|ujące|ujących|ującym|ującymi)$/iu,
+    ],
   },
   ORGANIZATION_NAME:        { maxLength: 120 },
   VEHICLE_IDENTIFIER:       { maxLength: 40 },

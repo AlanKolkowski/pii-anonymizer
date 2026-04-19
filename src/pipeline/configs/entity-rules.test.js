@@ -9,11 +9,15 @@ describe('rulesFor', () => {
 
   it('merges entity overrides onto DEFAULT_RULE', () => {
     const rules = rulesFor('PERSON_ROLE_OR_TITLE');
-    expect(rules.threshold).toBe(0.6);
-    expect(rules.thresholdBySource['polish-q8']).toBe(0.75);
+    expect(rules.threshold).toBe(0.9);
     expect(rules.blocklist).toEqual(['Pan', 'Pani', 'Nadawca']);
+    expect(rules.blocklistPatterns.length).toBeGreaterThan(0);
     expect(rules.snap).toBe(true);
     expect(rules.trimTrailingPunctuation).toBe(true);
+  });
+
+  it('defaults blocklistPatterns to empty array for types without overrides', () => {
+    expect(rulesFor('EMAIL_ADDRESS').blocklistPatterns).toEqual([]);
   });
 
   it('preserves DEFAULT_RULE.maxLength = null for unconfigured types', () => {

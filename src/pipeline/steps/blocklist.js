@@ -50,19 +50,29 @@ export function blocklistStep(ctx) {
   const out = [];
   for (const entity of entities) {
     const rules = rulesFor(entity.entity_group);
-    if (!rules.blocklist || rules.blocklist.length === 0) {
+    const hasWords = rules.blocklist && rules.blocklist.length > 0;
+    const hasPatterns = rules.blocklistPatterns && rules.blocklistPatterns.length > 0;
+    if (!hasWords && !hasPatterns) {
       out.push(entity);
       continue;
     }
-    const blocklistLower = rules.blocklist.map((s) => s.toLowerCase());
-    const slice = text.slice(entity.start, entity.end);
-    if (matchesBlocklist(slice, blocklistLower)) continue;
 
-    const { start, end } = trimEdges(text, entity.start, entity.end, blocklistLower);
-    if (end <= start) continue;
-    const trimmedSlice = text.slice(start, end).trim();
-    if (!trimmedSlice) continue;
-    if (matchesBlocklist(text.slice(start, end), blocklistLower)) continue;
+    let start = entity.start;
+    let end = entity.end;
+
+    if (hasWords) {
+      const blocklistLower = rules.blocklist.map((s) => s.toLowerCase());
+      if (matchesBlocklist(text.slice(start, end), blocklistLower)) continue;
+      ({ start, end } = trimEdges(text, start, end, blocklistLower));
+      if (end <= start) continue;
+      if (!text.slice(start, end).trim()) continue;
+      if (matchesBlocklist(text.slice(start, end), blocklistLower)) continue;
+    }
+
+    if (hasPatterns) {
+      const finalSlice = text.slice(start, end).trim();
+      if (rules.blocklistPatterns.some((p) => p.test(finalSlice))) continue;
+    }
 
     if (start === entity.start && end === entity.end) {
       out.push(entity);
