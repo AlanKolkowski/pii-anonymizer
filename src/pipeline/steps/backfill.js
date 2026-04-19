@@ -1,4 +1,5 @@
 import { couldBeSamePerson } from '../../anonymizer.js';
+import { rulesFor } from '../configs/entity-rules.js';
 
 const CAP_WORD = '[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:-[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)*';
 const NAME_CANDIDATE = new RegExp(`${CAP_WORD}(?:\\s+${CAP_WORD})+`, 'g');
@@ -30,6 +31,7 @@ export function backfillOccurrencesStep(ctx) {
 
   const byType = new Map();
   for (const e of entities) {
+    if (!rulesFor(e.entity_group).backfill) continue;
     const value = text.slice(e.start, e.end);
     if (value.length < MIN_VALUE_LENGTH) continue;
     if (!byType.has(e.entity_group)) byType.set(e.entity_group, new Set());
@@ -52,7 +54,7 @@ export function backfillOccurrencesStep(ctx) {
   }
 
   const nameValues = byType.get('PERSON_NAME');
-  if (nameValues && nameValues.size > 0) {
+  if (nameValues && nameValues.size > 0 && rulesFor('PERSON_NAME').backfill) {
     for (const m of text.matchAll(NAME_CANDIDATE)) {
       const start = m.index;
       const end = start + m[0].length;
