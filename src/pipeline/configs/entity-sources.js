@@ -1,9 +1,9 @@
 export const SOURCES = {
-  'multilang-q8': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8' },
-  'multilang-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'fp32' },
-  'polish-q8':    { kind: 'hf', id: 'bardsai/eu-pii-anonimization', dtype: 'q8' },
-  'polish-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization', dtype: 'fp32' },
-  'regex':        { kind: 'regex' },
+  'multilang-q8':   { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'q8',   sizeMB: 280 },
+  'multilang-fp32': { kind: 'hf', id: 'bardsai/eu-pii-anonimization-multilang', dtype: 'fp32', sizeMB: 1100 },
+  'polish-q8':      { kind: 'hf', id: 'bardsai/eu-pii-anonimization',           dtype: 'q8',   sizeMB: 280 },
+  'polish-fp32':    { kind: 'hf', id: 'bardsai/eu-pii-anonimization',           dtype: 'fp32', sizeMB: 1100 },
+  'regex':          { kind: 'regex' },
 };
 
 export const ENTITY_SOURCES = {

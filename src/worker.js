@@ -5,6 +5,11 @@ import { runPipeline } from './pipeline/runner.js';
 import { createDefaultPipeline } from './pipeline/configs/default.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 
+// Memory budget for resident HF models in the WASM heap.
+// Sized so 2× q8 (~280 MB) + 1× fp32 (~1100 MB) ≈ 1.66 GB fits with headroom
+// for ORT scratch / tokenizer / segment buffers, while two fp32 models do not.
+const MEMORY_BUDGET_MB = 1800;
+
 let wasmReady = false;
 let currentConfig = null;
 const loadedModels = new Map();
@@ -16,11 +21,18 @@ async function ensureWasm() {
   }
 }
 
+function totalLoadedMB() {
+  let total = 0;
+  for (const entry of loadedModels.values()) total += entry.sizeMB;
+  return total;
+}
+
 async function disposeModel(alias) {
   const entry = loadedModels.get(alias);
   if (!entry) return;
   try { await entry.dispose(); } catch (err) { console.warn(`[worker] dispose ${alias}:`, err); }
   loadedModels.delete(alias);
+  console.log(`[worker] evicted ${alias} (total=${totalLoadedMB()}MB)`);
 }
 
 async function disposeUnusedModels(neededAliases) {
@@ -30,10 +42,23 @@ async function disposeUnusedModels(neededAliases) {
   }
 }
 
+async function evictForBudget(needSizeMB, protectAlias) {
+  if (totalLoadedMB() + needSizeMB <= MEMORY_BUDGET_MB) return;
+  const candidates = [...loadedModels.entries()]
+    .filter(([alias]) => alias !== protectAlias)
+    .sort((a, b) => b[1].sizeMB - a[1].sizeMB);
+  for (const [alias] of candidates) {
+    if (totalLoadedMB() + needSizeMB <= MEMORY_BUDGET_MB) return;
+    await disposeModel(alias);
+  }
+}
+
 async function ensureModelLoaded(alias) {
   if (loadedModels.has(alias)) return;
   const def = SOURCES[alias];
   if (!def || def.kind !== 'hf') return;
+  const sizeMB = def.sizeMB ?? 0;
+  await evictForBudget(sizeMB, alias);
   const ner = await hfPipeline('token-classification', def.id, {
     dtype: def.dtype,
     progress_callback: (data) => {
@@ -42,8 +67,8 @@ async function ensureModelLoaded(alias) {
       }
     },
   });
-  loadedModels.set(alias, { ner, dispose: async () => await ner.dispose() });
-  console.log(`[worker] loaded ${alias} (${def.id}, ${def.dtype})`);
+  loadedModels.set(alias, { ner, sizeMB, dispose: async () => await ner.dispose() });
+  console.log(`[worker] loaded ${alias} (${def.id}, ${def.dtype}, ${sizeMB}MB; total=${totalLoadedMB()}MB)`);
 }
 
 async function loadModelForPipeline({ id, dtype }) {
@@ -88,13 +113,16 @@ self.onmessage = async (e) => {
       return;
     }
     try {
-      for (const alias of currentConfig.requiredAliases) {
-        await ensureModelLoaded(alias);
-      }
+      const sortSources = (hf) => [...hf].sort((a, b) => {
+        const aLoaded = loadedModels.has(a.alias) ? 0 : 1;
+        const bLoaded = loadedModels.has(b.alias) ? 0 : 1;
+        if (aLoaded !== bLoaded) return aLoaded - bLoaded;
+        return (SOURCES[a.alias]?.sizeMB ?? 0) - (SOURCES[b.alias]?.sizeMB ?? 0);
+      });
       const pipelineConfig = createDefaultPipeline(
         loadModelForPipeline,
         get_sentence_boundaries,
-        { enabledEntities: currentConfig.enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES },
+        { enabledEntities: currentConfig.enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES, sortSources },
       );
       const ctx = await runPipeline(e.data.text, pipelineConfig);
       self.postMessage({

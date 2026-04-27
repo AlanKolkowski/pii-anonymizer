@@ -41,6 +41,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
   const sources = options.sources ?? SOURCES;
   const enabledEntities = options.enabledEntities;
   const { hf, regexActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
+  const orderedHf = options.sortSources ? options.sortSources(hf) : hf;
 
   return [
     { phase: 'preprocess', steps: [normalizeWhitespace] },
@@ -49,7 +50,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
       mergeAbbreviationsStep,
       tightenSegmentsStep,
     ] },
-    { phase: 'ner', steps: [createNerStep(hf, loadModel), createRegexStep(regexActive)] },
+    { phase: 'ner', steps: [createNerStep(orderedHf, loadModel), createRegexStep(regexActive)] },
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
       thresholdStep,
