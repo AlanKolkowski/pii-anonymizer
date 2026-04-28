@@ -1,13 +1,13 @@
 export const SOURCE_MARKERS = {
-  'bardsai/eu-pii-anonimization-multilang': '¹',
-  'bardsai/eu-pii-anonimization': '²',
+  'wjarka/eu-pii-anonimization-multilang': '¹',
+  'wjarka/eu-pii-anonimization-pl': '²',
   regex: 'ʳ',
   rescan: 'ᵇ',
 };
 
 export const SOURCE_LABELS = {
-  'bardsai/eu-pii-anonimization-multilang': 'bardsai/eu-pii-anonimization-multilang',
-  'bardsai/eu-pii-anonimization': 'bardsai/eu-pii-anonimization',
+  'wjarka/eu-pii-anonimization-multilang': 'wjarka/eu-pii-anonimization-multilang (mirror of bardsai/eu-pii-anonimization-multilang)',
+  'wjarka/eu-pii-anonimization-pl': 'wjarka/eu-pii-anonimization-pl (mirror of bardsai/eu-pii-anonimization)',
   regex: 'regex (built-in patterns)',
   rescan: 'rescan (backfill of known values)',
 };
