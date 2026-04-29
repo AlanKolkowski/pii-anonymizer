@@ -281,3 +281,50 @@ copyDeanonymizedBtn.addEventListener('click', () => {
 });
 
 updateAnonymizeButton();
+
+// WebMCP integration
+const mcp = new WebMCP({ channelName: 'pii_anonymizer' });
+mcp.registerTool(
+  'read_anonymized_text',
+  'Read the current anonymized text from the PII anonymizer',
+  { type: "object", properties: {} },
+  () => {
+    if (!currentLegend) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: 'No anonymized text available. Run anonymization first.' }) }]
+      };
+    }
+    return {
+      content: [{
+        type: "text",
+        text: anonymizedOutput.textContent
+      }]
+    };
+  }
+);
+mcp.registerTool(
+  'write_deanonymize_text',
+  'Write text to the deanonymize input field; the deanonymized result is shown in the browser but never returned to protect PII',
+  {
+    type: "object",
+    properties: {
+      text: { type: "string", description: "Text containing anonymization tokens (e.g. [PERSON_NAME_1])" }
+    },
+    required: ["text"]
+  },
+  (args) => {
+    if (!currentLegend) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: 'No legend available. Run anonymization first.' }) }]
+      };
+    }
+    const text = args.text;
+    deanonymizeInput.value = text;
+    const result = deanonymizeText(text, currentLegend);
+    deanonymizedOutput.textContent = result;
+    deanonymizeResultSection.hidden = false;
+    return {
+      content: [{ type: "text", text: JSON.stringify({ success: true }) }]
+    };
+  }
+);

@@ -62,3 +62,29 @@ Ground truth lives in `test-data/synthetic/` as paired `.txt` + `.expected.json`
 - Entity format: `{ entity_group, start, end, score, word }`
 - **Always tag eval runs** with `--label=<short-descriptive-slug>` (e.g. `npm run eval -- --label=trim-trailing-dot`) so `eval:list` stays navigable and `eval:compare` is meaningful.
 - ALWAYS run `eval` (tagged) and `eval:score` after finishing implementation
+
+## WebMCP Integration
+
+The app integrates with [WebMCP](https://webmcp.dev/) to expose anonymization/deanonymization as MCP tools for LLM clients.
+
+### Setup (one-time)
+
+1. Configure your MCP client (e.g. Claude Desktop):
+   ```bash
+   npx -y @jason.today/webmcp@latest --config claude
+   ```
+   This adds a `webmcp` server to your Claude Desktop config.
+
+### Usage
+
+1. Start the Vite dev server: `npm run dev`
+2. Open the browser, paste a document, click "Anonimizuj"
+3. In your MCP client, ask it to generate a WebMCP token
+4. Click the blue WebMCP widget (bottom-right corner) in the browser, paste the token
+5. The LLM can now use two tools:
+   - `read_anonymized_text` — reads the anonymized text (legend is never exposed to protect PII)
+   - `write_deanonymize_text` — writes text with tokens, returns deanonymized result
+
+### Workflow
+
+User anonymizes document → LLM reads anonymized text via MCP → LLM processes it → LLM writes response via MCP → browser shows deanonymized result.
