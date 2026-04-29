@@ -2,6 +2,9 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { matchEntities } from './matching.js';
 import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sources.js';
+import { ENTITY_COLORS, FALLBACK_COLOR, colorFor } from '../ui/entity-colors.js';
+
+export { ENTITY_COLORS, FALLBACK_COLOR };
 
 function sourceMarker(source) {
   return SOURCE_MARKERS[source] || '?';
@@ -251,34 +254,10 @@ export function buildAnnotatedText(text, spans) {
 }
 
 // ── Color palette ──────────────────────────────────────────────────
-
-export const ENTITY_COLORS = {
-  PERSON_NAME: '#4CAF50',
-  POSTAL_ADDRESS: '#2196F3',
-  PHONE_NUMBER: '#FF9800',
-  EMAIL_ADDRESS: '#9C27B0',
-  ORGANIZATION_NAME: '#00BCD4',
-  ORGANIZATION_IDENTIFIER: '#607D8B',
-  PERSON_IDENTIFIER: '#E91E63',
-  DOCUMENT_REFERENCE: '#795548',
-  FINANCIAL_AMOUNT: '#FFC107',
-  BANK_ACCOUNT_IDENTIFIER: '#3F51B5',
-  LOCATION: '#8BC34A',
-  DATE_OF_BIRTH: '#FF5722',
-  HEALTH_DATA: '#F44336',
-  PERSON_ROLE_OR_TITLE: '#009688',
-  PERSON_ATTRIBUTE: '#CDDC39',
-  DOCUMENT_IDENTIFIER: '#673AB7',
-  INCOME_COMPENSATION: '#FF6F00',
-  PROPER_NAME: '#26A69A',
-  VEHICLE_IDENTIFIER: '#5C6BC0',
-  ACCOUNT_IDENTIFIER: '#EF5350',
-};
-
-const FALLBACK_COLOR = '#9E9E9E';
+// (moved to src/ui/entity-colors.js, re-exported at top of file)
 
 function getColor(entityGroup) {
-  return ENTITY_COLORS[entityGroup] || FALLBACK_COLOR;
+  return colorFor(entityGroup);
 }
 
 export function buildCss() {
