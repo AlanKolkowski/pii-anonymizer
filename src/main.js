@@ -1,28 +1,31 @@
-import { deanonymizeText } from './anonymizer.js';
+import { deanonymizeText, anonymizeText } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
+import { createAnnotationEditor } from './ui/annotation-editor/index.js';
+import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
   defaultEnabledEntities,
 } from './pipeline/configs/entity-sources.js';
 import './style.css';
+import './ui/annotation-editor/styles.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
 });
 
 let currentLegend = null;
+let currentAnonymized = '';
 let configuredOnce = false;
 let classifyInFlight = false;
 const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
 const LS_KEY = 'pii.selected-entities';
 
 const modelStatus = document.getElementById('model-status');
-const inputText = document.getElementById('input-text');
 const anonymizeBtn = document.getElementById('anonymize-btn');
-const resultSection = document.getElementById('result-section');
-const anonymizedOutput = document.getElementById('anonymized-output');
+const editTextBtn = document.getElementById('edit-text-btn');
 const copyAnonymizedBtn = document.getElementById('copy-anonymized');
+const resultSection = document.getElementById('result-section');
 const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
@@ -33,6 +36,7 @@ const deanonymizeResultSection = document.getElementById('deanonymize-result-sec
 const deanonymizedOutput = document.getElementById('deanonymized-output');
 const copyDeanonymizedBtn = document.getElementById('copy-deanonymized');
 const selectorRoot = document.getElementById('entity-selector-root');
+const workspaceRoot = document.getElementById('workspace-root');
 
 function loadSelectionFromStorage() {
   try {
@@ -68,6 +72,58 @@ const selector = createEntitySelector(selectorRoot, {
 });
 
 worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected() });
+
+const editor = createAnnotationEditor(workspaceRoot, {
+  text: '',
+  entities: [],
+  entityCategories: ENTITY_CATEGORIES,
+  entityLabels: ENTITY_LABELS,
+  postEdit(text, entities) {
+    return backfillOccurrencesStep({ text, entities }).entities;
+  },
+  onChange(newEntities) {
+    refreshLegendAndAnonymized(editor.getText(), newEntities);
+  },
+  onModeChange(mode) {
+    if (mode === 'annotation') {
+      editTextBtn.hidden = false;
+      copyAnonymizedBtn.hidden = false;
+      anonymizeBtn.hidden = true;
+    } else {
+      editTextBtn.hidden = true;
+      copyAnonymizedBtn.hidden = true;
+      anonymizeBtn.hidden = false;
+    }
+  },
+});
+
+function refreshLegendAndAnonymized(text, entities) {
+  if (!entities || entities.length === 0) {
+    currentLegend = null;
+    currentAnonymized = '';
+    legendTableBody.innerHTML = '';
+    resultSection.hidden = true;
+    return;
+  }
+  const { anonymized, legend } = anonymizeText(text, entities);
+  currentLegend = legend;
+  currentAnonymized = anonymized;
+
+  legendTableBody.innerHTML = '';
+  for (const [token, value] of Object.entries(legend)) {
+    const row = document.createElement('tr');
+    const tokenCell = document.createElement('td');
+    const code = document.createElement('code');
+    code.textContent = token;
+    tokenCell.appendChild(code);
+    const valueCell = document.createElement('td');
+    valueCell.textContent = value;
+    row.appendChild(tokenCell);
+    row.appendChild(valueCell);
+    legendTableBody.appendChild(row);
+  }
+  resultSection.hidden = false;
+}
 
 function updateAnonymizeButton() {
   const hasSelection = selector.getSelected().length > 0;
@@ -106,7 +162,16 @@ worker.onmessage = (e) => {
 };
 
 anonymizeBtn.addEventListener('click', () => {
-  const text = inputText.value.trim();
+  const liveText = editor.getText();
+  // Snapshot-aware: in text mode, ask the editor whether the text actually changed.
+  if (editor.getMode() === 'text') {
+    const { changed } = editor.commitTextMode(liveText);
+    if (!changed) {
+      // Editor flips back to annotation mode itself; no pipeline needed.
+      return;
+    }
+  }
+  const text = liveText.trim();
   if (!text) return;
   classifyInFlight = true;
   modelStatus.textContent = 'Analizowanie...';
@@ -115,27 +180,27 @@ anonymizeBtn.addEventListener('click', () => {
   worker.postMessage({ type: 'classify', text });
 });
 
+editTextBtn.addEventListener('click', () => {
+  editor.enterTextMode();
+});
+
+copyAnonymizedBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(currentAnonymized);
+  copyAnonymizedBtn.textContent = 'Skopiowano!';
+  setTimeout(() => { copyAnonymizedBtn.textContent = 'Kopiuj zanonimizowany'; }, 2000);
+});
+
 function handleAnonymizationResult(msg) {
-  const { anonymized, legend, debug } = msg;
+  const { data: entities, anonymized, legend, debug } = msg;
+
+  // The editor takes the entities; its onChange will rebuild legend/anonymized
+  // from the canonical anonymizeText() so they stay in sync after manual edits.
+  // We still cache the worker's first-pass values so rendering is consistent
+  // even if no edits happen.
   currentLegend = legend;
+  currentAnonymized = anonymized;
+  editor.setEntities(entities);
 
-  anonymizedOutput.textContent = anonymized;
-
-  legendTableBody.innerHTML = '';
-  for (const [token, value] of Object.entries(legend)) {
-    const row = document.createElement('tr');
-    const tokenCell = document.createElement('td');
-    const code = document.createElement('code');
-    code.textContent = token;
-    tokenCell.appendChild(code);
-    const valueCell = document.createElement('td');
-    valueCell.textContent = value;
-    row.appendChild(tokenCell);
-    row.appendChild(valueCell);
-    legendTableBody.appendChild(row);
-  }
-
-  resultSection.hidden = false;
   deanonymizeSection.hidden = false;
   deanonymizeResultSection.hidden = true;
   anonymizeBtn.textContent = 'Anonimizuj';
@@ -260,12 +325,6 @@ function escHtml(s) {
   return div.innerHTML;
 }
 
-copyAnonymizedBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(anonymizedOutput.textContent);
-  copyAnonymizedBtn.textContent = 'Skopiowano!';
-  setTimeout(() => { copyAnonymizedBtn.textContent = 'Kopiuj do schowka'; }, 2000);
-});
-
 deanonymizeBtn.addEventListener('click', () => {
   const text = deanonymizeInput.value.trim();
   if (!text || !currentLegend) return;
@@ -281,3 +340,50 @@ copyDeanonymizedBtn.addEventListener('click', () => {
 });
 
 updateAnonymizeButton();
+
+// WebMCP integration
+const mcp = new WebMCP({ channelName: 'pii_anonymizer' });
+mcp.registerTool(
+  'read_anonymized_text',
+  'Read the current anonymized text from the PII anonymizer',
+  { type: "object", properties: {} },
+  () => {
+    if (!currentLegend) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: 'No anonymized text available. Run anonymization first.' }) }]
+      };
+    }
+    return {
+      content: [{
+        type: "text",
+        text: currentAnonymized
+      }]
+    };
+  }
+);
+mcp.registerTool(
+  'write_deanonymize_text',
+  'Write text to the deanonymize input field; the deanonymized result is shown in the browser but never returned to protect PII',
+  {
+    type: "object",
+    properties: {
+      text: { type: "string", description: "Text containing anonymization tokens (e.g. [PERSON_NAME_1])" }
+    },
+    required: ["text"]
+  },
+  (args) => {
+    if (!currentLegend) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: 'No legend available. Run anonymization first.' }) }]
+      };
+    }
+    const text = args.text;
+    deanonymizeInput.value = text;
+    const result = deanonymizeText(text, currentLegend);
+    deanonymizedOutput.textContent = result;
+    deanonymizeResultSection.hidden = false;
+    return {
+      content: [{ type: "text", text: JSON.stringify({ success: true }) }]
+    };
+  }
+);

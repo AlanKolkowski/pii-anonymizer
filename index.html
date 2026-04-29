@@ -26,19 +26,17 @@
     </section>
 
     <section id="input-section">
-      <label for="input-text">2. Wklej swój dokument</label>
-      <textarea id="input-text" rows="10" placeholder="Wklej tekst zawierający dane osobowe..."></textarea>
-      <button id="anonymize-btn" class="btn btn-primary" disabled>Anonimizuj</button>
+      <label>2. Wklej swój dokument i anonimizuj</label>
+      <div id="workspace-root"></div>
+      <div class="workspace-actions">
+        <button id="anonymize-btn" class="btn btn-primary" disabled>Anonimizuj</button>
+        <button id="edit-text-btn" class="btn btn-secondary" hidden>Edytuj tekst</button>
+        <button id="copy-anonymized" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
+      </div>
       <p id="model-status"></p>
     </section>
 
     <section id="result-section" hidden>
-      <h2>Zanonimizowany tekst</h2>
-      <div class="output-wrapper">
-        <pre id="anonymized-output" class="output-box"></pre>
-        <button id="copy-anonymized" class="btn btn-secondary">Kopiuj do schowka</button>
-      </div>
-
       <h3>Legenda</h3>
       <table id="legend-table">
         <thead>
@@ -83,6 +81,7 @@
     </footer>
   </div>
 
+  <script src="webmcp.js"></script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

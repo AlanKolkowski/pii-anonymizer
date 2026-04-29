@@ -1,0 +1,288 @@
+/* ── Workspace shell ────────────────────────────────────────── */
+.ann-editor {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.ann-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.8rem;
+}
+
+.ann-editor-mode {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+  margin-right: auto;
+}
+.ann-editor-mode.text {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ann-editor-textarea {
+  width: 100%;
+  min-height: 12rem;
+  padding: 0.75rem;
+  border: none;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+  background: #fff;
+  outline: none;
+  display: block;
+}
+
+/* ── Annotation surface ─────────────────────────────────────── */
+.ann-editor-surface {
+  padding: 1.25rem 0.75rem 0.5rem;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  line-height: 2.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 12rem;
+  cursor: text;
+  user-select: text;
+}
+
+/* ── Entity highlight ───────────────────────────────────────── */
+.ann-ent {
+  position: relative;
+  display: inline;
+  background: var(--ent-bg, rgba(158, 158, 158, 0.25));
+  border-radius: 3px;
+  padding: 0.05rem 0.2rem;
+  cursor: pointer;
+  transition: outline 0.1s;
+}
+.ann-ent:hover {
+  filter: brightness(0.96);
+}
+.ann-ent.selected {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Token chip floating top-right of the entity. Hidden by default to keep the
+   document readable; revealed when this entity (or any sibling sharing the
+   same token) is being hovered, or when selected. */
+.ann-ent-chip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: #fff;
+  color: var(--ent-color, #444);
+  border: 1px solid var(--ent-color, #999);
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+  white-space: nowrap;
+  z-index: 2;
+  user-select: none;
+  opacity: 0;
+  pointer-events: none;
+  /* slight delay on fade-out so cursor has time to reach the chip */
+  transition: opacity 0.1s 0.18s;
+}
+.ann-ent.ann-ent-token-active > .ann-ent-chip,
+.ann-ent.selected > .ann-ent-chip {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.ann-ent-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 0.85rem;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-left: 0;
+  cursor: pointer;
+  opacity: 0;
+  overflow: hidden;
+  transition: width 0.1s, margin-left 0.1s, opacity 0.1s;
+  line-height: 1;
+}
+.ann-ent-chip:hover .ann-ent-chip-x {
+  width: 0.85rem;
+  margin-left: 0.2rem;
+  opacity: 1;
+}
+.ann-ent-chip-x:hover {
+  background: #dc2626;
+}
+
+/* ── Drag handles ───────────────────────────────────────────── */
+.ann-ent-handle {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 4px;
+  background: #2563eb;
+  border-radius: 2px;
+  cursor: ew-resize;
+  z-index: 2;
+}
+.ann-ent-handle.l { left: -2px; }
+.ann-ent-handle.r { right: -2px; }
+
+/* ── Popover (edit + create) ────────────────────────────────── */
+.ann-popover {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  z-index: 100;
+  min-width: 14rem;
+  max-width: 18rem;
+  user-select: none;
+}
+
+.ann-popover-label {
+  display: block;
+  font-size: 0.65rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+  margin-top: 0.15rem;
+}
+.ann-popover-label:first-child { margin-top: 0; }
+
+.ann-popover select,
+.ann-popover button {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-family: inherit;
+  margin-bottom: 0.4rem;
+}
+.ann-popover button {
+  cursor: pointer;
+}
+.ann-popover button.primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.ann-popover button.primary:hover {
+  background: #1d4ed8;
+}
+.ann-popover button.danger {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.ann-popover button.danger:hover {
+  background: #fecaca;
+}
+.ann-popover .meta {
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-family: 'SF Mono', monospace;
+  margin-bottom: 0.4rem;
+  word-break: break-all;
+}
+
+/* ── Inline confirm (delete) ────────────────────────────────── */
+.ann-confirm {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.6rem 0.75rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  z-index: 110;
+  width: 16rem;
+}
+.ann-confirm-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #1f2937;
+}
+.ann-confirm-body {
+  color: #4b5563;
+  margin-bottom: 0.6rem;
+  line-height: 1.4;
+  font-size: 0.75rem;
+}
+.ann-confirm-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.ann-confirm-actions button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ann-confirm-actions button.danger {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #b91c1c;
+}
+
+/* ── Toast (overlap warning) ────────────────────────────────── */
+.ann-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #78350f;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 18rem;
+  z-index: 200;
+  animation: ann-toast-in 0.18s ease-out;
+}
+.ann-toast.fading {
+  animation: ann-toast-out 0.3s ease-in forwards;
+}
+@keyframes ann-toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ann-toast-out {
+  to { opacity: 0; transform: translateY(6px); }
+}

@@ -86,6 +86,10 @@ textarea:focus {
 }
 
 /* --- Buttons --- */
+[hidden] {
+  display: none !important;
+}
+
 .btn {
   display: inline-block;
   padding: 0.6rem 1.4rem;
@@ -196,6 +200,17 @@ td code {
   margin-top: 0.5rem;
   font-size: 0.9rem;
   color: #555;
+}
+
+/* --- Workspace action row --- */
+.workspace-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.workspace-actions .btn {
+  margin-top: 0;
 }
 
 /* --- Footer --- */
