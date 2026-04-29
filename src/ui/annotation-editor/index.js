@@ -573,8 +573,11 @@ export function createAnnotationEditor(rootEl, options) {
   function bindOutsideClickToClose(el) {
     function onDoc(ev) {
       if (el.contains(ev.target)) return;
-      // Don't close if user clicked inside another piece of editor chrome (handles, chips)
-      // — those handle their own state.
+      // Drag handles belong to the selected entity's chrome and own their own
+      // behavior — clicking one starts a boundary drag; we must not close the
+      // popover (which would clear selectedIndex and destroy the handle the
+      // mousedown was meant for).
+      if (ev.target.closest && ev.target.closest('.ann-ent-handle')) return;
       closeAllOverlays();
       document.removeEventListener('mousedown', onDoc, true);
       document.removeEventListener('keydown', onKey, true);
