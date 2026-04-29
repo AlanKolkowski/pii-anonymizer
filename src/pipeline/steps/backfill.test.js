@@ -11,6 +11,7 @@ vi.mock('../configs/entity-rules.js', () => ({
       PERSON_NAME: { backfill: true, fuzzyBackfill: true },
       PERSON_ROLE_OR_TITLE: { backfill: true, fuzzyBackfill: true },
       ORGANIZATION_NAME: { backfill: false, fuzzyBackfill: false },
+      ORG_CASE_INSENSITIVE: { backfill: true, fuzzyBackfill: false, caseInsensitiveBackfill: true },
       DOCUMENT_REFERENCE: { backfill: true, fuzzyBackfill: false },
     };
     return map[type] || { backfill: true, fuzzyBackfill: false };
@@ -54,6 +55,28 @@ describe('backfillOccurrencesStep', () => {
     const result = backfillOccurrencesStep(ctx(text, [detected]));
     const refs = result.entities.filter((e) => e.entity_group === 'DOCUMENT_REFERENCE');
     expect(refs).toHaveLength(1);
+  });
+
+  it('case-insensitive backfill: finds different-case occurrences when rule opts in', () => {
+    const text = 'Acme Corp paid acme corp again. Then ACME CORP was billed.';
+    const result = backfillOccurrencesStep(ctx(text, [
+      { entity_group: 'ORG_CASE_INSENSITIVE', start: 0, end: 9, score: 0.9, source: 'manual' },
+    ]));
+    const orgs = result.entities.filter((e) => e.entity_group === 'ORG_CASE_INSENSITIVE');
+    expect(orgs).toHaveLength(3);
+    const sliced = orgs.map((e) => text.slice(e.start, e.end)).sort();
+    expect(sliced).toEqual(['ACME CORP', 'Acme Corp', 'acme corp']);
+  });
+
+  it('case-insensitive backfill: dedupes by lowercase so we do not re-scan equivalents', () => {
+    const text = 'Acme Corp and acme corp.';
+    // Two existing entities with different cases — should not double-add.
+    const result = backfillOccurrencesStep(ctx(text, [
+      { entity_group: 'ORG_CASE_INSENSITIVE', start: 0, end: 9, score: 0.9, source: 'manual' },
+      { entity_group: 'ORG_CASE_INSENSITIVE', start: 14, end: 23, score: 0.9, source: 'manual' },
+    ]));
+    const orgs = result.entities.filter((e) => e.entity_group === 'ORG_CASE_INSENSITIVE');
+    expect(orgs).toHaveLength(2);
   });
 
   it('fuzzy-backfill does not match different role stems', () => {

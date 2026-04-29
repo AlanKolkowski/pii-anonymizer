@@ -10,8 +10,9 @@ function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildWordBoundaryRegex(value) {
-  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegex(value)}(?![\\p{L}\\p{N}_])`, 'gu');
+function buildWordBoundaryRegex(value, caseInsensitive = false) {
+  const flags = caseInsensitive ? 'giu' : 'gu';
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegex(value)}(?![\\p{L}\\p{N}_])`, flags);
 }
 
 function positionKey(start, end) {
@@ -29,13 +30,19 @@ export function backfillOccurrencesStep(ctx) {
   const { text, entities } = ctx;
   if (!entities || entities.length === 0) return ctx;
 
+  // Per type: dedupe values by case-insensitive key when the rule asks for it,
+  // so we don't run multiple equivalent scans (e.g., "Acme Corp" and "acme corp"
+  // would both spawn a scan that finds the same matches).
   const byType = new Map();
   for (const e of entities) {
-    if (!rulesFor(e.entity_group).backfill) continue;
+    const rules = rulesFor(e.entity_group);
+    if (!rules.backfill) continue;
     const value = text.slice(e.start, e.end);
     if (value.length < MIN_VALUE_LENGTH) continue;
-    if (!byType.has(e.entity_group)) byType.set(e.entity_group, new Set());
-    byType.get(e.entity_group).add(value);
+    if (!byType.has(e.entity_group)) byType.set(e.entity_group, new Map());
+    const valuesMap = byType.get(e.entity_group);
+    const key = rules.caseInsensitiveBackfill ? value.toLowerCase() : value;
+    if (!valuesMap.has(key)) valuesMap.set(key, value);
   }
 
   const additions = [];
@@ -45,15 +52,16 @@ export function backfillOccurrencesStep(ctx) {
     additions.push({ entity_group, start, end, score: 1.0, source: 'rescan' });
   };
 
-  for (const [type, values] of byType) {
-    for (const value of values) {
-      for (const m of text.matchAll(buildWordBoundaryRegex(value))) {
+  for (const [type, valuesMap] of byType) {
+    const rules = rulesFor(type);
+    for (const value of valuesMap.values()) {
+      for (const m of text.matchAll(buildWordBoundaryRegex(value, rules.caseInsensitiveBackfill))) {
         addIfFree(type, m.index, m.index + m[0].length);
       }
     }
   }
 
-  for (const [type, values] of byType) {
+  for (const [type, valuesMap] of byType) {
     const rules = rulesFor(type);
     if (!rules.fuzzyBackfill) continue;
     for (const m of text.matchAll(NAME_CANDIDATE)) {
@@ -61,7 +69,7 @@ export function backfillOccurrencesStep(ctx) {
       const end = start + m[0].length;
       if (overlapsAny(start, end, entities)) continue;
       if (overlapsAny(start, end, additions)) continue;
-      for (const value of values) {
+      for (const value of valuesMap.values()) {
         if (couldBeSamePerson(m[0], value)) {
           addIfFree(type, start, end);
           break;
