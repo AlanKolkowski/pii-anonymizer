@@ -137,6 +137,9 @@
 }
 
 /* ── Drag handles ───────────────────────────────────────────── */
+/* Hidden by default; shown when the entity is directly hovered (so we don't
+   light up handles on every token-mate, which would be visually noisy) or
+   when selected (the popover is open). */
 .ann-ent-handle {
   position: absolute;
   top: -2px;
@@ -146,6 +149,17 @@
   border-radius: 2px;
   cursor: ew-resize;
   z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  /* same delay-on-leave as the chip so the cursor can travel from entity
+     text to the handle without losing hover */
+  transition: opacity 0.1s 0.18s;
+}
+.ann-ent:hover > .ann-ent-handle,
+.ann-ent.selected > .ann-ent-handle {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 .ann-ent-handle.l { left: -2px; }
 .ann-ent-handle.r { right: -2px; }

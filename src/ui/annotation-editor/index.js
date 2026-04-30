@@ -163,19 +163,18 @@ export function createAnnotationEditor(rootEl, options) {
       document.createTextNode(text.slice(entity.start, entity.end)),
     );
 
-    // handles (only when selected)
-    if (index === selectedIndex) {
-      const lh = document.createElement('span');
-      lh.className = 'ann-ent-handle l';
-      lh.contentEditable = 'false';
-      attachDragHandle(lh, index, 'left');
-      span.appendChild(lh);
-      const rh = document.createElement('span');
-      rh.className = 'ann-ent-handle r';
-      rh.contentEditable = 'false';
-      attachDragHandle(rh, index, 'right');
-      span.appendChild(rh);
-    }
+    // handles — always rendered so they can appear on hover; CSS hides them
+    // until the entity is hovered (only the directly-hovered one) or selected.
+    const lh = document.createElement('span');
+    lh.className = 'ann-ent-handle l';
+    lh.contentEditable = 'false';
+    attachDragHandle(lh, index, 'left');
+    span.appendChild(lh);
+    const rh = document.createElement('span');
+    rh.className = 'ann-ent-handle r';
+    rh.contentEditable = 'false';
+    attachDragHandle(rh, index, 'right');
+    span.appendChild(rh);
 
     span.addEventListener('mousedown', (ev) => {
       // ignore clicks that originate on chip's X or handles (handled separately)
@@ -402,14 +401,20 @@ export function createAnnotationEditor(rootEl, options) {
     handleEl.addEventListener('mousedown', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      const surface = bodyEl.querySelector('.ann-editor-surface');
-      if (!surface) return;
+      // Sanity-check that we're in annotation mode at drag start.
+      if (!bodyEl.querySelector('.ann-editor-surface')) return;
 
       const startEntity = entities[index];
       const startStart = startEntity.start;
       const startEnd = startEntity.end;
 
       function onMove(e) {
+        // Re-query the surface every frame: each mousemove triggers a full
+        // renderAnnotationMode() which replaces the surface DOM, so a captured
+        // reference would point at a detached node and charPosFromPoint would
+        // always return null after the first frame.
+        const surface = bodyEl.querySelector('.ann-editor-surface');
+        if (!surface) return;
         const charPos = charPosFromPoint(surface, e.clientX, e.clientY);
         if (charPos == null) return;
         let newStart = startStart;
@@ -573,8 +578,11 @@ export function createAnnotationEditor(rootEl, options) {
   function bindOutsideClickToClose(el) {
     function onDoc(ev) {
       if (el.contains(ev.target)) return;
-      // Don't close if user clicked inside another piece of editor chrome (handles, chips)
-      // — those handle their own state.
+      // Drag handles belong to the selected entity's chrome and own their own
+      // behavior — clicking one starts a boundary drag; we must not close the
+      // popover (which would clear selectedIndex and destroy the handle the
+      // mousedown was meant for).
+      if (ev.target.closest && ev.target.closest('.ann-ent-handle')) return;
       closeAllOverlays();
       document.removeEventListener('mousedown', onDoc, true);
       document.removeEventListener('keydown', onKey, true);
