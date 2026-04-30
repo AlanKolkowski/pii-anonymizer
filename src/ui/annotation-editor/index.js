@@ -163,19 +163,18 @@ export function createAnnotationEditor(rootEl, options) {
       document.createTextNode(text.slice(entity.start, entity.end)),
     );
 
-    // handles (only when selected)
-    if (index === selectedIndex) {
-      const lh = document.createElement('span');
-      lh.className = 'ann-ent-handle l';
-      lh.contentEditable = 'false';
-      attachDragHandle(lh, index, 'left');
-      span.appendChild(lh);
-      const rh = document.createElement('span');
-      rh.className = 'ann-ent-handle r';
-      rh.contentEditable = 'false';
-      attachDragHandle(rh, index, 'right');
-      span.appendChild(rh);
-    }
+    // handles — always rendered so they can appear on hover; CSS hides them
+    // until the entity is hovered (only the directly-hovered one) or selected.
+    const lh = document.createElement('span');
+    lh.className = 'ann-ent-handle l';
+    lh.contentEditable = 'false';
+    attachDragHandle(lh, index, 'left');
+    span.appendChild(lh);
+    const rh = document.createElement('span');
+    rh.className = 'ann-ent-handle r';
+    rh.contentEditable = 'false';
+    attachDragHandle(rh, index, 'right');
+    span.appendChild(rh);
 
     span.addEventListener('mousedown', (ev) => {
       // ignore clicks that originate on chip's X or handles (handled separately)
