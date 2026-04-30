@@ -402,14 +402,20 @@ export function createAnnotationEditor(rootEl, options) {
     handleEl.addEventListener('mousedown', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      const surface = bodyEl.querySelector('.ann-editor-surface');
-      if (!surface) return;
+      // Sanity-check that we're in annotation mode at drag start.
+      if (!bodyEl.querySelector('.ann-editor-surface')) return;
 
       const startEntity = entities[index];
       const startStart = startEntity.start;
       const startEnd = startEntity.end;
 
       function onMove(e) {
+        // Re-query the surface every frame: each mousemove triggers a full
+        // renderAnnotationMode() which replaces the surface DOM, so a captured
+        // reference would point at a detached node and charPosFromPoint would
+        // always return null after the first frame.
+        const surface = bodyEl.querySelector('.ann-editor-surface');
+        if (!surface) return;
         const charPos = charPosFromPoint(surface, e.clientX, e.clientY);
         if (charPos == null) return;
         let newStart = startStart;
