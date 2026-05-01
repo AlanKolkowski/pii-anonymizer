@@ -6,3 +6,7 @@ test-data/results/
 
 # Eval reports (generated per run)
 test-data/results/*/report.html
+
+# Bench results & playwright user-data
+test-data/bench-results/
+bench/.user-data/

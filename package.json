@@ -12,7 +12,10 @@
     "eval:list": "node src/eval/compare.js --list",
     "eval:score": "node src/eval/score.js",
     "eval:view": "node src/eval/viewer.js",
-    "eval:snapshot-segments": "node scripts/snapshot-segments.js"
+    "eval:snapshot-segments": "node scripts/snapshot-segments.js",
+    "bench": "node bench/runner.js",
+    "bench:compare": "node bench/compare.js",
+    "bench:list": "node bench/compare.js --list"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",
@@ -21,6 +24,7 @@
     "sentencex-wasm": "^0.1.20"
   },
   "devDependencies": {
+    "playwright": "^1.59.1",
     "vite": "^6.0.0",
     "vitest": "^3.0.0"
   }
