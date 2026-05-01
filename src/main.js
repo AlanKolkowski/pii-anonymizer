@@ -152,6 +152,9 @@ worker.onmessage = (e) => {
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
       handleAnonymizationResult(msg);
       updateAnonymizeButton();
+      if (msg.data.length === 0) {
+        modelStatus.textContent = 'Nie znaleziono żadnych danych osobowych w tekście.';
+      }
       break;
     case 'timing':
       console.log(`[bench-timing] ${msg.mark}${msg.alias ? ' alias=' + msg.alias : ''} t=${msg.t.toFixed(2)}`);
