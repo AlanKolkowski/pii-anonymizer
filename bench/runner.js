@@ -18,20 +18,24 @@ const VITE_STARTUP_TIMEOUT_MS = 30_000;
 const PAGE_READY_TIMEOUT_MS = 60_000;
 
 function makeRunId() {
-  return new Date().toISOString().replace(/:/g, '-').replace(/\.\d+Z$/, '');
+  return new Date().toISOString().replace(/:/g, '-').replace(/\.(\d+)Z$/, '-$1');
 }
 
 async function startVite() {
-  const proc = spawn('npx', ['vite', '--port', String(PORT)], {
+  const proc = spawn('npx', ['vite', '--strictPort', '--port', String(PORT)], {
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: ROOT,
   });
+  // Match the "Local:" line so we don't false-positive on error messages
+  // that happen to contain `localhost:${PORT}`. --strictPort makes Vite
+  // fail loudly if the port is taken instead of silently bumping.
+  const readyRe = new RegExp(`Local:\\s+\\S*localhost:${PORT}`);
   await new Promise((resolve, reject) => {
     let buffer = '';
     let settled = false;
     const onData = (chunk) => {
       buffer += chunk.toString();
-      if (!settled && buffer.includes(`localhost:${PORT}`)) {
+      if (!settled && readyRe.test(buffer)) {
         settled = true;
         resolve();
       }
@@ -48,7 +52,7 @@ async function startVite() {
       if (!settled) {
         settled = true;
         proc.kill();
-        reject(new Error(`Vite startup timeout after ${VITE_STARTUP_TIMEOUT_MS}ms`));
+        reject(new Error(`Vite startup timeout after ${VITE_STARTUP_TIMEOUT_MS}ms. Output:\n${buffer}`));
       }
     }, VITE_STARTUP_TIMEOUT_MS);
   });
@@ -144,9 +148,22 @@ async function runOne(context, baseURL, testText, entities) {
   return { e2eMs, events, summary: outcome === 'ok' ? summarizeTimings(events) : null, outcome, errors: errorMsgs };
 }
 
-async function captureSystemInfo(context, baseURL) {
+const REQUIRED_SELECTORS = ['#anonymize-btn', '#model-status', '#result-section', '.ann-editor-textarea'];
+
+async function preflightAndCaptureSystemInfo(context, baseURL) {
   const page = await context.newPage();
   await page.goto(baseURL);
+
+  // Fail fast if the UI selectors the runner depends on don't exist —
+  // otherwise each case hits the 600s result-wait timeout before failing.
+  const missing = await page.evaluate((selectors) => {
+    return selectors.filter((s) => !document.querySelector(s));
+  }, REQUIRED_SELECTORS);
+  if (missing.length > 0) {
+    await page.close();
+    throw new Error(`Pre-flight failed: required selectors not found: ${missing.join(', ')}. UI may have changed; update bench/runner.js.`);
+  }
+
   const info = await page.evaluate(() => ({
     userAgent: navigator.userAgent,
     hardwareConcurrency: navigator.hardwareConcurrency,
@@ -160,6 +177,10 @@ async function main() {
   const args = process.argv.slice(2);
   const label = args.find((a) => a.startsWith('--label='))?.slice(8);
   const runs = parseInt(args.find((a) => a.startsWith('--runs='))?.slice(7) ?? '3', 10);
+  if (!Number.isFinite(runs) || runs < 1) {
+    console.error(`--runs must be a positive integer (got: ${runs})`);
+    process.exit(1);
+  }
   const skipWarmup = args.includes('--no-warmup');
   const headed = args.includes('--headed');
 
@@ -193,7 +214,7 @@ async function main() {
   const results = [];
 
   try {
-    systemInfo = await captureSystemInfo(context, baseURL);
+    systemInfo = await preflightAndCaptureSystemInfo(context, baseURL);
 
     for (const c of cases) {
       console.log(`\n--- Case: ${c.label} (${c.sources.join(', ')}, ${c.sizeMB}MB) ---`);

@@ -25,9 +25,14 @@ async function resolveRun(ref) {
     return await readlink(join(RESULTS_DIR, 'latest'));
   }
   const runs = await listRuns();
-  const match = runs.find((r) => r.startsWith(ref));
-  if (match) return match;
-  throw new Error(`No run matching "${ref}". Available: ${runs.join(', ')}`);
+  const exact = runs.find((r) => r === ref);
+  if (exact) return exact;
+  const matches = runs.filter((r) => r.startsWith(ref));
+  if (matches.length === 1) return matches[0];
+  if (matches.length === 0) {
+    throw new Error(`No run matching "${ref}". Available: ${runs.join(', ')}`);
+  }
+  throw new Error(`Ambiguous ref "${ref}" matches ${matches.length} runs: ${matches.join(', ')}. Use a longer prefix.`);
 }
 
 async function loadSummary(runId) {

@@ -23,6 +23,9 @@ npm run eval:compare     # Diff two runs
 npm run eval:list        # List available runs
 
 # Performance benchmark (Playwright + real Chromium)
+# First-time setup (one-off): downloads ~150MB Chromium binary
+npx playwright install chromium
+
 npm run bench                                  # 3 measured runs/case + 1 warmup
 npm run bench -- --label=before-fp16           # Tag a run
 npm run bench -- --runs=5 --no-warmup          # Adjust runs / skip warmup
@@ -70,7 +73,7 @@ Worker emits `{type:'timing', mark, alias?, t}` postMessages. `src/main.js` mirr
 
 Test doc: `test-data/bench/single-page.txt` (~2700 chars with all entity types). Results: `test-data/bench-results/{run-id}/summary.json` with `latest` symlink.
 
-**v1 limitations**: download time excluded (cache-warm only); no fp16 / WebNN support yet (matrix auto-extends when `SOURCES` grows). Use `--no-warmup` to skip the warmup pass when iterating.
+**v1 limitations**: download time excluded (cache-warm only); no fp16 / WebNN support yet (matrix auto-extends when `SOURCES` grows). Use `--no-warmup` to skip the warmup pass when iterating. **Cross-machine variance is unaddressed** — `bench:compare` is meaningful only between runs on the same hardware (CPU, RAM, dtype-acceleration support). Tag the host in `--label=` if you'll compare across machines.
 
 ## Conventions
 
