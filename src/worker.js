@@ -59,6 +59,7 @@ async function ensureModelLoaded(alias) {
   if (!def || def.kind !== 'hf') return;
   const sizeMB = def.sizeMB ?? 0;
   await evictForBudget(sizeMB, alias);
+  self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
   const ner = await hfPipeline('token-classification', def.id, {
     dtype: def.dtype,
     progress_callback: (data) => {
@@ -67,6 +68,7 @@ async function ensureModelLoaded(alias) {
       }
     },
   });
+  self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
   loadedModels.set(alias, { ner, sizeMB, dispose: async () => await ner.dispose() });
   console.log(`[worker] loaded ${alias} (${def.id}, ${def.dtype}, ${sizeMB}MB; total=${totalLoadedMB()}MB)`);
 }
@@ -112,6 +114,7 @@ self.onmessage = async (e) => {
       self.postMessage({ type: 'error', message: 'No entities enabled' });
       return;
     }
+    self.postMessage({ type: 'timing', mark: 'classify:start', t: performance.now() });
     try {
       const sortSources = (hf) => [...hf].sort((a, b) => {
         const aLoaded = loadedModels.has(a.alias) ? 0 : 1;

@@ -149,8 +149,12 @@ worker.onmessage = (e) => {
       break;
     case 'result':
       classifyInFlight = false;
+      console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
       handleAnonymizationResult(msg);
       updateAnonymizeButton();
+      break;
+    case 'timing':
+      console.log(`[bench-timing] ${msg.mark}${msg.alias ? ' alias=' + msg.alias : ''} t=${msg.t.toFixed(2)}`);
       break;
     case 'error':
       classifyInFlight = false;

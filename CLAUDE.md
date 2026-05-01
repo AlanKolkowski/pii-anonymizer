@@ -21,6 +21,13 @@ npm run eval -- --label=my-run  # Tag a run
 npm run eval:score       # Compute precision/recall/F1 against .expected.json
 npm run eval:compare     # Diff two runs
 npm run eval:list        # List available runs
+
+# Performance benchmark (Playwright + real Chromium)
+npm run bench                                  # 3 measured runs/case + 1 warmup
+npm run bench -- --label=before-fp16           # Tag a run
+npm run bench -- --runs=5 --no-warmup          # Adjust runs / skip warmup
+npm run bench:list                             # List bench runs
+npm run bench:compare latest <run-ref>         # Diff median timings
 ```
 
 ## Architecture
@@ -52,6 +59,18 @@ Pipeline steps are environment-agnostic. Model loading is injected via `loadMode
 ### Eval Framework
 
 Ground truth lives in `test-data/synthetic/` as paired `.txt` + `.expected.json` files. Eval runs are stored in `test-data/results/{timestamp}/` with a `latest` symlink. Scoring (`src/eval/score.js`) computes per-document and aggregate precision/recall/F1 using overlap-based entity matching (`src/eval/matching.js`).
+
+### Bench Framework
+
+Playwright drives real Chromium against the Vite dev server, exercising the same UI flow a user runs (paste text → click Analyze → result). Cases are derived at runtime by deduping `ENTITY_SOURCES` arrays (regex stripped) — currently 5 unique source combos plus a 6th "all-entities" baseline. Per case: 1 warmup + 3 measured runs in fresh tabs, sharing IndexedDB cache so models stay warm.
+
+Per case captured: E2E (Playwright wall clock), load (worker `model:load:start`/`end` events summed), inference (classify wall − total load). Static `sizeMB` from `SOURCES`.
+
+Worker emits `{type:'timing', mark, alias?, t}` postMessages. `src/main.js` mirrors them to `console.log` with `[bench-timing]` prefix; `bench/runner.js` parses console events. No bench-only code in production.
+
+Test doc: `test-data/bench/single-page.txt` (~2700 chars with all entity types). Results: `test-data/bench-results/{run-id}/summary.json` with `latest` symlink.
+
+**v1 limitations**: download time excluded (cache-warm only); no fp16 / WebNN support yet (matrix auto-extends when `SOURCES` grows). Use `--no-warmup` to skip the warmup pass when iterating.
 
 ## Conventions
 
