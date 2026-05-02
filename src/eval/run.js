@@ -200,7 +200,7 @@ async function main() {
     runId,
     timestamp: new Date().toISOString(),
     ...(label && { label }),
-    enabledEntities,
+    enabledEntities: [...enabledEntities].sort(),
     config,
     totals: {
       documents: results.length,

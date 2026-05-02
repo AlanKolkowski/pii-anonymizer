@@ -1,16 +1,9 @@
 import { readdir, readFile, readlink, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import { sameEnabledSets, NEQ_MARKER } from './enabled-entities.js';
 
 const RESULTS_DIR = join(import.meta.dirname, '../../test-data/results');
-
-function sameStringSet(a, b) {
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every(x => set.has(x));
-}
-
-const NEQ_MARKER = '  ≠types';
 
 async function listRuns() {
   const entries = await readdir(RESULTS_DIR);
@@ -129,7 +122,7 @@ async function main() {
 
   const oldEnabled = oldSummary.enabledEntities || allEntityTypes();
   const newEnabled = newSummary.enabledEntities || allEntityTypes();
-  const sameEnabled = sameStringSet(oldEnabled, newEnabled);
+  const sameEnabled = sameEnabledSets(oldEnabled, newEnabled);
 
   console.log(`\nComparing eval runs:`);
   console.log(`  OLD: ${oldId}${oldLabel}`);

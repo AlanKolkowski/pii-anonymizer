@@ -12,6 +12,7 @@ import {
   ENTITY_COLORS,
 } from './report.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -102,16 +103,6 @@ const METRIC_VARIANTS = [
   { key: 'precision', label: 'Precision' },
   { key: 'recall', label: 'Recall' },
 ];
-
-function sameEnabledSets(a, b) {
-  if (!a || !b) return false;
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every(x => set.has(x));
-}
-
-const NEQ_DELTA_HTML =
-  ' <span class="delta-neq" title="different scored entity set; absolute values shown">≠types</span>';
 
 function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = null } = {}) {
   const baseline = columns.find(c => c.runId === baselineId);
@@ -538,7 +529,6 @@ function buildShell(runs, baselineId, latestId) {
     .big-metric-group .big-metrics { margin: 0; gap: 0.75rem; }
     .big-metric-group .big-metric { padding: 0.6rem 0.9rem; box-shadow: none; border: 1px solid #eee; flex: 1; }
     .big-metric .value .delta-pos, .big-metric .value .delta-neg, .big-metric .value .delta-zero, .big-metric .value .delta-neq { font-size: 0.8rem; margin-left: 0.35rem; font-weight: 500; }
-    .delta-neq { color: #888; font-size: 0.85em; cursor: help; }
     .run-id-row { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
     .run-badge { font-size: 0.6rem; text-transform: uppercase; padding: 0.05rem 0.3rem; border-radius: 2px; font-weight: 600; letter-spacing: 0.03em; }
     .run-badge.baseline { background: #fff3e0; color: #E65100; display: none; }

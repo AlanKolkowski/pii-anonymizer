@@ -4,16 +4,7 @@ import { matchEntities } from './matching.js';
 import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sources.js';
 import { ENTITY_COLORS, FALLBACK_COLOR, colorFor } from '../ui/entity-colors.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
-
-function sameEnabledSets(a, b) {
-  if (!a || !b) return false;
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every(x => set.has(x));
-}
-
-const NEQ_DELTA_HTML =
-  ' <span class="delta-neq" title="different scored entity set; absolute values shown">≠types</span>';
+import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
 
 export { ENTITY_COLORS, FALLBACK_COLOR };
 

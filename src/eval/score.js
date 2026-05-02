@@ -14,14 +14,6 @@ export function filterByTypes(entities, enabledSet) {
   return entities.filter(e => enabledSet.has(e.entity_group));
 }
 
-function countByType(entities) {
-  const counts = {};
-  for (const e of entities) {
-    counts[e.entity_group] = (counts[e.entity_group] || 0) + 1;
-  }
-  return counts;
-}
-
 // Resolves the effective scoring filter from a run's enabledEntities and an
 // optional --entities override. Override must be a (non-strict) subset of the
 // run's enabledEntities — you can't score for types the pipeline never tried
@@ -217,7 +209,6 @@ async function main() {
   const allExpectedSegments = [];
   const allPredictedSegments = [];
   const docScores = {};
-  const droppedExpectedByType = {};
   let totalDroppedExpected = 0;
 
   for (const expFile of expectedFiles.sort()) {
@@ -250,14 +241,7 @@ async function main() {
     const predicted = isFullSet ? predictedRaw : filterByTypes(predictedRaw, filterSet);
 
     if (!isFullSet) {
-      const droppedNow = expectedRaw.length - expected.length;
-      if (droppedNow > 0) {
-        const droppedEntities = expectedRaw.filter(e => !filterSet.has(e.entity_group));
-        for (const [t, n] of Object.entries(countByType(droppedEntities))) {
-          droppedExpectedByType[t] = (droppedExpectedByType[t] || 0) + n;
-        }
-        totalDroppedExpected += droppedNow;
-      }
+      totalDroppedExpected += expectedRaw.length - expected.length;
     }
 
     const metrics = computeMetrics(expected, predicted, options);
@@ -345,9 +329,6 @@ async function main() {
     runId,
     options,
     enabledEntities: enabledList,
-    ...(!isFullSet && {
-      droppedExpected: { total: totalDroppedExpected, byType: droppedExpectedByType },
-    }),
     overall: {
       precision: overall.precision,
       recall: overall.recall,
