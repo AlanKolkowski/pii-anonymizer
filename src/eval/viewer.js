@@ -11,6 +11,7 @@ import {
   buildSegmentationSection,
   ENTITY_COLORS,
 } from './report.js';
+import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -49,11 +50,13 @@ async function listRuns() {
         readFile(join(RESULTS_DIR, entry, 'summary.json'), 'utf-8'),
       ]);
       const summary = JSON.parse(summaryRaw);
+      const scores = JSON.parse(scoresRaw);
       runs.push({
         runId: entry,
         label: summary.label || null,
         timestamp: summary.timestamp || null,
-        scores: JSON.parse(scoresRaw),
+        enabledEntities: summary.enabledEntities || scores.enabledEntities || null,
+        scores,
       });
     } catch {
       // No scores yet or missing files — skip
@@ -100,16 +103,39 @@ const METRIC_VARIANTS = [
   { key: 'recall', label: 'Recall' },
 ];
 
+function sameEnabledSets(a, b) {
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every(x => set.has(x));
+}
+
+const NEQ_DELTA_HTML =
+  ' <span class="delta-neq" title="different scored entity set; absolute values shown">≠types</span>';
+
 function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = null } = {}) {
   const baseline = columns.find(c => c.runId === baselineId);
+  const baseEnabled = baseline?.enabledEntities || null;
 
-  function metricRow(label, getValue) {
+  // Whether to show a delta cell vs baseline. For aggregate/per-doc rows,
+  // require enabledEntities to match. For per-type rows, require both runs to
+  // have scored that specific type — closest-to-fair cross-subset comparison.
+  function showDeltaForCol(col, type) {
+    if (col.runId === baselineId) return false;
+    if (type) {
+      const colSet = new Set(col.enabledEntities || []);
+      return Boolean(baseEnabled && new Set(baseEnabled).has(type) && colSet.has(type));
+    }
+    return sameEnabledSets(baseEnabled, col.enabledEntities);
+  }
+
+  function metricRow(label, getValue, type = null) {
     const baseVal = baseline ? getValue(baseline) : null;
     const cells = columns.map(col => {
       const val = getValue(col);
       let content = val != null ? pct(val) : '–';
       if (col.runId !== baselineId) {
-        content += formatDelta(baseVal, val);
+        content += showDeltaForCol(col, type) ? formatDelta(baseVal, val) : NEQ_DELTA_HTML;
       }
       return `<td>${content}</td>`;
     }).join('');
@@ -144,9 +170,13 @@ function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = 
     <tbody>${mainRows}</tbody>
   </table>`;
 
-  function breakdownBlock(title, rowHeader, entries, getValueFor) {
+  function breakdownBlock(title, rowHeader, entries, getValueFor, { isType = false } = {}) {
     if (!entries || !entries.length) return '';
-    const body = entries.map(e => metricRow(e.label, col => getValueFor(col, e.key))).join('');
+    const body = entries.map(e => metricRow(
+      e.label,
+      col => getValueFor(col, e.key),
+      isType ? e.key : null,
+    )).join('');
     return `<details class="breakdown">
       <summary>${escapeHtml(title)}</summary>
       <div class="breakdown-body">
@@ -188,6 +218,7 @@ function buildComparisonTable(columns, baselineId, { docRows = null, typeRows = 
         'Type',
         entries,
         (col, typeKey) => col.byType?.[typeKey]?.[metricKey] ?? null,
+        { isType: true },
       );
     }
   }
@@ -252,6 +283,7 @@ async function renderReport(runIds, baselineId) {
   const columns = selectedRuns.map(r => ({
     runId: r.runId,
     label: r.label,
+    enabledEntities: r.enabledEntities,
     f1: r.scores.overall.f1,
     precision: r.scores.overall.precision,
     recall: r.scores.overall.recall,
@@ -268,9 +300,13 @@ async function renderReport(runIds, baselineId) {
   const baseOverall = baselineRun.scores.overall;
   const curOverall = currentRun.scores.overall;
   const sameRun = baselineRun.runId === currentRun.runId;
+  const sameEnabledHeader = sameEnabledSets(baselineRun.enabledEntities, currentRun.enabledEntities);
 
-  function metricTile(label, baseVal, curVal, showDelta) {
-    const deltaHtml = showDelta ? formatDelta(baseVal, curVal) : '';
+  function metricTile(label, baseVal, curVal, showDelta, sameEnabled = true) {
+    let deltaHtml = '';
+    if (showDelta) {
+      deltaHtml = sameEnabled ? formatDelta(baseVal, curVal) : NEQ_DELTA_HTML;
+    }
     return `<div class="big-metric"><div class="value">${pct(curVal)}${deltaHtml}</div><div class="label">${label}</div></div>`;
   }
 
@@ -293,9 +329,9 @@ async function renderReport(runIds, baselineId) {
     <div class="big-metric-group">
       <div class="big-metric-group-header">${groupHeader('Current', currentRun)}</div>
       <div class="big-metrics">
-        ${metricTile('F1', baseOverall.f1, curOverall.f1, true)}
-        ${metricTile('Precision', baseOverall.precision, curOverall.precision, true)}
-        ${metricTile('Recall', baseOverall.recall, curOverall.recall, true)}
+        ${metricTile('F1', baseOverall.f1, curOverall.f1, true, sameEnabledHeader)}
+        ${metricTile('Precision', baseOverall.precision, curOverall.precision, true, sameEnabledHeader)}
+        ${metricTile('Recall', baseOverall.recall, curOverall.recall, true, sameEnabledHeader)}
       </div>
     </div>`;
 
@@ -406,11 +442,27 @@ async function renderReport(runIds, baselineId) {
     `);
   }
 
+  const enabledSummary = (() => {
+    const allCount = allEntityTypes().length;
+    const lines = [];
+    for (const r of selectedRuns) {
+      const ee = r.enabledEntities;
+      if (!ee || ee.length === allCount) continue;
+      lines.push(`<code>${escapeHtml(r.runId)}</code> scored ${ee.length} types: ${escapeHtml(ee.join(', '))}`);
+    }
+    if (!lines.length) return '';
+    return `<p style="font-size:0.8rem;color:#888;margin-top:-1rem;margin-bottom:1rem">
+      Subset runs: ${lines.join(' &nbsp;·&nbsp; ')}.
+      <br><strong>≠types</strong> in delta cells means the column's scored entity set differs from baseline — pipeline is non-distributive over types, so cross-subset deltas would be misleading.
+    </p>`;
+  })();
+
   const html = `
     ${bigMetrics}
     <p style="font-size:0.85rem;color:#666;margin-top:-1rem;margin-bottom:1.5rem">
       Strict scoring. Deltas are relative to baseline <code>${escapeHtml(baselineId)}</code>.
     </p>
+    ${enabledSummary}
     <div class="section-title">Overall Comparison</div>
     ${overallTable}
     ${sections.join('\n')}
@@ -485,7 +537,8 @@ function buildShell(runs, baselineId, latestId) {
     .big-metric-group-header code { background: #fff; padding: 0 0.3rem; border-radius: 2px; font-size: 0.78rem; text-transform: none; letter-spacing: 0; }
     .big-metric-group .big-metrics { margin: 0; gap: 0.75rem; }
     .big-metric-group .big-metric { padding: 0.6rem 0.9rem; box-shadow: none; border: 1px solid #eee; flex: 1; }
-    .big-metric .value .delta-pos, .big-metric .value .delta-neg, .big-metric .value .delta-zero { font-size: 0.8rem; margin-left: 0.35rem; font-weight: 500; }
+    .big-metric .value .delta-pos, .big-metric .value .delta-neg, .big-metric .value .delta-zero, .big-metric .value .delta-neq { font-size: 0.8rem; margin-left: 0.35rem; font-weight: 500; }
+    .delta-neq { color: #888; font-size: 0.85em; cursor: help; }
     .run-id-row { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
     .run-badge { font-size: 0.6rem; text-transform: uppercase; padding: 0.05rem 0.3rem; border-radius: 2px; font-weight: 600; letter-spacing: 0.03em; }
     .run-badge.baseline { background: #fff3e0; color: #E65100; display: none; }
