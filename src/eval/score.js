@@ -2,10 +2,39 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename, extname } from 'node:path';
 import { matchEntities } from './matching.js';
 import { generateReport } from './report.js';
+import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
+
+// ── Subset filtering ────────────────────────────────────────────────
+
+export function filterByTypes(entities, enabledSet) {
+  return entities.filter(e => enabledSet.has(e.entity_group));
+}
+
+// Resolves the effective scoring filter from a run's enabledEntities and an
+// optional --entities override. Override must be a (non-strict) subset of the
+// run's enabledEntities — you can't score for types the pipeline never tried
+// to detect. Returns a Set of entity_group names.
+export function resolveScoringFilter({ runEnabledEntities, overrideEntities }) {
+  const runEnabled = runEnabledEntities && runEnabledEntities.length > 0
+    ? runEnabledEntities
+    : allEntityTypes();
+  const runSet = new Set(runEnabled);
+
+  if (!overrideEntities || overrideEntities.length === 0) return runSet;
+
+  const unknown = overrideEntities.filter(e => !runSet.has(e));
+  if (unknown.length > 0) {
+    throw new Error(
+      `Cannot score for types not in run's enabledEntities: ${unknown.join(', ')}. ` +
+      `Run scored: ${[...runSet].sort().join(', ')}`,
+    );
+  }
+  return new Set(overrideEntities);
+}
 
 // ── Metrics ─────────────────────────────────────────────────────────
 
@@ -125,15 +154,45 @@ function printSegmentScores(_name, m) {
 async function main() {
   const args = process.argv.slice(2);
 
-  // Resolve which run to score
-  let runId = args[0] || 'latest';
+  // Parse positional run id (first non-flag arg), default to "latest"
+  const positional = args.filter(a => !a.startsWith('--'));
+  let runId = positional[0] || 'latest';
   if (runId === 'latest') {
     const { readlink } = await import('node:fs/promises');
     runId = await readlink(join(RESULTS_DIR, 'latest'));
   }
 
+  // Optional --entities override (must be subset of run's enabledEntities)
+  const entitiesArg = args.find(a => a.startsWith('--entities='))?.slice('--entities='.length);
+  const overrideEntities = entitiesArg
+    ? entitiesArg.split(',').map(s => s.trim()).filter(Boolean)
+    : null;
+
   const runDir = join(RESULTS_DIR, runId);
-  console.log(`Scoring run: ${runId}\n`);
+  console.log(`Scoring run: ${runId}`);
+
+  // Load summary for enabledEntities (fall back to "all" for older runs)
+  let runEnabledEntities;
+  try {
+    const summaryRaw = await readFile(join(runDir, 'summary.json'), 'utf-8');
+    const summary = JSON.parse(summaryRaw);
+    runEnabledEntities = summary.enabledEntities;
+  } catch {}
+
+  let filterSet;
+  try {
+    filterSet = resolveScoringFilter({ runEnabledEntities, overrideEntities });
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+  const allTypes = allEntityTypes();
+  const isFullSet = filterSet.size === allTypes.length;
+  const enabledList = [...filterSet].sort();
+  if (!isFullSet) {
+    console.log(`Filter: ${enabledList.length} of ${allTypes.length} types — ${enabledList.join(', ')}`);
+  }
+  console.log('');
 
   // Find expected files
   const entries = await readdir(DOCS_DIR);
@@ -150,15 +209,16 @@ async function main() {
   const allExpectedSegments = [];
   const allPredictedSegments = [];
   const docScores = {};
+  let totalDroppedExpected = 0;
 
   for (const expFile of expectedFiles.sort()) {
     const name = basename(expFile, '.expected.json');
-    const expected = JSON.parse(await readFile(join(DOCS_DIR, expFile), 'utf-8'));
+    const expectedRaw = JSON.parse(await readFile(join(DOCS_DIR, expFile), 'utf-8'));
 
-    let predicted;
+    let predictedRaw;
     try {
       const raw = await readFile(join(runDir, name, 'entities.json'), 'utf-8');
-      predicted = JSON.parse(raw);
+      predictedRaw = JSON.parse(raw);
     } catch {
       console.log(`  SKIP: ${name} — no results in this run`);
       continue;
@@ -168,10 +228,21 @@ async function main() {
     let sourceText;
     try {
       sourceText = await readFile(join(DOCS_DIR, `${name}.txt`), 'utf-8');
-      for (const e of predicted) {
+      for (const e of predictedRaw) {
         if (!e.text) e.text = sourceText.slice(e.start, e.end);
       }
     } catch {}
+
+    // Apply the filter: drop expected entities of types not in the filter set,
+    // and (defensively) predicted entities of unscored types in case anyone
+    // hand-edited entities.json. Predicted should already be subset-filtered
+    // at run time via sourceFilterStep.
+    const expected = isFullSet ? expectedRaw : filterByTypes(expectedRaw, filterSet);
+    const predicted = isFullSet ? predictedRaw : filterByTypes(predictedRaw, filterSet);
+
+    if (!isFullSet) {
+      totalDroppedExpected += expectedRaw.length - expected.length;
+    }
 
     const metrics = computeMetrics(expected, predicted, options);
     const byType = computeByType(expected, predicted, options);
@@ -230,6 +301,9 @@ async function main() {
   const overallByType = computeByType(allExpected, allPredicted, options);
 
   console.log('\n=== OVERALL (micro-averaged, strict exact matching) ===');
+  if (!isFullSet) {
+    console.log(`  Scoring ${enabledList.length} of ${allTypes.length} types — dropped ${totalDroppedExpected} expected entities of unscored types`);
+  }
   console.log(`  Precision: ${pct(overall.precision)}   Recall: ${pct(overall.recall)}   F1: ${pct(overall.f1)}`);
   console.log(`  TP: ${overall.tp}  FP: ${overall.fp}  FN: ${overall.fn}  (${overall.tpPartial} partial → counted as FP+FN)`);
 
@@ -254,6 +328,7 @@ async function main() {
   const scoresData = {
     runId,
     options,
+    enabledEntities: enabledList,
     overall: {
       precision: overall.precision,
       recall: overall.recall,

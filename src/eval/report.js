@@ -3,6 +3,8 @@ import { join, basename } from 'node:path';
 import { matchEntities } from './matching.js';
 import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sources.js';
 import { ENTITY_COLORS, FALLBACK_COLOR, colorFor } from '../ui/entity-colors.js';
+import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
 
 export { ENTITY_COLORS, FALLBACK_COLOR };
 
@@ -435,6 +437,7 @@ export function buildCss() {
     .delta-pos { color: #2e7d32; }
     .delta-neg { color: #c62828; }
     .delta-zero { color: #999; }
+    .delta-neq { color: #888; font-size: 0.85em; cursor: help; }
 
     .section-title {
       font-size: 1rem;
@@ -693,7 +696,12 @@ export async function loadHistoricalScores(currentRunId) {
       const scores = JSON.parse(raw);
       const summaryRaw = await readFile(join(RESULTS_DIR, entry, 'summary.json'), 'utf-8');
       const summary = JSON.parse(summaryRaw);
-      runs.push({ runId: entry, label: summary.label || null, scores });
+      runs.push({
+        runId: entry,
+        label: summary.label || null,
+        enabledEntities: summary.enabledEntities || scores.enabledEntities || null,
+        scores,
+      });
     } catch {
       // No scores.json — skip
     }
@@ -734,15 +742,28 @@ const METRIC_VARIANTS = [
 export function buildComparisonTable(columns, currentRunId, { docRows = null, typeRows = null } = {}) {
   const currentIdx = columns.findIndex(c => c.runId === currentRunId);
   const prevIdx = currentIdx > 0 ? currentIdx - 1 : -1;
+  const currentCol = currentIdx >= 0 ? columns[currentIdx] : null;
+  const prevCol = prevIdx >= 0 ? columns[prevIdx] : null;
+  const aggregateSameEnabled = currentCol && prevCol
+    ? sameEnabledSets(currentCol.enabledEntities, prevCol.enabledEntities)
+    : true;
 
-  function metricRow(label, getValue) {
+  function showDeltaForType(type) {
+    if (!currentCol || !prevCol) return false;
+    if (!type) return aggregateSameEnabled;
+    const curSet = new Set(currentCol.enabledEntities || []);
+    const prevSet = new Set(prevCol.enabledEntities || []);
+    return curSet.has(type) && prevSet.has(type);
+  }
+
+  function metricRow(label, getValue, type = null) {
     const cells = columns.map((col, i) => {
       const val = getValue(col);
       let content = val != null ? pct(val) : '–';
       if (i === currentIdx && prevIdx >= 0) {
         const prevVal = getValue(columns[prevIdx]);
         if (val != null && prevVal != null) {
-          content += ` ${formatDelta(prevVal, val)}`;
+          content += showDeltaForType(type) ? ` ${formatDelta(prevVal, val)}` : NEQ_DELTA_HTML;
         }
       }
       return `<td>${content}</td>`;
@@ -774,9 +795,13 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
     <tbody>${mainRows}</tbody>
   </table>`;
 
-  function breakdownBlock(title, rowHeader, entries, getValueFor) {
+  function breakdownBlock(title, rowHeader, entries, getValueFor, { isType = false } = {}) {
     if (!entries || !entries.length) return '';
-    const body = entries.map(e => metricRow(e.label, col => getValueFor(col, e.key))).join('');
+    const body = entries.map(e => metricRow(
+      e.label,
+      col => getValueFor(col, e.key),
+      isType ? e.key : null,
+    )).join('');
     return `<details class="breakdown">
       <summary>${title}</summary>
       <div class="breakdown-body">
@@ -818,6 +843,7 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
         'Type',
         entries,
         (col, typeKey) => col.byType?.[typeKey]?.[metricKey] ?? null,
+        { isType: true },
       );
     }
   }
@@ -1019,6 +1045,7 @@ export async function generateReport(runId, scoresData) {
     ...historicalRuns.map(r => ({
       runId: r.runId,
       label: r.label,
+      enabledEntities: r.enabledEntities,
       f1: r.scores.overall.f1,
       precision: r.scores.overall.precision,
       recall: r.scores.overall.recall,
@@ -1031,6 +1058,7 @@ export async function generateReport(runId, scoresData) {
     {
       runId,
       label: currentSummary.label || null,
+      enabledEntities: currentSummary.enabledEntities || scoresData.enabledEntities || null,
       f1: scoresData.overall.f1,
       precision: scoresData.overall.precision,
       recall: scoresData.overall.recall,
@@ -1158,6 +1186,12 @@ export async function generateReport(runId, scoresData) {
       ${currentSummary.label ? ` — ${escapeHtml(currentSummary.label)}` : ''}
       &nbsp;|&nbsp; ${currentSummary.timestamp || ''}
       &nbsp;|&nbsp; ${docNames.length} documents
+      ${(() => {
+        const ee = scoresData.enabledEntities || currentSummary.enabledEntities;
+        const total = allEntityTypes().length;
+        if (!ee || ee.length === total) return '';
+        return `&nbsp;|&nbsp; <strong>Scored types: ${ee.length} of ${total}</strong> <small style="color:#888">(${escapeHtml(ee.join(', '))})</small>`;
+      })()}
     </div>
   </div>
 

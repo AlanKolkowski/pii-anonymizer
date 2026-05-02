@@ -1,5 +1,7 @@
 import { readdir, readFile, readlink, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import { sameEnabledSets, NEQ_MARKER } from './enabled-entities.js';
 
 const RESULTS_DIR = join(import.meta.dirname, '../../test-data/results');
 
@@ -59,12 +61,14 @@ function deltaPct(oldVal, newVal) {
   return diff > 0 ? ` +${diff.toFixed(1)}pp` : ` ${diff.toFixed(1)}pp`;
 }
 
-function formatScoreRow(label, oldVal, newVal, pad = 30) {
-  return `  ${label.padEnd(pad)} ${pct(oldVal).padStart(6)} → ${pct(newVal).padStart(6)}  ${deltaPct(oldVal, newVal)}`;
+function formatScoreRow(label, oldVal, newVal, pad = 30, showDelta = true) {
+  const trail = showDelta ? deltaPct(oldVal, newVal) : NEQ_MARKER;
+  return `  ${label.padEnd(pad)} ${pct(oldVal).padStart(6)} → ${pct(newVal).padStart(6)}  ${trail}`;
 }
 
-function formatRow(label, oldVal, newVal, pad = 30) {
-  return `  ${label.padEnd(pad)} ${String(oldVal).padStart(5)} → ${String(newVal).padStart(5)}  ${delta(oldVal, newVal)}`;
+function formatRow(label, oldVal, newVal, pad = 30, showDelta = true) {
+  const trail = showDelta ? delta(oldVal, newVal) : NEQ_MARKER;
+  return `  ${label.padEnd(pad)} ${String(oldVal).padStart(5)} → ${String(newVal).padStart(5)}  ${trail}`;
 }
 
 async function main() {
@@ -116,14 +120,28 @@ async function main() {
   const oldLabel = oldSummary.label ? ` (${oldSummary.label})` : '';
   const newLabel = newSummary.label ? ` (${newSummary.label})` : '';
 
+  const oldEnabled = oldSummary.enabledEntities || allEntityTypes();
+  const newEnabled = newSummary.enabledEntities || allEntityTypes();
+  const sameEnabled = sameEnabledSets(oldEnabled, newEnabled);
+
   console.log(`\nComparing eval runs:`);
   console.log(`  OLD: ${oldId}${oldLabel}`);
   console.log(`  NEW: ${newId}${newLabel}\n`);
 
+  if (!sameEnabled) {
+    console.log('  ⚠ enabledEntities differ between runs — score and count deltas hidden (≠types).');
+    console.log('     Pipeline behavior is non-distributive over types: re-run with matched subsets to compare.');
+    const onlyOld = oldEnabled.filter(t => !newEnabled.includes(t));
+    const onlyNew = newEnabled.filter(t => !oldEnabled.includes(t));
+    if (onlyOld.length) console.log(`     only in OLD: ${onlyOld.join(', ')}`);
+    if (onlyNew.length) console.log(`     only in NEW: ${onlyNew.join(', ')}`);
+    console.log('');
+  }
+
   // Overall totals
   console.log('=== Totals ===');
-  console.log(formatRow('Entities', oldSummary.totals.entities, newSummary.totals.entities));
-  console.log(formatRow('Tokens', oldSummary.totals.tokens, newSummary.totals.tokens));
+  console.log(formatRow('Entities', oldSummary.totals.entities, newSummary.totals.entities, 30, sameEnabled));
+  console.log(formatRow('Tokens', oldSummary.totals.tokens, newSummary.totals.tokens, 30, sameEnabled));
   console.log(formatRow('Time (s)', oldSummary.totals.elapsed, newSummary.totals.elapsed));
 
   // Scores comparison
@@ -132,12 +150,12 @@ async function main() {
 
   if (oldScores && newScores) {
     console.log('\n=== Scores ===');
-    console.log(formatScoreRow('Precision', oldScores.overall.precision, newScores.overall.precision));
-    console.log(formatScoreRow('Recall', oldScores.overall.recall, newScores.overall.recall));
-    console.log(formatScoreRow('F1', oldScores.overall.f1, newScores.overall.f1));
-    console.log(formatRow('TP', oldScores.overall.tp, newScores.overall.tp));
-    console.log(formatRow('FP', oldScores.overall.fp, newScores.overall.fp));
-    console.log(formatRow('FN', oldScores.overall.fn, newScores.overall.fn));
+    console.log(formatScoreRow('Precision', oldScores.overall.precision, newScores.overall.precision, 30, sameEnabled));
+    console.log(formatScoreRow('Recall', oldScores.overall.recall, newScores.overall.recall, 30, sameEnabled));
+    console.log(formatScoreRow('F1', oldScores.overall.f1, newScores.overall.f1, 30, sameEnabled));
+    console.log(formatRow('TP', oldScores.overall.tp, newScores.overall.tp, 30, sameEnabled));
+    console.log(formatRow('FP', oldScores.overall.fp, newScores.overall.fp, 30, sameEnabled));
+    console.log(formatRow('FN', oldScores.overall.fn, newScores.overall.fn, 30, sameEnabled));
   } else if (!oldScores && !newScores) {
     console.log('\n  (no scores — run `npm run eval:score` on both runs)');
   }
@@ -150,24 +168,29 @@ async function main() {
     const newDoc = newSummary.documents[doc] || { entityCount: 0, tokenCount: 0, entitiesByType: {}, elapsed: '0' };
 
     console.log(`\n--- ${doc} ---`);
-    console.log(formatRow('Entities', oldDoc.entityCount, newDoc.entityCount));
-    console.log(formatRow('Tokens', oldDoc.tokenCount, newDoc.tokenCount));
+    console.log(formatRow('Entities', oldDoc.entityCount, newDoc.entityCount, 30, sameEnabled));
+    console.log(formatRow('Tokens', oldDoc.tokenCount, newDoc.tokenCount, 30, sameEnabled));
 
     if (oldScores?.documents[doc] && newScores?.documents[doc]) {
       const os = oldScores.documents[doc];
       const ns = newScores.documents[doc];
-      console.log(formatScoreRow('F1', os.f1, ns.f1));
-      console.log(formatScoreRow('Precision', os.precision, ns.precision));
-      console.log(formatScoreRow('Recall', os.recall, ns.recall));
+      console.log(formatScoreRow('F1', os.f1, ns.f1, 30, sameEnabled));
+      console.log(formatScoreRow('Precision', os.precision, ns.precision, 30, sameEnabled));
+      console.log(formatScoreRow('Recall', os.recall, ns.recall, 30, sameEnabled));
     }
 
-    // Per-type breakdown
+    // Per-type breakdown — show count delta only when the type was scored by
+    // both runs. (Per-type cells are the closest thing to a fair cross-subset
+    // comparison since matching is type-restricted within a single type.)
+    const oldEnabledSet = new Set(oldEnabled);
+    const newEnabledSet = new Set(newEnabled);
     const types = allTypes(oldDoc.entitiesByType, newDoc.entitiesByType);
     for (const type of types) {
       const oldCount = oldDoc.entitiesByType[type] || 0;
       const newCount = newDoc.entitiesByType[type] || 0;
       if (oldCount !== newCount) {
-        console.log(formatRow(`  ${type}`, oldCount, newCount));
+        const bothScored = oldEnabledSet.has(type) && newEnabledSet.has(type);
+        console.log(formatRow(`  ${type}`, oldCount, newCount, 30, bothScored));
       }
     }
   }
