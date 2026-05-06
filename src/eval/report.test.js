@@ -30,20 +30,20 @@ describe('classifyEntities', () => {
       { entity_group: 'PERSON_NAME', start: 40, end: 50, text: 'Jane Doe' },
     ];
     const predicted = [
-      { entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.95, source: 'bardsai/eu-pii-anonimization-multilang' },
+      { entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.95, source: 'wjarka/eu-pii-anonimization-multilang' },
       { entity_group: 'EMAIL_ADDRESS', start: 60, end: 80, score: 1.0, source: 'regex' },
-      { entity_group: 'LOCATION', start: 40, end: 50, score: 0.9, source: 'bardsai/eu-pii-anonimization' },
+      { entity_group: 'LOCATION', start: 40, end: 50, score: 0.9, source: 'wjarka/eu-pii-anonimization-pl' },
     ];
     const result = classifyEntities(expected, predicted);
 
     const tp = result.find(e => e.status === 'tp');
-    expect(tp.source).toBe('bardsai/eu-pii-anonimization-multilang');
+    expect(tp.source).toBe('wjarka/eu-pii-anonimization-multilang');
 
     const fp = result.find(e => e.status === 'fp');
     expect(fp.source).toBe('regex');
 
     const mismatch = result.find(e => e.status === 'mismatch');
-    expect(mismatch.source).toBe('bardsai/eu-pii-anonimization');
+    expect(mismatch.source).toBe('wjarka/eu-pii-anonimization-pl');
 
     const fn = result.find(e => e.status === 'fn');
     if (fn) expect(fn.source ?? null).toBeNull();
@@ -105,7 +105,7 @@ describe('buildAnnotatedText', () => {
   it('emits a <sup class="src"> marker for entities with a known source', () => {
     const text = 'Hello John Smith world';
     const spans = [
-      { start: 6, end: 16, entity_group: 'PERSON_NAME', status: 'tp', score: 0.95, source: 'bardsai/eu-pii-anonimization-multilang' },
+      { start: 6, end: 16, entity_group: 'PERSON_NAME', status: 'tp', score: 0.95, source: 'wjarka/eu-pii-anonimization-multilang' },
     ];
     const html = buildAnnotatedText(text, spans);
     expect(html).toContain('<sup class="src"');
@@ -115,7 +115,7 @@ describe('buildAnnotatedText', () => {
   it('concatenates markers when source is an array (merged entity)', () => {
     const text = 'Jan Kowalski mieszka w Krakowie';
     const spans = [
-      { start: 0, end: 13, entity_group: 'POSTAL_ADDRESS', status: 'tp', score: 0.9, source: ['bardsai/eu-pii-anonimization-multilang', 'bardsai/eu-pii-anonimization'] },
+      { start: 0, end: 13, entity_group: 'POSTAL_ADDRESS', status: 'tp', score: 0.9, source: ['wjarka/eu-pii-anonimization-multilang', 'wjarka/eu-pii-anonimization-pl'] },
     ];
     const html = buildAnnotatedText(text, spans);
     expect(html).toContain('¹²');
