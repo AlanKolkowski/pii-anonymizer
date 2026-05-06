@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PII Sanitizer + Chunker</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; line-height: 1.45; }
+  h1 { margin-top: 0; }
+  h2 { font-size: 1rem; margin-bottom: 0.4rem; margin-top: 1.5rem; }
+  textarea { width: 100%; height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; padding: 0.5rem; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 4px; }
+  button { padding: 0.6rem 1.2rem; cursor: pointer; font-size: 1rem; border: 0; border-radius: 4px; background: #2563eb; color: white; margin-right: 0.5rem; }
+  button:hover:not(:disabled) { background: #1d4ed8; }
+  button:disabled { background: #9ca3af; cursor: not-allowed; }
+  button.secondary { background: #6b7280; }
+  button.secondary:hover:not(:disabled) { background: #4b5563; }
+  code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.9em; }
+  .stats { background: #f3f4f6; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; }
+  .note { background: #fffbe6; padding: 0.75rem 1rem; border-radius: 4px; border-left: 3px solid #f0c000; margin: 1rem 0; }
+  .note.ok { background: #ecfdf5; border-left-color: #10b981; }
+  .bad { background: #fef2f2; padding: 0.5rem 0.75rem; border-radius: 4px; border-left: 3px solid #ef4444; margin: 0.5rem 0; }
+  .bad pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; margin: 0.3rem 0 0 0; background: white; padding: 0.4rem; border-radius: 3px; border: 1px solid #fecaca; }
+  .hidden { display: none; }
+  #status { margin-left: 0.75rem; color: #6b7280; font-size: 0.9rem; }
+  details summary { cursor: pointer; color: #6b7280; }
+  ol { padding-left: 1.4rem; }
+  ol li { margin: 0.3rem 0; }
+</style>
+</head>
+<body>
+<h1>PII Sanitizer + Chunker</h1>
+
+<p class="note ok">
+  <strong>Twój tekst nigdy nie opuszcza tej karty.</strong>
+  Wszystkie zasoby (HTML, biblioteka <code>sentencex-wasm</code>) są hostowane na tym samym serwerze co aplikacja.
+  Żadnych zewnętrznych CDN, żadnych requestów z Twoim tekstem — sprawdź w DevTools → Network.
+</p>
+
+<p>Co to robi:</p>
+<ol>
+  <li>Czyści niewidzialne znaki (BOM, twarde spacje, miękkie dywizy, fancy cudzysłowy itp.).</li>
+  <li>Dzieli tekst na kawałki ~2000 znaków po granicach akapitów.</li>
+  <li>Uruchamia <code>sentencex</code> na każdym kawałku w izolowanym Web Workerze — jeśli się wysypie, ginie tylko worker, nie cała strona.</li>
+  <li>Dla kawałków, które się wywalają, robi <strong>bisekcję</strong>: dzieli na pół, testuje każdą połówkę, schodzi w głąb aż znajdzie pojedynczy ~80-znakowy fragment, który łamie segmenter.</li>
+  <li>Generuje <strong>czysty tekst</strong> (do wklejenia do pii-anonymizer) + <strong>listę problematycznych fragmentów</strong> (do zgłoszenia bugu).</li>
+</ol>
+
+<h2>1. Wklej oryginalny tekst:</h2>
+<textarea id="input" placeholder="Wklej tu tekst, na którym pii-anonymizer się wywala..."></textarea>
+
+<button id="analyze">Analizuj</button>
+<span id="status"></span>
+
+<div id="init-error" class="bad hidden" style="border-left-color: #b91c1c; background: #fef2f2;"></div>
+
+<div id="results" class="hidden">
+
+<h2>📊 Statystyki</h2>
+<div id="stats" class="stats"></div>
+
+<h2>✅ Tekst gotowy do wklejenia (problematyczne fragmenty pominięte)</h2>
+<textarea id="output" readonly></textarea>
+<div style="margin-top: 0.5rem;">
+  <button id="copy">Skopiuj do schowka</button>
+</div>
+
+<h2>❌ Pominięte fragmenty</h2>
+<div id="bad-passages"></div>
+
+</div>
+
+<script type="module">
+const CHUNK_TARGET = 2000;
+const BISECT_MIN = 80;
+const TEST_TIMEOUT = 15000;
+
+// Resolve absolute URLs for the worker (which lives in a blob: URL and can't use relative paths).
+const WASM_GLUE_URL = new URL('vendor/sentencex_wasm.js', location.href).href;
+const WASM_BIN_URL = new URL('vendor/sentencex_wasm_bg.wasm', location.href).href;
+
+const $ = (id) => document.getElementById(id);
+const setStatus = (msg) => { $('status').textContent = msg; };
+
+// ============================================================
+// 1. Sanitization
+// ============================================================
+function sanitize(text) {
+  const stats = {};
+  let s = text;
+
+  const nfc = s.normalize('NFC');
+  if (nfc !== s) stats['NFC normalizacja'] = 'tak';
+  s = nfc;
+
+  let before = s.length;
+  s = s.replace(/[﻿​‌‍⁠]/g, '');
+  if (before !== s.length) stats['Znaki zerowej szerokości'] = before - s.length;
+
+  before = s.length;
+  s = s.replace(/­/g, '');
+  if (before !== s.length) stats['Miękkie dywizy'] = before - s.length;
+
+  const nbspCount = (s.match(/[      ]/g) || []).length;
+  s = s.replace(/[      ]/g, ' ');
+  if (nbspCount) stats['Twarde / wąskie spacje'] = nbspCount;
+
+  const sqBefore = s;
+  s = s.replace(/[‘’‚‛]/g, "'")
+       .replace(/[“”„‟]/g, '"');
+  if (sqBefore !== s) stats['Cudzysłowy zamienione'] = 'tak';
+
+  before = s.length;
+  s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  if (before !== s.length) stats['Znaki kontrolne'] = before - s.length;
+
+  s = s.replace(/\r\n?/g, '\n');
+
+  return { text: s, stats };
+}
+
+// ============================================================
+// 2. Chunking (paragraph-aware)
+// ============================================================
+function chunkText(text, maxLen = CHUNK_TARGET) {
+  const paragraphs = text.split(/\n\s*\n/);
+  const chunks = [];
+  let cur = '';
+  const flush = () => { if (cur) { chunks.push(cur); cur = ''; } };
+
+  for (const para of paragraphs) {
+    if (para.length > maxLen) {
+      flush();
+      const lines = para.split('\n');
+      for (const line of lines) {
+        if (line.length > maxLen) {
+          flush();
+          let pos = 0;
+          while (pos < line.length) {
+            let end = Math.min(pos + maxLen, line.length);
+            if (end < line.length) {
+              const sp = line.lastIndexOf(' ', end);
+              if (sp > pos + maxLen / 2) end = sp + 1;
+            }
+            chunks.push(line.slice(pos, end));
+            pos = end;
+          }
+        } else if ((cur + '\n' + line).length > maxLen) {
+          flush();
+          cur = line;
+        } else {
+          cur = cur ? cur + '\n' + line : line;
+        }
+      }
+    } else if ((cur + '\n\n' + para).length > maxLen) {
+      flush();
+      cur = para;
+    } else {
+      cur = cur ? cur + '\n\n' + para : para;
+    }
+  }
+  flush();
+  return chunks;
+}
+
+// ============================================================
+// 3. Worker (one alive, respawned after every panic)
+// ============================================================
+const workerSource = `
+import init, { get_sentence_boundaries } from '${WASM_GLUE_URL}';
+
+const ready = init({ module_or_path: '${WASM_BIN_URL}' }).then(() => true).catch((err) => err);
+
+self.onmessage = async (e) => {
+  const r = await ready;
+  if (r !== true) {
+    self.postMessage({ ok: false, error: 'init failed: ' + (r && r.message || r) });
+    return;
+  }
+  try {
+    const boundaries = get_sentence_boundaries('pl', e.data.text);
+    self.postMessage({ ok: true, count: Array.isArray(boundaries) ? boundaries.length : 0 });
+  } catch (err) {
+    self.postMessage({ ok: false, error: String((err && err.message) || err) });
+  }
+};
+`;
+
+let workerInst = null;
+let workerUrl = null;
+
+function getWorker() {
+  if (!workerUrl) {
+    const blob = new Blob([workerSource], { type: 'application/javascript' });
+    workerUrl = URL.createObjectURL(blob);
+  }
+  if (!workerInst) {
+    workerInst = new Worker(workerUrl, { type: 'module' });
+  }
+  return workerInst;
+}
+
+function discardWorker() {
+  if (workerInst) {
+    workerInst.terminate();
+    workerInst = null;
+  }
+}
+
+function testChunk(text) {
+  return new Promise((resolve) => {
+    const w = getWorker();
+    let resolved = false;
+    const finish = (data) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
+      w.removeEventListener('message', onMsg);
+      w.removeEventListener('error', onErr);
+      // Any failure poisons WASM state — nuke the worker.
+      if (!data.ok) discardWorker();
+      resolve(data);
+    };
+    const onMsg = (e) => finish(e.data);
+    const onErr = (e) => {
+      const parts = [];
+      if (e.message) parts.push(e.message);
+      if (e.filename) parts.push(e.filename + (e.lineno ? `:${e.lineno}` : ''));
+      finish({ ok: false, error: parts.length ? parts.join(' @ ') : 'worker error event (brak szczegółów — sprawdź DevTools → Console w workerze)' });
+    };
+    const timer = setTimeout(() => finish({ ok: false, error: 'timeout' }), TEST_TIMEOUT);
+    w.addEventListener('message', onMsg);
+    w.addEventListener('error', onErr);
+    w.postMessage({ text });
+  });
+}
+
+// ============================================================
+// 4. Bisection (recursive)
+// ============================================================
+async function bisect(text, depth = 0) {
+  if (text.length <= BISECT_MIN) {
+    return { good: [], bad: [text] };
+  }
+  // Find split point near middle, prefer whitespace.
+  const mid = Math.floor(text.length / 2);
+  let split = mid;
+  const win = Math.floor(text.length * 0.25);
+  let found = false;
+  for (let i = 0; i <= win && !found; i++) {
+    if (mid - i > 0 && /\s/.test(text[mid - i])) { split = mid - i + 1; found = true; }
+    else if (mid + i < text.length && /\s/.test(text[mid + i])) { split = mid + i + 1; found = true; }
+  }
+  const left = text.slice(0, split);
+  const right = text.slice(split);
+
+  setStatus(`Bisekcja (głęb. ${depth}): test lewej (${left.length} zn.)…`);
+  const lr = await testChunk(left);
+
+  setStatus(`Bisekcja (głęb. ${depth}): test prawej (${right.length} zn.)…`);
+  const rr = await testChunk(right);
+
+  const good = [], bad = [];
+  if (lr.ok) {
+    good.push(left);
+  } else {
+    const sub = await bisect(left, depth + 1);
+    good.push(...sub.good);
+    bad.push(...sub.bad);
+  }
+  if (rr.ok) {
+    good.push(right);
+  } else {
+    const sub = await bisect(right, depth + 1);
+    good.push(...sub.good);
+    bad.push(...sub.bad);
+  }
+  return { good, bad };
+}
+
+// ============================================================
+// 5. Main flow
+// ============================================================
+async function analyze() {
+  $('analyze').disabled = true;
+  $('results').classList.add('hidden');
+  $('init-error').classList.add('hidden');
+  setStatus('Czyszczenie…');
+
+  const raw = $('input').value;
+  if (!raw.trim()) {
+    setStatus('Wklej najpierw tekst.');
+    $('analyze').disabled = false;
+    return;
+  }
+
+  const t0 = performance.now();
+
+  const { text: clean, stats: sanStats } = sanitize(raw);
+  const chunks = chunkText(clean);
+
+  // Pre-flight 1: confirm vendor assets are reachable AND have the right content-type.
+  // (Vite dev server returns index.html for unknown paths with 200 OK, so status alone isn't enough.)
+  setStatus('Pre-flight: sprawdzam czy zasoby vendor/ istnieją…');
+  const checkAsset = async (url, expectedTypePrefix) => {
+    try {
+      const r = await fetch(url);
+      const ct = r.headers.get('content-type') || '';
+      const ok = r.ok && (expectedTypePrefix.some(p => ct.includes(p)));
+      return { url, status: r.status, contentType: ct, ok };
+    } catch (e) {
+      return { url, status: 0, contentType: '', ok: false, error: String(e) };
+    }
+  };
+  const reachability = await Promise.all([
+    checkAsset(WASM_GLUE_URL, ['javascript', 'ecmascript']),
+    checkAsset(WASM_BIN_URL, ['wasm', 'octet-stream'])
+  ]);
+  const unreachable = reachability.filter(r => !r.ok);
+  if (unreachable.length) {
+    const msg = unreachable.map(r =>
+      `${r.url}\n   → status: ${r.status || 'network error'}${r.contentType ? ', content-type: ' + r.contentType : ''}${r.error ? ' (' + r.error + ')' : ''}`
+    ).join('\n');
+    renderInitError('zasoby niedostępne lub zwracają nieoczekiwaną zawartość:\n\n' + msg);
+    setStatus('Pre-flight nie przeszedł — przerwano.');
+    $('analyze').disabled = false;
+    return;
+  }
+
+  // Pre-flight 2: actually run sentencex on a trivial input.
+  setStatus('Pre-flight: czy sentencex w ogóle działa…');
+  const smoke = await testChunk('test');
+  if (!smoke.ok) {
+    renderInitError(smoke.error);
+    setStatus('Pre-flight nie przeszedł — przerwano.');
+    $('analyze').disabled = false;
+    return;
+  }
+  setStatus(`Pre-flight OK. Podzielono na ${chunks.length} kawałków…`);
+
+  const finalParts = [];
+  const badPassages = [];
+  const errorTally = new Map();
+  let okChunks = 0, failChunks = 0;
+
+  for (let i = 0; i < chunks.length; i++) {
+    setStatus(`Test ${i + 1}/${chunks.length} (${chunks[i].length} zn.)…`);
+    const r = await testChunk(chunks[i]);
+    if (r.ok) {
+      finalParts.push(chunks[i]);
+      okChunks++;
+    } else {
+      failChunks++;
+      errorTally.set(r.error, (errorTally.get(r.error) || 0) + 1);
+      setStatus(`Kawałek ${i + 1} się wywala (${r.error}) — bisekcja…`);
+      const { good, bad } = await bisect(chunks[i]);
+      finalParts.push(good.join(''));
+      badPassages.push(...bad);
+    }
+  }
+
+  discardWorker();
+  const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+
+  render({ raw, clean, sanStats, chunks: chunks.length, okChunks, failChunks, finalParts, badPassages, errorTally, elapsed });
+  setStatus(`Gotowe (${elapsed}s).`);
+  $('analyze').disabled = false;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
+}
+
+function renderInitError(err) {
+  const el = $('init-error');
+  el.innerHTML =
+    `<strong>❌ Worker sentencex nie może się zainicjalizować.</strong>` +
+    `<p style="margin: 0.5rem 0;">Błąd: <code>${escapeHtml(String(err))}</code></p>` +
+    `<p style="margin: 0.5rem 0;">Próbowane URL-e:</p>` +
+    `<ul style="margin: 0.3rem 0;">` +
+      `<li><code>${escapeHtml(WASM_GLUE_URL)}</code></li>` +
+      `<li><code>${escapeHtml(WASM_BIN_URL)}</code></li>` +
+    `</ul>` +
+    `<p style="margin: 0.5rem 0;">Sprawdź:</p>` +
+    `<ol style="margin: 0.3rem 0;">` +
+      `<li>Czy te pliki są dostępne pod tymi URL-ami (otwórz oba w nowej karcie — powinny zwrócić 200, nie 404).</li>` +
+      `<li>Czy uruchomiono <code>npm run build</code> i deploy <em>po</em> dodaniu katalogu <code>public/vendor/</code>.</li>` +
+      `<li>Czy strona jest serwowana przez HTTP/HTTPS (nie <code>file://</code>) — moduły ESM w workerach nie działają z file://.</li>` +
+      `<li>Otwórz DevTools → Network, kliknij "Analizuj" jeszcze raz i zobacz, który request się wywala.</li>` +
+    `</ol>`;
+  el.classList.remove('hidden');
+}
+
+function visualizeWhitespace(s) {
+  return s
+    .replace(/\t/g, '→')
+    .replace(/\n/g, '↵\n');
+}
+
+function render({ raw, clean, sanStats, chunks, okChunks, failChunks, finalParts, badPassages, errorTally, elapsed }) {
+  const lines = [
+    `Czas analizy:        ${elapsed}s`,
+    `Wejście:             ${raw.length} znaków`,
+    `Po sanityzacji:      ${clean.length} znaków`,
+  ];
+  if (Object.keys(sanStats).length) {
+    lines.push('Sanityzacja:');
+    for (const [k, v] of Object.entries(sanStats)) lines.push(`  • ${k}: ${v}`);
+  } else {
+    lines.push('Sanityzacja:        nic do zmiany');
+  }
+  lines.push(`Kawałków:            ${chunks} (✅ ${okChunks} przeszło, ❌ ${failChunks} się wywaliło)`);
+  if (badPassages.length) {
+    const totalBad = badPassages.reduce((sum, p) => sum + p.length, 0);
+    const pct = (totalBad / clean.length * 100).toFixed(2);
+    lines.push(`Pominięto fragmentów: ${badPassages.length}`);
+    lines.push(`Pominięte znaki:      ${totalBad} (${pct}% tekstu)`);
+  }
+  if (errorTally && errorTally.size) {
+    lines.push('Błędy zgłoszone przez worker:');
+    const sorted = [...errorTally.entries()].sort((a, b) => b[1] - a[1]);
+    for (const [err, count] of sorted) lines.push(`  • [${count}×] ${err}`);
+  }
+  $('stats').textContent = lines.join('\n');
+
+  $('output').value = finalParts.filter(p => p).join('\n\n');
+
+  const badEl = $('bad-passages');
+  badEl.innerHTML = '';
+  if (badPassages.length === 0) {
+    const ok = document.createElement('p');
+    ok.style.color = '#065f46';
+    ok.textContent = '🎉 Brak problematycznych fragmentów — cały tekst nadaje się do wklejenia.';
+    badEl.appendChild(ok);
+  } else {
+    for (let i = 0; i < badPassages.length; i++) {
+      const div = document.createElement('div');
+      div.className = 'bad';
+      const p = badPassages[i];
+      div.innerHTML =
+        `<strong>Fragment ${i + 1}</strong> (${p.length} zn.):` +
+        `<pre>${escapeHtml(visualizeWhitespace(p))}</pre>`;
+      badEl.appendChild(div);
+    }
+    const note = document.createElement('p');
+    note.style.color = '#6b7280';
+    note.style.fontSize = '0.9rem';
+    note.style.marginTop = '0.75rem';
+    note.innerHTML =
+      'Te fragmenty łamią <code>sentencex</code> — można je wysłać autorowi narzędzia ' +
+      'jako repro do zgłoszenia bugu w <a href="https://github.com/wikimedia/sentencex/issues" target="_blank" rel="noopener">wikimedia/sentencex</a>.';
+    badEl.appendChild(note);
+  }
+
+  $('results').classList.remove('hidden');
+}
+
+$('analyze').addEventListener('click', analyze);
+$('copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('output').value);
+    setStatus('Skopiowane do schowka.');
+  } catch {
+    $('output').select();
+    document.execCommand('copy');
+    setStatus('Skopiowane do schowka.');
+  }
+});
+</script>
+</body>
+</html>
