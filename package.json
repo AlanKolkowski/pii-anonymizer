@@ -15,7 +15,8 @@
     "eval:snapshot-segments": "node scripts/snapshot-segments.js",
     "bench": "node bench/runner.js",
     "bench:compare": "node bench/compare.js",
-    "bench:list": "node bench/compare.js --list"
+    "bench:list": "node bench/compare.js --list",
+    "test:e2e": "playwright test --config=e2e/playwright.config.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",
@@ -26,6 +27,7 @@
     "sentencex-wasm": "^0.1.20"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "jsdom": "^29.1.1",
     "playwright": "^1.59.1",
     "vite": "^6.0.0",
