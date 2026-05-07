@@ -1,5 +1,6 @@
 import { extractTxt } from './txt.js';
 import { extractDocx } from './docx.js';
+import { extractPdf } from './pdf.js';
 import {
   UnsupportedTypeError,
   FileTooLargeError,
@@ -10,16 +11,19 @@ export const MAX_BYTES = 25 * 1024 * 1024;
 const EXTENSION_TO_FORMAT = {
   txt: 'txt',
   docx: 'docx',
+  pdf: 'pdf',
 };
 
 const MIME_TO_FORMAT = {
   'text/plain': 'txt',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/pdf': 'pdf',
 };
 
 const EXTRACTORS = {
   txt: extractTxt,
   docx: extractDocx,
+  pdf: extractPdf,
 };
 
 function inferFormat(file) {

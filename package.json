@@ -21,6 +21,7 @@
     "@huggingface/transformers": "^3.4.0",
     "mammoth": "^1.12.0",
     "onnxruntime-node": "^1.24.3",
+    "pdfjs-dist": "^5.7.284",
     "sentencex": "^1.0.20",
     "sentencex-wasm": "^0.1.20"
   },

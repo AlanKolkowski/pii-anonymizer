@@ -51,4 +51,10 @@ describe('extractText dispatch', () => {
     const { ExtractionFailedError } = await import('./errors.js');
     await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
   });
+
+  it('routes .pdf to the pdf extractor', async () => {
+    const file = new File([new Uint8Array(8)], 'a.pdf', { type: 'application/pdf' });
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
 });
