@@ -44,7 +44,53 @@ export function createWorkspace(rootEl, options) {
       <div class="ws-dropzone-primary">Upuść plik (.docx, .pdf, .txt)</div>
       <div class="ws-dropzone-secondary">lub kliknij aby wkleić tekst</div>
     `;
+    dz.addEventListener('click', () => {
+      transitionToLoaded({ text: '', entities: [] });
+    });
+    dz.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        transitionToLoaded({ text: '', entities: [] });
+      }
+    });
     rootEl.appendChild(dz);
+  }
+
+  function transitionToLoaded({ text, entities, meta }) {
+    if (state === 'loaded') return;
+    state = 'loaded';
+    lastMeta = meta ?? null;
+    renderLoaded({ text, entities });
+  }
+
+  function renderLoaded({ text, entities }) {
+    for (const child of [...rootEl.children]) {
+      if (child !== fileInput) rootEl.removeChild(child);
+    }
+    const toolbar = document.createElement('div');
+    toolbar.className = 'ws-toolbar';
+    toolbar.dataset.testid = 'workspace-toolbar';
+    if (lastMeta?.filename) {
+      const pill = document.createElement('span');
+      pill.className = 'ws-file-pill';
+      pill.dataset.testid = 'workspace-file-pill';
+      pill.textContent = `📄 ${lastMeta.filename}`;
+      pill.title = lastMeta.filename;
+      toolbar.appendChild(pill);
+    }
+    rootEl.appendChild(toolbar);
+
+    const editorRoot = document.createElement('div');
+    rootEl.appendChild(editorRoot);
+    editor = createAnnotationEditor(editorRoot, {
+      text: text ?? '',
+      entities: entities ?? [],
+      entityCategories: opts.entityCategories ?? [],
+      entityLabels: opts.entityLabels ?? {},
+      postEdit: opts.postEdit,
+      onChange,
+      onModeChange,
+    });
   }
 
   renderEmpty();

@@ -62,3 +62,29 @@ describe('createWorkspace — empty state', () => {
     expect(dropzone.getAttribute('tabindex')).toBe('0');
   });
 });
+
+describe('createWorkspace — click empty dropzone', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('clicking the dropzone mounts the editor with empty text', () => {
+    const { root, ws } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dz.click();
+    expect(root.querySelector('.ann-editor')).not.toBeNull();
+    expect(ws.getText()).toBe('');
+    expect(root.querySelector('[data-testid="workspace-dropzone"]')).toBeNull();
+  });
+
+  it('does not show a file pill when entered via click', () => {
+    const { root } = mount();
+    root.querySelector('[data-testid="workspace-dropzone"]').click();
+    expect(root.querySelector('[data-testid="workspace-file-pill"]')).toBeNull();
+  });
+
+  it('keyboard Enter on the dropzone also transitions to loaded', () => {
+    const { root } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dz.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(root.querySelector('.ann-editor')).not.toBeNull();
+  });
+});
