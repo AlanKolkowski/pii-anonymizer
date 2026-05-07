@@ -168,6 +168,7 @@ async function preflightAndCaptureSystemInfo(context, baseURL) {
     userAgent: navigator.userAgent,
     hardwareConcurrency: navigator.hardwareConcurrency,
     deviceMemory: navigator.deviceMemory ?? null,
+    webnnAvailable: 'ml' in navigator,
   }));
   await page.close();
   return info;
@@ -183,6 +184,7 @@ async function main() {
   }
   const skipWarmup = args.includes('--no-warmup');
   const headed = args.includes('--headed');
+  const backend = args.find((a) => a.startsWith('--backend='))?.slice('--backend='.length) ?? null;
 
   const cases = deriveCases();
   const testText = await readFile(TEST_DOC_PATH, 'utf-8');
@@ -194,14 +196,21 @@ async function main() {
   console.log(`Bench: ${cases.length} cases × ${runs} measured run(s)${skipWarmup ? '' : ' (+ 1 warmup)'}`);
   console.log(`Run:   ${runId}${label ? ` (${label})` : ''}`);
   console.log(`Doc:   ${TEST_DOC_PATH} (${testText.length} chars)`);
+  if (backend) console.log(`Backend override: ?backend=${backend}`);
   console.log('Starting Vite...');
 
   const vite = await startVite();
-  const baseURL = `http://localhost:${PORT}`;
+  const baseURL = backend ? `http://localhost:${PORT}/?backend=${encodeURIComponent(backend)}` : `http://localhost:${PORT}`;
 
   await mkdir(USER_DATA_DIR, { recursive: true });
   console.log('Launching Chromium...');
-  const context = await chromium.launchPersistentContext(USER_DATA_DIR, { headless: !headed });
+  // WebNN is behind a feature flag in Chromium. Without --enable-features,
+  // navigator.ml is undefined and our backend detector silently falls back
+  // to WASM, making the bench unable to measure WebNN-GPU.
+  const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
+    headless: !headed,
+    args: ['--enable-features=WebMachineLearningNeuralNetwork'],
+  });
 
   const cleanup = async () => {
     try { await context.close(); } catch {}
@@ -215,6 +224,11 @@ async function main() {
 
   try {
     systemInfo = await preflightAndCaptureSystemInfo(context, baseURL);
+    console.log(`WebNN: ${systemInfo.webnnAvailable ? 'available (fp32 → WebNN-GPU)' : 'NOT available — fp32 will run on WASM'}`);
+    if (!systemInfo.webnnAvailable && backend !== 'wasm') {
+      console.warn('  ⚠ Bench requested non-wasm backend but Chromium did not expose navigator.ml.');
+      console.warn('    Try: --headed (some flags require it), or run against system Chrome.');
+    }
 
     for (const c of cases) {
       console.log(`\n--- Case: ${c.label} (${c.sources.join(', ')}, ${c.sizeMB}MB) ---`);
@@ -279,6 +293,7 @@ async function main() {
     runId,
     timestamp: new Date().toISOString(),
     ...(label && { label }),
+    ...(backend && { backend }),
     runsPerCase: runs,
     warmup: !skipWarmup,
     document: {

@@ -1,8 +1,13 @@
+// `backends` is the ordered list of inference backends a source can run on.
+// First entry = preferred when available; later entries = fallbacks.
+// q8 is wasm-only because ORT-Web's WebNN EP doesn't broadcast `scale` to
+// input rank for per-tensor int8 dequantize and MLGraphBuilder rejects the
+// rank mismatch. fp32 runs on either; we prefer GPU when available.
 export const SOURCES = {
-  'multilang-q8':   { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8',   sizeMB: 280 },
-  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeMB: 1100 },
-  'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeMB: 280 },
-  'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeMB: 1100 },
+  'multilang-q8':   { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8',   sizeMB: 280,  backends: ['wasm'] },
+  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
+  'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeMB: 280,  backends: ['wasm'] },
+  'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
 };
 

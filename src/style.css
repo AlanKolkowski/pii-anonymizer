@@ -171,6 +171,114 @@ td code {
   font-size: 0.85rem;
 }
 
+/* --- WebNN hint banner --- */
+/* When the banner is visible we add padding-top to the body so the floating
+   pill doesn't crowd the page title. */
+body.has-webnn-hint {
+  padding-top: 3.5rem;
+}
+
+.webnn-hint {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: min(92vw, 520px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.webnn-hint-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #78350f;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.webnn-hint-trigger::before {
+  content: '';
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.webnn-hint-trigger:hover {
+  background: #fde68a;
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.35);
+}
+
+.webnn-hint-trigger:active {
+  transform: translateY(1px);
+}
+
+.webnn-hint-trigger:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+.webnn-hint-panel {
+  margin-top: 0.5rem;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-size: 0.9rem;
+  color: #1a1a2e;
+}
+
+.webnn-hint-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.webnn-hint-panel p {
+  margin: 0 0 0.75rem;
+}
+
+.webnn-hint-panel ol {
+  margin: 0 0 0.75rem 1.25rem;
+  padding: 0;
+}
+
+.webnn-hint-panel li {
+  margin-bottom: 0.4rem;
+}
+
+.webnn-hint-panel code {
+  background: #f3f4f6;
+  color: #1f2937;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85em;
+  word-break: break-all;
+}
+
+.webnn-hint-note {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.webnn-hint-panel .btn {
+  margin-top: 0.25rem;
+}
+
 /* --- Backend picker --- */
 .backend-picker {
   display: flex;

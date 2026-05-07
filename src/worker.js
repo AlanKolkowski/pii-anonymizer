@@ -10,9 +10,45 @@ import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/ent
 // for ORT scratch / tokenizer / segment buffers, while two fp32 models do not.
 const MEMORY_BUDGET_MB = 1800;
 
+// WebNN compiles a fixed-shape graph at session creation. Pin sequence_length
+// so the tokenizer pads/truncates every input to this length; without it, only
+// ~25% of nodes run on WebNN and the rest fall back to CPU with memcpy fences.
+// 512 covers chunked segments (pipeline chunks at 900 chars ≈ 200-400 tokens)
+// and matches XLM-RoBERTa's max_position_embeddings of 514.
+const WEBNN_SEQ_LEN = 512;
+
 let wasmReady = false;
 let currentConfig = null;
+let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto
+let webnnAvailable = false;
 const loadedModels = new Map();
+
+function isBackendAvailable(backend) {
+  // Whether a backend can run at all in this environment.
+  // 'wasm' is universally available; 'webnn-gpu' depends on browser support.
+  if (backend === 'wasm') return true;
+  if (backend === 'webnn-gpu') return webnnAvailable;
+  return false;
+}
+
+function isBackendDisabledByUser(backend) {
+  // No override → nothing disabled. With an override, only the matching
+  // backend is allowed (so `?backend=wasm` forces WASM, `?backend=webnn-gpu`
+  // forces WebNN, etc.).
+  return backendOverride != null && backendOverride !== backend;
+}
+
+function deviceFor(def) {
+  // Try each backend in the source's preference order. Skip ones that aren't
+  // available in this environment or have been disabled by the user override.
+  const supported = def.backends ?? ['wasm'];
+  for (const backend of supported) {
+    if (isBackendAvailable(backend) && !isBackendDisabledByUser(backend)) {
+      return backend;
+    }
+  }
+  throw new Error(`No usable backend for ${def.id}@${def.dtype}; supported=[${supported.join(', ')}]`);
+}
 
 async function ensureWasm() {
   if (!wasmReady) {
@@ -22,8 +58,13 @@ async function ensureWasm() {
 }
 
 function totalLoadedMB() {
+  // Budget tracks WASM heap occupancy only. WebNN-GPU sessions live in GPU
+  // memory and don't pressure the WASM heap, so they don't count here and
+  // aren't candidates for eviction below.
   let total = 0;
-  for (const entry of loadedModels.values()) total += entry.sizeMB;
+  for (const entry of loadedModels.values()) {
+    if (entry.device === 'wasm') total += entry.sizeMB;
+  }
   return total;
 }
 
@@ -44,8 +85,10 @@ async function disposeUnusedModels(neededAliases) {
 
 async function evictForBudget(needSizeMB, protectAlias) {
   if (totalLoadedMB() + needSizeMB <= MEMORY_BUDGET_MB) return;
+  // Only evict WASM-resident models — disposing a GPU session frees GPU
+  // memory but does nothing for WASM heap pressure.
   const candidates = [...loadedModels.entries()]
-    .filter(([alias]) => alias !== protectAlias)
+    .filter(([alias, entry]) => alias !== protectAlias && entry.device === 'wasm')
     .sort((a, b) => b[1].sizeMB - a[1].sizeMB);
   for (const [alias] of candidates) {
     if (totalLoadedMB() + needSizeMB <= MEMORY_BUDGET_MB) return;
@@ -53,24 +96,65 @@ async function evictForBudget(needSizeMB, protectAlias) {
   }
 }
 
-async function ensureModelLoaded(alias) {
-  if (loadedModels.has(alias)) return;
-  const def = SOURCES[alias];
-  if (!def || def.kind !== 'hf') return;
-  const sizeMB = def.sizeMB ?? 0;
-  await evictForBudget(sizeMB, alias);
-  self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
-  const ner = await hfPipeline('token-classification', def.id, {
+async function loadPipelineWithDevice(def, device) {
+  const opts = {
     dtype: def.dtype,
     progress_callback: (data) => {
       if (data.status === 'progress') {
         self.postMessage({ type: 'progress', file: data.file, progress: data.progress });
       }
     },
-  });
+  };
+  if (device === 'webnn-gpu') {
+    opts.device = device;
+    opts.session_options = {
+      freeDimensionOverrides: { batch_size: 1, sequence_length: WEBNN_SEQ_LEN },
+    };
+  }
+  const ner = await hfPipeline('token-classification', def.id, opts);
+  if (device === 'webnn-gpu') {
+    // The token-classification pipeline calls tokenizer with `padding: true`
+    // (= pad to longest in batch), which leaves single-input batches unpadded.
+    // WebNN's fixed-shape graph then rejects them. Override `_call` so every
+    // tokenization pads/truncates to WEBNN_SEQ_LEN.
+    const origCall = ner.tokenizer._call.bind(ner.tokenizer);
+    ner.tokenizer._call = (texts, options = {}) => origCall(texts, {
+      ...options,
+      padding: 'max_length',
+      max_length: WEBNN_SEQ_LEN,
+      truncation: true,
+    });
+  }
+  return ner;
+}
+
+async function ensureModelLoaded(alias) {
+  if (loadedModels.has(alias)) return;
+  const def = SOURCES[alias];
+  if (!def || def.kind !== 'hf') return;
+  const sizeMB = def.sizeMB ?? 0;
+  const targetDevice = deviceFor(def);
+  // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
+  if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
+  self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
+  let ner;
+  let device = targetDevice;
+  try {
+    ner = await loadPipelineWithDevice(def, targetDevice);
+  } catch (err) {
+    if (targetDevice === 'webnn-gpu') {
+      console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
+      // Fallback lands on WASM heap, so evict now.
+      await evictForBudget(sizeMB, alias);
+      ner = await loadPipelineWithDevice(def, 'wasm');
+      device = 'wasm';
+    } else {
+      throw err;
+    }
+  }
   self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
-  loadedModels.set(alias, { ner, sizeMB, dispose: async () => await ner.dispose() });
-  console.log(`[worker] loaded ${alias} (${def.id}, ${def.dtype}, ${sizeMB}MB; total=${totalLoadedMB()}MB)`);
+  loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
+  console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
 }
 
 async function loadModelForPipeline({ id, dtype }) {
@@ -93,6 +177,24 @@ self.onmessage = async (e) => {
   if (type === 'configure') {
     try {
       await ensureWasm();
+      const requestedBackend = e.data.backend ?? 'auto';
+      // 'auto' (default) = no override; any other value forces that backend.
+      const newOverride = requestedBackend === 'auto' ? null : requestedBackend;
+      // webnnAvailable reflects raw browser capability; the override is applied
+      // separately in deviceFor(), so the two stay decoupled.
+      const newWebnnAvailable = 'ml' in self.navigator;
+      // Backend selection changed mid-session: drop sessions so they reload
+      // on the new device.
+      if ((newOverride !== backendOverride || newWebnnAvailable !== webnnAvailable) && loadedModels.size > 0) {
+        for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
+      }
+      backendOverride = newOverride;
+      webnnAvailable = newWebnnAvailable;
+      self.postMessage({
+        type: 'backend-resolved',
+        webnnAvailable,
+        requested: requestedBackend,
+      });
       const enabledEntities = e.data.enabledEntities ?? [];
       const requiredAliases = requiredSources(enabledEntities).filter((a) => SOURCES[a]?.kind === 'hf');
       currentConfig = { enabledEntities, requiredAliases };
