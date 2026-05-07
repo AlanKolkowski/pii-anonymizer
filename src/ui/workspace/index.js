@@ -53,7 +53,38 @@ export function createWorkspace(rootEl, options) {
         transitionToLoaded({ text: '', entities: [] });
       }
     });
+    let dragCounter = 0;
+    dz.addEventListener('dragenter', (ev) => {
+      ev.preventDefault();
+      dragCounter++;
+      dz.classList.add('ws-dragover');
+    });
+    dz.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'copy';
+    });
+    dz.addEventListener('dragleave', () => {
+      dragCounter = Math.max(0, dragCounter - 1);
+      if (dragCounter === 0) dz.classList.remove('ws-dragover');
+    });
+    dz.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      dragCounter = 0;
+      dz.classList.remove('ws-dragover');
+      const file = ev.dataTransfer?.files?.[0];
+      if (!file) return;
+      void runExtractionFromEmpty(file);
+    });
     rootEl.appendChild(dz);
+  }
+
+  async function runExtractionFromEmpty(file) {
+    try {
+      const { text, meta } = await extractText(file);
+      transitionToLoaded({ text, entities: [], meta });
+    } catch (err) {
+      console.error('[workspace] extraction failed', err);
+    }
   }
 
   function transitionToLoaded({ text, entities, meta }) {

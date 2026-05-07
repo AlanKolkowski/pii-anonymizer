@@ -88,3 +88,56 @@ describe('createWorkspace — click empty dropzone', () => {
     expect(root.querySelector('.ann-editor')).not.toBeNull();
   });
 });
+
+function dragEvent(type, files) {
+  const ev = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(ev, 'dataTransfer', {
+    value: { files, items: files.map((f) => ({ kind: 'file', getAsFile: () => f })), dropEffect: '' },
+  });
+  return ev;
+}
+
+function dropOn(el, files) {
+  el.dispatchEvent(dragEvent('dragover', []));
+  el.dispatchEvent(dragEvent('drop', files));
+}
+
+async function flush() {
+  await new Promise((r) => setTimeout(r, 0));
+  await new Promise((r) => setTimeout(r, 0));
+}
+
+describe('createWorkspace — drop file in empty', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('successful drop transitions to loaded with extracted text', async () => {
+    const { root, ws } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    const file = new File(['Hello upload'], 'doc.txt', { type: 'text/plain' });
+    dropOn(dz, [file]);
+    await flush();
+    expect(ws.getText()).toBe('Hello upload');
+    expect(root.querySelector('.ann-editor')).not.toBeNull();
+  });
+
+  it('shows a file pill with the filename after successful drop', async () => {
+    const { root } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dropOn(dz, [new File(['x'], 'contract.txt', { type: 'text/plain' })]);
+    await flush();
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill).not.toBeNull();
+    expect(pill.textContent).toContain('contract.txt');
+  });
+
+  it('only the first file is processed when multiple are dropped', async () => {
+    const { root, ws } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dropOn(dz, [
+      new File(['first'], 'a.txt', { type: 'text/plain' }),
+      new File(['second'], 'b.txt', { type: 'text/plain' }),
+    ]);
+    await flush();
+    expect(ws.getText()).toBe('first');
+  });
+});
