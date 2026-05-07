@@ -5,7 +5,9 @@ import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
+  SOURCES,
   defaultEnabledEntities,
+  requiredSources,
 } from './pipeline/configs/entity-sources.js';
 import './style.css';
 import './ui/annotation-editor/styles.css';
@@ -18,7 +20,9 @@ let currentLegend = null;
 let currentAnonymized = '';
 let configuredOnce = false;
 let classifyInFlight = false;
-const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
+const urlParams = new URLSearchParams(window.location.search);
+const isDebug = urlParams.get('debug') === '1';
+const backendOverride = urlParams.get('backend'); // 'wasm' to force-disable WebNN; default = auto
 const LS_KEY = 'pii.selected-entities';
 
 const modelStatus = document.getElementById('model-status');
@@ -37,6 +41,53 @@ const deanonymizedOutput = document.getElementById('deanonymized-output');
 const copyDeanonymizedBtn = document.getElementById('copy-deanonymized');
 const selectorRoot = document.getElementById('entity-selector-root');
 const workspaceRoot = document.getElementById('workspace-root');
+const webnnHint = document.getElementById('webnn-hint');
+const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
+const webnnHintPanel = document.getElementById('webnn-hint-panel');
+const webnnHintClose = document.getElementById('webnn-hint-close');
+
+// Show the hint only when:
+//   - the browser doesn't expose WebNN, AND
+//   - the user hasn't explicitly forced WASM via URL (they know what they're doing), AND
+//   - at least one required source for the current entity selection actually
+//     supports webnn-gpu — no point nagging when the user only enabled q8-backed types.
+const webnnSupported = 'ml' in navigator;
+
+function shouldShowWebnnHint(enabledEntities) {
+  if (webnnSupported) return false;
+  if (backendOverride === 'wasm') return false;
+  return requiredSources(enabledEntities).some((alias) => {
+    const def = SOURCES[alias];
+    return def?.kind === 'hf' && def.backends?.includes('webnn-gpu');
+  });
+}
+
+function setWebnnPanelOpen(open) {
+  webnnHintPanel.hidden = !open;
+  webnnHintTrigger.setAttribute('aria-expanded', String(open));
+}
+
+function updateWebnnHint(enabledEntities) {
+  const show = shouldShowWebnnHint(enabledEntities);
+  webnnHint.hidden = !show;
+  document.body.classList.toggle('has-webnn-hint', show);
+  if (!show) setWebnnPanelOpen(false);
+}
+
+webnnHintTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setWebnnPanelOpen(webnnHintPanel.hidden);
+});
+
+webnnHintClose.addEventListener('click', () => {
+  setWebnnPanelOpen(false);
+});
+
+// Click outside the panel closes it.
+document.addEventListener('click', (e) => {
+  if (webnnHint.hidden || webnnHintPanel.hidden) return;
+  if (!webnnHint.contains(e.target)) setWebnnPanelOpen(false);
+});
 
 function loadSelectionFromStorage() {
   try {
@@ -56,7 +107,7 @@ let configureTimer = null;
 function scheduleConfigure(enabledEntities) {
   clearTimeout(configureTimer);
   configureTimer = setTimeout(() => {
-    worker.postMessage({ type: 'configure', enabledEntities });
+    worker.postMessage({ type: 'configure', enabledEntities, backend: backendOverride ?? 'auto' });
   }, 300);
 }
 
@@ -67,11 +118,14 @@ const selector = createEntitySelector(selectorRoot, {
   onChange(selected) {
     localStorage.setItem(LS_KEY, JSON.stringify(selected));
     updateAnonymizeButton();
+    updateWebnnHint(selected);
     scheduleConfigure(selected);
   },
 });
 
-worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected() });
+updateWebnnHint(initialSelection);
+
+worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected(), backend: backendOverride ?? 'auto' });
 
 const editor = createAnnotationEditor(workspaceRoot, {
   text: '',
@@ -143,6 +197,9 @@ worker.onmessage = (e) => {
       modelStatus.textContent = `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`;
       break;
     }
+    case 'backend-resolved':
+      console.log(`[main] WebNN ${msg.webnnAvailable ? 'available — fp32 models will run on GPU' : 'unavailable — all models on WASM'} (requested=${msg.requested})`);
+      break;
     case 'configured':
       configuredOnce = true;
       updateAnonymizeButton();
