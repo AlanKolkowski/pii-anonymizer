@@ -27,9 +27,10 @@ A dropzone replaces the textarea. Centered:
 
 - icon (📄)
 - primary line: "Upuść plik (.docx, .pdf, .txt)"
-- secondary line: "lub kliknij aby wkleić tekst"
+- secondary line: "lub kliknij, aby wybrać plik"
+- secondary action button: "Wolę wkleić tekst"
 
-Click anywhere in the dropzone (other than the file picker affordance) → transition to `'loaded'` with empty text and the textarea focused. Dropping a supported file → run extractor → on success transition to `'loaded'` with the extracted text.
+**Click semantics** — clicking anywhere in the dropzone (except the "Wolę wkleić tekst" button) opens the native file picker. This matches the dominant pattern in upload widgets (Dropbox, Slack, Gmail) where dropzone-as-button is presumed. The "Wolę wkleić tekst" button is the alternate path: click it to transition to `'loaded'` with empty text and the textarea focused. Dropping a supported file → run extractor → on success transition to `'loaded'` with the extracted text.
 
 ### State: `'loaded'`
 

@@ -35,6 +35,11 @@
   color: #475569;
   font-size: 0.85rem;
 }
+.ws-dropzone-paste {
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+}
 
 .ws-toolbar {
   display: flex;

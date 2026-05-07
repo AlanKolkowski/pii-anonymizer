@@ -49,18 +49,32 @@ export function createWorkspace(rootEl, options) {
     dz.dataset.testid = 'workspace-dropzone';
     dz.setAttribute('role', 'button');
     dz.setAttribute('tabindex', '0');
+    dz.setAttribute('aria-label', 'Upuść plik lub kliknij, aby wybrać plik');
     dz.innerHTML = `
       <div class="ws-dropzone-icon">📄</div>
       <div class="ws-dropzone-primary">Upuść plik (.docx, .pdf, .txt)</div>
-      <div class="ws-dropzone-secondary">lub kliknij aby wkleić tekst</div>
+      <div class="ws-dropzone-secondary">lub kliknij, aby wybrać plik</div>
     `;
-    dz.addEventListener('click', () => {
+
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'btn btn-secondary ws-dropzone-paste';
+    pasteBtn.dataset.testid = 'workspace-paste-text';
+    pasteBtn.textContent = 'Wolę wkleić tekst';
+    pasteBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       transitionToLoaded({ text: '', entities: [] });
+    });
+    dz.appendChild(pasteBtn);
+
+    dz.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-testid="workspace-paste-text"]')) return;
+      fileInput.click();
     });
     dz.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
-        transitionToLoaded({ text: '', entities: [] });
+        fileInput.click();
       }
     });
     let dragCounter = 0;

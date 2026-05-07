@@ -27,7 +27,14 @@ describe('createWorkspace — empty state', () => {
     const dropzone = root.querySelector('[data-testid="workspace-dropzone"]');
     expect(dropzone).not.toBeNull();
     expect(dropzone.textContent).toContain('Upuść plik');
-    expect(dropzone.textContent).toContain('lub kliknij');
+    expect(dropzone.textContent).toContain('kliknij, aby wybrać plik');
+  });
+
+  it('renders a "Wolę wkleić tekst" button as the alternate path', () => {
+    const { root } = mount();
+    const btn = root.querySelector('[data-testid="workspace-paste-text"]');
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('wkleić tekst');
   });
 
   it('does not render the annotation editor', () => {
@@ -63,29 +70,48 @@ describe('createWorkspace — empty state', () => {
   });
 });
 
-describe('createWorkspace — click empty dropzone', () => {
+describe('createWorkspace — empty dropzone interactions', () => {
   afterEach(() => { document.body.innerHTML = ''; });
 
-  it('clicking the dropzone mounts the editor with empty text', () => {
-    const { root, ws } = mount();
+  it('clicking the dropzone triggers the hidden file input', () => {
+    const { root } = mount();
     const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    const fileInput = root.querySelector('input[type="file"]');
+    let clicked = 0;
+    fileInput.click = () => { clicked++; };
     dz.click();
+    expect(clicked).toBe(1);
+    expect(root.querySelector('.ann-editor')).toBeNull();
+  });
+
+  it('keyboard Enter on the dropzone also triggers the file input', () => {
+    const { root } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    const fileInput = root.querySelector('input[type="file"]');
+    let clicked = 0;
+    fileInput.click = () => { clicked++; };
+    dz.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(clicked).toBe(1);
+  });
+
+  it('"Wolę wkleić tekst" button mounts the editor with empty text and no file pill', () => {
+    const { root, ws } = mount();
+    const pasteBtn = root.querySelector('[data-testid="workspace-paste-text"]');
+    pasteBtn.click();
     expect(root.querySelector('.ann-editor')).not.toBeNull();
     expect(ws.getText()).toBe('');
+    expect(root.querySelector('[data-testid="workspace-file-pill"]')).toBeNull();
     expect(root.querySelector('[data-testid="workspace-dropzone"]')).toBeNull();
   });
 
-  it('does not show a file pill when entered via click', () => {
+  it('clicking the paste button does not also fire the dropzone file picker', () => {
     const { root } = mount();
-    root.querySelector('[data-testid="workspace-dropzone"]').click();
-    expect(root.querySelector('[data-testid="workspace-file-pill"]')).toBeNull();
-  });
-
-  it('keyboard Enter on the dropzone also transitions to loaded', () => {
-    const { root } = mount();
-    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
-    dz.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    expect(root.querySelector('.ann-editor')).not.toBeNull();
+    const fileInput = root.querySelector('input[type="file"]');
+    let clicked = 0;
+    fileInput.click = () => { clicked++; };
+    const pasteBtn = root.querySelector('[data-testid="workspace-paste-text"]');
+    pasteBtn.click();
+    expect(clicked).toBe(0);
   });
 });
 
@@ -140,6 +166,19 @@ describe('createWorkspace — drop file in empty', () => {
     await flush();
     expect(ws.getText()).toBe('first');
   });
+
+  it('after extraction, commitTextMode reports changed=true so the pipeline fires on first Anonimizuj', async () => {
+    // Regression: the editor used to set textSnapshot to its initial text. When the workspace
+    // mounted the editor with extracted text, snapshot===text and Anonimizuj returned changed=false,
+    // flipping into annotation mode without ever running the pipeline. Snapshot must represent
+    // "last classified text" — empty when no entities were passed in.
+    const { root, ws } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dropOn(dz, [new File(['Jan Kowalski mieszka w Warszawie'], 'doc.txt', { type: 'text/plain' })]);
+    await flush();
+    const result = ws.commitTextMode(ws.getText());
+    expect(result.changed).toBe(true);
+  });
 });
 
 describe('createWorkspace — loaded toolbar', () => {
@@ -182,7 +221,7 @@ describe('createWorkspace — drop in loaded text mode', () => {
 
   it('drop on empty textarea replaces text without asking', async () => {
     const { root, ws } = mount();
-    root.querySelector('[data-testid="workspace-dropzone"]').click();
+    root.querySelector('[data-testid="workspace-paste-text"]').click();
     const ta = root.querySelector('.ann-editor-textarea');
     expect(ta).not.toBeNull();
     dropOn(ta, [new File(['fresh'], 'a.txt', { type: 'text/plain' })]);
