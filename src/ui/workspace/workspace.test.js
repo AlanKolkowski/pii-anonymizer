@@ -214,3 +214,24 @@ describe('createWorkspace — drop in loaded text mode', () => {
     expect(pill.textContent).toContain('b.txt');
   });
 });
+
+describe('createWorkspace — drop in annotation mode', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('drop in annotation mode is silently ignored', async () => {
+    const { root, ws } = mount();
+    ws.setText('Jan Kowalski');
+    ws.setEntities([{ entity_group: 'PERSON_NAME', start: 0, end: 12, score: 1, source: 'manual' }]);
+    expect(ws.getMode()).toBe('annotation');
+
+    const editorEl = root.querySelector('.ann-editor');
+    const before = ws.getText();
+    const beforeEnts = ws.getEntities();
+
+    dropOn(editorEl, [new File(['NEW'], 'x.txt', { type: 'text/plain' })]);
+    await flush();
+
+    expect(ws.getText()).toBe(before);
+    expect(ws.getEntities()).toEqual(beforeEnts);
+  });
+});
