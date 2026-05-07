@@ -161,18 +161,19 @@ export function createAnnotationEditor(rootEl, options) {
     chip.appendChild(x);
     span.appendChild(chip);
 
-    // text content
-    span.appendChild(
-      document.createTextNode(text.slice(entity.start, entity.end)),
-    );
-
-    // handles — always rendered so they can appear on hover; CSS hides them
-    // until the entity is hovered (only the directly-hovered one) or selected.
+    // Handles flow inline so they stay anchored to the actual start/end
+    // characters when the entity wraps across multiple lines. Absolute
+    // positioning would stretch them across the entire bounding box.
     const lh = document.createElement('span');
     lh.className = 'ann-ent-handle l';
     lh.contentEditable = 'false';
     attachDragHandle(lh, index, 'left');
     span.appendChild(lh);
+
+    span.appendChild(
+      document.createTextNode(text.slice(entity.start, entity.end)),
+    );
+
     const rh = document.createElement('span');
     rh.className = 'ann-ent-handle r';
     rh.contentEditable = 'false';

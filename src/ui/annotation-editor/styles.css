@@ -137,18 +137,19 @@
 }
 
 /* ── Drag handles ───────────────────────────────────────────── */
-/* Hidden by default; shown when the entity is directly hovered (so we don't
-   light up handles on every token-mate, which would be visually noisy) or
-   when selected (the popover is open). */
+/* Inline-flow so they stay anchored to the actual start/end characters when
+   the entity wraps across multiple lines. Hidden by default; shown when the
+   entity is directly hovered (so we don't light up handles on every
+   token-mate, which would be visually noisy) or when selected. */
 .ann-ent-handle {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
+  display: inline-block;
   width: 4px;
+  height: 1.1em;
+  vertical-align: -0.2em;
   background: #2563eb;
   border-radius: 2px;
   cursor: ew-resize;
-  z-index: 2;
+  user-select: none;
   opacity: 0;
   pointer-events: none;
   /* same delay-on-leave as the chip so the cursor can travel from entity
@@ -161,8 +162,6 @@
   pointer-events: auto;
   transition-delay: 0s;
 }
-.ann-ent-handle.l { left: -2px; }
-.ann-ent-handle.r { right: -2px; }
 
 /* ── Popover (edit + create) ────────────────────────────────── */
 .ann-popover {
