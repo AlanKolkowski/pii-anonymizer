@@ -88,13 +88,67 @@ export function createWorkspace(rootEl, options) {
     rootEl.appendChild(dz);
   }
 
-  async function runExtractionFromEmpty(file) {
+  async function runExtractionFromEmpty(file, deps = {}) {
+    clearError();
+    const extractor = deps.extractText ?? extractText;
     try {
-      const { text, meta } = await extractText(file);
+      const { text, meta } = await extractor(file);
       transitionToLoaded({ text, entities: [], meta });
     } catch (err) {
-      console.error('[workspace] extraction failed', err);
+      renderError(err);
     }
+  }
+
+  function renderError(err) {
+    const dropzone = rootEl.querySelector('[data-testid="workspace-dropzone"]');
+    const toolbar = rootEl.querySelector('[data-testid="workspace-toolbar"]');
+    const host = dropzone ?? toolbar?.parentElement ?? rootEl;
+    let region = rootEl.querySelector('[data-testid="workspace-error"]');
+    if (!region) {
+      region = document.createElement('div');
+      region.className = 'ws-error';
+      region.dataset.testid = 'workspace-error';
+      region.setAttribute('aria-live', 'assertive');
+      host.appendChild(region);
+    }
+    region.innerHTML = '';
+    const msg = document.createElement('p');
+    msg.className = 'ws-error-msg';
+    msg.textContent = messageFor(err);
+    region.appendChild(msg);
+
+    if (err instanceof ScannedPdfError || err instanceof ExtractionFailedError) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-secondary ws-error-recover';
+      btn.dataset.testid = 'workspace-recover-paste';
+      btn.textContent = 'Wklej tekst';
+      btn.addEventListener('click', () => transitionToLoaded({ text: '', entities: [] }));
+      region.appendChild(btn);
+    }
+  }
+
+  function messageFor(err) {
+    if (err instanceof UnsupportedTypeError) {
+      return 'Nieobsługiwany typ pliku. Akceptujemy: .pdf, .docx, .txt';
+    }
+    if (err instanceof FileTooLargeError) {
+      const mb = (err.sizeBytes / (1024 * 1024)).toFixed(1);
+      const limitMb = (err.limitBytes / (1024 * 1024)).toFixed(0);
+      return `Plik jest za duży (${mb} MB / limit ${limitMb} MB)`;
+    }
+    if (err instanceof ScannedPdfError) {
+      return 'Wygląda na zeskanowany PDF. Wklej tekst ręcznie.';
+    }
+    if (err instanceof ExtractionFailedError) {
+      return 'Nie udało się odczytać pliku. Spróbuj ponownie lub wklej tekst.';
+    }
+    return 'Nieznany błąd.';
+  }
+
+  function clearError() {
+    const region = rootEl.querySelector('[data-testid="workspace-error"]');
+    if (region) region.remove();
   }
 
   function transitionToLoaded({ text, entities, meta }) {
@@ -193,19 +247,21 @@ export function createWorkspace(rootEl, options) {
     onModeChange('text');
   }
 
-  async function runExtractionFromLoaded(file) {
+  async function runExtractionFromLoaded(file, deps = {}) {
+    clearError();
     const currentText = editor.getText();
     if (currentText.length > 0) {
       const ok = window.confirm('Zastąpić obecny tekst?');
       if (!ok) return;
     }
+    const extractor = deps.extractText ?? extractText;
     try {
-      const { text, meta } = await extractText(file);
+      const { text, meta } = await extractor(file);
       lastMeta = meta;
       editor.setText(text);
       renderLoaded({ text, entities: [] });
     } catch (err) {
-      console.error('[workspace] extraction failed', err);
+      renderError(err);
     }
   }
 
@@ -232,11 +288,23 @@ export function createWorkspace(rootEl, options) {
     },
     enterTextMode() { editor?.enterTextMode(); },
     commitTextMode(t) { return editor ? editor.commitTextMode(t) : { changed: false }; },
+    _handleFileForTest(file, fnOpts = {}) {
+      const fakeExtract = fnOpts.mockExtract;
+      const extractor = fakeExtract
+        ? async (f) => {
+            const out = fakeExtract(f);
+            if (out instanceof Promise) return out;
+            return out;
+          }
+        : extractText;
+      return runExtractionFromEmpty(file, { extractText: extractor });
+    },
     dispose: () => {
       if (editor) editor.dispose();
       rootEl.classList.remove('ws');
       rootEl.innerHTML = '';
     },
   };
+  rootEl.__workspace_for_tests__ = api;
   return api;
 }

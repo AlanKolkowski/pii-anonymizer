@@ -215,6 +215,70 @@ describe('createWorkspace — drop in loaded text mode', () => {
   });
 });
 
+async function ws_handleFile_for_test(root, file, opts = {}) {
+  const ws = root.__workspace_for_tests__;
+  if (!ws) throw new Error('workspace test seam missing');
+  return ws._handleFileForTest(file, opts);
+}
+
+describe('createWorkspace — error rendering', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('UnsupportedTypeError shows inline error and keeps dropzone', async () => {
+    const { root } = mount();
+    const dz = root.querySelector('[data-testid="workspace-dropzone"]');
+    dropOn(dz, [new File(['x'], 'a.zip', { type: 'application/zip' })]);
+    await flush();
+    const err = root.querySelector('[data-testid="workspace-error"]');
+    expect(err).not.toBeNull();
+    expect(err.textContent).toContain('Nieobsługiwany typ pliku');
+    expect(root.querySelector('[data-testid="workspace-dropzone"]')).not.toBeNull();
+  });
+
+  it('FileTooLargeError shows size and limit', async () => {
+    const { FileTooLargeError } = await import('../../file-import/errors.js');
+    const { root } = mount();
+    const f = { name: 'big.txt', type: 'text/plain', size: 26 * 1024 * 1024 };
+    await ws_handleFile_for_test(root, f, {
+      mockExtract: () => { throw new FileTooLargeError(f.size, 25 * 1024 * 1024); },
+    });
+    await flush();
+    const err = root.querySelector('[data-testid="workspace-error"]');
+    expect(err).not.toBeNull();
+    expect(err.textContent).toMatch(/za duży/);
+  });
+
+  it('ScannedPdfError shows PDF-specific message and recovery button', async () => {
+    const { ScannedPdfError } = await import('../../file-import/errors.js');
+    const { root } = mount();
+    const f = { name: 'scan.pdf', type: 'application/pdf', size: 100 };
+    await ws_handleFile_for_test(root, f, {
+      mockExtract: () => { throw new ScannedPdfError(3); },
+    });
+    await flush();
+    const err = root.querySelector('[data-testid="workspace-error"]');
+    expect(err.textContent).toContain('zeskanowany PDF');
+    const recover = root.querySelector('[data-testid="workspace-recover-paste"]');
+    expect(recover).not.toBeNull();
+    recover.click();
+    expect(root.querySelector('.ann-editor')).not.toBeNull();
+    expect(root.querySelector('.ann-editor-textarea')).not.toBeNull();
+  });
+
+  it('ExtractionFailedError shows generic message and recovery button', async () => {
+    const { ExtractionFailedError } = await import('../../file-import/errors.js');
+    const { root } = mount();
+    const f = { name: 'broken.docx', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 100 };
+    await ws_handleFile_for_test(root, f, {
+      mockExtract: () => { throw new ExtractionFailedError('docx', new Error('x')); },
+    });
+    await flush();
+    const err = root.querySelector('[data-testid="workspace-error"]');
+    expect(err.textContent).toMatch(/Nie udało się odczytać/);
+    expect(root.querySelector('[data-testid="workspace-recover-paste"]')).not.toBeNull();
+  });
+});
+
 describe('createWorkspace — drop in annotation mode', () => {
   afterEach(() => { document.body.innerHTML = ''; });
 
