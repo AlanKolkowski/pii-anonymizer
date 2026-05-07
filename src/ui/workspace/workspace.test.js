@@ -171,3 +171,46 @@ describe('createWorkspace — loaded toolbar', () => {
     expect(lastEntities).toEqual([]);
   });
 });
+
+describe('createWorkspace — drop in loaded text mode', () => {
+  let originalConfirm;
+  beforeEach(() => { originalConfirm = window.confirm; });
+  afterEach(() => {
+    document.body.innerHTML = '';
+    window.confirm = originalConfirm;
+  });
+
+  it('drop on empty textarea replaces text without asking', async () => {
+    const { root, ws } = mount();
+    root.querySelector('[data-testid="workspace-dropzone"]').click();
+    const ta = root.querySelector('.ann-editor-textarea');
+    expect(ta).not.toBeNull();
+    dropOn(ta, [new File(['fresh'], 'a.txt', { type: 'text/plain' })]);
+    await flush();
+    expect(ws.getText()).toBe('fresh');
+  });
+
+  it('drop on non-empty textarea asks for confirmation; cancel keeps text', async () => {
+    const { root, ws } = mount();
+    ws.setText('original');
+    const ta = root.querySelector('.ann-editor-textarea');
+    window.confirm = vi.fn(() => false);
+    dropOn(ta, [new File(['replacement'], 'a.txt', { type: 'text/plain' })]);
+    await flush();
+    expect(ws.getText()).toBe('original');
+    expect(window.confirm).toHaveBeenCalled();
+  });
+
+  it('drop on non-empty textarea replaces on confirm and shows new pill', async () => {
+    const { root, ws } = mount();
+    ws.setText('original');
+    const ta = root.querySelector('.ann-editor-textarea');
+    window.confirm = vi.fn(() => true);
+    dropOn(ta, [new File(['replacement'], 'b.txt', { type: 'text/plain' })]);
+    await flush();
+    expect(ws.getText()).toBe('replacement');
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill).not.toBeNull();
+    expect(pill.textContent).toContain('b.txt');
+  });
+});

@@ -149,6 +149,35 @@ export function createWorkspace(rootEl, options) {
       onChange,
       onModeChange,
     });
+
+    let dragCounter = 0;
+    editorRoot.addEventListener('dragenter', (ev) => {
+      if (editor.getMode() !== 'text') return;
+      ev.preventDefault();
+      dragCounter++;
+      editorRoot.classList.add('ws-dragover');
+    });
+    editorRoot.addEventListener('dragover', (ev) => {
+      if (editor.getMode() !== 'text') return;
+      ev.preventDefault();
+      if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'copy';
+    });
+    editorRoot.addEventListener('dragleave', () => {
+      dragCounter = Math.max(0, dragCounter - 1);
+      if (dragCounter === 0) editorRoot.classList.remove('ws-dragover');
+    });
+    editorRoot.addEventListener('drop', (ev) => {
+      if (editor.getMode() !== 'text') {
+        ev.preventDefault();
+        return;
+      }
+      ev.preventDefault();
+      dragCounter = 0;
+      editorRoot.classList.remove('ws-dragover');
+      const file = ev.dataTransfer?.files?.[0];
+      if (!file) return;
+      void runExtractionFromLoaded(file);
+    });
   }
 
   function transitionToEmpty() {
@@ -165,6 +194,11 @@ export function createWorkspace(rootEl, options) {
   }
 
   async function runExtractionFromLoaded(file) {
+    const currentText = editor.getText();
+    if (currentText.length > 0) {
+      const ok = window.confirm('Zastąpić obecny tekst?');
+      if (!ok) return;
+    }
     try {
       const { text, meta } = await extractText(file);
       lastMeta = meta;
