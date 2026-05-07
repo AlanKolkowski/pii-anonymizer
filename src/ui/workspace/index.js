@@ -23,6 +23,16 @@ export function createWorkspace(rootEl, options) {
   fileInput.type = 'file';
   fileInput.accept = '.pdf,.docx,.txt';
   fileInput.style.display = 'none';
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!file) return;
+    if (state === 'empty') {
+      void runExtractionFromEmpty(file);
+    } else {
+      void runExtractionFromLoaded(file);
+    }
+  });
   rootEl.appendChild(fileInput);
 
   function renderEmpty() {
@@ -109,6 +119,23 @@ export function createWorkspace(rootEl, options) {
       pill.title = lastMeta.filename;
       toolbar.appendChild(pill);
     }
+
+    const upload = document.createElement('button');
+    upload.type = 'button';
+    upload.className = 'btn btn-secondary ws-toolbar-btn';
+    upload.dataset.testid = 'workspace-upload-another';
+    upload.textContent = 'Wgraj inny plik';
+    upload.addEventListener('click', () => fileInput.click());
+    toolbar.appendChild(upload);
+
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'btn btn-secondary ws-toolbar-btn';
+    clear.dataset.testid = 'workspace-clear';
+    clear.textContent = 'Wyczyść';
+    clear.addEventListener('click', () => transitionToEmpty());
+    toolbar.appendChild(clear);
+
     rootEl.appendChild(toolbar);
 
     const editorRoot = document.createElement('div');
@@ -124,6 +151,30 @@ export function createWorkspace(rootEl, options) {
     });
   }
 
+  function transitionToEmpty() {
+    if (state === 'empty') return;
+    lastMeta = null;
+    if (editor) {
+      editor.dispose();
+      editor = null;
+    }
+    state = 'empty';
+    renderEmpty();
+    onChange([]);
+    onModeChange('text');
+  }
+
+  async function runExtractionFromLoaded(file) {
+    try {
+      const { text, meta } = await extractText(file);
+      lastMeta = meta;
+      editor.setText(text);
+      renderLoaded({ text, entities: [] });
+    } catch (err) {
+      console.error('[workspace] extraction failed', err);
+    }
+  }
+
   renderEmpty();
   onModeChange('text');
 
@@ -131,10 +182,22 @@ export function createWorkspace(rootEl, options) {
     getText: () => (editor ? editor.getText() : ''),
     getEntities: () => (editor ? editor.getEntities() : []),
     getMode: () => (editor ? editor.getMode() : 'text'),
-    setEntities: () => {},
-    setText: () => {},
-    enterTextMode: () => {},
-    commitTextMode: () => ({ changed: false }),
+    setText(newText) {
+      if (state === 'empty') {
+        transitionToLoaded({ text: newText, entities: [] });
+        return;
+      }
+      editor.setText(newText);
+    },
+    setEntities(newEntities) {
+      if (state === 'empty') {
+        transitionToLoaded({ text: '', entities: newEntities });
+        return;
+      }
+      editor.setEntities(newEntities);
+    },
+    enterTextMode() { editor?.enterTextMode(); },
+    commitTextMode(t) { return editor ? editor.commitTextMode(t) : { changed: false }; },
     dispose: () => {
       if (editor) editor.dispose();
       rootEl.classList.remove('ws');

@@ -141,3 +141,33 @@ describe('createWorkspace — drop file in empty', () => {
     expect(ws.getText()).toBe('first');
   });
 });
+
+describe('createWorkspace — loaded toolbar', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  function loadWith(text = 'sample', entities = [], opts = {}) {
+    const m = mount(opts);
+    m.ws.setText(text);
+    if (entities.length) m.ws.setEntities(entities);
+    return m;
+  }
+
+  it('renders Wgraj inny plik and Wyczyść buttons in loaded', () => {
+    const { root } = loadWith();
+    expect(root.querySelector('[data-testid="workspace-upload-another"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="workspace-clear"]')).not.toBeNull();
+  });
+
+  it('Wyczyść returns to empty state and clears entities', () => {
+    let lastEntities = null;
+    const { root, ws } = loadWith('hello', [{ entity_group: 'PERSON_NAME', start: 0, end: 5, score: 1, source: 'manual' }], {
+      onChange: (e) => { lastEntities = e; },
+    });
+    root.querySelector('[data-testid="workspace-clear"]').click();
+    expect(root.querySelector('[data-testid="workspace-dropzone"]')).not.toBeNull();
+    expect(root.querySelector('.ann-editor')).toBeNull();
+    expect(ws.getText()).toBe('');
+    expect(ws.getEntities()).toEqual([]);
+    expect(lastEntities).toEqual([]);
+  });
+});
