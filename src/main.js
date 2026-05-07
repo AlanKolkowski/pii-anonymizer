@@ -1,6 +1,6 @@
 import { deanonymizeText, anonymizeText } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
-import { createAnnotationEditor } from './ui/annotation-editor/index.js';
+import { createWorkspace } from './ui/workspace/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
@@ -11,6 +11,7 @@ import {
 } from './pipeline/configs/entity-sources.js';
 import './style.css';
 import './ui/annotation-editor/styles.css';
+import './ui/workspace/styles.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
@@ -127,7 +128,7 @@ updateWebnnHint(initialSelection);
 
 worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected(), backend: backendOverride ?? 'auto' });
 
-const editor = createAnnotationEditor(workspaceRoot, {
+const editor = createWorkspace(workspaceRoot, {
   text: '',
   entities: [],
   entityCategories: ENTITY_CATEGORIES,

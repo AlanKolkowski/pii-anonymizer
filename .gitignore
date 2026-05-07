@@ -1,6 +1,7 @@
 node_modules
 dist
 .DS_Store
+.superpowers/
 test-data/results/
 !test-data/results/baseline/
 
@@ -10,3 +11,7 @@ test-data/results/*/report.html
 # Bench results & playwright user-data
 test-data/bench-results/
 bench/.user-data/
+
+# Playwright e2e artifacts (root-level outputs from `npm run test:e2e`)
+/test-results/
+/playwright-report/

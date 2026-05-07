@@ -1,0 +1,85 @@
+.ws {
+  display: block;
+}
+
+.ws-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 2.5rem 1rem;
+  border: 2px dashed #93c5fd;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1e3a8a;
+  cursor: pointer;
+  text-align: center;
+  outline-offset: 4px;
+  user-select: none;
+}
+.ws-dropzone:focus-visible {
+  outline: 2px solid #3b82f6;
+}
+.ws-dropzone.ws-dragover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+.ws-dropzone-icon {
+  font-size: 2rem;
+}
+.ws-dropzone-primary {
+  font-weight: 600;
+}
+.ws-dropzone-secondary {
+  color: #475569;
+  font-size: 0.85rem;
+}
+.ws-dropzone-paste {
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+}
+
+.ws-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ws-file-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 0.8rem;
+  margin-right: auto;
+  max-width: 50ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-toolbar-btn {
+  margin-top: 0;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.ws-error {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.ws-error-msg { margin: 0 0 0.5rem; }
+.ws-error-recover { margin-top: 0; }
+
+.ann-editor.ws-dragover {
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
+}

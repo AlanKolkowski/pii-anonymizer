@@ -35,5 +35,6 @@ export default defineConfig({
   plugins: [noSpaFallbackForLocalModels()],
   test: {
     globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
 });

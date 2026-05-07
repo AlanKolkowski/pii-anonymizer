@@ -38,7 +38,10 @@ export function createAnnotationEditor(rootEl, options) {
   let text = initialText;
   let entities = initialEntities;
   let mode = entities.length > 0 ? 'annotation' : 'text';
-  let textSnapshot = text;
+  // Snapshot tracks "text that has been classified into the current entities".
+  // With no entities, nothing is classified yet — leave it empty so the first
+  // Anonimizuj click recognises the text as a real change and fires the pipeline.
+  let textSnapshot = entities.length > 0 ? text : '';
 
   let selectedIndex = -1; // index into entities
   let popoverEl = null;
@@ -675,7 +678,9 @@ export function createAnnotationEditor(rootEl, options) {
 
   function setText(newText) {
     text = newText;
-    textSnapshot = newText;
+    // Programmatic replacement (file upload, drop-replace) clears entities,
+    // so the new text is unclassified — keep snapshot empty so Anonimizuj fires.
+    textSnapshot = '';
     entities = [];
     selectedIndex = -1;
     mode = 'text';
