@@ -35,4 +35,20 @@ describe('extractText dispatch', () => {
     const out = await extractText(file);
     expect(out.text).toBe('hi');
   });
+
+  it('routes .docx to the docx extractor', async () => {
+    const file = new File(
+      [new Uint8Array(8)],
+      'a.docx',
+      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+    );
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
+
+  it('infers .docx from filename when mime is empty', async () => {
+    const file = new File([new Uint8Array(8)], 'b.docx', { type: '' });
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
 });

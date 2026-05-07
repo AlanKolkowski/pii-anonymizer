@@ -1,4 +1,5 @@
 import { extractTxt } from './txt.js';
+import { extractDocx } from './docx.js';
 import {
   UnsupportedTypeError,
   FileTooLargeError,
@@ -8,14 +9,17 @@ export const MAX_BYTES = 25 * 1024 * 1024;
 
 const EXTENSION_TO_FORMAT = {
   txt: 'txt',
+  docx: 'docx',
 };
 
 const MIME_TO_FORMAT = {
   'text/plain': 'txt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
 };
 
 const EXTRACTORS = {
   txt: extractTxt,
+  docx: extractDocx,
 };
 
 function inferFormat(file) {
