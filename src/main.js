@@ -27,11 +27,17 @@ const isDebug = urlParams.get('debug') === '1';
 const backendOverride = urlParams.get('backend'); // 'wasm' to force-disable WebNN; default = auto
 const LS_KEY = 'pii.selected-entities';
 
-const modelStatus = document.getElementById('model-status');
-const anonymizeBtn = document.getElementById('anonymize-btn');
-const rerunBtn = document.getElementById('rerun-btn');
-const editTextBtn = document.getElementById('edit-text-btn');
-const copyAnonymizedBtn = document.getElementById('copy-anonymized');
+// Action buttons + status are mirrored top + bottom around the editor; we
+// always operate on every instance.
+const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
+const rerunBtns = document.querySelectorAll('[data-action="rerun"]');
+const editTextBtns = document.querySelectorAll('[data-action="edit-text"]');
+const copyAnonymizedBtns = document.querySelectorAll('[data-action="copy"]');
+const modelStatusEls = document.querySelectorAll('[data-status="model"]');
+
+function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
+function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
+function setText(els, text) { els.forEach(el => { el.textContent = text; }); }
 const resultSection = document.getElementById('result-section');
 const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
@@ -144,13 +150,13 @@ const editor = createWorkspace(workspaceRoot, {
   },
   onModeChange(mode) {
     if (mode === 'annotation') {
-      editTextBtn.hidden = false;
-      copyAnonymizedBtn.hidden = false;
-      anonymizeBtn.hidden = true;
+      setHidden(editTextBtns, false);
+      setHidden(copyAnonymizedBtns, false);
+      setHidden(anonymizeBtns, true);
     } else {
-      editTextBtn.hidden = true;
-      copyAnonymizedBtn.hidden = true;
-      anonymizeBtn.hidden = false;
+      setHidden(editTextBtns, true);
+      setHidden(copyAnonymizedBtns, true);
+      setHidden(anonymizeBtns, false);
     }
     updateRerunButton();
   },
@@ -186,11 +192,11 @@ function refreshLegendAndAnonymized(text, entities) {
 
 function updateAnonymizeButton() {
   const hasSelection = selector.getSelected().length > 0;
-  anonymizeBtn.disabled = !hasSelection || !configuredOnce || classifyInFlight;
+  setDisabled(anonymizeBtns, !hasSelection || !configuredOnce || classifyInFlight);
   if (!hasSelection) {
-    modelStatus.textContent = 'Wybierz przynajmniej jedną encję.';
+    setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
   } else if (!classifyInFlight) {
-    modelStatus.textContent = '';
+    setText(modelStatusEls, '');
   }
 }
 
@@ -203,7 +209,7 @@ function setsEqual(a, b) {
 
 function updateRerunButton() {
   if (!lastRun) {
-    rerunBtn.hidden = true;
+    setHidden(rerunBtns, true);
     return;
   }
   const isAnnot = editor.getMode() === 'annotation';
@@ -214,8 +220,8 @@ function updateRerunButton() {
     !setsEqual(currentSelection, lastRun.enabledEntities);
   const hasSelection = currentSelection.length > 0;
   const hasText = currentText.trim() !== '';
-  rerunBtn.hidden = !(isAnnot && stale && hasSelection && hasText);
-  rerunBtn.disabled = classifyInFlight;
+  setHidden(rerunBtns, !(isAnnot && stale && hasSelection && hasText));
+  setDisabled(rerunBtns, classifyInFlight);
 }
 
 worker.onmessage = (e) => {
@@ -223,7 +229,7 @@ worker.onmessage = (e) => {
   switch (msg.type) {
     case 'progress': {
       const pct = Math.round(msg.progress ?? 0);
-      modelStatus.textContent = `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`;
+      setText(modelStatusEls, `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`);
       break;
     }
     case 'backend-resolved':
@@ -244,7 +250,7 @@ worker.onmessage = (e) => {
       updateAnonymizeButton();
       updateRerunButton();
       if (msg.data.length === 0) {
-        modelStatus.textContent = 'Nie znaleziono żadnych danych osobowych w tekście.';
+        setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
       }
       break;
     case 'timing':
@@ -252,15 +258,15 @@ worker.onmessage = (e) => {
       break;
     case 'error':
       classifyInFlight = false;
-      modelStatus.textContent = `Błąd: ${msg.message}`;
-      anonymizeBtn.textContent = 'Anonimizuj';
+      setText(modelStatusEls, `Błąd: ${msg.message}`);
+      setText(anonymizeBtns, 'Anonimizuj');
       updateAnonymizeButton();
       updateRerunButton();
       break;
   }
 };
 
-anonymizeBtn.addEventListener('click', () => {
+anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   const liveText = editor.getText();
   // Snapshot-aware: in text mode, ask the editor whether the text actually changed.
   if (editor.getMode() === 'text') {
@@ -273,30 +279,30 @@ anonymizeBtn.addEventListener('click', () => {
   const text = liveText.trim();
   if (!text) return;
   classifyInFlight = true;
-  modelStatus.textContent = 'Analizowanie...';
-  anonymizeBtn.textContent = 'Analizowanie...';
-  anonymizeBtn.disabled = true;
+  setText(modelStatusEls, 'Analizowanie...');
+  setText(anonymizeBtns, 'Analizowanie...');
+  setDisabled(anonymizeBtns, true);
   worker.postMessage({ type: 'classify', text });
-});
+}));
 
-rerunBtn.addEventListener('click', () => {
+rerunBtns.forEach(btn => btn.addEventListener('click', () => {
   const text = editor.getText().trim();
   if (!text) return;
   classifyInFlight = true;
-  modelStatus.textContent = 'Analizowanie...';
-  rerunBtn.disabled = true;
+  setText(modelStatusEls, 'Analizowanie...');
+  setDisabled(rerunBtns, true);
   worker.postMessage({ type: 'classify', text });
-});
+}));
 
-editTextBtn.addEventListener('click', () => {
+editTextBtns.forEach(btn => btn.addEventListener('click', () => {
   editor.enterTextMode();
-});
+}));
 
-copyAnonymizedBtn.addEventListener('click', () => {
+copyAnonymizedBtns.forEach(btn => btn.addEventListener('click', () => {
   navigator.clipboard.writeText(currentAnonymized);
-  copyAnonymizedBtn.textContent = 'Skopiowano!';
-  setTimeout(() => { copyAnonymizedBtn.textContent = 'Kopiuj zanonimizowany'; }, 2000);
-});
+  setText(copyAnonymizedBtns, 'Skopiowano!');
+  setTimeout(() => { setText(copyAnonymizedBtns, 'Kopiuj zanonimizowany'); }, 2000);
+}));
 
 function handleAnonymizationResult(msg) {
   const { data: entities, anonymized, legend, debug } = msg;
@@ -311,7 +317,7 @@ function handleAnonymizationResult(msg) {
 
   deanonymizeSection.hidden = false;
   deanonymizeResultSection.hidden = true;
-  anonymizeBtn.textContent = 'Anonimizuj';
+  setText(anonymizeBtns, 'Anonimizuj');
 
   if (isDebug && debug) {
     renderDebugPanel(debug, anonymized, legend);

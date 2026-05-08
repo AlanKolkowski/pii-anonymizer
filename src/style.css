@@ -303,22 +303,32 @@ body.has-webnn-hint {
   color: #999;
 }
 
-/* --- Status text --- */
-#model-status {
+/* --- Status text (mirrored above and below editor) --- */
+[data-status="model"] {
   margin: 0;
   font-size: 0.9rem;
   color: #555;
 }
-#model-status:empty {
+[data-status="model"]:empty {
   display: none;
 }
 
-/* --- Workspace action row --- */
+/* --- Workspace action row (mirrored above and below editor) --- */
 .workspace-actions {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+.workspace-actions--top {
+  margin-bottom: 0.75rem;
+}
+.workspace-actions--bottom {
   margin-top: 0.75rem;
+}
+/* Hide a bar when none of its buttons are visible (avoids stray gap when
+   no actions apply, e.g. before any classify in the top bar). */
+.workspace-actions:not(:has(.btn:not([hidden]))) {
+  display: none;
 }
 .workspace-actions-buttons {
   display: flex;

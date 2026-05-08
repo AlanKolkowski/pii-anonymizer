@@ -44,14 +44,22 @@
 
     <section id="input-section">
       <label>2. Wklej swój dokument i anonimizuj</label>
-      <div id="workspace-root"></div>
-      <div class="workspace-actions">
-        <p id="model-status"></p>
+      <div class="workspace-actions workspace-actions--top">
         <div class="workspace-actions-buttons">
-          <button id="anonymize-btn" class="btn btn-primary" disabled>Anonimizuj</button>
-          <button id="rerun-btn" class="btn btn-primary" hidden>Anonimizuj ponownie</button>
-          <button id="edit-text-btn" class="btn btn-secondary" hidden>Edytuj tekst</button>
-          <button id="copy-anonymized" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
+          <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
+          <button data-action="rerun" class="btn btn-primary" hidden>Anonimizuj ponownie</button>
+          <button data-action="edit-text" class="btn btn-secondary" hidden>Edytuj tekst</button>
+          <button data-action="copy" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
+        </div>
+      </div>
+      <div id="workspace-root"></div>
+      <div class="workspace-actions workspace-actions--bottom">
+        <p data-status="model"></p>
+        <div class="workspace-actions-buttons">
+          <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
+          <button data-action="rerun" class="btn btn-primary" hidden>Anonimizuj ponownie</button>
+          <button data-action="edit-text" class="btn btn-secondary" hidden>Edytuj tekst</button>
+          <button data-action="copy" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
         </div>
       </div>
     </section>
