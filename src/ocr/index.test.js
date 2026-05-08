@@ -49,3 +49,45 @@ describe('createOcr', () => {
     await expect(ocr.init()).resolves.toBeUndefined();
   });
 });
+
+import { createOcrWorkerProxy } from './index.js';
+
+class FakeWorker {
+  constructor() {
+    this.postMessage = (data, transfer) => { this._lastPost = { data, transfer }; };
+    this.terminate = () => { this.terminated = true; };
+    this.onmessage = null;
+    this._lastPost = null;
+  }
+  // helper for tests:
+  trigger(data) { this.onmessage?.({ data }); }
+}
+
+describe('createOcrWorkerProxy', () => {
+  it('forwards ocrBitmap to the worker and resolves with done payload', async () => {
+    const worker = new FakeWorker();
+    const proxy = createOcrWorkerProxy(worker);
+    const promise = proxy.ocrBitmap({ width: 10, height: 10, close: () => {} });
+    expect(worker._lastPost.data.type).toBe('ocr:run');
+    const id = worker._lastPost.data.id;
+    worker.trigger({ type: 'ocr:done', id, text: 'hi', confidence: 0.9, backend: 'wasm' });
+    const out = await promise;
+    expect(out).toEqual({ text: 'hi', confidence: 0.9, backend: 'wasm' });
+  });
+
+  it('rejects when the worker reports an error', async () => {
+    const worker = new FakeWorker();
+    const proxy = createOcrWorkerProxy(worker);
+    const promise = proxy.ocrBitmap({ width: 1, height: 1, close: () => {} });
+    const id = worker._lastPost.data.id;
+    worker.trigger({ type: 'ocr:error', id, name: 'OcrFailedError', message: 'boom' });
+    await expect(promise).rejects.toMatchObject({ name: 'OcrFailedError', message: 'boom' });
+  });
+
+  it('cancel() posts a cancel message', () => {
+    const worker = new FakeWorker();
+    const proxy = createOcrWorkerProxy(worker);
+    proxy.cancel();
+    expect(worker._lastPost.data).toEqual({ type: 'cancel' });
+  });
+});
