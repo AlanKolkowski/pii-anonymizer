@@ -587,3 +587,18 @@ describe('findRegexEntities — financial amounts', () => {
   });
 });
 
+describe('applyTokens', () => {
+  it('replaces entities using a pre-built seen map', async () => {
+    const { applyTokens, buildTokenMap } = await import('./anonymizer.js');
+    const text = 'Jan Kowalski works at Example Corp';
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 },
+      { entity_group: 'ORGANIZATION_NAME', start: 22, end: 34, score: 0.95 },
+    ];
+    const { seen } = buildTokenMap(entities, text);
+    expect(applyTokens(text, entities, seen)).toBe(
+      '[PERSON_NAME_1] works at [ORGANIZATION_NAME_1]',
+    );
+  });
+});
+

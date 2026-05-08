@@ -91,9 +91,7 @@ export function buildTokenMap(entities, originalText) {
   return { seen, legend };
 }
 
-export function anonymizeText(text, entities) {
-  const { seen, legend } = buildTokenMap(entities, text);
-
+export function applyTokens(text, entities, seen) {
   const positionsSeen = new Set();
   const unique = [];
   for (const entity of entities) {
@@ -112,8 +110,12 @@ export function anonymizeText(text, entities) {
     const token = seen[key];
     result = result.slice(0, entity.start) + token + result.slice(entity.end);
   }
+  return result;
+}
 
-  return { anonymized: result, legend };
+export function anonymizeText(text, entities) {
+  const { seen, legend } = buildTokenMap(entities, text);
+  return { anonymized: applyTokens(text, entities, seen), legend };
 }
 
 export function aggregateEntities(rawTokens, originalText) {
