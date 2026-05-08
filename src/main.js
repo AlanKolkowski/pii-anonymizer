@@ -1,6 +1,5 @@
-import { deanonymizeText, anonymizeText, buildTokenMapMulti, applyTokens } from './anonymizer.js';
+import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
-import { createWorkspace } from './ui/workspace/index.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createOutcomesList } from './ui/outcomes-list/index.js';
 import { extractText } from './file-import/index.js';
@@ -14,7 +13,6 @@ import {
 } from './pipeline/configs/entity-sources.js';
 import './style.css';
 import './ui/annotation-editor/styles.css';
-import './ui/workspace/styles.css';
 import './ui/sources-list/styles.css';
 import './ui/outcomes-list/styles.css';
 
