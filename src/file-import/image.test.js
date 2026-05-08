@@ -19,7 +19,7 @@ describe('extractImage', () => {
       filename: 'photo.png',
       mimeType: 'image/png',
       sizeBytes: file.size,
-      ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+      ocr: { engine: 'paddleocr-v5', backend: 'wasm' },
     });
   });
 

@@ -365,7 +365,7 @@ describe('createWorkspace — file pill OCR breadcrumb', () => {
           filename: 'photo.png',
           mimeType: 'image/png',
           sizeBytes: 100,
-          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+          ocr: { engine: 'paddleocr-v5', backend: 'wasm' },
         },
       }),
     });
@@ -393,7 +393,7 @@ describe('createWorkspace — file pill OCR breadcrumb', () => {
             { index: 3, source: 'ocr', confidence: 0.9 },
             { index: 4, source: 'ocr', confidence: 0.9 },
           ],
-          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+          ocr: { engine: 'paddleocr-v5', backend: 'wasm' },
         },
       }),
     });
@@ -418,7 +418,7 @@ describe('createWorkspace — file pill OCR breadcrumb', () => {
             { index: 1, source: 'ocr', confidence: 0.9 },
             { index: 2, source: 'ocr', confidence: 0.9 },
           ],
-          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+          ocr: { engine: 'paddleocr-v5', backend: 'wasm' },
         },
       }),
     });
@@ -510,14 +510,14 @@ describe('createWorkspace — model loading message', () => {
     let resolveExtract;
     const promise = ws._handleFileForTest(f, {
       mockExtract: (file, opts) => {
-        opts?.onModelLoad?.({ type: 'model:load:start', engine: 'paddleocr-v4' });
+        opts?.onModelLoad?.({ type: 'model:load:start', engine: 'paddleocr-v5' });
         return new Promise((res) => { resolveExtract = res; });
       },
     });
     await flush();
     const status = root.querySelector('[data-testid="workspace-progress"]');
     expect(status?.textContent).toContain('Pobieranie modelu OCR');
-    resolveExtract?.({ text: 'x', meta: { filename: 'photo.png', mimeType: 'image/png', sizeBytes: 100, ocr: { engine: 'paddleocr-v4', backend: 'wasm' } } });
+    resolveExtract?.({ text: 'x', meta: { filename: 'photo.png', mimeType: 'image/png', sizeBytes: 100, ocr: { engine: 'paddleocr-v5', backend: 'wasm' } } });
     await promise;
   });
 });

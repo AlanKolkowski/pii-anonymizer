@@ -1,4 +1,5 @@
 import { ExtractionFailedError } from './errors.js';
+import { ENGINE } from '../ocr/models.js';
 
 const HEIC_TYPES = new Set(['image/heic', 'image/heif']);
 const HEIC_EXTS = new Set(['heic', 'heif']);
@@ -43,7 +44,7 @@ export async function extractImage(file, deps = {}) {
         filename: file.name,
         mimeType: file.type,
         sizeBytes: file.size,
-        ocr: { engine: 'paddleocr-v4', backend: result.backend },
+        ocr: { engine: ENGINE, backend: result.backend },
       },
     };
   } catch (err) {

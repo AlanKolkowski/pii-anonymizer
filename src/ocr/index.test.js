@@ -48,63 +48,18 @@ describe('createOcr', () => {
     const ocr = createOcr({ engine });
     await expect(ocr.init()).resolves.toBeUndefined();
   });
-});
 
-import { createOcrWorkerProxy } from './index.js';
-
-class FakeWorker {
-  constructor() {
-    this.postMessage = (data, transfer) => { this._lastPost = { data, transfer }; };
-    this.terminate = () => { this.terminated = true; };
-    this.onmessage = null;
-    this._lastPost = null;
-  }
-  // helper for tests:
-  trigger(data) { this.onmessage?.({ data }); }
-}
-
-describe('createOcrWorkerProxy', () => {
-  it('forwards ocrBitmap to the worker and resolves with done payload', async () => {
-    const worker = new FakeWorker();
-    const proxy = createOcrWorkerProxy(worker);
-    const promise = proxy.ocrBitmap({ width: 10, height: 10, close: () => {} });
-    expect(worker._lastPost.data.type).toBe('ocr:run');
-    const id = worker._lastPost.data.id;
-    worker.trigger({ type: 'ocr:done', id, text: 'hi', confidence: 0.9, backend: 'wasm' });
-    const out = await promise;
-    expect(out).toEqual({ text: 'hi', confidence: 0.9, backend: 'wasm' });
-  });
-
-  it('rejects when the worker reports an error', async () => {
-    const worker = new FakeWorker();
-    const proxy = createOcrWorkerProxy(worker);
-    const promise = proxy.ocrBitmap({ width: 1, height: 1, close: () => {} });
-    const id = worker._lastPost.data.id;
-    worker.trigger({ type: 'ocr:error', id, name: 'OcrFailedError', message: 'boom' });
-    await expect(promise).rejects.toMatchObject({ name: 'OcrFailedError', message: 'boom' });
-  });
-
-  it('cancel() posts a cancel message', () => {
-    const worker = new FakeWorker();
-    const proxy = createOcrWorkerProxy(worker);
-    proxy.cancel();
-    expect(worker._lastPost.data).toEqual({ type: 'cancel' });
-  });
-
-  it('reconstructs OCR error subclasses so instanceof works downstream', async () => {
-    const { WebNNUnavailableError, OcrFailedError, OcrCancelledError } = await import('./errors.js');
-    const cases = [
-      { name: 'WebNNUnavailableError', message: 'no ep', cls: WebNNUnavailableError },
-      { name: 'OcrFailedError', message: 'boom', cls: OcrFailedError },
-      { name: 'OcrCancelledError', message: 'cancelled', cls: OcrCancelledError },
-    ];
-    for (const { name, message, cls } of cases) {
-      const worker = new FakeWorker();
-      const proxy = createOcrWorkerProxy(worker);
-      const promise = proxy.ocrBitmap({ width: 1, height: 1, close: () => {} });
-      const id = worker._lastPost.data.id;
-      worker.trigger({ type: 'ocr:error', id, name, message });
-      await expect(promise).rejects.toBeInstanceOf(cls);
-    }
+  it('onModelLoad forwards to the engine listener', async () => {
+    let listenerSet = null;
+    const engine = {
+      run: async () => ({ text: '', confidence: 0, backend: 'wasm' }),
+      cancel: () => {},
+      getBackend: () => 'wasm',
+      onModelLoad: (l) => { listenerSet = l; },
+    };
+    const ocr = createOcr({ engine });
+    const fn = () => {};
+    ocr.onModelLoad(fn);
+    expect(listenerSet).toBe(fn);
   });
 });

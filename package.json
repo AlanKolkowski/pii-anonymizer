@@ -19,8 +19,8 @@
     "test:e2e": "playwright test --config=e2e/playwright.config.js"
   },
   "dependencies": {
-    "@gutenye/ocr-browser": "^1.4.8",
     "@huggingface/transformers": "^3.4.0",
+    "@paddleocr/paddleocr-js": "^0.3.2",
     "heic-to": "^1.4.2",
     "mammoth": "^1.12.0",
     "onnxruntime-node": "^1.24.3",

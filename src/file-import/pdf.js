@@ -1,4 +1,5 @@
 import { ExtractionFailedError } from './errors.js';
+import { ENGINE } from '../ocr/models.js';
 
 export const PAGE_TEXT_THRESHOLD = 20;
 export const RENDER_SCALE = 2.0;
@@ -136,7 +137,7 @@ export async function extractPdf(file, deps = {}) {
     ),
   };
   if (classifications.some((c) => c.source === 'ocr' && c.confidence != null)) {
-    meta.ocr = { engine: 'paddleocr-v4', backend: ocrBackend ?? 'wasm' };
+    meta.ocr = { engine: ENGINE, backend: ocrBackend ?? 'wasm' };
   }
   return { text, meta };
 }

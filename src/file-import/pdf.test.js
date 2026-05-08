@@ -121,7 +121,7 @@ describe('extractPdf — mixed / OCR PDFs', () => {
       { index: 1, source: 'text' },
       { index: 2, source: 'ocr', confidence: 0.9 },
     ]);
-    expect(out.meta.ocr).toEqual({ engine: 'paddleocr-v4', backend: 'wasm' });
+    expect(out.meta.ocr).toEqual({ engine: 'paddleocr-v5', backend: 'wasm' });
     expect(ocr.spy).toHaveLength(1);
   });
 
