@@ -1,6 +1,9 @@
-import { deanonymizeText, anonymizeText } from './anonymizer.js';
+import { deanonymizeText, anonymizeText, buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createWorkspace } from './ui/workspace/index.js';
+import { createSourcesList } from './ui/sources-list/index.js';
+import { createOutcomesList } from './ui/outcomes-list/index.js';
+import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
@@ -12,44 +15,42 @@ import {
 import './style.css';
 import './ui/annotation-editor/styles.css';
 import './ui/workspace/styles.css';
+import './ui/sources-list/styles.css';
+import './ui/outcomes-list/styles.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
 });
 
-let currentLegend = null;
-let currentAnonymized = '';
+const sources = [];
+const outcomes = [];
+let legend = {};
+let seen = {};
+let lastRun = null;
+const inFlightSourceIds = new Set();
 let configuredOnce = false;
-let classifyInFlight = false;
-let lastRun = null;  // { text, enabledEntities (sorted) } after a successful classify
 const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
-const backendOverride = urlParams.get('backend'); // 'wasm' to force-disable WebNN; default = auto
+const backendOverride = urlParams.get('backend');
 const LS_KEY = 'pii.selected-entities';
 
-// Action buttons + status are mirrored top + bottom around the editor; we
-// always operate on every instance.
+function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
+
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
-const rerunBtns = document.querySelectorAll('[data-action="rerun"]');
-const editTextBtns = document.querySelectorAll('[data-action="edit-text"]');
-const copyAnonymizedBtns = document.querySelectorAll('[data-action="copy"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
 
 function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
 function setText(els, text) { els.forEach(el => { el.textContent = text; }); }
+
 const resultSection = document.getElementById('result-section');
 const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
-const deanonymizeSection = document.getElementById('deanonymize-section');
-const deanonymizeInput = document.getElementById('deanonymize-input');
-const deanonymizeBtn = document.getElementById('deanonymize-btn');
-const deanonymizeResultSection = document.getElementById('deanonymize-result-section');
-const deanonymizedOutput = document.getElementById('deanonymized-output');
-const copyDeanonymizedBtn = document.getElementById('copy-deanonymized');
+const outcomesSection = document.getElementById('outcomes-section');
 const selectorRoot = document.getElementById('entity-selector-root');
-const workspaceRoot = document.getElementById('workspace-root');
+const sourcesListRoot = document.getElementById('sources-list-root');
+const outcomesListRoot = document.getElementById('outcomes-list-root');
 const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
@@ -126,8 +127,7 @@ const selector = createEntitySelector(selectorRoot, {
   initial: initialSelection,
   onChange(selected) {
     localStorage.setItem(LS_KEY, JSON.stringify(selected));
-    updateAnonymizeButton();
-    updateRerunButton();
+    refreshAnonymizeButton();
     updateWebnnHint(selected);
     scheduleConfigure(selected);
   },
@@ -145,42 +145,112 @@ if (ocrWarm) {
   });
 }
 
-const editor = createWorkspace(workspaceRoot, {
-  text: '',
-  entities: [],
+const sourcesList = createSourcesList(sourcesListRoot, {
   entityCategories: ENTITY_CATEGORIES,
   entityLabels: ENTITY_LABELS,
   postEdit(text, entities) {
     return backfillOccurrencesStep({ text, entities }).entities;
   },
-  onChange(newEntities) {
-    refreshLegendAndAnonymized(editor.getText(), newEntities);
+  onAddPaste() {
+    const id = crypto.randomUUID();
+    const label = nextPasteLabel();
+    sources.push({
+      id, label, text: '', entities: [], meta: null, status: 'idle', error: null,
+    });
+    sourcesList.addSource(id, label, { text: '', entities: [], status: 'idle' });
+    sourcesList.enterTextMode(id);
+    refreshAnonymizeButton();
   },
-  onModeChange(mode) {
-    if (mode === 'annotation') {
-      setHidden(editTextBtns, false);
-      setHidden(copyAnonymizedBtns, false);
-      setHidden(anonymizeBtns, true);
-    } else {
-      setHidden(editTextBtns, true);
-      setHidden(copyAnonymizedBtns, true);
-      setHidden(anonymizeBtns, false);
+  async onAddFiles(files) {
+    for (const file of files) await addSourceFromFile(file);
+  },
+  onRemove(id) {
+    const idx = sources.findIndex((s) => s.id === id);
+    if (idx === -1) return;
+    const removed = sources[idx];
+    if (removed.status === 'ready' && removed.entities.length > 0) {
+      const ok = window.confirm(`Usunąć "${removed.label}"?`);
+      if (!ok) return;
     }
-    updateRerunButton();
+    sources.splice(idx, 1);
+    sourcesList.removeSource(id);
+    refreshLegend();
+    refreshAnonymizeButton();
+  },
+  onRename(id, label) {
+    const s = sources.find((x) => x.id === id);
+    if (s) s.label = label;
+  },
+  onAnnotationChange(id, entities) {
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    s.entities = entities;
+    refreshLegend();
+  },
+  onModeChange() { refreshAnonymizeButton(); },
+});
+
+const outcomesList = createOutcomesList(outcomesListRoot, {
+  onRemove(id) {
+    const idx = outcomes.findIndex((o) => o.id === id);
+    if (idx === -1) return;
+    outcomes.splice(idx, 1);
+    outcomesList.removeOutcome(id);
+    if (outcomes.length === 0) outcomesSection.hidden = true;
   },
 });
 
-function refreshLegendAndAnonymized(text, entities) {
-  if (!entities || entities.length === 0) {
-    currentLegend = null;
-    currentAnonymized = '';
+function nextPasteLabel() {
+  const used = sources
+    .map((s) => /^Wklejony tekst (\d+)$/.exec(s.label)?.[1])
+    .filter(Boolean)
+    .map(Number);
+  const next = used.length === 0 ? 1 : Math.max(...used) + 1;
+  return `Wklejony tekst ${next}`;
+}
+
+async function addSourceFromFile(file) {
+  const id = crypto.randomUUID();
+  const label = file.name || `Plik ${sources.length + 1}`;
+  sources.push({
+    id, label, text: '', entities: [], meta: null, status: 'pending', error: null,
+  });
+  sourcesList.addSource(id, label, { text: '', entities: [], status: 'pending' });
+  try {
+    const { text, meta } = await extractText(file);
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    s.text = text;
+    s.meta = meta;
+    s.status = 'idle';
+    s.error = null;
+    sourcesList.setSourceText(id, text);
+    sourcesList.setSourceStatus(id, 'idle');
+  } catch (err) {
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    s.status = 'error';
+    s.error = err.message;
+    sourcesList.setSourceStatus(id, 'error', err.message);
+  }
+  refreshAnonymizeButton();
+}
+
+function refreshLegend() {
+  const ready = sources.filter((s) => s.status === 'ready' && s.entities.length > 0);
+  if (ready.length === 0) {
+    legend = {};
+    seen = {};
     legendTableBody.innerHTML = '';
     resultSection.hidden = true;
+    outcomesList.refreshLegend({});
     return;
   }
-  const { anonymized, legend } = anonymizeText(text, entities);
-  currentLegend = legend;
-  currentAnonymized = anonymized;
+  const built = buildTokenMapMulti(
+    ready.map((s) => ({ text: s.text, entities: s.entities })),
+  );
+  seen = built.seen;
+  legend = built.legend;
 
   legendTableBody.innerHTML = '';
   for (const [token, value] of Object.entries(legend)) {
@@ -196,16 +266,13 @@ function refreshLegendAndAnonymized(text, entities) {
     legendTableBody.appendChild(row);
   }
   resultSection.hidden = false;
+  outcomesList.refreshLegend(legend);
 }
 
-function updateAnonymizeButton() {
-  const hasSelection = selector.getSelected().length > 0;
-  setDisabled(anonymizeBtns, !hasSelection || !configuredOnce || classifyInFlight);
-  if (!hasSelection) {
-    setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
-  } else if (!classifyInFlight) {
-    setText(modelStatusEls, '');
-  }
+function anonymizedTextFor(sourceId) {
+  const s = sources.find((x) => x.id === sourceId);
+  if (!s || s.status !== 'ready') return null;
+  return applyTokens(s.text, s.entities, seen);
 }
 
 function setsEqual(a, b) {
@@ -215,21 +282,13 @@ function setsEqual(a, b) {
   return true;
 }
 
-function updateRerunButton() {
-  if (!lastRun) {
-    setHidden(rerunBtns, true);
-    return;
-  }
-  const isAnnot = editor.getMode() === 'annotation';
-  const currentText = editor.getText();
-  const currentSelection = selector.getSelected();
-  const stale =
-    currentText !== lastRun.text ||
-    !setsEqual(currentSelection, lastRun.enabledEntities);
-  const hasSelection = currentSelection.length > 0;
-  const hasText = currentText.trim() !== '';
-  setHidden(rerunBtns, !(isAnnot && stale && hasSelection && hasText));
-  setDisabled(rerunBtns, classifyInFlight);
+function refreshAnonymizeButton() {
+  const hasSelection = selector.getSelected().length > 0;
+  const hasAnyText = sources.some((s) => (s.text ?? '').trim().length > 0);
+  const blocked = !configuredOnce || isAnyClassifyInFlight();
+  setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
+  if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
+  else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
 }
 
 worker.onmessage = (e) => {
@@ -245,93 +304,87 @@ worker.onmessage = (e) => {
       break;
     case 'configured':
       configuredOnce = true;
-      updateAnonymizeButton();
+      refreshAnonymizeButton();
       break;
-    case 'result':
-      classifyInFlight = false;
+    case 'result': {
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
-      handleAnonymizationResult(msg);
-      lastRun = {
-        text: editor.getText(),
-        enabledEntities: [...selector.getSelected()].sort(),
-      };
-      updateAnonymizeButton();
-      updateRerunButton();
-      if (msg.data.length === 0) {
-        setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
+      const id = msg.id;
+      const s = sources.find((x) => x.id === id);
+      if (s) {
+        s.entities = msg.data;
+        s.status = 'ready';
+        s.error = null;
+        sourcesList.setSourceEntities(id, msg.data);
+        sourcesList.setSourceStatus(id, 'ready');
       }
+      inFlightSourceIds.delete(id);
+      refreshLegend();
+      if (isDebug && msg.debug) {
+        renderDebugPanel(msg.debug, msg.anonymized, msg.legend);
+        debugSection.hidden = false;
+      }
+      if (!isAnyClassifyInFlight()) {
+        const allEmpty = sources.every((x) => x.entities.length === 0);
+        if (allEmpty) {
+          setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
+        } else {
+          setText(modelStatusEls, '');
+        }
+        lastRun = {
+          texts: new Map(sources.map((x) => [x.id, x.text])),
+          enabledEntities: [...selector.getSelected()].sort(),
+        };
+        setText(anonymizeBtns, 'Anonimizuj');
+      } else {
+        setText(modelStatusEls, `Analizowanie ${sources.length - inFlightSourceIds.size}/${sources.length}…`);
+      }
+      refreshAnonymizeButton();
       break;
+    }
     case 'timing':
       console.log(`[bench-timing] ${msg.mark}${msg.alias ? ' alias=' + msg.alias : ''} t=${msg.t.toFixed(2)}`);
       break;
-    case 'error':
-      classifyInFlight = false;
+    case 'error': {
+      const id = msg.id;
+      const s = id ? sources.find((x) => x.id === id) : null;
+      if (s) {
+        s.status = 'error';
+        s.error = msg.message;
+        sourcesList.setSourceStatus(id, 'error', msg.message);
+      }
+      if (id) inFlightSourceIds.delete(id);
+      if (!isAnyClassifyInFlight()) setText(anonymizeBtns, 'Anonimizuj');
       setText(modelStatusEls, `Błąd: ${msg.message}`);
-      setText(anonymizeBtns, 'Anonimizuj');
-      updateAnonymizeButton();
-      updateRerunButton();
+      refreshAnonymizeButton();
       break;
+    }
   }
 };
 
 anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
-  const liveText = editor.getText();
-  // Snapshot-aware: in text mode, ask the editor whether the text actually changed.
-  if (editor.getMode() === 'text') {
-    const { changed } = editor.commitTextMode(liveText);
-    if (!changed) {
-      // Editor flips back to annotation mode itself; no pipeline needed.
-      return;
+  for (const s of sources) {
+    if (sourcesList.getMode(s.id) === 'text') {
+      const live = sourcesList.getText(s.id);
+      sourcesList.commitTextMode(s.id, live);
+      s.text = sourcesList.getText(s.id);
     }
   }
-  const text = liveText.trim();
-  if (!text) return;
-  classifyInFlight = true;
-  setText(modelStatusEls, 'Analizowanie...');
-  setText(anonymizeBtns, 'Analizowanie...');
-  setDisabled(anonymizeBtns, true);
-  worker.postMessage({ type: 'classify', text });
-}));
+  const toClassify = sources.filter((s) => (s.text ?? '').trim().length > 0);
+  if (toClassify.length === 0) return;
 
-rerunBtns.forEach(btn => btn.addEventListener('click', () => {
-  const text = editor.getText().trim();
-  if (!text) return;
-  classifyInFlight = true;
-  setText(modelStatusEls, 'Analizowanie...');
-  setDisabled(rerunBtns, true);
-  worker.postMessage({ type: 'classify', text });
-}));
-
-editTextBtns.forEach(btn => btn.addEventListener('click', () => {
-  editor.enterTextMode();
-}));
-
-copyAnonymizedBtns.forEach(btn => btn.addEventListener('click', () => {
-  navigator.clipboard.writeText(currentAnonymized);
-  setText(copyAnonymizedBtns, 'Skopiowano!');
-  setTimeout(() => { setText(copyAnonymizedBtns, 'Kopiuj zanonimizowany'); }, 2000);
-}));
-
-function handleAnonymizationResult(msg) {
-  const { data: entities, anonymized, legend, debug } = msg;
-
-  // The editor takes the entities; its onChange will rebuild legend/anonymized
-  // from the canonical anonymizeText() so they stay in sync after manual edits.
-  // We still cache the worker's first-pass values so rendering is consistent
-  // even if no edits happen.
-  currentLegend = legend;
-  currentAnonymized = anonymized;
-  editor.setEntities(entities);
-
-  deanonymizeSection.hidden = false;
-  deanonymizeResultSection.hidden = true;
-  setText(anonymizeBtns, 'Anonimizuj');
-
-  if (isDebug && debug) {
-    renderDebugPanel(debug, anonymized, legend);
-    debugSection.hidden = false;
+  for (const s of toClassify) {
+    s.status = 'pending';
+    s.error = null;
+    sourcesList.setSourceStatus(s.id, 'pending');
+    inFlightSourceIds.add(s.id);
   }
-}
+  setText(modelStatusEls, `Analizowanie 0/${toClassify.length}…`);
+  setText(anonymizeBtns, 'Analizowanie...');
+  refreshAnonymizeButton();
+  for (const s of toClassify) {
+    worker.postMessage({ type: 'classify', id: s.id, text: s.text });
+  }
+}));
 
 function renderDebugPanel(debug, anonymized, legend) {
   debugPanel.innerHTML = '';
@@ -447,66 +500,100 @@ function escHtml(s) {
   return div.innerHTML;
 }
 
-deanonymizeBtn.addEventListener('click', () => {
-  const text = deanonymizeInput.value.trim();
-  if (!text || !currentLegend) return;
-  const result = deanonymizeText(text, currentLegend);
-  deanonymizedOutput.textContent = result;
-  deanonymizeResultSection.hidden = false;
-});
+refreshAnonymizeButton();
 
-copyDeanonymizedBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(deanonymizedOutput.textContent);
-  copyDeanonymizedBtn.textContent = 'Skopiowano!';
-  setTimeout(() => { copyDeanonymizedBtn.textContent = 'Kopiuj do schowka'; }, 2000);
-});
-
-updateAnonymizeButton();
-updateRerunButton();
-
-// WebMCP integration
 const mcp = new WebMCP({ channelName: 'pii_anonymizer' });
+
+function jsonContent(value) {
+  return { content: [{ type: 'text', text: JSON.stringify(value) }] };
+}
+function textContent(value) {
+  return { content: [{ type: 'text', text: value }] };
+}
+
 mcp.registerTool(
-  'read_anonymized_text',
-  'Read the current anonymized text from the PII anonymizer',
-  { type: "object", properties: {} },
+  'list_sources',
+  'List all anonymized source documents that are ready. Returns id, label, and char_count for each. Text contents are token-form (PII never crosses this boundary).',
+  { type: 'object', properties: {} },
   () => {
-    if (!currentLegend) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: 'No anonymized text available. Run anonymization first.' }) }]
-      };
-    }
-    return {
-      content: [{
-        type: "text",
-        text: currentAnonymized
-      }]
-    };
-  }
-);
-mcp.registerTool(
-  'write_deanonymize_text',
-  'Write text to the deanonymize input field; the deanonymized result is shown in the browser but never returned to protect PII',
-  {
-    type: "object",
-    properties: {
-      text: { type: "string", description: "Text containing anonymization tokens (e.g. [PERSON_NAME_1])" }
-    },
-    required: ["text"]
+    const ready = sources.filter((s) => s.status === 'ready');
+    const items = ready.map((s) => {
+      const anonymized = applyTokens(s.text, s.entities, seen);
+      return { id: s.id, label: s.label, char_count: anonymized.length };
+    });
+    return jsonContent(items);
   },
-  (args) => {
-    if (!currentLegend) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: 'No legend available. Run anonymization first.' }) }]
-      };
+);
+
+mcp.registerTool(
+  'read_source',
+  'Read the anonymized (token-form) text of a single source by id. PII is never returned.',
+  {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  ({ id }) => {
+    const s = sources.find((x) => x.id === id);
+    if (!s || s.status !== 'ready') return jsonContent({ error: `Source ${id} not ready` });
+    return textContent(applyTokens(s.text, s.entities, seen));
+  },
+);
+
+mcp.registerTool(
+  'list_outcomes',
+  'List all outcome documents (LLM-produced, in token form). Returns id, label, char_count.',
+  { type: 'object', properties: {} },
+  () => jsonContent(outcomes.map((o) => ({ id: o.id, label: o.label, char_count: o.text.length }))),
+);
+
+mcp.registerTool(
+  'read_outcome',
+  'Read the tokenized text of an outcome by id (the LLM\'s own previous output).',
+  {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  ({ id }) => {
+    const o = outcomes.find((x) => x.id === id);
+    if (!o) return jsonContent({ error: `Outcome ${id} not found` });
+    return textContent(o.text);
+  },
+);
+
+mcp.registerTool(
+  'write_outcome',
+  'Create or update an outcome document. Provide id to update an existing outcome; omit id to create a new one. text MUST be in token form (e.g. [PERSON_NAME_1]); the browser deanonymizes it for the human user only and never returns PII.',
+  {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      label: { type: 'string' },
+      text: { type: 'string' },
+    },
+    required: ['label', 'text'],
+  },
+  ({ id, label, text }) => {
+    if (typeof label !== 'string' || label.trim().length === 0) {
+      return jsonContent({ error: 'label must be a non-empty string' });
     }
-    const text = args.text;
-    deanonymizeInput.value = text;
-    const result = deanonymizeText(text, currentLegend);
-    deanonymizedOutput.textContent = result;
-    deanonymizeResultSection.hidden = false;
-    return {
-      content: [{ type: "text", text: JSON.stringify({ success: true }) }]
-    };
-  }
+    if (typeof text !== 'string') {
+      return jsonContent({ error: 'text must be a string' });
+    }
+    if (id) {
+      const o = outcomes.find((x) => x.id === id);
+      if (!o) return jsonContent({ error: `Outcome ${id} not found` });
+      o.label = label;
+      o.text = text;
+      outcomesList.updateOutcome(id, label, text, legend);
+      outcomesSection.hidden = false;
+      return jsonContent({ id, success: true });
+    }
+    const newId = crypto.randomUUID();
+    outcomes.push({ id: newId, label, text });
+    outcomesList.addOutcome(newId, label, text, legend);
+    outcomesSection.hidden = false;
+    return jsonContent({ id: newId, success: true });
+  },
 );
