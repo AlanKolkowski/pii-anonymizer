@@ -1,7 +1,7 @@
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
-import { classifyWithCache } from './pipeline/cache-orchestrator.js';
+import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 
 // Memory budget for resident HF models in the WASM heap.
@@ -21,7 +21,7 @@ let currentConfig = null;
 let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto
 let webnnAvailable = false;
 const loadedModels = new Map();
-let nerCache = null;
+const nerCache = new Map();
 
 function isBackendAvailable(backend) {
   // Whether a backend can run at all in this environment.
@@ -190,7 +190,7 @@ self.onmessage = async (e) => {
           for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
         }
         // Backend semantics may differ; drop entity cache too.
-        nerCache = null;
+        nerCache.clear();
       }
       backendOverride = newOverride;
       webnnAvailable = newWebnnAvailable;
@@ -229,17 +229,19 @@ self.onmessage = async (e) => {
         return (SOURCES[a.alias]?.sizeMB ?? 0) - (SOURCES[b.alias]?.sizeMB ?? 0);
       });
 
-      const { ctx, cache: newCache } = await classifyWithCache({
+      const hash = await sha256Hex(e.data.text);
+      const prev = nerCache.get(hash) ?? null;
+      const { ctx, cache: newEntry } = await classifyWithCache({
         text: e.data.text,
         enabledEntities: currentConfig.enabledEntities,
-        cache: nerCache,
+        cache: prev,
         sources: SOURCES,
         entitySources: ENTITY_SOURCES,
         loadModel: loadModelForPipeline,
         getSentenceBoundaries: get_sentence_boundaries,
         sortSources,
       });
-      nerCache = newCache;
+      nerCache.set(hash, newEntry);
 
       self.postMessage({
         type: 'result',
