@@ -16,6 +16,7 @@ export function createPaddleEngine(deps = {}) {
     backend: 'wasm',
     wasmPaths: DEFAULT_WASM_PATHS,
   };
+  const createWorker = deps.createWorker;
   const sdkOptions = deps.sdkOptions;
 
   let instance = null;
@@ -49,7 +50,7 @@ export function createPaddleEngine(deps = {}) {
       try {
         emitLoadStart();
         const made = await PaddleOCR.create({
-          worker: true,
+          worker: createWorker ? { createWorker } : true,
           ortOptions,
           ...sdkOptions,
         });

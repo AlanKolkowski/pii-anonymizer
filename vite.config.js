@@ -36,6 +36,22 @@ export default defineConfig({
   worker: {
     format: 'es',
   },
+  optimizeDeps: {
+    // The PaddleOCR SDK ships its own worker entry as a sibling asset
+    // (./assets/worker-entry-*.js) loaded via `new Worker(new URL(..., import.meta.url))`.
+    // Vite's pre-bundling moves the main module to .vite/deps/ but doesn't
+    // copy the sibling assets/, so the worker URL resolves to a non-existent
+    // path and the SPA fallback returns index.html — the worker dies on spawn.
+    // Excluding the SDK leaves it served straight from node_modules where the
+    // relative `./assets/...` URL resolves correctly. Its CJS deps still need
+    // pre-bundling though, so we force-include them.
+    exclude: ['@paddleocr/paddleocr-js'],
+    include: [
+      '@paddleocr/paddleocr-js > clipper-lib',
+      '@paddleocr/paddleocr-js > js-yaml',
+      '@paddleocr/paddleocr-js > @techstark/opencv-js',
+    ],
+  },
   test: {
     globals: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', '**/.claude/worktrees/**'],

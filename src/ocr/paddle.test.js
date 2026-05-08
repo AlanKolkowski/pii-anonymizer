@@ -48,6 +48,17 @@ describe('createPaddleEngine', () => {
     expect(calls.lastOptions.ortOptions).toEqual({ backend: 'wasm', wasmPaths: '/local/' });
   });
 
+  it('passes a custom createWorker when provided', async () => {
+    const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
+    const fakeCreateWorker = () => ({ postMessage: () => {}, terminate: () => {} });
+    const engine = createPaddleEngine({
+      loadSdk: async () => sdk,
+      createWorker: fakeCreateWorker,
+    });
+    await engine.run({ kind: 'fake' });
+    expect(calls.lastOptions.worker).toEqual({ createWorker: fakeCreateWorker });
+  });
+
   it('joins items[].text with newlines and averages score for confidence', async () => {
     const { sdk } = fakeSdkFactory(async () => okResult([
       { poly: [], text: 'Jan Kowalski', score: 0.9 },
