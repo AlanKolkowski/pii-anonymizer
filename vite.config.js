@@ -33,6 +33,9 @@ export default defineConfig({
     host: true,
   },
   plugins: [noSpaFallbackForLocalModels()],
+  worker: {
+    format: 'es',
+  },
   test: {
     globals: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', '**/.claude/worktrees/**'],
