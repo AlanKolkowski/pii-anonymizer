@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>OCR spike</title>
+  </head>
+  <body>
+    <h1>OCR spike — Polish text</h1>
+    <p>
+      Renders synthetic Polish text on a canvas, then feeds it to
+      <code>@gutenye/ocr-browser</code> via the spike script. Open the dev tools
+      console to see results.
+    </p>
+    <canvas id="spike-canvas" width="1200" height="800"></canvas>
+    <br />
+    <img id="spike-img" alt="canvas snapshot fed into OCR" />
+    <script>
+      (function renderSyntheticPolish() {
+        const canvas = document.getElementById('spike-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#000000';
+        ctx.font = '32px sans-serif';
+        const lines = [
+          'Jan Kowalski',
+          'ul. Marszałkowska 1, 00-001 Warszawa',
+          'PESEL: 80010112345',
+          'NIP: 526-000-12-46',
+        ];
+        lines.forEach((text, i) => {
+          ctx.fillText(text, 60, 120 + i * 80);
+        });
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const img = document.getElementById('spike-img');
+          img.src = url;
+          img.onload = () => {
+            // Spike script expects #spike-img to be loaded before it runs detect.
+            // Dynamic import keeps the canvas render synchronous.
+            import('/scripts/spike-ocr.js');
+          };
+        }, 'image/png');
+      })();
+    </script>
+  </body>
+</html>
