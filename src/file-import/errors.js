@@ -23,14 +23,6 @@ export class FileTooLargeError extends FileImportError {
   }
 }
 
-export class ScannedPdfError extends FileImportError {
-  constructor(pageCount) {
-    super(`PDF appears to be scanned (no extractable text); pageCount=${pageCount}`);
-    this.name = 'ScannedPdfError';
-    this.pageCount = pageCount;
-  }
-}
-
 export class ExtractionFailedError extends FileImportError {
   constructor(format, cause) {
     super(`Extraction failed for ${format}: ${cause?.message ?? cause}`);
@@ -39,3 +31,11 @@ export class ExtractionFailedError extends FileImportError {
     this.cause = cause;
   }
 }
+
+// OCR-class errors come from the OCR module; re-exported here so that
+// file-import callers (workspace, tests) only need one errors namespace.
+export {
+  WebNNUnavailableError,
+  OcrFailedError,
+  OcrCancelledError,
+} from '../ocr/errors.js';
