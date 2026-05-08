@@ -24,6 +24,9 @@ test('image upload runs OCR and shows the OCR breadcrumb', async ({ page }) => {
   const value = await page.locator('.ann-editor-textarea').inputValue();
   expect(value).toContain('Jan');
   expect(value).toContain('Kowalski');
+  // The Latin PP-OCRv5 rec model preserves Polish diacritics — verify at
+  // least one survived round-trip through render → OCR.
+  expect(value).toMatch(/Marszałkowska|Łódź|Kraków|Wrocław|Gdańsk/);
 
   const pill = page.locator('[data-testid="workspace-file-pill"]');
   await expect(pill).toContainText('sample-photo.png');

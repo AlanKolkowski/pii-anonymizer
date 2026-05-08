@@ -62,7 +62,8 @@ async function buildPhotoPng() {
     height: 600,
     lines: [
       'Jan Kowalski',
-      'ul. Marszalkowska 1, 00-001 Warszawa',
+      'ul. Marszałkowska 1, 00-001 Warszawa',
+      'Kraków, Łódź, Wrocław, Gdańsk',
       'PESEL: 80010112345',
     ],
   });
@@ -74,7 +75,7 @@ async function buildScannedPdf() {
   const png = renderTextImage({
     width: 1200,
     height: 1600,
-    lines: ['Jan Kowalski', 'ul. Marszalkowska 1, 00-001 Warszawa'],
+    lines: ['Jan Kowalski', 'ul. Marszałkowska 1, 00-001 Warszawa'],
   });
   const pdf = await PDFDocument.create();
   const img = await pdf.embedPng(png);
