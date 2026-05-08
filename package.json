@@ -30,6 +30,7 @@
     "sentencex-wasm": "^0.1.20"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^0.1.100",
     "@playwright/test": "^1.59.1",
     "docx": "^9.6.1",
     "jsdom": "^29.1.1",
