@@ -137,6 +137,14 @@ updateWebnnHint(initialSelection);
 
 worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected(), backend: backendOverride ?? 'auto' });
 
+const ocrWarm = urlParams.get('ocr') === 'warm';
+if (ocrWarm) {
+  import('./ocr/index.js').then(({ getWorkerBackedOcr }) => {
+    const ocr = getWorkerBackedOcr();
+    ocr.init?.();
+  });
+}
+
 const editor = createWorkspace(workspaceRoot, {
   text: '',
   entities: [],
