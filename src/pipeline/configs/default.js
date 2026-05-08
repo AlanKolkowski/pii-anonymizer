@@ -29,20 +29,7 @@ function resolveActiveSources({ enabledEntities, entitySources, sources }) {
   return { hf, regexActive };
 }
 
-/**
- * Creates the default PII anonymization pipeline.
- *
- * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
- * @param {Function} getSentenceBoundaries - (lang, text) => [{start_index, end_index, text}, ...]
- * @param {object} options - { enabledEntities, entitySources?, sources? }
- */
-export function createDefaultPipeline(loadModel, getSentenceBoundaries, options) {
-  const entitySources = options.entitySources ?? ENTITY_SOURCES;
-  const sources = options.sources ?? SOURCES;
-  const enabledEntities = options.enabledEntities;
-  const { hf, regexActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
-  const orderedHf = options.sortSources ? options.sortSources(hf) : hf;
-
+export function createPreSegmentSteps(getSentenceBoundaries) {
   return [
     { phase: 'preprocess', steps: [normalizeWhitespace] },
     { phase: 'segment', steps: [
@@ -50,7 +37,19 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
       mergeAbbreviationsStep,
       tightenSegmentsStep,
     ] },
-    { phase: 'ner', steps: [createNerStep(orderedHf, loadModel), createRegexStep(regexActive)] },
+  ];
+}
+
+export function createNerSteps(hfSubset, regexActive, loadModel) {
+  return [
+    { phase: 'ner', steps: [createNerStep(hfSubset, loadModel), createRegexStep(regexActive)] },
+  ];
+}
+
+export function createPostprocessSteps(options) {
+  const entitySources = options.entitySources ?? ENTITY_SOURCES;
+  const enabledEntities = options.enabledEntities;
+  return [
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
       thresholdStep,
@@ -63,5 +62,26 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
       mergeStep,
       tokenizeStep,
     ] },
+  ];
+}
+
+/**
+ * Creates the default PII anonymization pipeline.
+ *
+ * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
+ * @param {Function} getSentenceBoundaries - (lang, text) => [{start_index, end_index, text}, ...]
+ * @param {object} options - { enabledEntities, entitySources?, sources?, sortSources? }
+ */
+export function createDefaultPipeline(loadModel, getSentenceBoundaries, options) {
+  const entitySources = options.entitySources ?? ENTITY_SOURCES;
+  const sources = options.sources ?? SOURCES;
+  const enabledEntities = options.enabledEntities;
+  const { hf, regexActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
+  const orderedHf = options.sortSources ? options.sortSources(hf) : hf;
+
+  return [
+    ...createPreSegmentSteps(getSentenceBoundaries),
+    ...createNerSteps(orderedHf, regexActive, loadModel),
+    ...createPostprocessSteps({ enabledEntities, entitySources }),
   ];
 }

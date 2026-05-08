@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { get_sentence_boundaries } from 'sentencex';
-import { createDefaultPipeline } from './default.js';
+import {
+  createDefaultPipeline,
+  createPreSegmentSteps,
+  createNerSteps,
+  createPostprocessSteps,
+} from './default.js';
 import { runPipeline } from '../runner.js';
 import { allEntityTypes } from './entity-sources.js';
 
@@ -60,5 +65,36 @@ describe('default pipeline (with mock NER)', () => {
     const before = segmentDebug[0].changes.segments.count.after;
     const after = segmentDebug[1].changes.segments.count.after;
     expect(after).toBeLessThan(before);
+  });
+});
+
+describe('stage helpers', () => {
+  it('createPreSegmentSteps returns preprocess + segment phases', () => {
+    const steps = createPreSegmentSteps(get_sentence_boundaries);
+    expect(steps.map(s => s.phase)).toEqual(['preprocess', 'segment']);
+  });
+
+  it('createNerSteps returns a single ner phase with hf step (and regex when active)', () => {
+    const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
+    const withRegex = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, noLoad);
+    expect(withRegex).toHaveLength(1);
+    expect(withRegex[0].phase).toBe('ner');
+    expect(withRegex[0].steps).toHaveLength(2);
+
+    const withoutRegex = createNerSteps([], false, noLoad);
+    expect(withoutRegex[0].steps).toHaveLength(2); // ner step always exists; regex step is a no-op when active=false
+  });
+
+  it('createPostprocessSteps returns a single postprocess phase', () => {
+    const steps = createPostprocessSteps({ enabledEntities: ALL_ENTITIES });
+    expect(steps).toHaveLength(1);
+    expect(steps[0].phase).toBe('postprocess');
+    expect(steps[0].steps.length).toBeGreaterThan(5);
+  });
+
+  it('createDefaultPipeline composes all three helpers in order', () => {
+    const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
+    const pipeline = createDefaultPipeline(noLoad, get_sentence_boundaries, { enabledEntities: ALL_ENTITIES });
+    expect(pipeline.map(p => p.phase)).toEqual(['preprocess', 'segment', 'ner', 'postprocess']);
   });
 });
