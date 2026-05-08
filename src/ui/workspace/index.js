@@ -169,6 +169,11 @@ export function createWorkspace(rootEl, options) {
             updateProgress(rootEl, `Przetwarzanie strony ${current} z ${total} (OCR)…`);
           }
         },
+        onModelLoad: ({ type }) => {
+          if (type === 'model:load:start') {
+            updateProgress(rootEl, 'Pobieranie modelu OCR (jednorazowo)…');
+          }
+        },
       });
       hideProgress(rootEl);
       hideCancel(rootEl);
@@ -358,6 +363,11 @@ export function createWorkspace(rootEl, options) {
         onProgress: ({ stage, current, total }) => {
           if (stage === 'ocr') {
             updateProgress(rootEl, `Przetwarzanie strony ${current} z ${total} (OCR)…`);
+          }
+        },
+        onModelLoad: ({ type }) => {
+          if (type === 'model:load:start') {
+            updateProgress(rootEl, 'Pobieranie modelu OCR (jednorazowo)…');
           }
         },
       });

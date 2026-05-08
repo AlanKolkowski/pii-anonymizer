@@ -499,3 +499,25 @@ describe('createWorkspace — OCR progress and cancel', () => {
     expect(root.querySelector('[data-testid="workspace-dropzone"]')).not.toBeNull();
   });
 });
+
+describe('createWorkspace — model loading message', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('shows a one-time model-loading message before the page progress', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    const f = { name: 'photo.png', type: 'image/png', size: 100 };
+    let resolveExtract;
+    const promise = ws._handleFileForTest(f, {
+      mockExtract: (file, opts) => {
+        opts?.onModelLoad?.({ type: 'model:load:start', engine: 'paddleocr-v4' });
+        return new Promise((res) => { resolveExtract = res; });
+      },
+    });
+    await flush();
+    const status = root.querySelector('[data-testid="workspace-progress"]');
+    expect(status?.textContent).toContain('Pobieranie modelu OCR');
+    resolveExtract?.({ text: 'x', meta: { filename: 'photo.png', mimeType: 'image/png', sizeBytes: 100, ocr: { engine: 'paddleocr-v4', backend: 'wasm' } } });
+    await promise;
+  });
+});

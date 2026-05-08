@@ -94,7 +94,12 @@ export async function extractPdf(file, deps = {}) {
       ocr?.cancel?.();
       throw new OcrCancelledError();
     }
-    if (!ocr) ocr = await loadOcr();
+    if (!ocr) {
+      ocr = await loadOcr();
+      if (typeof ocr.onModelLoad === 'function' && deps.onModelLoad) {
+        ocr.onModelLoad(deps.onModelLoad);
+      }
+    }
     ocrDone++;
     onProgress({ stage: 'ocr', current: ocrDone, total: ocrTotal });
 

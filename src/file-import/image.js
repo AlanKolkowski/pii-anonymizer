@@ -33,6 +33,9 @@ export async function extractImage(file, deps = {}) {
       blob = await mod.heicTo({ blob: file, type: 'image/jpeg', quality: 0.95 });
     }
     const ocr = await loadOcr();
+    if (typeof ocr.onModelLoad === 'function' && deps.onModelLoad) {
+      ocr.onModelLoad(deps.onModelLoad);
+    }
     const result = await ocr.ocrImage(blob);
     return {
       text: result.text,
