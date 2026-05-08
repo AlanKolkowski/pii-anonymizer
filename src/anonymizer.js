@@ -57,38 +57,52 @@ function createNameNormalizer() {
   };
 }
 
-export function buildTokenMap(entities, originalText) {
-  const counters = {};
-  const seen = {};
-  const legend = {};
-  const normalizeName = createNameNormalizer();
-
+function ingestSource({ text, entities }, state) {
   for (const entity of entities) {
-    const value = originalText.slice(entity.start, entity.end);
+    const value = text.slice(entity.start, entity.end);
     const type = entity.entity_group;
     let normalizedValue = value;
     if (type === 'PERSON_NAME') {
-      normalizedValue = normalizeName(value);
+      normalizedValue = state.normalizeName(value);
     } else if (type === 'ORGANIZATION_NAME') {
       normalizedValue = value.toLowerCase();
     }
     const canonicalKey = `${type}::${normalizedValue}`;
 
-    if (!seen[canonicalKey]) {
-      counters[type] = (counters[type] || 0) + 1;
-      const token = `[${type}_${counters[type]}]`;
-      seen[canonicalKey] = token;
-      legend[token] = value;
+    if (!state.seen[canonicalKey]) {
+      state.counters[type] = (state.counters[type] || 0) + 1;
+      const token = `[${type}_${state.counters[type]}]`;
+      state.seen[canonicalKey] = token;
+      state.legend[token] = value;
     }
 
-    // Also index by raw value so anonymizeText can look up by exact text
     const rawKey = `${type}::${value}`;
     if (rawKey !== canonicalKey) {
-      seen[rawKey] = seen[canonicalKey];
+      state.seen[rawKey] = state.seen[canonicalKey];
     }
   }
+}
 
-  return { seen, legend };
+export function buildTokenMap(entities, originalText) {
+  const state = {
+    counters: {},
+    seen: {},
+    legend: {},
+    normalizeName: createNameNormalizer(),
+  };
+  ingestSource({ text: originalText, entities }, state);
+  return { seen: state.seen, legend: state.legend };
+}
+
+export function buildTokenMapMulti(sources) {
+  const state = {
+    counters: {},
+    seen: {},
+    legend: {},
+    normalizeName: createNameNormalizer(),
+  };
+  for (const source of sources) ingestSource(source, state);
+  return { seen: state.seen, legend: state.legend };
 }
 
 export function applyTokens(text, entities, seen) {

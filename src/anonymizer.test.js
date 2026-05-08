@@ -602,3 +602,87 @@ describe('applyTokens', () => {
   });
 });
 
+describe('buildTokenMapMulti', () => {
+  it('shares a token across sources for the same value', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    const docA = {
+      text: 'Pisze Jan Kowalski.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 6, end: 18, score: 0.98 }],
+    };
+    const docB = {
+      text: 'Także Jan Kowalski był obecny.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 6, end: 18, score: 0.97 }],
+    };
+    const { legend } = buildTokenMapMulti([docA, docB]);
+    expect(legend).toEqual({ '[PERSON_NAME_1]': 'Jan Kowalski' });
+  });
+
+  it('reuses one token across declension forms (Polish)', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    const docA = {
+      text: 'Jan Kowalski podpisał umowę.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 }],
+    };
+    const docB = {
+      text: 'Pełnomocnictwo dla Janowi Kowalskiemu.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 19, end: 37, score: 0.97 }],
+    };
+    const { legend } = buildTokenMapMulti([docA, docB]);
+    expect(Object.keys(legend)).toHaveLength(1);
+    expect(legend['[PERSON_NAME_1]']).toBe('Jan Kowalski');
+  });
+
+  it('numbers tokens in insertion order across sources', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    const docA = {
+      text: 'Anna Nowak',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.98 }],
+    };
+    const docB = {
+      text: 'Jan Kowalski',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 }],
+    };
+    const aFirst = buildTokenMapMulti([docA, docB]).legend;
+    const bFirst = buildTokenMapMulti([docB, docA]).legend;
+    expect(aFirst).toEqual({
+      '[PERSON_NAME_1]': 'Anna Nowak',
+      '[PERSON_NAME_2]': 'Jan Kowalski',
+    });
+    expect(bFirst).toEqual({
+      '[PERSON_NAME_1]': 'Jan Kowalski',
+      '[PERSON_NAME_2]': 'Anna Nowak',
+    });
+  });
+
+  it('returns empty seen and legend for no sources', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    expect(buildTokenMapMulti([])).toEqual({ seen: {}, legend: {} });
+  });
+
+  it('skips sources with empty entity lists', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    const docA = { text: 'no PII here', entities: [] };
+    const docB = {
+      text: 'Anna Nowak',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.98 }],
+    };
+    const { legend } = buildTokenMapMulti([docA, docB]);
+    expect(legend).toEqual({ '[PERSON_NAME_1]': 'Anna Nowak' });
+  });
+
+  it('applyTokens with the multi-source seen map renders each source correctly', async () => {
+    const { buildTokenMapMulti, applyTokens } = await import('./anonymizer.js');
+    const docA = {
+      text: 'Jan Kowalski tu jest.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 12, score: 0.98 }],
+    };
+    const docB = {
+      text: 'I Jan Kowalski tam był.',
+      entities: [{ entity_group: 'PERSON_NAME', start: 2, end: 14, score: 0.97 }],
+    };
+    const { seen } = buildTokenMapMulti([docA, docB]);
+    expect(applyTokens(docA.text, docA.entities, seen)).toBe('[PERSON_NAME_1] tu jest.');
+    expect(applyTokens(docB.text, docB.entities, seen)).toBe('I [PERSON_NAME_1] tam był.');
+  });
+});
+
