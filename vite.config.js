@@ -7,17 +7,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, 'public');
 
 // Vite's SPA fallback would otherwise return index.html for any missing path,
-// including missing model files under /local-models/. HF transformers then
-// tries to parse the HTML as an ONNX protobuf and crashes. Send a real 404.
+// including missing model files under /local-models/ or /ocr-models/.
+// HF transformers / the PaddleOCR tar loader then tries to parse the HTML as
+// an ONNX protobuf or tar archive and crashes. Send a real 404 instead.
+const NO_FALLBACK_PREFIXES = ['/local-models/', '/ocr-models/'];
+
 function noSpaFallbackForLocalModels() {
   return {
     name: 'no-spa-fallback-for-local-models',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? '';
-        const localIdx = url.indexOf('/local-models/');
-        if (localIdx === -1) return next();
-        const rel = url.slice(localIdx + 1).split('?')[0];
+        const prefix = NO_FALLBACK_PREFIXES.find((p) => url.includes(p));
+        if (!prefix) return next();
+        const idx = url.indexOf(prefix);
+        const rel = url.slice(idx + 1).split('?')[0];
         const abs = join(PUBLIC_DIR, rel);
         if (existsSync(abs) && statSync(abs).isFile()) return next();
         res.statusCode = 404;
