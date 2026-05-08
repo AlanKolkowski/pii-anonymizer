@@ -90,4 +90,21 @@ describe('createOcrWorkerProxy', () => {
     proxy.cancel();
     expect(worker._lastPost.data).toEqual({ type: 'cancel' });
   });
+
+  it('reconstructs OCR error subclasses so instanceof works downstream', async () => {
+    const { WebNNUnavailableError, OcrFailedError, OcrCancelledError } = await import('./errors.js');
+    const cases = [
+      { name: 'WebNNUnavailableError', message: 'no ep', cls: WebNNUnavailableError },
+      { name: 'OcrFailedError', message: 'boom', cls: OcrFailedError },
+      { name: 'OcrCancelledError', message: 'cancelled', cls: OcrCancelledError },
+    ];
+    for (const { name, message, cls } of cases) {
+      const worker = new FakeWorker();
+      const proxy = createOcrWorkerProxy(worker);
+      const promise = proxy.ocrBitmap({ width: 1, height: 1, close: () => {} });
+      const id = worker._lastPost.data.id;
+      worker.trigger({ type: 'ocr:error', id, name, message });
+      await expect(promise).rejects.toBeInstanceOf(cls);
+    }
+  });
 });

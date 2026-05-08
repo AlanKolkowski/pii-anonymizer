@@ -1,4 +1,33 @@
 import { createPaddleEngine } from './paddle.js';
+import {
+  OcrCancelledError,
+  OcrFailedError,
+  WebNNUnavailableError,
+} from './errors.js';
+
+// Worker → main thread `postMessage` strips prototype chains. Reconstruct the
+// proper subclass instance here so `instanceof` checks downstream (workspace
+// `messageFor`, file-import error wrapping) work.
+function reconstructOcrError(name, message) {
+  let err;
+  switch (name) {
+    case 'OcrCancelledError':
+      err = new OcrCancelledError();
+      break;
+    case 'WebNNUnavailableError':
+      err = new WebNNUnavailableError(message);
+      break;
+    case 'OcrFailedError':
+      err = new OcrFailedError(message);
+      break;
+    default:
+      err = new Error(message);
+      err.name = name ?? 'OcrError';
+      return err;
+  }
+  err.message = message;
+  return err;
+}
 
 async function defaultDecodeBitmap(blob) {
   return await createImageBitmap(blob);
@@ -59,9 +88,7 @@ export function createOcrWorkerProxy(worker) {
         break;
       case 'ocr:error': {
         inflight.delete(msg.id);
-        const err = new Error(msg.message);
-        err.name = msg.name;
-        pending?.reject(err);
+        pending?.reject(reconstructOcrError(msg.name, msg.message));
         break;
       }
       case 'ocr:progress':
