@@ -35,14 +35,15 @@ test('text-based pdf upload populates the textarea', async ({ page }) => {
   await uploadAndAssertText(page, 'sample-text.pdf', 'Jan Kowalski');
 });
 
-test('scanned pdf shows the scan-detection error and Wklej tekst recovery', async ({ page }) => {
+test('scanned pdf is OCRd and the textarea contains the recovered text', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.goto('/');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, 'sample-scanned.pdf'));
-  const err = page.locator('[data-testid="workspace-error"]');
-  await expect(err).toContainText('zeskanowany PDF');
-  await page.locator('[data-testid="workspace-recover-paste"]').click();
-  await expect(page.locator('.ann-editor-textarea')).toBeVisible();
-  await expect(page.locator('.ann-editor-textarea')).toHaveValue('');
+  await page.waitForSelector('.ann-editor-textarea', { timeout: 90_000 });
+  const value = await page.locator('.ann-editor-textarea').inputValue();
+  expect(value).toContain('Jan');
+  const pill = page.locator('[data-testid="workspace-file-pill"]');
+  await expect(pill).toContainText('OCR');
 });
