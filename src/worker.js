@@ -212,12 +212,13 @@ self.onmessage = async (e) => {
   }
 
   if (type === 'classify') {
+    const { id } = e.data;
     if (!currentConfig) {
-      self.postMessage({ type: 'error', message: 'Worker not configured' });
+      self.postMessage({ type: 'error', id, message: 'Worker not configured' });
       return;
     }
     if (currentConfig.enabledEntities.length === 0) {
-      self.postMessage({ type: 'error', message: 'No entities enabled' });
+      self.postMessage({ type: 'error', id, message: 'No entities enabled' });
       return;
     }
     self.postMessage({ type: 'timing', mark: 'classify:start', t: performance.now() });
@@ -245,6 +246,7 @@ self.onmessage = async (e) => {
 
       self.postMessage({
         type: 'result',
+        id,
         data: ctx.entities,
         anonymized: ctx.anonymized,
         legend: ctx.legend,
@@ -252,7 +254,7 @@ self.onmessage = async (e) => {
       });
     } catch (err) {
       console.error('[worker] classify failed:', err);
-      self.postMessage({ type: 'error', message: err.message });
+      self.postMessage({ type: 'error', id, message: err.message });
     }
     return;
   }
