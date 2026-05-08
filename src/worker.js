@@ -1,8 +1,7 @@
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
-import { runPipeline } from './pipeline/runner.js';
-import { createDefaultPipeline } from './pipeline/configs/default.js';
+import { classifyWithCache } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 
 // Memory budget for resident HF models in the WASM heap.
@@ -22,6 +21,7 @@ let currentConfig = null;
 let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto
 let webnnAvailable = false;
 const loadedModels = new Map();
+let nerCache = null;
 
 function isBackendAvailable(backend) {
   // Whether a backend can run at all in this environment.
@@ -185,8 +185,12 @@ self.onmessage = async (e) => {
       const newWebnnAvailable = 'ml' in self.navigator;
       // Backend selection changed mid-session: drop sessions so they reload
       // on the new device.
-      if ((newOverride !== backendOverride || newWebnnAvailable !== webnnAvailable) && loadedModels.size > 0) {
-        for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
+      if (newOverride !== backendOverride || newWebnnAvailable !== webnnAvailable) {
+        if (loadedModels.size > 0) {
+          for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
+        }
+        // Backend semantics may differ; drop entity cache too.
+        nerCache = null;
       }
       backendOverride = newOverride;
       webnnAvailable = newWebnnAvailable;
@@ -224,12 +228,19 @@ self.onmessage = async (e) => {
         if (aLoaded !== bLoaded) return aLoaded - bLoaded;
         return (SOURCES[a.alias]?.sizeMB ?? 0) - (SOURCES[b.alias]?.sizeMB ?? 0);
       });
-      const pipelineConfig = createDefaultPipeline(
-        loadModelForPipeline,
-        get_sentence_boundaries,
-        { enabledEntities: currentConfig.enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES, sortSources },
-      );
-      const ctx = await runPipeline(e.data.text, pipelineConfig);
+
+      const { ctx, cache: newCache } = await classifyWithCache({
+        text: e.data.text,
+        enabledEntities: currentConfig.enabledEntities,
+        cache: nerCache,
+        sources: SOURCES,
+        entitySources: ENTITY_SOURCES,
+        loadModel: loadModelForPipeline,
+        getSentenceBoundaries: get_sentence_boundaries,
+        sortSources,
+      });
+      nerCache = newCache;
+
       self.postMessage({
         type: 'result',
         data: ctx.entities,
