@@ -1,4 +1,5 @@
 import { OcrFailedError, OcrCancelledError } from './errors.js';
+import { TEXT_RECOGNITION_MODEL_NAME, TEXT_RECOGNITION_MODEL_URL } from './models.js';
 
 // The official @paddleocr/paddleocr-js SDK owns its own worker (via
 // `worker: true`) and ONNX Runtime Web setup, so we don't manage either.
@@ -52,6 +53,8 @@ export function createPaddleEngine(deps = {}) {
         const made = await PaddleOCR.create({
           worker: createWorker ? { createWorker } : true,
           ortOptions,
+          textRecognitionModelName: TEXT_RECOGNITION_MODEL_NAME,
+          textRecognitionModelAsset: { url: TEXT_RECOGNITION_MODEL_URL },
           ...sdkOptions,
         });
         // Cancel arrived during init: discard the freshly-made instance.

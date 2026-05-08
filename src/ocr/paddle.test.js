@@ -1,5 +1,6 @@
 import { createPaddleEngine } from './paddle.js';
 import { OcrFailedError, OcrCancelledError } from './errors.js';
+import { TEXT_RECOGNITION_MODEL_NAME, TEXT_RECOGNITION_MODEL_URL } from './models.js';
 
 function fakeSdkFactory(predictImpl, opts = {}) {
   const calls = { create: 0, dispose: 0, lastOptions: null };
@@ -46,6 +47,28 @@ describe('createPaddleEngine', () => {
     await engine.run({ kind: 'fake' });
     expect(calls.lastOptions.worker).toBe(true);
     expect(calls.lastOptions.ortOptions).toEqual({ backend: 'wasm', wasmPaths: '/local/' });
+  });
+
+  it('overrides the rec model with the Latin PP-OCRv5 build by default', async () => {
+    const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
+    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    await engine.run({ kind: 'fake' });
+    expect(calls.lastOptions.textRecognitionModelName).toBe(TEXT_RECOGNITION_MODEL_NAME);
+    expect(calls.lastOptions.textRecognitionModelAsset).toEqual({ url: TEXT_RECOGNITION_MODEL_URL });
+  });
+
+  it('lets sdkOptions override the default rec model wiring', async () => {
+    const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
+    const engine = createPaddleEngine({
+      loadSdk: async () => sdk,
+      sdkOptions: {
+        textRecognitionModelName: 'custom_rec',
+        textRecognitionModelAsset: { url: '/custom.tar' },
+      },
+    });
+    await engine.run({ kind: 'fake' });
+    expect(calls.lastOptions.textRecognitionModelName).toBe('custom_rec');
+    expect(calls.lastOptions.textRecognitionModelAsset).toEqual({ url: '/custom.tar' });
   });
 
   it('passes a custom createWorker when provided', async () => {
