@@ -4,7 +4,7 @@ import {
   FileImportError,
   UnsupportedTypeError,
   FileTooLargeError,
-  ScannedPdfError,
+  // ScannedPdfError, // re-enabled in Task 14
   ExtractionFailedError,
 } from '../../file-import/errors.js';
 
@@ -131,7 +131,8 @@ export function createWorkspace(rootEl, options) {
     msg.textContent = messageFor(err);
     region.appendChild(msg);
 
-    if (err instanceof ScannedPdfError || err instanceof ExtractionFailedError) {
+    // re-enabled in Task 14: was `err instanceof ScannedPdfError || err instanceof ExtractionFailedError`
+    if (err instanceof ExtractionFailedError) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-secondary ws-error-recover';
@@ -151,9 +152,10 @@ export function createWorkspace(rootEl, options) {
       const limitMb = (err.limitBytes / (1024 * 1024)).toFixed(0);
       return `Plik jest za duży (${mb} MB / limit ${limitMb} MB)`;
     }
-    if (err instanceof ScannedPdfError) {
-      return 'Wygląda na zeskanowany PDF. Wklej tekst ręcznie.';
-    }
+    // re-enabled in Task 14
+    // if (err instanceof ScannedPdfError) {
+    //   return 'Wygląda na zeskanowany PDF. Wklej tekst ręcznie.';
+    // }
     if (err instanceof ExtractionFailedError) {
       return 'Nie udało się odczytać pliku. Spróbuj ponownie lub wklej tekst.';
     }
