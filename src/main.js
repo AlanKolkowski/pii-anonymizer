@@ -289,6 +289,19 @@ function refreshAnonymizeButton() {
   else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
 }
 
+// Single-flight queue: dispatch one classify at a time. The worker's
+// model-eviction logic was designed assuming only one classify is in
+// flight; concurrent classifies can dispose a session another classify
+// is mid-inference on. The NER cache makes second-and-later classifies
+// in a batch cheap, so the perceived overhead is small.
+const pendingClassifies = [];
+
+function dispatchNextClassify() {
+  if (pendingClassifies.length === 0) return;
+  const next = pendingClassifies.shift();
+  worker.postMessage({ type: 'classify', id: next.id, text: next.text });
+}
+
 worker.onmessage = (e) => {
   const msg = e.data;
   switch (msg.type) {
@@ -316,6 +329,7 @@ worker.onmessage = (e) => {
         sourcesList.setSourceStatus(id, 'ready');
       }
       inFlightSourceIds.delete(id);
+      dispatchNextClassify();
       refreshLegend();
       if (isDebug && msg.debug) {
         renderDebugPanel(msg.debug, msg.anonymized, msg.legend);
@@ -350,7 +364,10 @@ worker.onmessage = (e) => {
         s.error = msg.message;
         sourcesList.setSourceStatus(id, 'error', msg.message);
       }
-      if (id) inFlightSourceIds.delete(id);
+      if (id) {
+        inFlightSourceIds.delete(id);
+        dispatchNextClassify();
+      }
       if (!isAnyClassifyInFlight()) setText(anonymizeBtns, 'Anonimizuj');
       setText(modelStatusEls, `Błąd: ${msg.message}`);
       refreshAnonymizeButton();
@@ -370,18 +387,18 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   const toClassify = sources.filter((s) => (s.text ?? '').trim().length > 0);
   if (toClassify.length === 0) return;
 
+  pendingClassifies.length = 0;
   for (const s of toClassify) {
     s.status = 'pending';
     s.error = null;
     sourcesList.setSourceStatus(s.id, 'pending');
     inFlightSourceIds.add(s.id);
+    pendingClassifies.push({ id: s.id, text: s.text });
   }
   setText(modelStatusEls, `Analizowanie 0/${toClassify.length}…`);
   setText(anonymizeBtns, 'Analizowanie...');
   refreshAnonymizeButton();
-  for (const s of toClassify) {
-    worker.postMessage({ type: 'classify', id: s.id, text: s.text });
-  }
+  dispatchNextClassify();
 }));
 
 function renderDebugPanel(debug, anonymized, legend) {
