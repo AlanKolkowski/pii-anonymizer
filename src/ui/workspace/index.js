@@ -5,8 +5,9 @@ import {
   FileImportError,
   UnsupportedTypeError,
   FileTooLargeError,
-  // ScannedPdfError, // re-enabled in Task 14
   ExtractionFailedError,
+  WebNNUnavailableError,
+  OcrFailedError,
 } from '../../file-import/errors.js';
 
 function computeOcrLabel(meta) {
@@ -73,7 +74,7 @@ export function createWorkspace(rootEl, options) {
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
-  fileInput.accept = '.pdf,.docx,.txt';
+  fileInput.accept = '.pdf,.docx,.txt,.png,.jpg,.jpeg,.heic,.heif';
   fileInput.style.display = 'none';
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
@@ -104,7 +105,7 @@ export function createWorkspace(rootEl, options) {
     dz.setAttribute('aria-label', 'Upuść plik lub kliknij, aby wybrać plik');
     dz.innerHTML = `
       <div class="ws-dropzone-icon">📄</div>
-      <div class="ws-dropzone-primary">Upuść plik (.docx, .pdf, .txt)</div>
+      <div class="ws-dropzone-primary">Upuść plik (.docx, .pdf, .txt, .png, .jpg, .heic)</div>
       <div class="ws-dropzone-secondary">lub kliknij, aby wybrać plik</div>
     `;
 
@@ -200,8 +201,11 @@ export function createWorkspace(rootEl, options) {
     msg.textContent = messageFor(err);
     region.appendChild(msg);
 
-    // re-enabled in Task 14: was `err instanceof ScannedPdfError || err instanceof ExtractionFailedError`
-    if (err instanceof ExtractionFailedError) {
+    if (
+      err instanceof WebNNUnavailableError ||
+      err instanceof OcrFailedError ||
+      err instanceof ExtractionFailedError
+    ) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-secondary ws-error-recover';
@@ -214,17 +218,19 @@ export function createWorkspace(rootEl, options) {
 
   function messageFor(err) {
     if (err instanceof UnsupportedTypeError) {
-      return 'Nieobsługiwany typ pliku. Akceptujemy: .pdf, .docx, .txt';
+      return 'Nieobsługiwany typ pliku. Akceptujemy: .pdf, .docx, .txt, .png, .jpg, .heic';
     }
     if (err instanceof FileTooLargeError) {
       const mb = (err.sizeBytes / (1024 * 1024)).toFixed(1);
       const limitMb = (err.limitBytes / (1024 * 1024)).toFixed(0);
       return `Plik jest za duży (${mb} MB / limit ${limitMb} MB)`;
     }
-    // re-enabled in Task 14
-    // if (err instanceof ScannedPdfError) {
-    //   return 'Wygląda na zeskanowany PDF. Wklej tekst ręcznie.';
-    // }
+    if (err instanceof WebNNUnavailableError) {
+      return 'Twoja przeglądarka nie obsługuje OCR. Wklej tekst ręcznie.';
+    }
+    if (err instanceof OcrFailedError) {
+      return 'Nie udało się przeprowadzić OCR. Spróbuj ponownie lub wklej tekst.';
+    }
     if (err instanceof ExtractionFailedError) {
       return 'Nie udało się odczytać pliku. Spróbuj ponownie lub wklej tekst.';
     }

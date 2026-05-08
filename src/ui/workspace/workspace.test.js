@@ -59,7 +59,7 @@ describe('createWorkspace — empty state', () => {
     const { root } = mount();
     const input = root.querySelector('input[type="file"]');
     expect(input).not.toBeNull();
-    expect(input.getAttribute('accept')).toBe('.pdf,.docx,.txt');
+    expect(input.getAttribute('accept')).toBe('.pdf,.docx,.txt,.png,.jpg,.jpeg,.heic,.heif');
   });
 
   it('dropzone is keyboard focusable (role=button, tabindex=0)', () => {
@@ -287,22 +287,33 @@ describe('createWorkspace — error rendering', () => {
     expect(err.textContent).toMatch(/za duży/);
   });
 
-  // re-enabled in Task 14
-  it.skip('ScannedPdfError shows PDF-specific message and recovery button', async () => {
-    const { ScannedPdfError } = await import('../../file-import/errors.js');
+  it('WebNNUnavailableError shows OCR-specific message and recovery button', async () => {
+    const { WebNNUnavailableError } = await import('../../file-import/errors.js');
     const { root } = mount();
-    const f = { name: 'scan.pdf', type: 'application/pdf', size: 100 };
+    const f = { name: 'photo.png', type: 'image/png', size: 100 };
     await ws_handleFile_for_test(root, f, {
-      mockExtract: () => { throw new ScannedPdfError(3); },
+      mockExtract: () => { throw new WebNNUnavailableError('no ep'); },
     });
     await flush();
     const err = root.querySelector('[data-testid="workspace-error"]');
-    expect(err.textContent).toContain('zeskanowany PDF');
+    expect(err.textContent).toContain('przeglądarka nie obsługuje OCR');
     const recover = root.querySelector('[data-testid="workspace-recover-paste"]');
     expect(recover).not.toBeNull();
     recover.click();
     expect(root.querySelector('.ann-editor')).not.toBeNull();
-    expect(root.querySelector('.ann-editor-textarea')).not.toBeNull();
+  });
+
+  it('OcrFailedError shows generic-OCR message and recovery button', async () => {
+    const { OcrFailedError } = await import('../../file-import/errors.js');
+    const { root } = mount();
+    const f = { name: 'photo.png', type: 'image/png', size: 100 };
+    await ws_handleFile_for_test(root, f, {
+      mockExtract: () => { throw new OcrFailedError(new Error('boom')); },
+    });
+    await flush();
+    const err = root.querySelector('[data-testid="workspace-error"]');
+    expect(err.textContent).toContain('Nie udało się przeprowadzić OCR');
+    expect(root.querySelector('[data-testid="workspace-recover-paste"]')).not.toBeNull();
   });
 
   it('ExtractionFailedError shows generic message and recovery button', async () => {
