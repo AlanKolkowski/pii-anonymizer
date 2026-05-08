@@ -21,6 +21,7 @@ let currentLegend = null;
 let currentAnonymized = '';
 let configuredOnce = false;
 let classifyInFlight = false;
+let lastRun = null;  // { text, enabledEntities (sorted) } after a successful classify
 const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
 const backendOverride = urlParams.get('backend'); // 'wasm' to force-disable WebNN; default = auto
@@ -28,6 +29,7 @@ const LS_KEY = 'pii.selected-entities';
 
 const modelStatus = document.getElementById('model-status');
 const anonymizeBtn = document.getElementById('anonymize-btn');
+const rerunBtn = document.getElementById('rerun-btn');
 const editTextBtn = document.getElementById('edit-text-btn');
 const copyAnonymizedBtn = document.getElementById('copy-anonymized');
 const resultSection = document.getElementById('result-section');
@@ -119,6 +121,7 @@ const selector = createEntitySelector(selectorRoot, {
   onChange(selected) {
     localStorage.setItem(LS_KEY, JSON.stringify(selected));
     updateAnonymizeButton();
+    updateRerunButton();
     updateWebnnHint(selected);
     scheduleConfigure(selected);
   },
@@ -149,6 +152,7 @@ const editor = createWorkspace(workspaceRoot, {
       copyAnonymizedBtn.hidden = true;
       anonymizeBtn.hidden = false;
     }
+    updateRerunButton();
   },
 });
 
@@ -190,6 +194,30 @@ function updateAnonymizeButton() {
   }
 }
 
+function setsEqual(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = new Set(a);
+  for (const x of b) if (!sa.has(x)) return false;
+  return true;
+}
+
+function updateRerunButton() {
+  if (!lastRun) {
+    rerunBtn.hidden = true;
+    return;
+  }
+  const isAnnot = editor.getMode() === 'annotation';
+  const currentText = editor.getText();
+  const currentSelection = selector.getSelected();
+  const stale =
+    currentText !== lastRun.text ||
+    !setsEqual(currentSelection, lastRun.enabledEntities);
+  const hasSelection = currentSelection.length > 0;
+  const hasText = currentText.trim() !== '';
+  rerunBtn.hidden = !(isAnnot && stale && hasSelection && hasText);
+  rerunBtn.disabled = classifyInFlight;
+}
+
 worker.onmessage = (e) => {
   const msg = e.data;
   switch (msg.type) {
@@ -209,7 +237,12 @@ worker.onmessage = (e) => {
       classifyInFlight = false;
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
       handleAnonymizationResult(msg);
+      lastRun = {
+        text: editor.getText(),
+        enabledEntities: [...selector.getSelected()].sort(),
+      };
       updateAnonymizeButton();
+      updateRerunButton();
       if (msg.data.length === 0) {
         modelStatus.textContent = 'Nie znaleziono żadnych danych osobowych w tekście.';
       }
@@ -222,6 +255,7 @@ worker.onmessage = (e) => {
       modelStatus.textContent = `Błąd: ${msg.message}`;
       anonymizeBtn.textContent = 'Anonimizuj';
       updateAnonymizeButton();
+      updateRerunButton();
       break;
   }
 };
@@ -242,6 +276,15 @@ anonymizeBtn.addEventListener('click', () => {
   modelStatus.textContent = 'Analizowanie...';
   anonymizeBtn.textContent = 'Analizowanie...';
   anonymizeBtn.disabled = true;
+  worker.postMessage({ type: 'classify', text });
+});
+
+rerunBtn.addEventListener('click', () => {
+  const text = editor.getText().trim();
+  if (!text) return;
+  classifyInFlight = true;
+  modelStatus.textContent = 'Analizowanie...';
+  rerunBtn.disabled = true;
   worker.postMessage({ type: 'classify', text });
 });
 
@@ -405,6 +448,7 @@ copyDeanonymizedBtn.addEventListener('click', () => {
 });
 
 updateAnonymizeButton();
+updateRerunButton();
 
 // WebMCP integration
 const mcp = new WebMCP({ channelName: 'pii_anonymizer' });
