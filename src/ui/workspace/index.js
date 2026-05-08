@@ -21,6 +21,45 @@ function computeOcrLabel(meta) {
   return range ? `OCR: ${range}` : 'OCR';
 }
 
+function ensureProgressEl(rootEl) {
+  let el = rootEl.querySelector('[data-testid="workspace-progress"]');
+  if (!el) {
+    const dropzone = rootEl.querySelector('[data-testid="workspace-dropzone"]');
+    el = document.createElement('div');
+    el.className = 'ws-progress';
+    el.dataset.testid = 'workspace-progress';
+    el.setAttribute('aria-live', 'polite');
+    el.textContent = 'Przetwarzanie pliku…';
+    (dropzone ?? rootEl).appendChild(el);
+  }
+  return el;
+}
+function updateProgress(rootEl, text) {
+  const el = ensureProgressEl(rootEl);
+  el.textContent = text;
+}
+function hideProgress(rootEl) {
+  rootEl.querySelector('[data-testid="workspace-progress"]')?.remove();
+}
+function ensureCancelBtn(rootEl, controller) {
+  let btn = rootEl.querySelector('[data-testid="workspace-ocr-cancel"]');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary ws-ocr-cancel';
+    btn.dataset.testid = 'workspace-ocr-cancel';
+    btn.setAttribute('aria-label', 'Anuluj OCR');
+    btn.textContent = 'Anuluj';
+    btn.addEventListener('click', () => controller.abort());
+    const host = rootEl.querySelector('[data-testid="workspace-dropzone"]') ?? rootEl;
+    host.appendChild(btn);
+  }
+  return btn;
+}
+function hideCancel(rootEl) {
+  rootEl.querySelector('[data-testid="workspace-ocr-cancel"]')?.remove();
+}
+
 export function createWorkspace(rootEl, options) {
   const opts = options ?? {};
   const onChange = opts.onChange ?? (() => {});
@@ -118,10 +157,27 @@ export function createWorkspace(rootEl, options) {
   async function runExtractionFromEmpty(file, deps = {}) {
     clearError();
     const extractor = deps.extractText ?? extractText;
+    const controller = new AbortController();
+    ensureProgressEl(rootEl);
+    ensureCancelBtn(rootEl, controller);
     try {
-      const { text, meta } = await extractor(file);
+      const { text, meta } = await extractor(file, {
+        signal: controller.signal,
+        onProgress: ({ stage, current, total }) => {
+          if (stage === 'ocr') {
+            updateProgress(rootEl, `Przetwarzanie strony ${current} z ${total} (OCR)…`);
+          }
+        },
+      });
+      hideProgress(rootEl);
+      hideCancel(rootEl);
       transitionToLoaded({ text, entities: [], meta });
     } catch (err) {
+      hideProgress(rootEl);
+      hideCancel(rootEl);
+      if (err?.name === 'OcrCancelledError') {
+        return;
+      }
       renderError(err);
     }
   }
@@ -287,12 +343,27 @@ export function createWorkspace(rootEl, options) {
       if (!ok) return;
     }
     const extractor = deps.extractText ?? extractText;
+    const controller = new AbortController();
+    ensureProgressEl(rootEl);
+    ensureCancelBtn(rootEl, controller);
     try {
-      const { text, meta } = await extractor(file);
+      const { text, meta } = await extractor(file, {
+        signal: controller.signal,
+        onProgress: ({ stage, current, total }) => {
+          if (stage === 'ocr') {
+            updateProgress(rootEl, `Przetwarzanie strony ${current} z ${total} (OCR)…`);
+          }
+        },
+      });
+      hideProgress(rootEl);
+      hideCancel(rootEl);
       lastMeta = meta;
       editor.setText(text);
       renderLoaded({ text, entities: [] });
     } catch (err) {
+      hideProgress(rootEl);
+      hideCancel(rootEl);
+      if (err?.name === 'OcrCancelledError') return;
       renderError(err);
     }
   }
@@ -323,8 +394,8 @@ export function createWorkspace(rootEl, options) {
     _handleFileForTest(file, fnOpts = {}) {
       const fakeExtract = fnOpts.mockExtract;
       const extractor = fakeExtract
-        ? async (f) => {
-            const out = fakeExtract(f);
+        ? async (f, runOpts) => {
+            const out = fakeExtract(f, runOpts);
             if (out instanceof Promise) return out;
             return out;
           }

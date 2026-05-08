@@ -46,7 +46,7 @@ function inferFormat(file) {
   return null;
 }
 
-export async function extractText(file) {
+export async function extractText(file, opts = {}) {
   if (file.size > MAX_BYTES) {
     throw new FileTooLargeError(file.size, MAX_BYTES);
   }
@@ -54,5 +54,5 @@ export async function extractText(file) {
   if (!format) {
     throw new UnsupportedTypeError(file.type, file.name);
   }
-  return EXTRACTORS[format](file);
+  return EXTRACTORS[format](file, opts);
 }

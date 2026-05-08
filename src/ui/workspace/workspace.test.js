@@ -437,3 +437,54 @@ describe('createWorkspace — file pill OCR breadcrumb', () => {
     expect(pill.textContent).not.toContain('OCR');
   });
 });
+
+describe('createWorkspace — OCR progress and cancel', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('renders an OCR progress message during extraction', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    let resolveExtract;
+    const slow = new Promise((res) => { resolveExtract = res; });
+    const f = { name: 'scan.pdf', type: 'application/pdf', size: 100 };
+    const promise = ws._handleFileForTest(f, {
+      mockExtract: (file, opts) => {
+        opts?.onProgress?.({ stage: 'ocr', current: 1, total: 3 });
+        return slow;
+      },
+    });
+    await flush();
+    const status = root.querySelector('[data-testid="workspace-progress"]');
+    expect(status).not.toBeNull();
+    expect(status.textContent).toContain('strony 1 z 3');
+    resolveExtract({ text: 'a', meta: { filename: 'scan.pdf', mimeType: 'application/pdf', sizeBytes: 100, pages: [], pageCount: 0 } });
+    await promise;
+  });
+
+  it('renders a Cancel button while OCR runs and aborts when clicked', async () => {
+    const { root, ws } = mount();
+    const f = { name: 'scan.pdf', type: 'application/pdf', size: 100 };
+    let aborted = false;
+    let resolveExtract;
+    const promise = ws._handleFileForTest(f, {
+      mockExtract: (file, opts) => {
+        opts.signal.addEventListener('abort', () => { aborted = true; });
+        return new Promise((res, rej) => {
+          opts.signal.addEventListener('abort', () => {
+            const err = new Error('cancelled');
+            err.name = 'OcrCancelledError';
+            rej(err);
+          });
+          resolveExtract = res;
+        });
+      },
+    });
+    await flush();
+    const cancel = root.querySelector('[data-testid="workspace-ocr-cancel"]');
+    expect(cancel).not.toBeNull();
+    cancel.click();
+    await promise.catch(() => {});
+    expect(aborted).toBe(true);
+    expect(root.querySelector('[data-testid="workspace-dropzone"]')).not.toBeNull();
+  });
+});

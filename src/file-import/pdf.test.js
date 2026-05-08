@@ -175,3 +175,43 @@ describe('extractPdf — error wrapping', () => {
     await expect(extractPdf(fakeFile(), exploding)).rejects.toBeInstanceOf(ExtractionFailedError);
   });
 });
+
+describe('extractPdf — progress and cancellation', () => {
+  it('emits onProgress per OCR page', async () => {
+    const events = [];
+    const ocr = ocrSpy(['p1', 'p2']);
+    await extractPdf(fakeFile(), {
+      ...pdfjs([[''], ['']]),
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr.deps,
+      onProgress: (e) => events.push(e),
+    });
+    expect(events).toEqual([
+      { stage: 'ocr', current: 1, total: 2 },
+      { stage: 'ocr', current: 2, total: 2 },
+    ]);
+  });
+
+  it('honors abortSignal — aborts before next OCR page', async () => {
+    const controller = new AbortController();
+    let invocations = 0;
+    const ocr = {
+      loadOcr: async () => ({
+        ocrBitmap: async () => {
+          invocations++;
+          if (invocations === 1) controller.abort();
+          return { text: 'p', confidence: 0.9, backend: 'wasm' };
+        },
+        cancel: () => {},
+      }),
+    };
+    const promise = extractPdf(fakeFile(), {
+      ...pdfjs([[''], [''], ['']]),
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr,
+      signal: controller.signal,
+    });
+    await expect(promise).rejects.toMatchObject({ name: 'OcrCancelledError' });
+    expect(invocations).toBe(1);
+  });
+});

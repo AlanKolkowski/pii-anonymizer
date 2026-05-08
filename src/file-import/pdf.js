@@ -42,6 +42,8 @@ export async function extractPdf(file, deps = {}) {
   const loadPdfWorkerUrl = deps.loadPdfWorkerUrl ?? defaultLoadPdfWorkerUrl;
   const loadOcr = deps.loadOcr ?? defaultLoadOcr;
   const makeCanvas = deps.makeCanvas ?? defaultMakeCanvas;
+  const onProgress = deps.onProgress ?? (() => {});
+  const signal = deps.signal;
 
   let pdfjs;
   let buf;
@@ -65,59 +67,70 @@ export async function extractPdf(file, deps = {}) {
     throw new ExtractionFailedError('pdf', err);
   }
 
-  const pageEntries = [];
-  let ocrBackend = null;
-  let ocr = null;
-
+  const classifications = [];
   try {
     for (let i = 1; i <= pageCount; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       if (nonWhitespaceLength(content.items) >= PAGE_TEXT_THRESHOLD) {
-        pageEntries.push({ index: i, source: 'text', text: joinPageItems(content.items) });
-        continue;
-      }
-      if (!ocr) ocr = await loadOcr();
-      const viewport = page.getViewport({ scale: RENDER_SCALE });
-      const canvas = makeCanvas({ width: viewport.width, height: viewport.height });
-      const ctx = canvas.getContext('2d');
-      let bitmap;
-      try {
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        bitmap = canvas.transferToImageBitmap();
-        const out = await ocr.ocrBitmap(bitmap);
-        ocrBackend = ocrBackend ?? out.backend;
-        pageEntries.push({ index: i, source: 'ocr', text: out.text, confidence: out.confidence });
-      } catch (err) {
-        if (err.name === 'OcrCancelledError' || err.name === 'WebNNUnavailableError') throw err;
-        pageEntries.push({
-          index: i,
-          source: 'ocr',
-          text: `[OCR strony ${i} nie powiódł się]`,
-          confidence: null,
-        });
-      } finally {
-        bitmap?.close?.();
+        classifications.push({ index: i, source: 'text', text: joinPageItems(content.items) });
+      } else {
+        classifications.push({ index: i, source: 'ocr', page });
       }
     }
   } catch (err) {
-    if (err.name === 'OcrCancelledError' || err.name === 'WebNNUnavailableError') throw err;
     throw new ExtractionFailedError('pdf', err);
   }
 
-  const text = pageEntries.map((p) => p.text).join('\n\n');
+  const ocrTotal = classifications.filter((c) => c.source === 'ocr').length;
+  let ocr = null;
+  let ocrBackend = null;
+  let ocrDone = 0;
+
+  for (const c of classifications) {
+    if (c.source === 'text') continue;
+    if (signal?.aborted) {
+      const { OcrCancelledError } = await import('../ocr/errors.js');
+      ocr?.cancel?.();
+      throw new OcrCancelledError();
+    }
+    if (!ocr) ocr = await loadOcr();
+    ocrDone++;
+    onProgress({ stage: 'ocr', current: ocrDone, total: ocrTotal });
+
+    const viewport = c.page.getViewport({ scale: RENDER_SCALE });
+    const canvas = makeCanvas({ width: viewport.width, height: viewport.height });
+    const ctx = canvas.getContext('2d');
+    let bitmap;
+    try {
+      await c.page.render({ canvasContext: ctx, viewport }).promise;
+      bitmap = canvas.transferToImageBitmap();
+      const out = await ocr.ocrBitmap(bitmap);
+      ocrBackend = ocrBackend ?? out.backend;
+      c.text = out.text;
+      c.confidence = out.confidence;
+    } catch (err) {
+      if (err.name === 'OcrCancelledError' || err.name === 'WebNNUnavailableError') throw err;
+      c.text = `[OCR strony ${c.index} nie powiódł się]`;
+      c.confidence = null;
+    } finally {
+      bitmap?.close?.();
+    }
+  }
+
+  const text = classifications.map((c) => c.text).join('\n\n');
   const meta = {
     filename: file.name,
     mimeType: file.type,
     sizeBytes: file.size,
     pageCount,
-    pages: pageEntries.map((p) =>
-      p.source === 'ocr'
-        ? { index: p.index, source: 'ocr', confidence: p.confidence }
-        : { index: p.index, source: 'text' }
+    pages: classifications.map((c) =>
+      c.source === 'ocr'
+        ? { index: c.index, source: 'ocr', confidence: c.confidence }
+        : { index: c.index, source: 'text' }
     ),
   };
-  if (pageEntries.some((p) => p.source === 'ocr' && p.confidence != null)) {
+  if (classifications.some((c) => c.source === 'ocr' && c.confidence != null)) {
     meta.ocr = { engine: 'paddleocr-v4', backend: ocrBackend ?? 'wasm' };
   }
   return { text, meta };
