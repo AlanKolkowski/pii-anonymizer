@@ -339,3 +339,101 @@ describe('createWorkspace — drop in annotation mode', () => {
     expect(ws.getEntities()).toEqual(beforeEnts);
   });
 });
+
+describe('createWorkspace — file pill OCR breadcrumb', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  it('shows " · OCR" for an image upload', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    const f = { name: 'photo.png', type: 'image/png', size: 100 };
+    await ws._handleFileForTest(f, {
+      mockExtract: () => ({
+        text: 'Jan',
+        meta: {
+          filename: 'photo.png',
+          mimeType: 'image/png',
+          sizeBytes: 100,
+          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+        },
+      }),
+    });
+    await flush();
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill.textContent).toContain('photo.png');
+    expect(pill.textContent).toContain('· OCR');
+  });
+
+  it('shows " · OCR: strony 3–4" when only some PDF pages were OCRd', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    const f = { name: 'doc.pdf', type: 'application/pdf', size: 100 };
+    await ws._handleFileForTest(f, {
+      mockExtract: () => ({
+        text: 'Page text',
+        meta: {
+          filename: 'doc.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 100,
+          pageCount: 4,
+          pages: [
+            { index: 1, source: 'text' },
+            { index: 2, source: 'text' },
+            { index: 3, source: 'ocr', confidence: 0.9 },
+            { index: 4, source: 'ocr', confidence: 0.9 },
+          ],
+          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+        },
+      }),
+    });
+    await flush();
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill.textContent).toContain('OCR: strony 3–4');
+  });
+
+  it('shows " · OCR: wszystkie strony" when every page was OCRd', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    const f = { name: 'scan.pdf', type: 'application/pdf', size: 100 };
+    await ws._handleFileForTest(f, {
+      mockExtract: () => ({
+        text: 'a',
+        meta: {
+          filename: 'scan.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 100,
+          pageCount: 2,
+          pages: [
+            { index: 1, source: 'ocr', confidence: 0.9 },
+            { index: 2, source: 'ocr', confidence: 0.9 },
+          ],
+          ocr: { engine: 'paddleocr-v4', backend: 'wasm' },
+        },
+      }),
+    });
+    await flush();
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill.textContent).toContain('wszystkie strony');
+  });
+
+  it('does not show OCR breadcrumb for a normal text PDF', async () => {
+    const { root } = mount();
+    const ws = root.__workspace_for_tests__;
+    const f = { name: 'doc.pdf', type: 'application/pdf', size: 100 };
+    await ws._handleFileForTest(f, {
+      mockExtract: () => ({
+        text: 'a',
+        meta: {
+          filename: 'doc.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 100,
+          pageCount: 1,
+          pages: [{ index: 1, source: 'text' }],
+        },
+      }),
+    });
+    await flush();
+    const pill = root.querySelector('[data-testid="workspace-file-pill"]');
+    expect(pill.textContent).not.toContain('OCR');
+  });
+});

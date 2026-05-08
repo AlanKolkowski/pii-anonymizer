@@ -1,5 +1,6 @@
 import { createAnnotationEditor } from '../annotation-editor/index.js';
 import { extractText } from '../../file-import/index.js';
+import { formatOcrRanges } from '../../ocr/range-format.js';
 import {
   FileImportError,
   UnsupportedTypeError,
@@ -7,6 +8,18 @@ import {
   // ScannedPdfError, // re-enabled in Task 14
   ExtractionFailedError,
 } from '../../file-import/errors.js';
+
+function computeOcrLabel(meta) {
+  if (!meta) return null;
+  const isImage = meta.mimeType?.startsWith('image/');
+  if (isImage && meta.ocr) return 'OCR';
+
+  if (!Array.isArray(meta.pages)) return null;
+  const ocrPages = meta.pages.filter((p) => p.source === 'ocr').map((p) => p.index);
+  if (ocrPages.length === 0) return null;
+  const range = formatOcrRanges(ocrPages, meta.pageCount);
+  return range ? `OCR: ${range}` : 'OCR';
+}
 
 export function createWorkspace(rootEl, options) {
   const opts = options ?? {};
@@ -185,7 +198,10 @@ export function createWorkspace(rootEl, options) {
       const pill = document.createElement('span');
       pill.className = 'ws-file-pill';
       pill.dataset.testid = 'workspace-file-pill';
-      pill.textContent = `📄 ${lastMeta.filename}`;
+      let label = `📄 ${lastMeta.filename}`;
+      const ocrLabel = computeOcrLabel(lastMeta);
+      if (ocrLabel) label += ` · ${ocrLabel}`;
+      pill.textContent = label;
       pill.title = lastMeta.filename;
       toolbar.appendChild(pill);
     }
