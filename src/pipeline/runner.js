@@ -98,8 +98,8 @@ function snapshotContext(ctx) {
   };
 }
 
-export async function runPipeline(text, pipeline) {
-  let ctx = createContext(text);
+export async function runPipeline(input, pipeline) {
+  let ctx = typeof input === 'string' ? createContext(input) : input;
   const debug = [];
 
   for (const { phase, steps } of pipeline) {

@@ -88,6 +88,25 @@ describe('runPipeline', () => {
     expect(result.debug[0].changes).toEqual({});
   });
 
+  it('accepts a pre-seeded context object instead of a string', async () => {
+    const seeded = {
+      text: 'pre-normalized',
+      segments: [{ offset: 0, text: 'pre-normalized' }],
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 3, score: 0.9 }],
+      anonymized: '',
+      legend: {},
+      debug: [],
+    };
+    function appendBang(ctx) {
+      return { ...ctx, anonymized: ctx.text + '!' };
+    }
+    const result = await runPipeline(seeded, [{ phase: 'postprocess', steps: [appendBang] }]);
+    expect(result.text).toBe('pre-normalized');
+    expect(result.segments).toHaveLength(1);
+    expect(result.entities).toHaveLength(1);
+    expect(result.anonymized).toBe('pre-normalized!');
+  });
+
   it('detects entity removals', async () => {
     function addEntities(ctx) {
       return {
