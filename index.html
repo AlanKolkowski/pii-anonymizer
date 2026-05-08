@@ -42,27 +42,16 @@
       <div id="entity-selector-root"></div>
     </section>
 
-    <section id="input-section">
-      <label>2. Wklej swój dokument i anonimizuj</label>
-      <div class="workspace-actions workspace-actions--top">
-        <div class="workspace-actions-buttons">
-          <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
-          <button data-action="rerun" class="btn btn-primary" hidden>Anonimizuj ponownie</button>
-          <button data-action="edit-text" class="btn btn-secondary" hidden>Edytuj tekst</button>
-          <button data-action="copy" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
-        </div>
+    <section id="run-section">
+      <div class="run-actions">
+        <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
         <p data-status="model"></p>
       </div>
-      <div id="workspace-root"></div>
-      <div class="workspace-actions workspace-actions--bottom">
-        <p data-status="model"></p>
-        <div class="workspace-actions-buttons">
-          <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
-          <button data-action="rerun" class="btn btn-primary" hidden>Anonimizuj ponownie</button>
-          <button data-action="edit-text" class="btn btn-secondary" hidden>Edytuj tekst</button>
-          <button data-action="copy" class="btn btn-secondary" hidden>Kopiuj zanonimizowany</button>
-        </div>
-      </div>
+    </section>
+
+    <section id="sources-section">
+      <label>2. Dodaj dokumenty do anonimizacji</label>
+      <div id="sources-list-root"></div>
     </section>
 
     <section id="result-section" hidden>
@@ -83,18 +72,9 @@
       <div id="debug-panel"></div>
     </section>
 
-    <section id="deanonymize-section" hidden>
-      <label for="deanonymize-input">3. Wklej odpowiedź LLM zawierającą tokeny</label>
-      <textarea id="deanonymize-input" rows="10" placeholder="Wklej tekst z tokenami w stylu [PERSON_NAME_1]..."></textarea>
-      <button id="deanonymize-btn" class="btn btn-primary">Deanonimizuj</button>
-    </section>
-
-    <section id="deanonymize-result-section" hidden>
-      <h2>Zdeanonimizowany tekst</h2>
-      <div class="output-wrapper">
-        <pre id="deanonymized-output" class="output-box"></pre>
-        <button id="copy-deanonymized" class="btn btn-secondary">Kopiuj do schowka</button>
-      </div>
+    <section id="outcomes-section" hidden>
+      <h3>Wyniki LLM</h3>
+      <div id="outcomes-list-root"></div>
     </section>
 
     <footer>

@@ -61,6 +61,8 @@ function hideCancel(rootEl) {
   rootEl.querySelector('[data-testid="workspace-ocr-cancel"]')?.remove();
 }
 
+// Unused on the main path after multi-document support landed.
+// Retained for reference during the upcoming UI redesign.
 export function createWorkspace(rootEl, options) {
   const opts = options ?? {};
   const onChange = opts.onChange ?? (() => {});

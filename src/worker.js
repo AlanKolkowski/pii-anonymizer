@@ -1,7 +1,7 @@
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
-import { classifyWithCache } from './pipeline/cache-orchestrator.js';
+import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 
 // Memory budget for resident HF models in the WASM heap.
@@ -21,7 +21,7 @@ let currentConfig = null;
 let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto
 let webnnAvailable = false;
 const loadedModels = new Map();
-let nerCache = null;
+const nerCache = new Map();
 
 function isBackendAvailable(backend) {
   // Whether a backend can run at all in this environment.
@@ -128,33 +128,54 @@ async function loadPipelineWithDevice(def, device) {
   return ner;
 }
 
+// Concurrent classify messages can race past the loadedModels.has() check
+// for the same alias and each kick off a load. The second loadedModels.set
+// clobbers the first, leaking the first session in the WASM heap with no
+// path to dispose it. Dedupe via in-flight load promises keyed by alias.
+const inFlightLoads = new Map();
+
 async function ensureModelLoaded(alias) {
   if (loadedModels.has(alias)) return;
+  const existing = inFlightLoads.get(alias);
+  if (existing) {
+    await existing;
+    return;
+  }
   const def = SOURCES[alias];
   if (!def || def.kind !== 'hf') return;
-  const sizeMB = def.sizeMB ?? 0;
-  const targetDevice = deviceFor(def);
-  // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
-  if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
-  self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
-  let ner;
-  let device = targetDevice;
-  try {
-    ner = await loadPipelineWithDevice(def, targetDevice);
-  } catch (err) {
-    if (targetDevice === 'webnn-gpu') {
-      console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
-      // Fallback lands on WASM heap, so evict now.
-      await evictForBudget(sizeMB, alias);
-      ner = await loadPipelineWithDevice(def, 'wasm');
-      device = 'wasm';
-    } else {
-      throw err;
+
+  const promise = (async () => {
+    const sizeMB = def.sizeMB ?? 0;
+    const targetDevice = deviceFor(def);
+    // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
+    if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
+    self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
+    let ner;
+    let device = targetDevice;
+    try {
+      ner = await loadPipelineWithDevice(def, targetDevice);
+    } catch (err) {
+      if (targetDevice === 'webnn-gpu') {
+        console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
+        // Fallback lands on WASM heap, so evict now.
+        await evictForBudget(sizeMB, alias);
+        ner = await loadPipelineWithDevice(def, 'wasm');
+        device = 'wasm';
+      } else {
+        throw err;
+      }
     }
+    self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
+    loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
+    console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
+  })();
+
+  inFlightLoads.set(alias, promise);
+  try {
+    await promise;
+  } finally {
+    inFlightLoads.delete(alias);
   }
-  self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
-  loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
-  console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
 }
 
 async function loadModelForPipeline({ id, dtype }) {
@@ -190,7 +211,7 @@ self.onmessage = async (e) => {
           for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
         }
         // Backend semantics may differ; drop entity cache too.
-        nerCache = null;
+        nerCache.clear();
       }
       backendOverride = newOverride;
       webnnAvailable = newWebnnAvailable;
@@ -212,12 +233,13 @@ self.onmessage = async (e) => {
   }
 
   if (type === 'classify') {
+    const { id } = e.data;
     if (!currentConfig) {
-      self.postMessage({ type: 'error', message: 'Worker not configured' });
+      self.postMessage({ type: 'error', id, message: 'Worker not configured' });
       return;
     }
     if (currentConfig.enabledEntities.length === 0) {
-      self.postMessage({ type: 'error', message: 'No entities enabled' });
+      self.postMessage({ type: 'error', id, message: 'No entities enabled' });
       return;
     }
     self.postMessage({ type: 'timing', mark: 'classify:start', t: performance.now() });
@@ -229,20 +251,23 @@ self.onmessage = async (e) => {
         return (SOURCES[a.alias]?.sizeMB ?? 0) - (SOURCES[b.alias]?.sizeMB ?? 0);
       });
 
-      const { ctx, cache: newCache } = await classifyWithCache({
+      const hash = await sha256Hex(e.data.text);
+      const prev = nerCache.get(hash) ?? null;
+      const { ctx, cache: newEntry } = await classifyWithCache({
         text: e.data.text,
         enabledEntities: currentConfig.enabledEntities,
-        cache: nerCache,
+        cache: prev,
         sources: SOURCES,
         entitySources: ENTITY_SOURCES,
         loadModel: loadModelForPipeline,
         getSentenceBoundaries: get_sentence_boundaries,
         sortSources,
       });
-      nerCache = newCache;
+      nerCache.set(hash, newEntry);
 
       self.postMessage({
         type: 'result',
+        id,
         data: ctx.entities,
         anonymized: ctx.anonymized,
         legend: ctx.legend,
@@ -250,7 +275,7 @@ self.onmessage = async (e) => {
       });
     } catch (err) {
       console.error('[worker] classify failed:', err);
-      self.postMessage({ type: 'error', message: err.message });
+      self.postMessage({ type: 'error', id, message: err.message });
     }
     return;
   }
