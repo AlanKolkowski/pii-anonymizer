@@ -128,33 +128,54 @@ async function loadPipelineWithDevice(def, device) {
   return ner;
 }
 
+// Concurrent classify messages can race past the loadedModels.has() check
+// for the same alias and each kick off a load. The second loadedModels.set
+// clobbers the first, leaking the first session in the WASM heap with no
+// path to dispose it. Dedupe via in-flight load promises keyed by alias.
+const inFlightLoads = new Map();
+
 async function ensureModelLoaded(alias) {
   if (loadedModels.has(alias)) return;
+  const existing = inFlightLoads.get(alias);
+  if (existing) {
+    await existing;
+    return;
+  }
   const def = SOURCES[alias];
   if (!def || def.kind !== 'hf') return;
-  const sizeMB = def.sizeMB ?? 0;
-  const targetDevice = deviceFor(def);
-  // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
-  if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
-  self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
-  let ner;
-  let device = targetDevice;
-  try {
-    ner = await loadPipelineWithDevice(def, targetDevice);
-  } catch (err) {
-    if (targetDevice === 'webnn-gpu') {
-      console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
-      // Fallback lands on WASM heap, so evict now.
-      await evictForBudget(sizeMB, alias);
-      ner = await loadPipelineWithDevice(def, 'wasm');
-      device = 'wasm';
-    } else {
-      throw err;
+
+  const promise = (async () => {
+    const sizeMB = def.sizeMB ?? 0;
+    const targetDevice = deviceFor(def);
+    // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
+    if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
+    self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
+    let ner;
+    let device = targetDevice;
+    try {
+      ner = await loadPipelineWithDevice(def, targetDevice);
+    } catch (err) {
+      if (targetDevice === 'webnn-gpu') {
+        console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
+        // Fallback lands on WASM heap, so evict now.
+        await evictForBudget(sizeMB, alias);
+        ner = await loadPipelineWithDevice(def, 'wasm');
+        device = 'wasm';
+      } else {
+        throw err;
+      }
     }
+    self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
+    loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
+    console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
+  })();
+
+  inFlightLoads.set(alias, promise);
+  try {
+    await promise;
+  } finally {
+    inFlightLoads.delete(alias);
   }
-  self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
-  loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
-  console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
 }
 
 async function loadModelForPipeline({ id, dtype }) {
