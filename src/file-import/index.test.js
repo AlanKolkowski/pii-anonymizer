@@ -58,3 +58,23 @@ describe('extractText dispatch', () => {
     await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
   });
 });
+
+describe('extractText dispatch — images', () => {
+  it('routes .png to the image extractor', async () => {
+    const file = new File([new Uint8Array(8)], 'a.png', { type: 'image/png' });
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
+
+  it('routes .jpg to the image extractor', async () => {
+    const file = new File([new Uint8Array(8)], 'a.jpg', { type: 'image/jpeg' });
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
+
+  it('routes .heic to the image extractor by extension', async () => {
+    const file = new File([new Uint8Array(8)], 'a.heic', { type: '' });
+    const { ExtractionFailedError } = await import('./errors.js');
+    await expect(extractText(file)).rejects.toBeInstanceOf(ExtractionFailedError);
+  });
+});

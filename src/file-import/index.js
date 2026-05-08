@@ -1,6 +1,7 @@
 import { extractTxt } from './txt.js';
 import { extractDocx } from './docx.js';
 import { extractPdf } from './pdf.js';
+import { extractImage } from './image.js';
 import {
   UnsupportedTypeError,
   FileTooLargeError,
@@ -12,18 +13,28 @@ const EXTENSION_TO_FORMAT = {
   txt: 'txt',
   docx: 'docx',
   pdf: 'pdf',
+  png: 'image',
+  jpg: 'image',
+  jpeg: 'image',
+  heic: 'image',
+  heif: 'image',
 };
 
 const MIME_TO_FORMAT = {
   'text/plain': 'txt',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
   'application/pdf': 'pdf',
+  'image/png': 'image',
+  'image/jpeg': 'image',
+  'image/heic': 'image',
+  'image/heif': 'image',
 };
 
 const EXTRACTORS = {
   txt: extractTxt,
   docx: extractDocx,
   pdf: extractPdf,
+  image: extractImage,
 };
 
 function inferFormat(file) {
