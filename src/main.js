@@ -543,7 +543,7 @@ function escHtml(s) {
 
 refreshAnonymizeButton();
 
-const mcp = new WebMCP({ channelName: 'pii_anonymizer' });
+const mcp = new WebMCP({ channelName: 'pii' });
 
 function jsonContent(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value) }] };
