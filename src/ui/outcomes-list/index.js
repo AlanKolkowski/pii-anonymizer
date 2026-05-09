@@ -65,6 +65,74 @@ export function createOutcomesList(rootEl, opts) {
     card.bodyEl.textContent = deanonymizeText(tokenText, legend);
   }
 
+  function enterEditMode(id) {
+    const card = cards.get(id);
+    if (!card || card.editForm) return;
+
+    const form = document.createElement('div');
+    form.className = 'outlist-edit';
+
+    const editLabelInput = document.createElement('input');
+    editLabelInput.type = 'text';
+    editLabelInput.className = 'outlist-add-label';
+    editLabelInput.dataset.testid = `outcome-edit-label-${id}`;
+    editLabelInput.value = card.labelEl.textContent;
+    form.appendChild(editLabelInput);
+
+    const editTextInput = document.createElement('textarea');
+    editTextInput.className = 'outlist-add-text';
+    editTextInput.dataset.testid = `outcome-edit-text-${id}`;
+    editTextInput.rows = 6;
+    editTextInput.value = card.tokenText;
+    form.appendChild(editTextInput);
+
+    const actions = document.createElement('div');
+    actions.className = 'outlist-edit-actions';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.dataset.testid = `outcome-edit-save-${id}`;
+    saveBtn.textContent = 'Zapisz';
+    actions.appendChild(saveBtn);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.dataset.testid = `outcome-edit-cancel-${id}`;
+    cancelBtn.textContent = 'Anuluj';
+    actions.appendChild(cancelBtn);
+
+    form.appendChild(actions);
+
+    saveBtn.addEventListener('click', () => {
+      const label = editLabelInput.value.trim();
+      const text = editTextInput.value;
+      if (label.length === 0 || text.trim().length === 0) return;
+      if (typeof opts.onEdit === 'function') opts.onEdit(id, label, text);
+      exitEditMode(id);
+    });
+    cancelBtn.addEventListener('click', () => exitEditMode(id));
+
+    // Hide display body and head action buttons; show form.
+    card.bodyEl.hidden = true;
+    card.editBtn.hidden = true;
+    card.copyBtn.hidden = true;
+    card.wrapper.appendChild(form);
+    card.editForm = form;
+    editTextInput.focus();
+  }
+
+  function exitEditMode(id) {
+    const card = cards.get(id);
+    if (!card || !card.editForm) return;
+    card.editForm.remove();
+    card.editForm = null;
+    card.bodyEl.hidden = false;
+    card.editBtn.hidden = false;
+    card.copyBtn.hidden = false;
+  }
+
   return {
     addOutcome(id, label, tokenText, legend) {
       if (cards.has(id)) throw new Error(`outcome ${id} already exists`);
@@ -98,6 +166,14 @@ export function createOutcomesList(rootEl, opts) {
       });
       head.appendChild(copyBtn);
 
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-secondary';
+      editBtn.dataset.testid = `outcome-edit-${id}`;
+      editBtn.textContent = 'Edytuj';
+      editBtn.addEventListener('click', () => enterEditMode(id));
+      head.appendChild(editBtn);
+
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'btn btn-secondary';
@@ -114,7 +190,7 @@ export function createOutcomesList(rootEl, opts) {
       wrapper.appendChild(bodyEl);
 
       cardsHost.appendChild(wrapper);
-      cards.set(id, { wrapper, labelEl, bodyEl, copyBtn, tokenText: '' });
+      cards.set(id, { wrapper, head, labelEl, bodyEl, copyBtn, editBtn, removeBtn, tokenText: '', editForm: null });
       renderCard(id, label, tokenText, legend);
     },
     updateOutcome(id, label, tokenText, legend) {

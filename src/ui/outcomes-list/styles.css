@@ -54,3 +54,13 @@
 .outlist-add .btn {
   align-self: flex-start;
 }
+.outlist-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.outlist-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}

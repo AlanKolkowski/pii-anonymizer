@@ -197,6 +197,9 @@ const outcomesList = createOutcomesList(outcomesListRoot, {
   onAdd(label, text) {
     createOutcome(label, text);
   },
+  onEdit(id, label, text) {
+    updateOutcomeFields(id, label, text);
+  },
 });
 
 // Single code path for outcome creation — used by both the manual-paste UI
@@ -207,6 +210,18 @@ function createOutcome(label, text) {
   outcomes.push({ id: newId, label, text });
   outcomesList.addOutcome(newId, label, text, legend);
   return newId;
+}
+
+// Single code path for outcome updates — used by both the inline edit
+// affordance and the write_outcome MCP handler's update branch. Returns
+// true on success, false if the id is unknown.
+function updateOutcomeFields(id, label, text) {
+  const o = outcomes.find((x) => x.id === id);
+  if (!o) return false;
+  o.label = label;
+  o.text = text;
+  outcomesList.updateOutcome(id, label, text, legend);
+  return true;
 }
 
 function nextPasteLabel() {
@@ -608,11 +623,9 @@ mcp.registerTool(
       return jsonContent({ error: 'text must be a string' });
     }
     if (id) {
-      const o = outcomes.find((x) => x.id === id);
-      if (!o) return jsonContent({ error: `Outcome ${id} not found` });
-      o.label = label;
-      o.text = text;
-      outcomesList.updateOutcome(id, label, text, legend);
+      if (!updateOutcomeFields(id, label, text)) {
+        return jsonContent({ error: `Outcome ${id} not found` });
+      }
       return jsonContent({ id, success: true });
     }
     const newId = createOutcome(label, text);

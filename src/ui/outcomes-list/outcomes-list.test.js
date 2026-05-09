@@ -119,4 +119,84 @@ describe('createOutcomesList', () => {
       expect(onAdd).not.toHaveBeenCalled();
     });
   });
+
+  describe('edit-outcome flow', () => {
+    function setupCard() {
+      const onEdit = vi.fn();
+      const list = createOutcomesList(root, { onRemove: vi.fn(), onEdit });
+      list.addOutcome('o1', 'Pismo', '[PERSON_NAME_1] zgadza się.', {
+        '[PERSON_NAME_1]': 'Jan Kowalski',
+      });
+      return { list, onEdit };
+    }
+
+    it('renders an edit button on each card', () => {
+      setupCard();
+      expect(root.querySelector('[data-testid="outcome-edit-o1"]')).not.toBeNull();
+    });
+
+    it('clicking edit reveals a form with the current label and tokenized text', () => {
+      setupCard();
+      root.querySelector('[data-testid="outcome-edit-o1"]').click();
+      const labelInput = root.querySelector('[data-testid="outcome-edit-label-o1"]');
+      const textInput = root.querySelector('[data-testid="outcome-edit-text-o1"]');
+      expect(labelInput).not.toBeNull();
+      expect(textInput).not.toBeNull();
+      expect(labelInput.value).toBe('Pismo');
+      expect(textInput.value).toBe('[PERSON_NAME_1] zgadza się.');
+    });
+
+    it('saving fires onEdit(id, label, text) and re-renders the card', () => {
+      const { onEdit } = setupCard();
+      root.querySelector('[data-testid="outcome-edit-o1"]').click();
+
+      const labelInput = root.querySelector('[data-testid="outcome-edit-label-o1"]');
+      const textInput = root.querySelector('[data-testid="outcome-edit-text-o1"]');
+      labelInput.value = 'Pismo (poprawione)';
+      textInput.value = '[PERSON_NAME_1] zgadza się w pełni.';
+      root.querySelector('[data-testid="outcome-edit-save-o1"]').click();
+
+      expect(onEdit).toHaveBeenCalledWith(
+        'o1',
+        'Pismo (poprawione)',
+        '[PERSON_NAME_1] zgadza się w pełni.',
+      );
+      // Form is gone; display mode is back.
+      expect(root.querySelector('[data-testid="outcome-edit-label-o1"]')).toBeNull();
+      expect(root.querySelector('[data-testid="outcome-body-o1"]')).not.toBeNull();
+    });
+
+    it('cancel returns to display mode without firing onEdit', () => {
+      const { onEdit } = setupCard();
+      root.querySelector('[data-testid="outcome-edit-o1"]').click();
+
+      root.querySelector('[data-testid="outcome-edit-text-o1"]').value = 'whatever';
+      root.querySelector('[data-testid="outcome-edit-cancel-o1"]').click();
+
+      expect(onEdit).not.toHaveBeenCalled();
+      expect(root.querySelector('[data-testid="outcome-edit-label-o1"]')).toBeNull();
+      expect(root.querySelector('[data-testid="outcome-body-o1"]').textContent).toBe(
+        'Jan Kowalski zgadza się.',
+      );
+    });
+
+    it('save with blank label or blank text is a no-op (defensive)', () => {
+      const { onEdit } = setupCard();
+      root.querySelector('[data-testid="outcome-edit-o1"]').click();
+
+      const labelInput = root.querySelector('[data-testid="outcome-edit-label-o1"]');
+      const textInput = root.querySelector('[data-testid="outcome-edit-text-o1"]');
+      labelInput.value = '   ';
+      textInput.value = 'x';
+      root.querySelector('[data-testid="outcome-edit-save-o1"]').click();
+
+      expect(onEdit).not.toHaveBeenCalled();
+
+      // Still in edit mode; try blank text now.
+      labelInput.value = 'OK';
+      textInput.value = '   ';
+      root.querySelector('[data-testid="outcome-edit-save-o1"]').click();
+      expect(onEdit).not.toHaveBeenCalled();
+    });
+  });
 });
