@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, 'public');
@@ -37,6 +37,14 @@ export default defineConfig({
     host: true,
   },
   plugins: [noSpaFallbackForLocalModels()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        tool: resolve(__dirname, 'tool.html'),
+      },
+    },
+  },
   worker: {
     format: 'es',
   },

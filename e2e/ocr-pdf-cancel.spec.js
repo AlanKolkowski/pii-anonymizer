@@ -8,7 +8,7 @@ const FIXTURES = path.join(__dirname, 'fixtures');
 test('OCR Cancel button returns to the dropzone with no error', async ({ page }) => {
   test.setTimeout(120_000);
 
-  await page.goto('/');
+  await page.goto('tool.html');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, 'sample-scanned.pdf'));

@@ -8,7 +8,7 @@ const FIXTURES = path.join(__dirname, 'fixtures');
 test('mixed PDF concatenates text-page and OCR-page output, pill shows page range', async ({ page }) => {
   test.setTimeout(120_000);
 
-  await page.goto('/');
+  await page.goto('tool.html');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, 'sample-mixed.pdf'));

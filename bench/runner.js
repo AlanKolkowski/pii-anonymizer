@@ -200,7 +200,10 @@ async function main() {
   console.log('Starting Vite...');
 
   const vite = await startVite();
-  const baseURL = backend ? `http://localhost:${PORT}/?backend=${encodeURIComponent(backend)}` : `http://localhost:${PORT}`;
+  const toolPath = '/pii-anonymizer/tool.html';
+  const baseURL = backend
+    ? `http://localhost:${PORT}${toolPath}?backend=${encodeURIComponent(backend)}`
+    : `http://localhost:${PORT}${toolPath}`;
 
   await mkdir(USER_DATA_DIR, { recursive: true });
   console.log('Launching Chromium...');

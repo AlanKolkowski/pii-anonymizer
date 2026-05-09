@@ -15,7 +15,7 @@ test('image upload runs OCR and shows the OCR breadcrumb', async ({ page }) => {
   });
   page.on('pageerror', (err) => console.log('[browser:pageerror]', err.message));
 
-  await page.goto('/');
+  await page.goto('tool.html');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, 'sample-photo.png'));

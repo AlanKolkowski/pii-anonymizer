@@ -12,7 +12,7 @@ async function uploadAndAssertText(page, filename, expectedSubstring) {
     }
   });
   page.on('pageerror', (err) => console.log('[browser:pageerror]', err.message));
-  await page.goto('/');
+  await page.goto('tool.html');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, filename));
@@ -37,7 +37,7 @@ test('text-based pdf upload populates the textarea', async ({ page }) => {
 
 test('scanned pdf is OCRd and the textarea contains the recovered text', async ({ page }) => {
   test.setTimeout(120_000);
-  await page.goto('/');
+  await page.goto('tool.html');
   await page.waitForSelector('[data-testid="workspace-dropzone"]');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(FIXTURES, 'sample-scanned.pdf'));
