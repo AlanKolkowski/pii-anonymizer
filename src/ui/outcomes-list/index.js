@@ -5,6 +5,57 @@ export function createOutcomesList(rootEl, opts) {
 
   const cards = new Map();
   let currentLegend = {};
+  let nextDefaultLabelN = 1;
+
+  const cardsHost = document.createElement('div');
+  cardsHost.className = 'outlist-cards';
+  rootEl.appendChild(cardsHost);
+
+  // Inline "create outcome by paste" affordance — the spec's deferred
+  // manual-paste flow. Routes through opts.onAdd(label, text), which the
+  // host wires to the same code path as the write_outcome MCP handler.
+  const addRow = document.createElement('div');
+  addRow.className = 'outlist-add';
+
+  const labelInput = document.createElement('input');
+  labelInput.type = 'text';
+  labelInput.className = 'outlist-add-label';
+  labelInput.dataset.testid = 'outcome-add-label';
+  labelInput.value = `Wynik ${nextDefaultLabelN}`;
+  addRow.appendChild(labelInput);
+
+  const textInput = document.createElement('textarea');
+  textInput.className = 'outlist-add-text';
+  textInput.dataset.testid = 'outcome-add-text';
+  textInput.rows = 6;
+  textInput.placeholder = 'Wklej zanonimizowany tekst od LLM (z tokenami w stylu [PERSON_NAME_1])…';
+  addRow.appendChild(textInput);
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'button';
+  submitBtn.className = 'btn btn-primary';
+  submitBtn.dataset.testid = 'outcome-add-submit';
+  submitBtn.textContent = 'Dodaj wynik';
+  submitBtn.disabled = true;
+  addRow.appendChild(submitBtn);
+
+  rootEl.appendChild(addRow);
+
+  function syncSubmitDisabled() {
+    submitBtn.disabled = textInput.value.trim().length === 0;
+  }
+  textInput.addEventListener('input', syncSubmitDisabled);
+
+  submitBtn.addEventListener('click', () => {
+    const label = labelInput.value.trim();
+    const text = textInput.value;
+    if (label.length === 0 || text.trim().length === 0) return;
+    if (typeof opts.onAdd === 'function') opts.onAdd(label, text);
+    textInput.value = '';
+    nextDefaultLabelN += 1;
+    labelInput.value = `Wynik ${nextDefaultLabelN}`;
+    syncSubmitDisabled();
+  });
 
   function renderCard(id, label, tokenText, legend) {
     const card = cards.get(id);
@@ -62,7 +113,7 @@ export function createOutcomesList(rootEl, opts) {
       bodyEl.dataset.testid = `outcome-body-${id}`;
       wrapper.appendChild(bodyEl);
 
-      rootEl.appendChild(wrapper);
+      cardsHost.appendChild(wrapper);
       cards.set(id, { wrapper, labelEl, bodyEl, copyBtn, tokenText: '' });
       renderCard(id, label, tokenText, legend);
     },

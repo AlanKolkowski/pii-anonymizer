@@ -24,3 +24,33 @@
   font-family: inherit;
   margin: 0;
 }
+.outlist-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.outlist-cards:empty {
+  display: none;
+}
+.outlist-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px dashed #b0b0b0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fafafa;
+}
+.outlist-add-label {
+  font: inherit;
+  padding: 0.25rem 0.5rem;
+}
+.outlist-add-text {
+  font: inherit;
+  resize: vertical;
+  min-height: 5rem;
+  padding: 0.5rem;
+}
+.outlist-add .btn {
+  align-self: flex-start;
+}

@@ -45,7 +45,6 @@ const resultSection = document.getElementById('result-section');
 const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
-const outcomesSection = document.getElementById('outcomes-section');
 const selectorRoot = document.getElementById('entity-selector-root');
 const sourcesListRoot = document.getElementById('sources-list-root');
 const outcomesListRoot = document.getElementById('outcomes-list-root');
@@ -194,9 +193,21 @@ const outcomesList = createOutcomesList(outcomesListRoot, {
     if (idx === -1) return;
     outcomes.splice(idx, 1);
     outcomesList.removeOutcome(id);
-    if (outcomes.length === 0) outcomesSection.hidden = true;
+  },
+  onAdd(label, text) {
+    createOutcome(label, text);
   },
 });
+
+// Single code path for outcome creation — used by both the manual-paste UI
+// affordance and the write_outcome MCP handler. Caller is responsible for
+// validating `label` and `text` are non-empty strings.
+function createOutcome(label, text) {
+  const newId = crypto.randomUUID();
+  outcomes.push({ id: newId, label, text });
+  outcomesList.addOutcome(newId, label, text, legend);
+  return newId;
+}
 
 function nextPasteLabel() {
   const used = sources
@@ -602,13 +613,9 @@ mcp.registerTool(
       o.label = label;
       o.text = text;
       outcomesList.updateOutcome(id, label, text, legend);
-      outcomesSection.hidden = false;
       return jsonContent({ id, success: true });
     }
-    const newId = crypto.randomUUID();
-    outcomes.push({ id: newId, label, text });
-    outcomesList.addOutcome(newId, label, text, legend);
-    outcomesSection.hidden = false;
+    const newId = createOutcome(label, text);
     return jsonContent({ id: newId, success: true });
   },
 );

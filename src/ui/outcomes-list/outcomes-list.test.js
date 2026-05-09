@@ -58,4 +58,65 @@ describe('createOutcomesList', () => {
     root.querySelector('[data-testid="outcome-remove-o1"]').click();
     expect(onRemove).toHaveBeenCalledWith('o1');
   });
+
+  describe('add-outcome form', () => {
+    it('renders an inline form for creating outcomes by paste', () => {
+      createOutcomesList(root, { onRemove: vi.fn(), onAdd: vi.fn() });
+      expect(root.querySelector('[data-testid="outcome-add-label"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="outcome-add-text"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="outcome-add-submit"]')).not.toBeNull();
+    });
+
+    it('default label increments per add ("Wynik 1", "Wynik 2", ...)', () => {
+      createOutcomesList(root, { onRemove: vi.fn(), onAdd: vi.fn() });
+      const labelInput = root.querySelector('[data-testid="outcome-add-label"]');
+      expect(labelInput.value).toBe('Wynik 1');
+    });
+
+    it('submit fires onAdd(label, text) and clears the form', () => {
+      const onAdd = vi.fn();
+      createOutcomesList(root, { onRemove: vi.fn(), onAdd });
+      const labelInput = root.querySelector('[data-testid="outcome-add-label"]');
+      const textInput = root.querySelector('[data-testid="outcome-add-text"]');
+      const submit = root.querySelector('[data-testid="outcome-add-submit"]');
+
+      labelInput.value = 'Pismo';
+      textInput.value = '[PERSON_NAME_1] zgadza się.';
+      textInput.dispatchEvent(new Event('input'));
+      submit.click();
+
+      expect(onAdd).toHaveBeenCalledWith('Pismo', '[PERSON_NAME_1] zgadza się.');
+      expect(textInput.value).toBe('');
+      expect(labelInput.value).toBe('Wynik 2');
+    });
+
+    it('submit is disabled when text is empty', () => {
+      createOutcomesList(root, { onRemove: vi.fn(), onAdd: vi.fn() });
+      const submit = root.querySelector('[data-testid="outcome-add-submit"]');
+      expect(submit.disabled).toBe(true);
+
+      const textInput = root.querySelector('[data-testid="outcome-add-text"]');
+      textInput.value = 'something';
+      textInput.dispatchEvent(new Event('input'));
+      expect(submit.disabled).toBe(false);
+
+      textInput.value = '   ';
+      textInput.dispatchEvent(new Event('input'));
+      expect(submit.disabled).toBe(true);
+    });
+
+    it('submit does nothing when label is blank (defensive)', () => {
+      const onAdd = vi.fn();
+      createOutcomesList(root, { onRemove: vi.fn(), onAdd });
+      const labelInput = root.querySelector('[data-testid="outcome-add-label"]');
+      const textInput = root.querySelector('[data-testid="outcome-add-text"]');
+      const submit = root.querySelector('[data-testid="outcome-add-submit"]');
+
+      labelInput.value = '   ';
+      textInput.value = 'x';
+      submit.click();
+
+      expect(onAdd).not.toHaveBeenCalled();
+    });
+  });
 });
