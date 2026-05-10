@@ -3,19 +3,11 @@ import {
   addEntity,
   removeToken,
   updateTypeForToken,
-  updateBoundaries,
   tokensFromEntities,
 } from './operations.js';
-import { colorFor } from '../entity-colors.js';
+import { applyPaletteVars } from '../entity-colors.js';
 
 const TOAST_TIMEOUT_MS = 2200;
-
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 function escapeHtml(s) {
   return s
@@ -130,65 +122,47 @@ export function createAnnotationEditor(rootEl, options) {
 
   function renderEntity(entity, index, token) {
     const span = document.createElement('span');
-    span.className = 'ann-ent';
+    // `.anno` is the design's annotation pill; `.ann-ent` is kept for the
+    // popover-positioning selector and any external CSS that still targets it.
+    span.className = 'anno ann-ent';
     span.dataset.index = String(index);
     span.dataset.type = entity.entity_group;
     if (token) span.dataset.token = token;
     if (index === selectedIndex) span.classList.add('selected');
 
-    // Cross-occurrence hover: highlight all entities sharing this token.
+    const orig = text.slice(entity.start, entity.end);
+    span.dataset.orig = orig;
+    span.title = token ? `${token} · ${orig}` : orig;
+
     span.addEventListener('mouseenter', () => activateToken(token));
     span.addEventListener('mouseleave', () => deactivateToken(token));
 
-    const color = colorFor(entity.entity_group);
-    span.style.setProperty('--ent-bg', hexToRgba(color, 0.3));
-    span.style.setProperty('--ent-color', color);
+    applyPaletteVars(span, entity.entity_group);
 
-    // chip (token + X)
-    const chip = document.createElement('span');
-    chip.className = 'ann-ent-chip';
-    chip.textContent = token ?? '';
-    chip.contentEditable = 'false';
+    span.appendChild(document.createTextNode(orig));
 
+    // Inline delete affordance — invisible until the pill is hovered, so the
+    // reading view stays clean.
     const x = document.createElement('span');
     x.className = 'ann-ent-chip-x';
     x.textContent = '×';
+    x.contentEditable = 'false';
+    x.setAttribute('aria-label', 'Usuń adnotację');
     x.addEventListener('mousedown', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       openConfirmDelete(span, entity, token);
     });
-    chip.appendChild(x);
-    span.appendChild(chip);
-
-    // Handles flow inline so they stay anchored to the actual start/end
-    // characters when the entity wraps across multiple lines. Absolute
-    // positioning would stretch them across the entire bounding box.
-    const lh = document.createElement('span');
-    lh.className = 'ann-ent-handle l';
-    lh.contentEditable = 'false';
-    attachDragHandle(lh, index, 'left');
-    span.appendChild(lh);
-
-    span.appendChild(
-      document.createTextNode(text.slice(entity.start, entity.end)),
-    );
-
-    const rh = document.createElement('span');
-    rh.className = 'ann-ent-handle r';
-    rh.contentEditable = 'false';
-    attachDragHandle(rh, index, 'right');
-    span.appendChild(rh);
+    span.appendChild(x);
 
     span.addEventListener('mousedown', (ev) => {
-      // ignore clicks that originate on chip's X or handles (handled separately)
       const t = ev.target;
-      if (t.classList && (t.classList.contains('ann-ent-chip-x') || t.classList.contains('ann-ent-handle'))) return;
+      if (t.classList && t.classList.contains('ann-ent-chip-x')) return;
       ev.stopPropagation();
     });
     span.addEventListener('click', (ev) => {
       const t = ev.target;
-      if (t.classList && (t.classList.contains('ann-ent-chip-x') || t.classList.contains('ann-ent-handle'))) return;
+      if (t.classList && t.classList.contains('ann-ent-chip-x')) return;
       ev.stopPropagation();
       openEditPopover(span, entity, index);
     });
@@ -249,7 +223,8 @@ export function createAnnotationEditor(rootEl, options) {
   }
 
   function computeRangeOffsets(surface, range) {
-    // Walk surface text nodes; only count nodes that are NOT inside a chip or handle.
+    // Walk all text nodes in document order; skip the inline delete-X span
+    // since it isn't part of the original text.
     let start = -1;
     let end = -1;
     let acc = 0;
@@ -257,7 +232,7 @@ export function createAnnotationEditor(rootEl, options) {
       acceptNode(node) {
         let p = node.parentElement;
         while (p && p !== surface) {
-          if (p.classList && (p.classList.contains('ann-ent-chip') || p.classList.contains('ann-ent-handle'))) {
+          if (p.classList && p.classList.contains('ann-ent-chip-x')) {
             return NodeFilter.FILTER_REJECT;
           }
           p = p.parentElement;
@@ -268,12 +243,8 @@ export function createAnnotationEditor(rootEl, options) {
     let node;
     while ((node = walker.nextNode())) {
       const len = node.nodeValue.length;
-      if (node === range.startContainer && start < 0) {
-        start = acc + range.startOffset;
-      }
-      if (node === range.endContainer && end < 0) {
-        end = acc + range.endOffset;
-      }
+      if (node === range.startContainer && start < 0) start = acc + range.startOffset;
+      if (node === range.endContainer && end < 0) end = acc + range.endOffset;
       acc += len;
     }
     if (start < 0 || end < 0) return null;
@@ -400,89 +371,6 @@ export function createAnnotationEditor(rootEl, options) {
     bindOutsideClickToClose(box);
   }
 
-  // ── Drag handle ───────────────────────────────────────────
-  function attachDragHandle(handleEl, index, side) {
-    handleEl.addEventListener('mousedown', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      // Sanity-check that we're in annotation mode at drag start.
-      if (!bodyEl.querySelector('.ann-editor-surface')) return;
-
-      const startEntity = entities[index];
-      const startStart = startEntity.start;
-      const startEnd = startEntity.end;
-
-      function onMove(e) {
-        // Re-query the surface every frame: each mousemove triggers a full
-        // renderAnnotationMode() which replaces the surface DOM, so a captured
-        // reference would point at a detached node and charPosFromPoint would
-        // always return null after the first frame.
-        const surface = bodyEl.querySelector('.ann-editor-surface');
-        if (!surface) return;
-        const charPos = charPosFromPoint(surface, e.clientX, e.clientY);
-        if (charPos == null) return;
-        let newStart = startStart;
-        let newEnd = startEnd;
-        if (side === 'left') {
-          newStart = Math.max(0, Math.min(charPos, startEnd - 1));
-        } else {
-          newEnd = Math.max(startStart + 1, Math.min(charPos, text.length));
-        }
-        const next = updateBoundaries(entities, index, newStart, newEnd);
-        if (next === null) return; // overlap, ignore this frame
-        // Live update during drag without committing through postEdit (that runs on release)
-        entities = next;
-        renderAnnotationMode();
-      }
-
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        // commit final state through postEdit + onChange
-        commitChange(entities);
-      }
-
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-  }
-
-  function charPosFromPoint(surface, clientX, clientY) {
-    let pos;
-    if (document.caretPositionFromPoint) {
-      const cp = document.caretPositionFromPoint(clientX, clientY);
-      if (!cp) return null;
-      pos = { node: cp.offsetNode, offset: cp.offset };
-    } else if (document.caretRangeFromPoint) {
-      const r = document.caretRangeFromPoint(clientX, clientY);
-      if (!r) return null;
-      pos = { node: r.startContainer, offset: r.startOffset };
-    } else {
-      return null;
-    }
-
-    if (!surface.contains(pos.node)) return null;
-    let acc = 0;
-    const walker = document.createTreeWalker(surface, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        let p = node.parentElement;
-        while (p && p !== surface) {
-          if (p.classList && (p.classList.contains('ann-ent-chip') || p.classList.contains('ann-ent-handle'))) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          p = p.parentElement;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node === pos.node) return acc + pos.offset;
-      acc += node.nodeValue.length;
-    }
-    return null;
-  }
-
   // ── Helpers ───────────────────────────────────────────────
   function buildTypeSelect(currentType) {
     const select = document.createElement('select');
@@ -553,7 +441,7 @@ export function createAnnotationEditor(rootEl, options) {
       acceptNode(node) {
         let p = node.parentElement;
         while (p && p !== surface) {
-          if (p.classList && (p.classList.contains('ann-ent-chip') || p.classList.contains('ann-ent-handle'))) {
+          if (p.classList && p.classList.contains('ann-ent-chip-x')) {
             return NodeFilter.FILTER_REJECT;
           }
           p = p.parentElement;
@@ -569,24 +457,17 @@ export function createAnnotationEditor(rootEl, options) {
         range.setStart(node, charStart - acc);
         range.setEnd(node, charStart - acc);
         const rect = range.getBoundingClientRect();
-        const fakeAnchor = { getBoundingClientRect: () => rect };
-        positionPopover(popEl, fakeAnchor);
+        positionPopover(popEl, { getBoundingClientRect: () => rect });
         return;
       }
       acc += len;
     }
-    // fallback
     positionPopover(popEl, surface);
   }
 
   function bindOutsideClickToClose(el) {
     function onDoc(ev) {
       if (el.contains(ev.target)) return;
-      // Drag handles belong to the selected entity's chrome and own their own
-      // behavior — clicking one starts a boundary drag; we must not close the
-      // popover (which would clear selectedIndex and destroy the handle the
-      // mousedown was meant for).
-      if (ev.target.closest && ev.target.closest('.ann-ent-handle')) return;
       closeAllOverlays();
       document.removeEventListener('mousedown', onDoc, true);
       document.removeEventListener('keydown', onKey, true);

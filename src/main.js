@@ -4,6 +4,7 @@ import { createSourcesList } from './ui/sources-list/index.js';
 import { createOutcomesList } from './ui/outcomes-list/index.js';
 import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
+import { applyPaletteVars } from './ui/entity-colors.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -35,7 +36,11 @@ const LS_KEY = 'pii.selected-entities';
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
+const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
+const runBarDocsEl = document.querySelector('[data-testid="run-bar-docs"]');
+const runBarTokensEl = document.querySelector('[data-testid="run-bar-tokens"]');
+const runBarMeterFillEl = document.querySelector('[data-testid="run-bar-meter-fill"]');
 
 function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
@@ -285,7 +290,12 @@ function refreshLegend() {
     const row = document.createElement('tr');
     const tokenCell = document.createElement('td');
     const code = document.createElement('code');
+    code.className = 'tok';
     code.textContent = token;
+    // Token format is `[TYPE_N]` — strip the brackets and trailing `_N` to
+    // get the entity type, then color via the same palette as the in-text pill.
+    const m = /^\[([A-Z_]+)_\d+\]$/.exec(token);
+    if (m) applyPaletteVars(code, m[1]);
     tokenCell.appendChild(code);
     const valueCell = document.createElement('td');
     valueCell.textContent = value;
@@ -317,6 +327,31 @@ function refreshAnonymizeButton() {
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
   else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
+  refreshRunBar();
+}
+
+function refreshRunBar() {
+  if (runBarDocsEl) runBarDocsEl.textContent = String(sources.length);
+  const totalEntities = sources.reduce(
+    (acc, s) => acc + (s.status === 'ready' ? s.entities.length : 0),
+    0,
+  );
+  if (runBarTokensEl) runBarTokensEl.textContent = String(totalEntities);
+
+  if (runBarMeterFillEl) {
+    const total = sources.length;
+    if (total === 0 || !isAnyClassifyInFlight()) {
+      runBarMeterFillEl.style.width = '100%';
+    } else {
+      const done = total - inFlightSourceIds.size;
+      const pct = Math.round((done / total) * 100);
+      runBarMeterFillEl.style.width = `${pct}%`;
+    }
+  }
+
+  // Copy-all is meaningful only when at least one source is ready.
+  const anyReady = sources.some((s) => s.status === 'ready');
+  setDisabled(copyAllBtns, !anyReady || isAnyClassifyInFlight());
 }
 
 // Single-flight queue: dispatch one classify at a time. The worker's
@@ -405,6 +440,25 @@ worker.onmessage = (e) => {
     }
   }
 };
+
+copyAllBtns.forEach(btn => btn.addEventListener('click', async () => {
+  const ready = sources.filter((s) => s.status === 'ready');
+  if (ready.length === 0) return;
+  const joined = ready
+    .map((s) => {
+      const text = applyTokens(s.text, s.entities, seen);
+      return ready.length === 1 ? text : `── ${s.label} ──\n${text}`;
+    })
+    .join('\n\n');
+  try {
+    await navigator.clipboard.writeText(joined);
+    const originalHtml = btn.innerHTML;
+    btn.textContent = 'Skopiowano!';
+    setTimeout(() => { btn.innerHTML = originalHtml; }, 1500);
+  } catch (err) {
+    console.error('[main] copy-all failed:', err);
+  }
+}));
 
 anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   for (const s of sources) {

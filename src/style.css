@@ -487,6 +487,23 @@ body.has-tool {
   font-size: 11px;
 }
 
+/* ---------- Annotations — highlight style ----------
+   Inline background highlight + bottom-border tint, colored per entity type
+   via the --ec-bg / --ec-ink / --ec-line palette vars set inline by JS. */
+.anno {
+  display: inline;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: var(--ec-bg, var(--bg-tint));
+  color: var(--ec-ink, var(--ink));
+  border-bottom: 2px solid var(--ec-line, var(--line));
+  white-space: normal;
+  cursor: pointer;
+  position: relative;
+  transition: filter 0.15s;
+}
+.anno:hover { filter: brightness(0.97); }
+
 /* ---------- Legend ---------- */
 .legend {
   border: 1px solid var(--line);
@@ -520,12 +537,13 @@ body.has-tool {
 }
 .legend tr:last-child td { border-bottom: 0; }
 .legend tr:hover td { background: var(--bg); }
-.legend td code {
+.legend td code,
+.legend .tok {
   font-family: var(--mono);
   font-size: 12px;
-  color: var(--accent-ink);
-  background: var(--accent-tint);
-  border: 1px solid var(--accent-line);
+  color: var(--ec-ink, var(--accent-ink));
+  background: var(--ec-bg, var(--accent-tint));
+  border: 1px solid var(--ec-line, var(--accent-line));
   padding: 1px 8px;
   border-radius: var(--r-pill);
   display: inline-block;
