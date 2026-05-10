@@ -47,6 +47,8 @@ const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
 const selectorRoot = document.getElementById('entity-selector-root');
 const sourcesListRoot = document.getElementById('sources-list-root');
+const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
+const editorToolbarRoot = document.getElementById('editor-toolbar-root');
 const outcomesListRoot = document.getElementById('outcomes-list-root');
 const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
@@ -143,6 +145,8 @@ if (ocrWarm) {
 }
 
 const sourcesList = createSourcesList(sourcesListRoot, {
+  tabsHost: workspaceTabsRoot,
+  toolbarHost: editorToolbarRoot,
   entityCategories: ENTITY_CATEGORIES,
   entityLabels: ENTITY_LABELS,
   postEdit(text, entities) {

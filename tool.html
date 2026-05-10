@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anonimizator PII</title>
+  <title>pii.tools — narzędzie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/landing.css">
   <link rel="stylesheet" href="/src/style.css">
 </head>
-<body>
+<body class="has-tool">
   <div id="webnn-hint" class="webnn-hint" hidden>
     <button type="button" id="webnn-hint-trigger" class="webnn-hint-trigger" aria-expanded="false" aria-controls="webnn-hint-panel">
       Włącz WebNN dla szybszej anonimizacji
@@ -21,74 +25,112 @@
         <li>Zrestartuj przeglądarkę.</li>
       </ol>
       <p class="webnn-hint-note">Firefox i Safari nie wspierają WebNN. Wymagany komputer z GPU.</p>
-      <button type="button" id="webnn-hint-close" class="btn btn-secondary">Zamknij</button>
+      <button type="button" id="webnn-hint-close" class="btn btn-sm">Zamknij</button>
     </div>
   </div>
-  <div class="container">
-    <header>
-      <h1>Anonimizator PII</h1>
-      <p class="subtitle">
-        Anonimizuj dane osobowe lokalnie w przeglądarce przy użyciu modeli
-        <a href="https://huggingface.co/wjarka/eu-pii-anonimization-pl" target="_blank" rel="noopener">eu-pii-anonimization</a>
-        i
-        <a href="https://huggingface.co/wjarka/eu-pii-anonimization-multilang" target="_blank" rel="noopener">eu-pii-anonimization-multilang</a>
-        (autor: <a href="https://bards.ai" target="_blank" rel="noopener">bards.ai</a>).
-        Żadne dane nie opuszczają Twojego urządzenia.
-      </p>
-    </header>
 
-    <section id="entity-selector-section">
-      <label>1. Wybierz dane do anonimizacji</label>
-      <div id="entity-selector-root"></div>
-    </section>
+  <header class="site-header">
+    <div class="wrap row">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">π</span>
+        <span class="brand-name"><b>pii</b><span>.tools</span></span>
+      </a>
+      <nav class="site-nav">
+        <a href="index.html#how">Jak to działa</a>
+        <a href="index.html#mcp">MCP</a>
+        <span class="pill pill-pl" title="pii.tools jest zoptymalizowany pod polskie dokumenty. Model multilang wzmacnia detekcję w polskich tekstach — nie służy do obsługi innych języków.">
+          <span class="pl-tag">PL</span>
+          <span class="pl-text">polskie dokumenty</span>
+        </span>
+        <a href="index.html" class="btn btn-sm btn-ghost">← Wróć do strony głównej</a>
+      </nav>
+    </div>
+  </header>
 
-    <section id="run-section">
-      <div class="run-actions">
-        <button data-action="anonymize" class="btn btn-primary" disabled>Anonimizuj</button>
-        <p data-status="model"></p>
+  <main class="tool-page">
+    <div class="tool-page-inner">
+      <div class="tool tool-fullscreen">
+        <div class="tool-header">
+          <div class="tool-tabs">
+            <button class="tool-tab active" type="button">
+              <span class="num">01</span>
+              Anonimizuj
+            </button>
+          </div>
+          <div class="tool-status">
+            <span class="pulse"></span>
+            <p data-status="model" class="tool-status-text">Ładowanie modeli…</p>
+          </div>
+        </div>
+
+        <div class="tool-body">
+          <aside class="tool-sidebar">
+            <div class="sidebar-section">
+              <div class="sidebar-title">
+                <h4>Encje do anonimizacji</h4>
+              </div>
+              <div id="entity-selector-root"></div>
+            </div>
+          </aside>
+
+          <section class="tool-main">
+            <div class="workspace-tabs" id="workspace-tabs-root"></div>
+            <div class="editor-pane">
+              <div class="editor-toolbar" id="editor-toolbar-root"></div>
+              <div class="tool-scroll">
+                <section id="sources-section" class="tool-section">
+                  <div id="sources-list-root"></div>
+                </section>
+
+                <section id="result-section" class="tool-section" hidden>
+                  <div class="tool-section-head">
+                    <h3>Legenda</h3>
+                  </div>
+                  <div class="legend">
+                    <table id="legend-table">
+                      <thead>
+                        <tr>
+                          <th>Token</th>
+                          <th>Oryginalna wartość</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section id="outcomes-section" class="tool-section">
+                  <div class="tool-section-head">
+                    <h3>Wyniki LLM</h3>
+                  </div>
+                  <div id="outcomes-list-root"></div>
+                </section>
+
+                <section id="debug-section" class="tool-section" hidden>
+                  <div class="tool-section-head">
+                    <h3>Debug pipeline'u</h3>
+                  </div>
+                  <div id="debug-panel"></div>
+                </section>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="run-bar">
+          <div class="left">
+            <p data-status="model" class="run-bar-status"></p>
+          </div>
+          <div class="right">
+            <button data-action="anonymize" class="btn btn-sm btn-primary" disabled>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg>
+              Anonimizuj
+            </button>
+          </div>
+        </div>
       </div>
-    </section>
-
-    <section id="sources-section">
-      <label>2. Dodaj dokumenty do anonimizacji</label>
-      <div id="sources-list-root"></div>
-    </section>
-
-    <section id="result-section" hidden>
-      <h3>Legenda</h3>
-      <table id="legend-table">
-        <thead>
-          <tr>
-            <th>Token</th>
-            <th>Oryginalna wartość</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section id="debug-section" hidden>
-      <h3>Debug pipeline'u</h3>
-      <div id="debug-panel"></div>
-    </section>
-
-    <section id="outcomes-section">
-      <h3>Wyniki LLM</h3>
-      <div id="outcomes-list-root"></div>
-    </section>
-
-    <footer>
-      <p>
-        Modele:
-        <a href="https://huggingface.co/wjarka/eu-pii-anonimization-pl" target="_blank" rel="noopener">wjarka/eu-pii-anonimization-pl</a>
-        +
-        <a href="https://huggingface.co/wjarka/eu-pii-anonimization-multilang" target="_blank" rel="noopener">wjarka/eu-pii-anonimization-multilang</a>
-        (mirror modeli <a href="https://bards.ai" target="_blank" rel="noopener">bards.ai</a>)
-        &middot; Apache 2.0
-        &middot; Napędzane przez <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
-      </p>
-    </footer>
-  </div>
+    </div>
+  </main>
 
   <script src="webmcp.js"></script>
   <script type="module" src="/src/main.js"></script>
