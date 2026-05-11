@@ -34,6 +34,23 @@ body { margin: 0; padding: 0; }
   box-shadow: var(--shadow-3);
   overflow: hidden;
 }
+.tool-mode-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tool-mode-panel[hidden] {
+  display: none !important;
+}
+.tool-mode-panel > #deanon-workspace-root,
+.deanon-workspace {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
 body.has-tool {
   overflow-x: auto;
   min-width: 1080px;
@@ -109,6 +126,9 @@ body.has-tool {
   grid-template-columns: 280px 1fr;
   flex: 1;
   min-height: 0;
+}
+.tool-body.tool-body-deanon {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .tool-sidebar {
@@ -208,6 +228,9 @@ body.has-tool {
   position: relative;
   min-width: 0;
   min-height: 0;
+}
+.deanon-pane-input {
+  border-right: 1px solid var(--line);
 }
 .editor-pane {
   flex: 1;
@@ -385,6 +408,29 @@ body.has-tool {
   overflow: auto;
   padding: 24px 28px 32px;
   min-height: 0;
+}
+.deanon-editor {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 28px 32px;
+  min-height: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--ink);
+  background: var(--bg-elev);
+}
+.deanon-editor-input {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.deanon-empty {
+  flex: 1;
+  min-height: 0;
+}
+.deanon-restored-count {
+  color: var(--accent-ink) !important;
 }
 .tool-section + .tool-section { margin-top: 28px; }
 .tool-section-head {

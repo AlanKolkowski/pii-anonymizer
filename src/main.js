@@ -2,6 +2,9 @@ import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createOutcomesList } from './ui/outcomes-list/index.js';
+import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
+import { createOutcomesCoordinator } from './ui/outcomes-coordinator.js';
+import { createToolModeController } from './ui/tool-mode.js';
 import { createProgressOverlay } from './ui/progress-overlay.js';
 import {
   createInitialProgressState,
@@ -62,7 +65,9 @@ const sourcesListRoot = document.getElementById('sources-list-root');
 const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
 const editorToolbarRoot = document.getElementById('editor-toolbar-root');
 const outcomesListRoot = document.getElementById('outcomes-list-root');
+const deanonWorkspaceRoot = document.getElementById('deanon-workspace-root');
 const editorPaneEl = document.querySelector('.editor-pane');
+const toolRoot = document.querySelector('.tool');
 const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
@@ -244,12 +249,24 @@ const sourcesList = createSourcesList(sourcesListRoot, {
 });
 sourcesList.renderDocList(docListRoot);
 
+const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
+  getOutcomes: () => outcomes,
+  getLegend: () => legend,
+  entityLabels: ENTITY_LABELS,
+  onAdd(label, text) {
+    createOutcome(label, text);
+  },
+  onUpdate(id, label, text) {
+    updateOutcomeFields(id, label, text);
+  },
+  onRemove(id) {
+    removeOutcome(id);
+  },
+});
+
 const outcomesList = createOutcomesList(outcomesListRoot, {
   onRemove(id) {
-    const idx = outcomes.findIndex((o) => o.id === id);
-    if (idx === -1) return;
-    outcomes.splice(idx, 1);
-    outcomesList.removeOutcome(id);
+    removeOutcome(id);
   },
   onAdd(label, text) {
     createOutcome(label, text);
@@ -259,26 +276,37 @@ const outcomesList = createOutcomesList(outcomesListRoot, {
   },
 });
 
+const outcomeCoordinator = createOutcomesCoordinator({
+  outcomes,
+  outcomesList,
+  deanonWorkspace,
+  getLegend: () => legend,
+});
+
+deanonWorkspace.render();
+
+const modeController = createToolModeController(toolRoot, {
+  onChange(mode) {
+    if (mode === 'deanonymize') deanonWorkspace.render();
+  },
+});
+
 // Single code path for outcome creation — used by both the manual-paste UI
 // affordance and the write_outcome MCP handler. Caller is responsible for
 // validating `label` and `text` are non-empty strings.
 function createOutcome(label, text) {
-  const newId = crypto.randomUUID();
-  outcomes.push({ id: newId, label, text });
-  outcomesList.addOutcome(newId, label, text, legend);
-  return newId;
+  return outcomeCoordinator.createOutcome(label, text);
 }
 
 // Single code path for outcome updates — used by both the inline edit
 // affordance and the write_outcome MCP handler's update branch. Returns
 // true on success, false if the id is unknown.
 function updateOutcomeFields(id, label, text) {
-  const o = outcomes.find((x) => x.id === id);
-  if (!o) return false;
-  o.label = label;
-  o.text = text;
-  outcomesList.updateOutcome(id, label, text, legend);
-  return true;
+  return outcomeCoordinator.updateOutcomeFields(id, label, text);
+}
+
+function removeOutcome(id) {
+  return outcomeCoordinator.removeOutcome(id);
 }
 
 function nextPasteLabel() {
@@ -326,7 +354,7 @@ function refreshLegend() {
     seen = {};
     legendTableBody.innerHTML = '';
     resultSection.hidden = true;
-    outcomesList.refreshLegend({});
+    outcomeCoordinator.refreshLegend({});
     return;
   }
   const built = buildTokenMapMulti(
@@ -354,7 +382,7 @@ function refreshLegend() {
     legendTableBody.appendChild(row);
   }
   resultSection.hidden = false;
-  outcomesList.refreshLegend(legend);
+  outcomeCoordinator.refreshLegend(legend);
 }
 
 function anonymizedTextFor(sourceId) {
