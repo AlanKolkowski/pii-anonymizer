@@ -12,7 +12,6 @@ import {
 } from './ui/progress-state.js';
 import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
-import { applyPaletteVars } from './ui/entity-colors.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -53,8 +52,6 @@ function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
 function setText(els, text) { els.forEach(el => { el.textContent = text; }); }
 
-const resultSection = document.getElementById('result-section');
-const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
 const selectorRoot = document.getElementById('entity-selector-root');
@@ -336,8 +333,6 @@ function refreshLegend() {
   if (ready.length === 0) {
     legend = {};
     seen = {};
-    legendTableBody.innerHTML = '';
-    resultSection.hidden = true;
     outcomeCoordinator.refreshLegend({});
     return;
   }
@@ -346,26 +341,6 @@ function refreshLegend() {
   );
   seen = built.seen;
   legend = built.legend;
-
-  legendTableBody.innerHTML = '';
-  for (const [token, value] of Object.entries(legend)) {
-    const row = document.createElement('tr');
-    const tokenCell = document.createElement('td');
-    const code = document.createElement('code');
-    code.className = 'tok';
-    code.textContent = token;
-    // Token format is `[TYPE_N]` — strip the brackets and trailing `_N` to
-    // get the entity type, then color via the same palette as the in-text pill.
-    const m = /^\[([A-Z_]+)_\d+\]$/.exec(token);
-    if (m) applyPaletteVars(code, m[1]);
-    tokenCell.appendChild(code);
-    const valueCell = document.createElement('td');
-    valueCell.textContent = value;
-    row.appendChild(tokenCell);
-    row.appendChild(valueCell);
-    legendTableBody.appendChild(row);
-  }
-  resultSection.hidden = false;
   outcomeCoordinator.refreshLegend(legend);
 }
 

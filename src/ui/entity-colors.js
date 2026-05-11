@@ -28,8 +28,7 @@ export function colorFor(entityGroup) {
 }
 
 // Design palette — oklch triples (bg/ink/line) per entity type. Source of
-// truth for in-editor pills AND the legend, so the token color in the text
-// matches the token color in the legend table.
+// truth for in-editor and deanonymization token pills.
 export const ENTITY_PALETTE = {
   PERSON_NAME:             { bg: 'oklch(0.95 0.04 165)', ink: 'oklch(0.36 0.10 165)', line: 'oklch(0.84 0.07 165)' },
   DATE_OF_BIRTH:           { bg: 'oklch(0.95 0.04 50)',  ink: 'oklch(0.42 0.12 50)',  line: 'oklch(0.84 0.08 50)'  },

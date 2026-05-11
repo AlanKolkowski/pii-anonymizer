@@ -787,52 +787,6 @@ body.has-tool {
 }
 .anno:hover { filter: brightness(0.97); }
 
-/* ---------- Legend ---------- */
-.legend {
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
-  overflow: hidden;
-  background: var(--bg-elev);
-}
-.legend table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  margin: 0;
-}
-.legend th {
-  text-align: left;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-4);
-  font-weight: 500;
-  padding: 10px 14px;
-  background: var(--bg-sunk);
-  border-bottom: 1px solid var(--line);
-}
-.legend td {
-  padding: 9px 14px;
-  border-bottom: 1px solid var(--line);
-  vertical-align: top;
-  color: var(--ink-2);
-}
-.legend tr:last-child td { border-bottom: 0; }
-.legend tr:hover td { background: var(--bg); }
-.legend td code,
-.legend .tok {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ec-ink, var(--accent-ink));
-  background: var(--ec-bg, var(--accent-tint));
-  border: 1px solid var(--ec-line, var(--accent-line));
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  display: inline-block;
-  white-space: nowrap;
-}
-
 /* ---------- Debug ---------- */
 .debug-step {
   border: 1px solid var(--line);
