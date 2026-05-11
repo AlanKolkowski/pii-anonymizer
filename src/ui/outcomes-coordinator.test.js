@@ -55,4 +55,34 @@ describe('createOutcomesCoordinator', () => {
       'Cześć',
     );
   });
+
+  it('can drive the deanon workspace without rendering the legacy outcomes list', () => {
+    document.body.innerHTML = '<div id="deanon"></div>';
+    const outcomes = [];
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+
+    const deanon = createDeanonWorkspace(document.getElementById('deanon'), {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      onAdd: vi.fn(),
+      onUpdate: vi.fn(),
+      onRemove: vi.fn(),
+      entityLabels: { PERSON_NAME: 'Imię i nazwisko' },
+    });
+    deanon.render();
+
+    const coordinator = createOutcomesCoordinator({
+      outcomes,
+      deanonWorkspace: deanon,
+      getLegend: () => legend,
+      makeId: () => 'mcp-1',
+    });
+
+    coordinator.createOutcome('Odpowiedź', 'Witaj [PERSON_NAME_1].');
+
+    expect(document.querySelector('[data-testid="outcome-card-mcp-1"]')).toBeNull();
+    expect(document.querySelector('[data-testid="deanon-output-body"]').textContent).toContain(
+      'Jan Kowalski',
+    );
+  });
 });

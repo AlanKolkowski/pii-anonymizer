@@ -1,7 +1,6 @@
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
-import { createOutcomesList } from './ui/outcomes-list/index.js';
 import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
 import { createOutcomesCoordinator } from './ui/outcomes-coordinator.js';
 import { createToolModeController } from './ui/tool-mode.js';
@@ -24,7 +23,6 @@ import {
 import './style.css';
 import './ui/annotation-editor/styles.css';
 import './ui/sources-list/styles.css';
-import './ui/outcomes-list/styles.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
@@ -64,7 +62,6 @@ const docListRoot = document.getElementById('doc-list-root');
 const sourcesListRoot = document.getElementById('sources-list-root');
 const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
 const editorToolbarRoot = document.getElementById('editor-toolbar-root');
-const outcomesListRoot = document.getElementById('outcomes-list-root');
 const deanonWorkspaceRoot = document.getElementById('deanon-workspace-root');
 const editorPaneEl = document.querySelector('.editor-pane');
 const toolRoot = document.querySelector('.tool');
@@ -264,21 +261,8 @@ const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
   },
 });
 
-const outcomesList = createOutcomesList(outcomesListRoot, {
-  onRemove(id) {
-    removeOutcome(id);
-  },
-  onAdd(label, text) {
-    createOutcome(label, text);
-  },
-  onEdit(id, label, text) {
-    updateOutcomeFields(id, label, text);
-  },
-});
-
 const outcomeCoordinator = createOutcomesCoordinator({
   outcomes,
-  outcomesList,
   deanonWorkspace,
   getLegend: () => legend,
 });
@@ -291,7 +275,7 @@ const modeController = createToolModeController(toolRoot, {
   },
 });
 
-// Single code path for outcome creation — used by both the manual-paste UI
+// Single code path for outcome creation — used by both the deanonymize-tab UI
 // affordance and the write_outcome MCP handler. Caller is responsible for
 // validating `label` and `text` are non-empty strings.
 function createOutcome(label, text) {

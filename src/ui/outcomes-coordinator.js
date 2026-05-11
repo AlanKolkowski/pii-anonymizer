@@ -1,6 +1,13 @@
+const NOOP_OUTCOMES_LIST = {
+  addOutcome() {},
+  updateOutcome() {},
+  removeOutcome() {},
+  refreshLegend() {},
+};
+
 export function createOutcomesCoordinator({
   outcomes,
-  outcomesList,
+  outcomesList = NOOP_OUTCOMES_LIST,
   deanonWorkspace,
   getLegend,
   makeId = () => crypto.randomUUID(),
