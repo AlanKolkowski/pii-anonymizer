@@ -62,6 +62,12 @@ body.has-tool {
   min-width: 1080px;
 }
 
+body.has-tool .site-header .wrap {
+  max-width: none;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
 .tool-header {
   display: flex;
   align-items: center;
