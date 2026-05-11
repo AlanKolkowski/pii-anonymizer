@@ -279,9 +279,10 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Trust strip */
 .trust-strip {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 0 32px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 max(32px, calc((100% - var(--maxw)) / 2 + 32px));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
@@ -290,17 +291,6 @@ button { font-family: inherit; cursor: pointer; }
   border-bottom: 1px solid var(--line);
   position: relative;
 }
-.trust-strip::before, .trust-strip::after {
-  content: "";
-  position: absolute;
-  top: -1px; bottom: -1px;
-  width: 50vw;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  pointer-events: none;
-}
-.trust-strip::before { right: 100%; }
-.trust-strip::after { left: 100%; }
 .trust-strip .cell {
   background: var(--bg);
   padding: 28px 24px;
