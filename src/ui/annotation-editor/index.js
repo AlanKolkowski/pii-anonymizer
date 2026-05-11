@@ -24,6 +24,7 @@ export function createAnnotationEditor(rootEl, options) {
     entityLabels = {},
     postEdit = (_text, ents) => ents,
     onChange = () => {},
+    onTextChange = () => {},
     onModeChange = () => {},
   } = options ?? {};
 
@@ -79,6 +80,7 @@ export function createAnnotationEditor(rootEl, options) {
     ta.placeholder = 'Wklej tekst zawierający dane osobowe...';
     ta.addEventListener('input', () => {
       text = ta.value;
+      onTextChange(text);
     });
     bodyEl.appendChild(ta);
     // focus after a tick so layout settles

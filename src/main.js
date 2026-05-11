@@ -51,6 +51,7 @@ const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
 const selectorRoot = document.getElementById('entity-selector-root');
+const docListRoot = document.getElementById('doc-list-root');
 const sourcesListRoot = document.getElementById('sources-list-root');
 const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
 const editorToolbarRoot = document.getElementById('editor-toolbar-root');
@@ -163,7 +164,9 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     sources.push({
       id, label, text: '', entities: [], meta: null, status: 'idle', error: null,
     });
-    sourcesList.addSource(id, label, { text: '', entities: [], status: 'idle' });
+    sourcesList.addSource(id, label, {
+      text: '', entities: [], status: 'idle', type: 'paste',
+    });
     sourcesList.enterTextMode(id);
     refreshAnonymizeButton();
   },
@@ -193,8 +196,15 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     s.entities = entities;
     refreshLegend();
   },
+  onTextChange(id, text) {
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    s.text = text;
+    refreshAnonymizeButton();
+  },
   onModeChange() { refreshAnonymizeButton(); },
 });
+sourcesList.renderDocList(docListRoot);
 
 const outcomesList = createOutcomesList(outcomesListRoot, {
   onRemove(id) {
@@ -248,7 +258,9 @@ async function addSourceFromFile(file) {
   sources.push({
     id, label, text: '', entities: [], meta: null, status: 'pending', error: null,
   });
-  sourcesList.addSource(id, label, { text: '', entities: [], status: 'pending' });
+  sourcesList.addSource(id, label, {
+    text: '', entities: [], status: 'pending', type: 'file',
+  });
   try {
     const { text, meta } = await extractText(file);
     const s = sources.find((x) => x.id === id);

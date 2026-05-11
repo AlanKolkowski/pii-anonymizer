@@ -29,6 +29,7 @@ describe('createSourcesList', () => {
       onRemove: vi.fn(),
       onRename: vi.fn(),
       onAnnotationChange: vi.fn(),
+      onTextChange: vi.fn(),
       onModeChange: vi.fn(),
       ...overrides,
     };
@@ -215,6 +216,18 @@ describe('createSourcesList', () => {
       list.removeSource('s1');
       expect(toolbarHost.querySelector('[data-testid="editor-toolbar-label"]')).toBeNull();
     });
+
+    it('reports live text edits from the source editor', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'a', { text: '', entities: [] });
+
+      const textarea = root.querySelector('.ann-editor-textarea');
+      textarea.value = 'Anna Kowalska';
+      textarea.dispatchEvent(new Event('input'));
+
+      expect(opts.onTextChange).toHaveBeenCalledWith('s1', 'Anna Kowalska');
+    });
   });
 
   describe('status', () => {
@@ -229,6 +242,97 @@ describe('createSourcesList', () => {
       expect(
         tabsHost.querySelector('[data-testid="source-status-s1"]').dataset.status,
       ).toBe('ready');
+    });
+  });
+
+  describe('sidebar doc list', () => {
+    let docHost;
+
+    beforeEach(() => {
+      docHost = document.createElement('div');
+      document.body.appendChild(docHost);
+    });
+
+    it('renders one row per source with a count and add button', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.renderDocList(docHost);
+
+      expect(docHost.querySelector('.sidebar-title h4').textContent).toBe('Dokumenty');
+      expect(docHost.querySelector('.sidebar-title .count').textContent).toBe('0');
+      expect(docHost.querySelectorAll('.doc-item').length).toBe(0);
+      expect(docHost.querySelector('[data-testid="doc-add"]')).not.toBeNull();
+
+      list.addSource('s1', 'Wklejony tekst 1', { text: '', entities: [], type: 'paste' });
+      list.addSource('s2', 'umowa.docx', { text: '', entities: [], type: 'file' });
+
+      const rows = [...docHost.querySelectorAll('.doc-item')];
+      expect(rows.length).toBe(2);
+      expect(docHost.querySelector('.sidebar-title .count').textContent).toBe('2');
+      expect(rows.map((row) => row.querySelector('.name').textContent)).toEqual([
+        'Wklejony tekst 1',
+        'umowa.docx',
+      ]);
+      expect(rows[0].dataset.type).toBe('paste');
+      expect(rows[1].dataset.type).toBe('file');
+    });
+
+    it('moves active state between doc list and workspace tabs', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.renderDocList(docHost);
+      list.addSource('s1', 'first', { text: '', entities: [] });
+      list.addSource('s2', 'second', { text: '', entities: [] });
+
+      docHost.querySelector('[data-testid="doc-item-s2"]').click();
+      expect(docHost.querySelector('[data-testid="doc-item-s2"]').classList.contains('active')).toBe(true);
+      expect(tabsHost.querySelector('[data-testid="ws-tab-s2"]').classList.contains('active')).toBe(true);
+      expect(root.querySelector('[data-testid="source-card-s2"]').dataset.active).toBe('true');
+
+      tabsHost.querySelector('[data-testid="ws-tab-s1"]').click();
+      expect(docHost.querySelector('[data-testid="doc-item-s1"]').classList.contains('active')).toBe(true);
+      expect(docHost.querySelector('[data-testid="doc-item-s2"]').classList.contains('active')).toBe(false);
+    });
+
+    it('updates count and active row when sources are removed', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.renderDocList(docHost);
+      list.addSource('s1', 'first', { text: '', entities: [] });
+      list.addSource('s2', 'second', { text: '', entities: [] });
+      list.addSource('s3', 'third', { text: '', entities: [] });
+
+      list.removeSource('s1');
+
+      expect(docHost.querySelector('.sidebar-title .count').textContent).toBe('2');
+      expect(docHost.querySelector('[data-testid="doc-item-s1"]')).toBeNull();
+      expect(docHost.querySelectorAll('.doc-item.active').length).toBe(1);
+      expect(tabsHost.querySelectorAll('.ws-tab.active').length).toBe(1);
+    });
+
+    it('keeps status glyphs in sync with source status', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.renderDocList(docHost);
+      list.addSource('s1', 'first', { text: '', entities: [], status: 'idle' });
+      list.addSource('s2', 'second', { text: '', entities: [], status: 'pending' });
+
+      expect(docHost.querySelector('[data-testid="doc-status-s1"]').textContent).toBe('…');
+      expect(docHost.querySelector('[data-testid="doc-status-s2"]').textContent).toBe('·');
+
+      list.setSourceStatus('s1', 'ready');
+      list.setSourceStatus('s2', 'error', 'failed');
+
+      expect(docHost.querySelector('[data-testid="doc-status-s1"]').textContent).toBe('✓');
+      expect(docHost.querySelector('[data-testid="doc-status-s2"]').textContent).toBe('✕');
+      expect(tabsHost.querySelector('[data-testid="source-status-s1"]').dataset.status).toBe('ready');
+      expect(tabsHost.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('error');
+    });
+
+    it('clicking doc list add uses the paste add handler', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.renderDocList(docHost);
+
+      docHost.querySelector('[data-testid="doc-add"]').click();
+
+      expect(opts.onAddPaste).toHaveBeenCalledTimes(1);
     });
   });
 
