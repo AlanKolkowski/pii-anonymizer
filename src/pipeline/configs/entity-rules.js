@@ -26,7 +26,7 @@ export const ENTITY_RULES = {
   },
   ORGANIZATION_NAME:        { maxLength: 120, threshold: 0.6, thresholdBySource: { 'multilang-fp32': 0.95 }, caseInsensitiveBackfill: true },
   VEHICLE_IDENTIFIER:       { maxLength: 40 },
-  LOCATION:                 { maxLength: 100 },
+  LOCATION:                 { maxLength: 100, threshold: 0.9 },
   POSTAL_ADDRESS:           { maxLength: 100, mergeWithAdjacent: ['LOCATION'] },
   PERSON_ATTRIBUTE:         { maxLength: 80 },
 };

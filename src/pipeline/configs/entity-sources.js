@@ -4,15 +4,17 @@
 // input rank for per-tensor int8 dequantize and MLGraphBuilder rejects the
 // rank mismatch. fp32 runs on either; we prefer GPU when available.
 export const SOURCES = {
-  'multilang-q8':   { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8',   sizeMB: 280,  backends: ['wasm'] },
+  'multilang-q8': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8', sizeMB: 280, backends: ['wasm'] },
+  'multilang-fp16': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp16',   sizeMB: 550,  backends: ['webnn-gpu', 'wasm'] },
   'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
   'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeMB: 280,  backends: ['wasm'] },
+  'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeMB: 550, backends: ['webnn-gpu', 'wasm'] },
   'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
 };
 
 export const ENTITY_SOURCES = {
-  PERSON_NAME:              ['multilang-q8'],
+  PERSON_NAME:              ['multilang-fp16'],
   DATE_OF_BIRTH:            ['multilang-q8', 'polish-q8'],
   PERSON_ATTRIBUTE:         ['multilang-q8', 'polish-q8'],
   PERSON_ALIAS:             ['multilang-q8', 'polish-q8'],
@@ -23,8 +25,8 @@ export const ENTITY_SOURCES = {
   EMAIL_ADDRESS:            ['multilang-q8', 'polish-q8', 'regex'],
   PHONE_NUMBER:             ['multilang-q8', 'polish-q8', 'regex'],
   CONTACT_HANDLE:           ['multilang-q8', 'polish-q8'],
-  POSTAL_ADDRESS:           ['polish-q8'],
-  LOCATION:                 ['polish-q8'],
+  POSTAL_ADDRESS:           ['polish-fp16'],
+  LOCATION:                 ['polish-fp16'],
   GEO_LOCATION:             ['multilang-q8', 'polish-q8'],
   IP_ADDRESS:               ['multilang-q8', 'polish-q8'],
   DEVICE_IDENTIFIER:        ['multilang-q8', 'polish-q8'],
