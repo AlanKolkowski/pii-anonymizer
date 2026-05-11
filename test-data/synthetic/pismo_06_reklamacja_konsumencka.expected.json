@@ -318,10 +318,16 @@
     "text": "Łukasz Pietrzak"
   },
   {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7187,
+    "end": 7217,
+    "text": "Urzędzie Pocztowym Białystok 4"
+  },
+  {
     "entity_group": "POSTAL_ADDRESS",
-    "start": 7206,
+    "start": 7219,
     "end": 7255,
-    "text": "Białystok 4, ul. Elektryczna 12, 15-080 Białystok"
+    "text": "ul. Elektryczna 12, 15-080 Białystok"
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",

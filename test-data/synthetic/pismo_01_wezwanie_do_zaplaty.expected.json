@@ -522,12 +522,6 @@
     "text": "Okręgowa Rada Adwokacka w Warszawie"
   },
   {
-    "entity_group": "LOCATION",
-    "start": 7544,
-    "end": 7553,
-    "text": "Warszawie"
-  },
-  {
     "entity_group": "PHONE_NUMBER",
     "start": 7800,
     "end": 7816,
