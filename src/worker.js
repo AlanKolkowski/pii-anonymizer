@@ -23,6 +23,10 @@ let webnnAvailable = false;
 const loadedModels = new Map();
 const nerCache = new Map();
 
+function postTiming(mark, extra = {}) {
+  self.postMessage({ type: 'timing', mark, ...extra, t: performance.now() });
+}
+
 function isBackendAvailable(backend) {
   // Whether a backend can run at all in this environment.
   // 'wasm' is universally available; 'webnn-gpu' depends on browser support.
@@ -149,7 +153,7 @@ async function ensureModelLoaded(alias) {
     const targetDevice = deviceFor(def);
     // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
     if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
-    self.postMessage({ type: 'timing', mark: 'model:load:start', alias, t: performance.now() });
+    postTiming('model:load:start', { alias });
     let ner;
     let device = targetDevice;
     try {
@@ -165,7 +169,7 @@ async function ensureModelLoaded(alias) {
         throw err;
       }
     }
-    self.postMessage({ type: 'timing', mark: 'model:load:end', alias, t: performance.now() });
+    postTiming('model:load:end', { alias });
     loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
     console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
   })();
@@ -242,7 +246,7 @@ self.onmessage = async (e) => {
       self.postMessage({ type: 'error', id, message: 'No entities enabled' });
       return;
     }
-    self.postMessage({ type: 'timing', mark: 'classify:start', t: performance.now() });
+    postTiming('classify:start');
     try {
       const sortSources = (hf) => [...hf].sort((a, b) => {
         const aLoaded = loadedModels.has(a.alias) ? 0 : 1;
@@ -262,6 +266,8 @@ self.onmessage = async (e) => {
         loadModel: loadModelForPipeline,
         getSentenceBoundaries: get_sentence_boundaries,
         sortSources,
+        preloadModels: true,
+        onTimingMark: postTiming,
       });
       nerCache.set(hash, newEntry);
 

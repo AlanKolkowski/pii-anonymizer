@@ -31,6 +31,8 @@ function makeSeededCtx({ text, segments, entities }) {
  * @param {Function} params.loadModel - async ({id, dtype}) => { infer, dispose }
  * @param {Function} params.getSentenceBoundaries - (lang, text) => boundaries[]
  * @param {Function} [params.sortSources] - optional ordering of HF sources
+ * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
+ * @param {boolean} [params.preloadModels] - load missing HF sessions before preprocess/segment
  * @returns {Promise<{ ctx: object, cache: object }>}
  */
 export async function classifyWithCache({
@@ -42,35 +44,62 @@ export async function classifyWithCache({
   loadModel,
   getSentenceBoundaries,
   sortSources,
+  onTimingMark = () => {},
+  preloadModels = false,
 }) {
+  const emit = (mark) => onTimingMark(mark);
   const hash = await sha256Hex(text);
   const hit = cache?.textHash === hash;
-
-  // --- Stage 1: preprocess + segment ---
-  let normalizedText, segments;
-  if (hit) {
-    normalizedText = cache.normalizedText;
-    segments = cache.segments;
-  } else {
-    const preCtx = await runPipeline(text, createPreSegmentSteps(getSentenceBoundaries));
-    normalizedText = preCtx.text;
-    segments = preCtx.segments;
-  }
-
-  // --- Stage 2: NER, running only what's missing ---
-  const bySource = hit ? new Map(cache.bySource) : new Map();
-  let regex = hit ? cache.regex : null;
 
   const needed = requiredSources(enabledEntities);
   const requiredHf = needed
     .filter((alias) => sources[alias]?.kind === 'hf')
     .map((alias) => ({ alias, id: sources[alias].id, dtype: sources[alias].dtype }));
+  const bySource = hit ? new Map(cache.bySource) : new Map();
   const missingHf = requiredHf.filter((s) => !bySource.has(s.alias));
+  const orderedMissingHf = sortSources ? sortSources(missingHf) : missingHf;
   const regexNeeded = needed.includes('regex');
 
+  emit('pipeline:load:start');
+  if (preloadModels) {
+    for (const source of orderedMissingHf) {
+      const model = await loadModel({ id: source.id, dtype: source.dtype });
+      await model.dispose?.();
+    }
+  }
+  emit('pipeline:load:end');
+
+  // --- Stage 1: preprocess + segment ---
+  let normalizedText, segments;
+  const [preprocessPhase, segmentPhase] = createPreSegmentSteps(getSentenceBoundaries);
+  emit('pipeline:preprocess:start');
+  if (hit) {
+    normalizedText = cache.normalizedText;
+  } else {
+    const preCtx = await runPipeline(text, [preprocessPhase]);
+    normalizedText = preCtx.text;
+  }
+  emit('pipeline:preprocess:end');
+
+  emit('pipeline:segment:start');
+  if (hit) {
+    segments = cache.segments;
+  } else {
+    const segCtx = await runPipeline(
+      makeSeededCtx({ text: normalizedText, segments: [], entities: [] }),
+      [segmentPhase],
+    );
+    normalizedText = segCtx.text;
+    segments = segCtx.segments;
+  }
+  emit('pipeline:segment:end');
+
+  // --- Stage 2: NER, running only what's missing ---
+  let regex = hit ? cache.regex : null;
+
+  emit('pipeline:ner:start');
   if (missingHf.length > 0) {
-    const ordered = sortSources ? sortSources(missingHf) : missingHf;
-    for (const source of ordered) {
+    for (const source of orderedMissingHf) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
         createNerSteps([source], false, loadModel),
@@ -86,13 +115,41 @@ export async function classifyWithCache({
     );
     regex = ctx.entities;
   }
+  emit('pipeline:ner:end');
 
   // --- Stage 3: postprocess on the merged entity union ---
   const merged = [...[...bySource.values()].flat(), ...(regex ?? [])];
-  const finalCtx = await runPipeline(
-    makeSeededCtx({ text: normalizedText, segments, entities: merged }),
-    createPostprocessSteps({ enabledEntities, entitySources }),
-  );
+  const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources });
+  const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
+  const postSteps = rescanIndex === -1
+    ? postprocessPhase.steps
+    : postprocessPhase.steps.slice(0, rescanIndex);
+  const rescanSteps = rescanIndex === -1
+    ? []
+    : postprocessPhase.steps.slice(rescanIndex);
+
+  emit('pipeline:postprocess:start');
+  const postCtx = postSteps.length > 0
+    ? await runPipeline(
+      makeSeededCtx({ text: normalizedText, segments, entities: merged }),
+      [{ phase: 'postprocess', steps: postSteps }],
+    )
+    : makeSeededCtx({ text: normalizedText, segments, entities: merged });
+  const postDebug = postCtx.debug ?? [];
+  emit('pipeline:postprocess:end');
+
+  emit('pipeline:rescan:start');
+  const rescanCtx = rescanSteps.length > 0
+    ? await runPipeline(
+      { ...postCtx, debug: [] },
+      [{ phase: 'postprocess', steps: rescanSteps }],
+    )
+    : postCtx;
+  const finalCtx = {
+    ...rescanCtx,
+    debug: [...postDebug, ...(rescanCtx.debug ?? [])],
+  };
+  emit('pipeline:rescan:end');
 
   return {
     ctx: finalCtx,

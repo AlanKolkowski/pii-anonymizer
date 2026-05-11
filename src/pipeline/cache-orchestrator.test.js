@@ -170,4 +170,60 @@ describe('classifyWithCache', () => {
     expect(cache2.textHash).not.toBe(cache1.textHash);
     expect(cache2.normalizedText).toBe('Inny tekst Jan.');
   });
+
+  it('emits timing marks for the UI progress buckets', async () => {
+    const marks = [];
+    await classifyWithCache({
+      text: 'Jan ma cukrzyca.',
+      enabledEntities: ['PERSON_NAME', 'HEALTH_DATA'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: get_sentence_boundaries,
+      onTimingMark: (mark) => marks.push(mark),
+    });
+
+    expect(marks).toEqual([
+      'pipeline:load:start',
+      'pipeline:load:end',
+      'pipeline:preprocess:start',
+      'pipeline:preprocess:end',
+      'pipeline:segment:start',
+      'pipeline:segment:end',
+      'pipeline:ner:start',
+      'pipeline:ner:end',
+      'pipeline:postprocess:start',
+      'pipeline:postprocess:end',
+      'pipeline:rescan:start',
+      'pipeline:rescan:end',
+    ]);
+  });
+
+  it('can preload missing HF models before preprocessing for browser progress order', async () => {
+    const events = [];
+    const loadModel = async ({ id }) => {
+      events.push(`load:${id}`);
+      return { infer: async () => [], dispose: async () => {} };
+    };
+
+    await classifyWithCache({
+      text: 'Jan ma cukrzyca.',
+      enabledEntities: ['PERSON_NAME'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel,
+      getSentenceBoundaries: get_sentence_boundaries,
+      preloadModels: true,
+      onTimingMark: (mark) => events.push(mark),
+    });
+
+    expect(events.slice(0, 3)).toEqual([
+      'pipeline:load:start',
+      'load:m-q8',
+      'pipeline:load:end',
+    ]);
+    expect(events.indexOf('load:m-q8')).toBeLessThan(events.indexOf('pipeline:preprocess:start'));
+  });
 });

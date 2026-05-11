@@ -2,6 +2,12 @@ import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createOutcomesList } from './ui/outcomes-list/index.js';
+import { createProgressOverlay } from './ui/progress-overlay.js';
+import {
+  createInitialProgressState,
+  getProgressView,
+  progressReducer,
+} from './ui/progress-state.js';
 import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import { applyPaletteVars } from './ui/entity-colors.js';
@@ -56,6 +62,7 @@ const sourcesListRoot = document.getElementById('sources-list-root');
 const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
 const editorToolbarRoot = document.getElementById('editor-toolbar-root');
 const outcomesListRoot = document.getElementById('outcomes-list-root');
+const editorPaneEl = document.querySelector('.editor-pane');
 const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
@@ -67,6 +74,37 @@ const webnnHintClose = document.getElementById('webnn-hint-close');
 //   - at least one required source for the current entity selection actually
 //     supports webnn-gpu — no point nagging when the user only enabled q8-backed types.
 const webnnSupported = 'ml' in navigator;
+const progressOverlay = editorPaneEl ? createProgressOverlay(editorPaneEl) : null;
+let progressState = createInitialProgressState();
+let progressHideTimer = null;
+let progressBatchTotal = 0;
+let progressSourceIndex = 0;
+
+function renderProgressState() {
+  progressOverlay?.render(progressState);
+  refreshRunBar();
+}
+
+function updateProgress(event) {
+  progressState = progressReducer(progressState, event);
+  renderProgressState();
+}
+
+function clearProgressHideTimer() {
+  if (progressHideTimer) {
+    clearTimeout(progressHideTimer);
+    progressHideTimer = null;
+  }
+}
+
+function scheduleProgressHide() {
+  clearProgressHideTimer();
+  updateProgress({ type: 'fade' });
+  progressHideTimer = setTimeout(() => {
+    progressHideTimer = null;
+    updateProgress({ type: 'hide' });
+  }, 350);
+}
 
 function shouldShowWebnnHint(enabledEntities) {
   if (webnnSupported) return false;
@@ -351,14 +389,8 @@ function refreshRunBar() {
   if (runBarTokensEl) runBarTokensEl.textContent = String(totalEntities);
 
   if (runBarMeterFillEl) {
-    const total = sources.length;
-    if (total === 0 || !isAnyClassifyInFlight()) {
-      runBarMeterFillEl.style.width = '100%';
-    } else {
-      const done = total - inFlightSourceIds.size;
-      const pct = Math.round((done / total) * 100);
-      runBarMeterFillEl.style.width = `${pct}%`;
-    }
+    const progressView = getProgressView(progressState);
+    runBarMeterFillEl.style.width = `${progressView.visible ? progressView.percent : 100}%`;
   }
 
   // Copy-all is meaningful only when at least one source is ready.
@@ -376,6 +408,15 @@ const pendingClassifies = [];
 function dispatchNextClassify() {
   if (pendingClassifies.length === 0) return;
   const next = pendingClassifies.shift();
+  clearProgressHideTimer();
+  progressSourceIndex += 1;
+  updateProgress({
+    type: 'source-start',
+    id: next.id,
+    index: progressSourceIndex,
+    total: progressBatchTotal || 1,
+    t: performance.now(),
+  });
   worker.postMessage({ type: 'classify', id: next.id, text: next.text });
 }
 
@@ -385,6 +426,12 @@ worker.onmessage = (e) => {
     case 'progress': {
       const pct = Math.round(msg.progress ?? 0);
       setText(modelStatusEls, `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`);
+      updateProgress({
+        type: 'download-progress',
+        file: msg.file,
+        progress: pct,
+        t: performance.now(),
+      });
       break;
     }
     case 'backend-resolved':
@@ -397,6 +444,7 @@ worker.onmessage = (e) => {
     case 'result': {
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
       const id = msg.id;
+      updateProgress({ type: 'result', id, t: performance.now() });
       const s = sources.find((x) => x.id === id);
       if (s) {
         s.entities = msg.data;
@@ -413,6 +461,7 @@ worker.onmessage = (e) => {
         debugSection.hidden = false;
       }
       if (!isAnyClassifyInFlight()) {
+        scheduleProgressHide();
         const allEmpty = sources.every((x) => x.entities.length === 0);
         if (allEmpty) {
           setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
@@ -432,6 +481,7 @@ worker.onmessage = (e) => {
     }
     case 'timing':
       console.log(`[bench-timing] ${msg.mark}${msg.alias ? ' alias=' + msg.alias : ''} t=${msg.t.toFixed(2)}`);
+      updateProgress({ type: 'timing', mark: msg.mark, t: msg.t });
       break;
     case 'error': {
       const id = msg.id;
@@ -442,10 +492,14 @@ worker.onmessage = (e) => {
         sourcesList.setSourceStatus(id, 'error', msg.message);
       }
       if (id) {
+        updateProgress({ type: 'error', id, t: performance.now() });
         inFlightSourceIds.delete(id);
         dispatchNextClassify();
       }
-      if (!isAnyClassifyInFlight()) setText(anonymizeBtns, 'Anonimizuj');
+      if (!isAnyClassifyInFlight()) {
+        setText(anonymizeBtns, 'Anonimizuj');
+        scheduleProgressHide();
+      }
       setText(modelStatusEls, `Błąd: ${msg.message}`);
       refreshAnonymizeButton();
       break;
@@ -483,6 +537,10 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   const toClassify = sources.filter((s) => (s.text ?? '').trim().length > 0);
   if (toClassify.length === 0) return;
 
+  clearProgressHideTimer();
+  progressBatchTotal = toClassify.length;
+  progressSourceIndex = 0;
+  updateProgress({ type: 'batch-start', total: toClassify.length, t: performance.now() });
   pendingClassifies.length = 0;
   for (const s of toClassify) {
     s.status = 'pending';
