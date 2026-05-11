@@ -66,6 +66,7 @@ const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
 const webnnHintClose = document.getElementById('webnn-hint-close');
+const webmcpControlRoot = document.getElementById('webmcp-control-root');
 
 // Show the hint only when:
 //   - the browser doesn't expose WebNN, AND
@@ -199,7 +200,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     const id = crypto.randomUUID();
     const label = nextPasteLabel();
     sources.push({
-      id, label, text: '', entities: [], meta: null, status: 'idle', error: null,
+      id, label, text: '', entities: [], meta: null, status: 'idle', error: null, lastReadyText: null,
     });
     sourcesList.addSource(id, label, {
       text: '', entities: [], status: 'idle', type: 'paste',
@@ -238,6 +239,9 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     if (!s) return;
     s.text = text;
     refreshAnonymizeButton();
+  },
+  onTextDirtyChange(id, dirty) {
+    updateSourceDirtyState(id, dirty);
   },
   onModeChange() { refreshAnonymizeButton(); },
 });
@@ -303,7 +307,7 @@ async function addSourceFromFile(file) {
   const id = crypto.randomUUID();
   const label = file.name || `Plik ${sources.length + 1}`;
   sources.push({
-    id, label, text: '', entities: [], meta: null, status: 'pending', error: null,
+    id, label, text: '', entities: [], meta: null, status: 'pending', error: null, lastReadyText: null,
   });
   sourcesList.addSource(id, label, {
     text: '', entities: [], status: 'pending', type: 'file',
@@ -324,6 +328,20 @@ async function addSourceFromFile(file) {
     s.status = 'error';
     s.error = err.message;
     sourcesList.setSourceStatus(id, 'error', err.message);
+  }
+  refreshAnonymizeButton();
+}
+
+function updateSourceDirtyState(id, dirty) {
+  const s = sources.find((x) => x.id === id);
+  if (!s) return;
+
+  const canRestoreReady = s.lastReadyText !== null && s.text === s.lastReadyText;
+  const nextStatus = dirty ? 'idle' : (canRestoreReady ? 'ready' : s.status);
+  if (nextStatus !== s.status) {
+    s.status = nextStatus;
+    sourcesList.setSourceStatus(id, nextStatus);
+    refreshLegend();
   }
   refreshAnonymizeButton();
 }
@@ -362,6 +380,12 @@ function refreshAnonymizeButton() {
   const hasAnyText = sources.some((s) => (s.text ?? '').trim().length > 0);
   const blocked = !configuredOnce || isAnyClassifyInFlight();
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
+  if (!isAnyClassifyInFlight()) {
+    const hasReclassify = sources.some((s) =>
+      s.lastReadyText !== null && s.text !== s.lastReadyText && (s.text ?? '').trim().length > 0,
+    );
+    setText(anonymizeBtns, hasReclassify ? 'Anonimizuj ponownie' : 'Anonimizuj');
+  }
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
   else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
   refreshRunBar();
@@ -437,6 +461,7 @@ worker.onmessage = (e) => {
         s.entities = msg.data;
         s.status = 'ready';
         s.error = null;
+        s.lastReadyText = s.text;
         sourcesList.setSourceEntities(id, msg.data);
         sourcesList.setSourceStatus(id, 'ready');
       }
@@ -659,6 +684,83 @@ function escHtml(s) {
 refreshAnonymizeButton();
 
 const mcp = new WebMCP({ channelName: 'pii' });
+mountWebMcpControl(mcp);
+
+function mountWebMcpControl(instance) {
+  if (!webmcpControlRoot || !instance?.elementId) return;
+  const widget = document.getElementById(instance.elementId);
+  if (!widget) return;
+
+  widget.classList.add('webmcp-run-widget');
+  webmcpControlRoot.appendChild(widget);
+
+  Object.assign(widget.style, {
+    position: 'relative',
+    top: 'auto',
+    right: 'auto',
+    bottom: 'auto',
+    left: 'auto',
+    padding: '0',
+    zIndex: '30',
+    display: 'inline-flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    fontFamily: 'inherit',
+    fontSize: '13px',
+  });
+
+  const trigger = widget.querySelector('.webmcp-trigger');
+  const panel = widget.querySelector('.webmcp-content');
+  if (trigger) {
+    trigger.setAttribute('role', 'button');
+    trigger.setAttribute('tabindex', '0');
+    trigger.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return;
+      ev.preventDefault();
+      trigger.click();
+    });
+  }
+  if (panel) {
+    Object.assign(panel.style, {
+      bottom: 'calc(100% + 10px)',
+      right: '0',
+      marginBottom: '0',
+      width: '280px',
+    });
+  }
+
+  const updateTrigger = (status = null) => {
+    if (!trigger) return;
+    const connected = Boolean(instance.isConnected);
+    widget.dataset.mcpConnected = connected ? 'true' : 'false';
+    if (status === 'connecting' || status === 'pending-auth') {
+      trigger.textContent = 'Łączenie AI…';
+    } else {
+      trigger.textContent = connected ? 'AI podłączone' : 'Podłącz AI';
+    }
+    trigger.setAttribute('aria-label', trigger.textContent);
+  };
+
+  const originalUpdateStatus = instance._updateStatus?.bind(instance);
+  if (originalUpdateStatus) {
+    instance._updateStatus = (status, message) => {
+      originalUpdateStatus(status, message);
+      widget.dataset.mcpStatus = status;
+      updateTrigger(status);
+    };
+  }
+
+  const originalUpdateConnectionUI = instance._updateConnectionUI?.bind(instance);
+  if (originalUpdateConnectionUI) {
+    instance._updateConnectionUI = (isConnected) => {
+      originalUpdateConnectionUI(isConnected);
+      widget.dataset.mcpConnected = isConnected ? 'true' : 'false';
+      updateTrigger();
+    };
+  }
+
+  updateTrigger();
+}
 
 function jsonContent(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value) }] };

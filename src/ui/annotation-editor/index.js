@@ -26,6 +26,7 @@ export function createAnnotationEditor(rootEl, options) {
     onChange = () => {},
     onTextChange = () => {},
     onModeChange = () => {},
+    onDirtyChange = () => {},
   } = options ?? {};
 
   let text = initialText;
@@ -40,6 +41,7 @@ export function createAnnotationEditor(rootEl, options) {
   let popoverEl = null;
   let confirmEl = null;
   let toastTimer = null;
+  let lastDirtyState = null;
 
   rootEl.classList.add('ann-editor');
 
@@ -53,6 +55,7 @@ export function createAnnotationEditor(rootEl, options) {
 
   // Body — switches between textarea and surface
   const bodyEl = document.createElement('div');
+  bodyEl.className = 'ann-editor-body';
   rootEl.appendChild(bodyEl);
 
   // ── Mode rendering ────────────────────────────────────────
@@ -81,6 +84,7 @@ export function createAnnotationEditor(rootEl, options) {
     ta.addEventListener('input', () => {
       text = ta.value;
       onTextChange(text);
+      emitDirtyChange();
     });
     bodyEl.appendChild(ta);
     // focus after a tick so layout settles
@@ -399,6 +403,17 @@ export function createAnnotationEditor(rootEl, options) {
     return select;
   }
 
+  function isTextDirty() {
+    return mode === 'text' && text !== textSnapshot;
+  }
+
+  function emitDirtyChange(force = false) {
+    const dirty = isTextDirty();
+    if (!force && dirty === lastDirtyState) return;
+    lastDirtyState = dirty;
+    onDirtyChange(dirty);
+  }
+
   function commitChange(newEntities) {
     let processed = newEntities;
     try {
@@ -522,12 +537,14 @@ export function createAnnotationEditor(rootEl, options) {
   function setEntities(newEntities) {
     entities = newEntities ?? [];
     selectedIndex = -1;
-    if (entities.length > 0 && mode !== 'annotation') {
+    textSnapshot = text;
+    if (mode !== 'annotation') {
       mode = 'annotation';
       onModeChange(mode);
     }
     renderMode();
     onChange(entities);
+    emitDirtyChange(true);
   }
 
   function enterTextMode() {
@@ -536,6 +553,7 @@ export function createAnnotationEditor(rootEl, options) {
     textSnapshot = text;
     renderMode();
     onModeChange(mode);
+    emitDirtyChange(true);
   }
 
   function commitTextMode(newText) {
@@ -545,9 +563,11 @@ export function createAnnotationEditor(rootEl, options) {
       mode = 'annotation';
       renderMode();
       onModeChange(mode);
+      emitDirtyChange(true);
       return { changed: false };
     }
     // Text actually changed — keep mode='text' until host runs pipeline and calls setEntities
+    emitDirtyChange(true);
     return { changed: true };
   }
 
@@ -571,6 +591,7 @@ export function createAnnotationEditor(rootEl, options) {
     renderMode();
     onModeChange(mode);
     onChange(entities);
+    emitDirtyChange(true);
   }
 
   function dispose() {
@@ -582,6 +603,7 @@ export function createAnnotationEditor(rootEl, options) {
   // initial render
   renderMode();
   onModeChange(mode);
+  emitDirtyChange(true);
 
   return {
     setEntities,
@@ -592,6 +614,7 @@ export function createAnnotationEditor(rootEl, options) {
     getEntities: () => entities,
     getTextSnapshot: () => textSnapshot,
     getMode: () => mode,
+    isTextDirty,
     dispose,
   };
 }

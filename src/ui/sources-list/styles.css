@@ -1,13 +1,31 @@
 .srclist {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+}
+.srclist-cards {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 .srclist-card {
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  padding: 0.75rem;
-  background: #fff;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: var(--bg-elev, #fff);
+  overflow: hidden;
+}
+.srclist-card[data-active="false"] { display: none; }
+.srclist-cards > .editor-empty {
+  flex: 1;
+  min-height: 0;
 }
 .srclist-card-head {
   display: flex;

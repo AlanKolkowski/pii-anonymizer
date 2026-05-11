@@ -92,4 +92,30 @@ describe('annotation-editor — pill rendering', () => {
     expect(tokens[0]).toBeTruthy();
     expect(tokens[0]).toBe(tokens[1]); // same canonical → same token
   });
+
+  it('can enter text editing and return to annotation mode when text is unchanged', () => {
+    const { root, editor } = mount();
+    editor.enterTextMode();
+    expect(editor.getMode()).toBe('text');
+    expect(editor.isTextDirty()).toBe(false);
+    expect(root.querySelector('.ann-editor-textarea')).not.toBeNull();
+
+    const result = editor.commitTextMode(editor.getText());
+    expect(result.changed).toBe(false);
+    expect(editor.getMode()).toBe('annotation');
+    expect(root.querySelector('.ann-editor-surface')).not.toBeNull();
+  });
+
+  it('stays in text mode and reports dirty when edited text differs from the snapshot', () => {
+    const { root, editor } = mount();
+    editor.enterTextMode();
+    const textarea = root.querySelector('.ann-editor-textarea');
+    textarea.value = 'Anna mieszka w Krakowie.';
+    textarea.dispatchEvent(new Event('input'));
+
+    expect(editor.isTextDirty()).toBe(true);
+    const result = editor.commitTextMode(editor.getText());
+    expect(result.changed).toBe(true);
+    expect(editor.getMode()).toBe('text');
+  });
 });

@@ -2,17 +2,20 @@
    defined in landing.css. Loaded together on tool.html. */
 
 * { box-sizing: border-box; }
+html, body { height: 100%; }
 body { margin: 0; padding: 0; }
 
 [hidden] { display: none !important; }
 
 /* ---------- Tool shell ---------- */
 .tool-page {
-  min-height: calc(100vh - 60px);
-  min-height: calc(100dvh - 60px);
+  height: calc(100vh - 60px);
+  height: calc(100dvh - 60px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 .tool-page-inner {
   flex: 1;
@@ -20,13 +23,14 @@ body { margin: 0; padding: 0; }
   display: flex;
   min-height: 0;
   min-width: 1080px;
+  overflow: hidden;
 }
 .tool {
   flex: 1;
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 640px;
+  min-height: 0;
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--r-4);
@@ -39,6 +43,7 @@ body { margin: 0; padding: 0; }
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .tool-mode-panel[hidden] {
   display: none !important;
@@ -53,6 +58,7 @@ body { margin: 0; padding: 0; }
 }
 body.has-tool {
   overflow-x: auto;
+  overflow-y: hidden;
   min-width: 1080px;
 }
 
@@ -126,6 +132,7 @@ body.has-tool {
   grid-template-columns: 280px 1fr;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 .tool-body.tool-body-deanon {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -406,8 +413,10 @@ body.has-tool {
 .tool-scroll {
   flex: 1;
   overflow: auto;
-  padding: 24px 28px 32px;
+  padding: 0;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .deanon-editor {
   flex: 1;
@@ -433,6 +442,23 @@ body.has-tool {
   color: var(--accent-ink) !important;
 }
 .tool-section + .tool-section { margin-top: 28px; }
+#sources-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+#sources-list-root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#debug-section {
+  padding: 24px 28px 32px;
+  border-top: 1px solid var(--line);
+}
 .tool-section-head {
   margin-bottom: 12px;
 }
@@ -745,16 +771,23 @@ body.has-tool {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1;
 }
 .srclist-cards {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 .srclist-card {
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
   background: var(--bg-elev);
-  box-shadow: var(--shadow-1);
+  box-shadow: none;
   overflow: hidden;
 }
 .srclist-card[data-active="false"] { display: none; }
@@ -768,6 +801,10 @@ body.has-tool {
   background: var(--bg-elev);
   font-family: var(--mono);
   font-size: 11px;
+}
+.edit-dirty-hint {
+  color: var(--warn) !important;
+  white-space: nowrap;
 }
 
 /* ---------- Annotations — highlight style ----------
@@ -786,6 +823,54 @@ body.has-tool {
   transition: filter 0.15s;
 }
 .anno:hover { filter: brightness(0.97); }
+
+/* ---------- WebMCP in run bar ---------- */
+.webmcp-control-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.webmcp-run-widget {
+  position: relative !important;
+  inset: auto !important;
+  padding: 0 !important;
+  z-index: 30 !important;
+  font-family: var(--sans) !important;
+  font-size: 13px !important;
+}
+.webmcp-run-widget .webmcp-trigger {
+  width: auto !important;
+  height: auto !important;
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+  border-radius: var(--r-2) !important;
+  border: 1px solid var(--line-2) !important;
+  background: var(--bg-elev) !important;
+  color: var(--ink-2) !important;
+  box-shadow: none !important;
+  font-family: var(--sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+.webmcp-run-widget .webmcp-trigger:hover {
+  border-color: var(--ink-4) !important;
+  color: var(--ink) !important;
+}
+.webmcp-run-widget[data-mcp-connected="true"] .webmcp-trigger {
+  border-color: var(--accent-line) !important;
+  background: var(--accent-tint) !important;
+  color: var(--accent-ink) !important;
+}
+.webmcp-run-widget .webmcp-content {
+  bottom: calc(100% + 10px) !important;
+  right: 0 !important;
+  margin-bottom: 0 !important;
+  font-family: var(--sans) !important;
+  color: #111827 !important;
+  text-align: left !important;
+}
 
 /* ---------- Debug ---------- */
 .debug-step {

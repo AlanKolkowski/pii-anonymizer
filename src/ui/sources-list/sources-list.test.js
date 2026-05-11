@@ -30,6 +30,7 @@ describe('createSourcesList', () => {
       onRename: vi.fn(),
       onAnnotationChange: vi.fn(),
       onTextChange: vi.fn(),
+      onTextDirtyChange: vi.fn(),
       onModeChange: vi.fn(),
       ...overrides,
     };
@@ -336,21 +337,45 @@ describe('createSourcesList', () => {
     });
   });
 
-  describe('rename', () => {
-    it('renaming via the toolbar rename button fires onRename and updates display', () => {
+  describe('edit mode controls', () => {
+    it('shows Edytuj in annotation mode and returns with Zakończ edycję when unchanged', () => {
       const opts = defaultOpts();
       const list = createSourcesList(root, opts);
-      list.addSource('s1', 'old', { text: '', entities: [] });
-      const editBtn = toolbarHost.querySelector('[data-testid="source-rename-s1"]');
+      list.addSource('s1', 'doc', {
+        text: 'Anna mieszka w Warszawie',
+        entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 4, score: 1 }],
+      });
+
+      const editBtn = toolbarHost.querySelector('[data-testid="source-edit-s1"]');
       expect(editBtn).not.toBeNull();
       editBtn.click();
-      const input = toolbarHost.querySelector('[data-testid="source-label-input-s1"]');
-      input.value = 'new';
-      input.dispatchEvent(new Event('change'));
-      input.dispatchEvent(new Event('blur'));
-      expect(opts.onRename).toHaveBeenCalledWith('s1', 'new');
-      list.setSourceLabel('s1', 'new');
-      expect(toolbarHost.querySelector('[data-testid="editor-toolbar-label"]').textContent).toBe('new');
+      expect(list.getMode('s1')).toBe('text');
+      expect(root.querySelector('.ann-editor-textarea')).not.toBeNull();
+
+      const finishBtn = toolbarHost.querySelector('[data-testid="source-finish-edit-s1"]');
+      expect(finishBtn).not.toBeNull();
+      finishBtn.click();
+      expect(list.getMode('s1')).toBe('annotation');
+      expect(root.querySelector('.ann-editor-surface')).not.toBeNull();
+    });
+
+    it('marks edited text as dirty and replaces finish control with a re-anonymize hint', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'doc', {
+        text: 'Anna mieszka w Warszawie',
+        entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 4, score: 1 }],
+      });
+
+      toolbarHost.querySelector('[data-testid="source-edit-s1"]').click();
+      const textarea = root.querySelector('.ann-editor-textarea');
+      textarea.value = 'Anna mieszka w Krakowie';
+      textarea.dispatchEvent(new Event('input'));
+
+      expect(list.isTextDirty('s1')).toBe(true);
+      expect(opts.onTextDirtyChange).toHaveBeenLastCalledWith('s1', true);
+      expect(toolbarHost.querySelector('[data-testid="source-finish-edit-s1"]')).toBeNull();
+      expect(toolbarHost.querySelector('[data-testid="editor-toolbar-dirty-hint"]')).not.toBeNull();
     });
   });
 

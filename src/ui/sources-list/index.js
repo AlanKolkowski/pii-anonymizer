@@ -199,6 +199,10 @@ export function createSourcesList(rootEl, opts) {
         if (id === activeId) refreshToolbar();
       },
       onModeChange: (mode) => opts.onModeChange(id, mode),
+      onDirtyChange: (dirty) => {
+        opts.onTextDirtyChange?.(id, dirty);
+        if (id === activeId) refreshToolbar();
+      },
     });
 
     cardsHost.appendChild(wrapper);
@@ -221,6 +225,8 @@ export function createSourcesList(rootEl, opts) {
     left.appendChild(labelEl);
 
     const text = card.editor.getText();
+    const mode = card.editor.getMode();
+    const dirty = card.editor.isTextDirty?.() ?? false;
     const sizeEl = document.createElement('span');
     sizeEl.className = 'meta';
     sizeEl.dataset.testid = 'editor-toolbar-size';
@@ -229,7 +235,7 @@ export function createSourcesList(rootEl, opts) {
     left.appendChild(sizeEl);
 
     const entities = card.editor.getEntities();
-    if (entities.length > 0) {
+    if (entities.length > 0 && !dirty) {
       left.appendChild(sep());
       const countEl = document.createElement('span');
       countEl.className = 'meta';
@@ -242,13 +248,35 @@ export function createSourcesList(rootEl, opts) {
     const right = document.createElement('div');
     right.className = 'right';
 
-    const renameBtn = document.createElement('button');
-    renameBtn.type = 'button';
-    renameBtn.className = 'btn btn-sm btn-ghost';
-    renameBtn.dataset.testid = `source-rename-${activeId}`;
-    renameBtn.textContent = 'Zmień nazwę';
-    renameBtn.addEventListener('click', () => beginRename(activeId));
-    right.appendChild(renameBtn);
+    if (mode === 'annotation') {
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-sm btn-ghost';
+      editBtn.dataset.testid = `source-edit-${activeId}`;
+      editBtn.textContent = 'Edytuj';
+      editBtn.addEventListener('click', () => {
+        card.editor.enterTextMode();
+        refreshToolbar();
+      });
+      right.appendChild(editBtn);
+    } else if (!dirty && text.length > 0) {
+      const finishBtn = document.createElement('button');
+      finishBtn.type = 'button';
+      finishBtn.className = 'btn btn-sm btn-ghost';
+      finishBtn.dataset.testid = `source-finish-edit-${activeId}`;
+      finishBtn.textContent = 'Zakończ edycję';
+      finishBtn.addEventListener('click', () => {
+        card.editor.commitTextMode(card.editor.getText());
+        refreshToolbar();
+      });
+      right.appendChild(finishBtn);
+    } else if (dirty) {
+      const hint = document.createElement('span');
+      hint.className = 'meta edit-dirty-hint';
+      hint.dataset.testid = 'editor-toolbar-dirty-hint';
+      hint.textContent = 'Uruchom anonimizację, aby odświeżyć adnotacje';
+      right.appendChild(hint);
+    }
 
     toolbarHost.appendChild(left);
     toolbarHost.appendChild(right);
@@ -467,11 +495,17 @@ export function createSourcesList(rootEl, opts) {
     getText(id) { return cards.get(id)?.editor.getText() ?? ''; },
     getEntities(id) { return cards.get(id)?.editor.getEntities() ?? []; },
     getMode(id) { return cards.get(id)?.editor.getMode() ?? 'text'; },
-    enterTextMode(id) { cards.get(id)?.editor.enterTextMode(); },
+    enterTextMode(id) {
+      cards.get(id)?.editor.enterTextMode();
+      if (id === activeId) refreshToolbar();
+    },
     commitTextMode(id, text) {
       const card = cards.get(id);
-      return card ? card.editor.commitTextMode(text) : { changed: false };
+      const result = card ? card.editor.commitTextMode(text) : { changed: false };
+      if (id === activeId) refreshToolbar();
+      return result;
     },
+    isTextDirty(id) { return cards.get(id)?.editor.isTextDirty?.() ?? false; },
     listIds() { return [...cards.keys()]; },
     getActiveId() { return activeId; },
     setActive,
