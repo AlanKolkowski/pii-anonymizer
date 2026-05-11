@@ -2,8 +2,18 @@ import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createOutcomesList } from './ui/outcomes-list/index.js';
+import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
+import { createOutcomesCoordinator } from './ui/outcomes-coordinator.js';
+import { createToolModeController } from './ui/tool-mode.js';
+import { createProgressOverlay } from './ui/progress-overlay.js';
+import {
+  createInitialProgressState,
+  getProgressView,
+  progressReducer,
+} from './ui/progress-state.js';
 import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
+import { applyPaletteVars } from './ui/entity-colors.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -35,7 +45,11 @@ const LS_KEY = 'pii.selected-entities';
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
+const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
+const runBarDocsEl = document.querySelector('[data-testid="run-bar-docs"]');
+const runBarTokensEl = document.querySelector('[data-testid="run-bar-tokens"]');
+const runBarMeterFillEl = document.querySelector('[data-testid="run-bar-meter-fill"]');
 
 function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
@@ -46,10 +60,14 @@ const legendTableBody = document.querySelector('#legend-table tbody');
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
 const selectorRoot = document.getElementById('entity-selector-root');
+const docListRoot = document.getElementById('doc-list-root');
 const sourcesListRoot = document.getElementById('sources-list-root');
 const workspaceTabsRoot = document.getElementById('workspace-tabs-root');
 const editorToolbarRoot = document.getElementById('editor-toolbar-root');
 const outcomesListRoot = document.getElementById('outcomes-list-root');
+const deanonWorkspaceRoot = document.getElementById('deanon-workspace-root');
+const editorPaneEl = document.querySelector('.editor-pane');
+const toolRoot = document.querySelector('.tool');
 const webnnHint = document.getElementById('webnn-hint');
 const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
@@ -61,6 +79,37 @@ const webnnHintClose = document.getElementById('webnn-hint-close');
 //   - at least one required source for the current entity selection actually
 //     supports webnn-gpu — no point nagging when the user only enabled q8-backed types.
 const webnnSupported = 'ml' in navigator;
+const progressOverlay = editorPaneEl ? createProgressOverlay(editorPaneEl) : null;
+let progressState = createInitialProgressState();
+let progressHideTimer = null;
+let progressBatchTotal = 0;
+let progressSourceIndex = 0;
+
+function renderProgressState() {
+  progressOverlay?.render(progressState);
+  refreshRunBar();
+}
+
+function updateProgress(event) {
+  progressState = progressReducer(progressState, event);
+  renderProgressState();
+}
+
+function clearProgressHideTimer() {
+  if (progressHideTimer) {
+    clearTimeout(progressHideTimer);
+    progressHideTimer = null;
+  }
+}
+
+function scheduleProgressHide() {
+  clearProgressHideTimer();
+  updateProgress({ type: 'fade' });
+  progressHideTimer = setTimeout(() => {
+    progressHideTimer = null;
+    updateProgress({ type: 'hide' });
+  }, 350);
+}
 
 function shouldShowWebnnHint(enabledEntities) {
   if (webnnSupported) return false;
@@ -158,7 +207,9 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     sources.push({
       id, label, text: '', entities: [], meta: null, status: 'idle', error: null,
     });
-    sourcesList.addSource(id, label, { text: '', entities: [], status: 'idle' });
+    sourcesList.addSource(id, label, {
+      text: '', entities: [], status: 'idle', type: 'paste',
+    });
     sourcesList.enterTextMode(id);
     refreshAnonymizeButton();
   },
@@ -188,15 +239,34 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     s.entities = entities;
     refreshLegend();
   },
+  onTextChange(id, text) {
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    s.text = text;
+    refreshAnonymizeButton();
+  },
   onModeChange() { refreshAnonymizeButton(); },
+});
+sourcesList.renderDocList(docListRoot);
+
+const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
+  getOutcomes: () => outcomes,
+  getLegend: () => legend,
+  entityLabels: ENTITY_LABELS,
+  onAdd(label, text) {
+    createOutcome(label, text);
+  },
+  onUpdate(id, label, text) {
+    updateOutcomeFields(id, label, text);
+  },
+  onRemove(id) {
+    removeOutcome(id);
+  },
 });
 
 const outcomesList = createOutcomesList(outcomesListRoot, {
   onRemove(id) {
-    const idx = outcomes.findIndex((o) => o.id === id);
-    if (idx === -1) return;
-    outcomes.splice(idx, 1);
-    outcomesList.removeOutcome(id);
+    removeOutcome(id);
   },
   onAdd(label, text) {
     createOutcome(label, text);
@@ -206,26 +276,37 @@ const outcomesList = createOutcomesList(outcomesListRoot, {
   },
 });
 
+const outcomeCoordinator = createOutcomesCoordinator({
+  outcomes,
+  outcomesList,
+  deanonWorkspace,
+  getLegend: () => legend,
+});
+
+deanonWorkspace.render();
+
+const modeController = createToolModeController(toolRoot, {
+  onChange(mode) {
+    if (mode === 'deanonymize') deanonWorkspace.render();
+  },
+});
+
 // Single code path for outcome creation — used by both the manual-paste UI
 // affordance and the write_outcome MCP handler. Caller is responsible for
 // validating `label` and `text` are non-empty strings.
 function createOutcome(label, text) {
-  const newId = crypto.randomUUID();
-  outcomes.push({ id: newId, label, text });
-  outcomesList.addOutcome(newId, label, text, legend);
-  return newId;
+  return outcomeCoordinator.createOutcome(label, text);
 }
 
 // Single code path for outcome updates — used by both the inline edit
 // affordance and the write_outcome MCP handler's update branch. Returns
 // true on success, false if the id is unknown.
 function updateOutcomeFields(id, label, text) {
-  const o = outcomes.find((x) => x.id === id);
-  if (!o) return false;
-  o.label = label;
-  o.text = text;
-  outcomesList.updateOutcome(id, label, text, legend);
-  return true;
+  return outcomeCoordinator.updateOutcomeFields(id, label, text);
+}
+
+function removeOutcome(id) {
+  return outcomeCoordinator.removeOutcome(id);
 }
 
 function nextPasteLabel() {
@@ -243,7 +324,9 @@ async function addSourceFromFile(file) {
   sources.push({
     id, label, text: '', entities: [], meta: null, status: 'pending', error: null,
   });
-  sourcesList.addSource(id, label, { text: '', entities: [], status: 'pending' });
+  sourcesList.addSource(id, label, {
+    text: '', entities: [], status: 'pending', type: 'file',
+  });
   try {
     const { text, meta } = await extractText(file);
     const s = sources.find((x) => x.id === id);
@@ -271,7 +354,7 @@ function refreshLegend() {
     seen = {};
     legendTableBody.innerHTML = '';
     resultSection.hidden = true;
-    outcomesList.refreshLegend({});
+    outcomeCoordinator.refreshLegend({});
     return;
   }
   const built = buildTokenMapMulti(
@@ -285,7 +368,12 @@ function refreshLegend() {
     const row = document.createElement('tr');
     const tokenCell = document.createElement('td');
     const code = document.createElement('code');
+    code.className = 'tok';
     code.textContent = token;
+    // Token format is `[TYPE_N]` — strip the brackets and trailing `_N` to
+    // get the entity type, then color via the same palette as the in-text pill.
+    const m = /^\[([A-Z_]+)_\d+\]$/.exec(token);
+    if (m) applyPaletteVars(code, m[1]);
     tokenCell.appendChild(code);
     const valueCell = document.createElement('td');
     valueCell.textContent = value;
@@ -294,7 +382,7 @@ function refreshLegend() {
     legendTableBody.appendChild(row);
   }
   resultSection.hidden = false;
-  outcomesList.refreshLegend(legend);
+  outcomeCoordinator.refreshLegend(legend);
 }
 
 function anonymizedTextFor(sourceId) {
@@ -317,6 +405,25 @@ function refreshAnonymizeButton() {
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
   else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
+  refreshRunBar();
+}
+
+function refreshRunBar() {
+  if (runBarDocsEl) runBarDocsEl.textContent = String(sources.length);
+  const totalEntities = sources.reduce(
+    (acc, s) => acc + (s.status === 'ready' ? s.entities.length : 0),
+    0,
+  );
+  if (runBarTokensEl) runBarTokensEl.textContent = String(totalEntities);
+
+  if (runBarMeterFillEl) {
+    const progressView = getProgressView(progressState);
+    runBarMeterFillEl.style.width = `${progressView.visible ? progressView.percent : 100}%`;
+  }
+
+  // Copy-all is meaningful only when at least one source is ready.
+  const anyReady = sources.some((s) => s.status === 'ready');
+  setDisabled(copyAllBtns, !anyReady || isAnyClassifyInFlight());
 }
 
 // Single-flight queue: dispatch one classify at a time. The worker's
@@ -329,6 +436,15 @@ const pendingClassifies = [];
 function dispatchNextClassify() {
   if (pendingClassifies.length === 0) return;
   const next = pendingClassifies.shift();
+  clearProgressHideTimer();
+  progressSourceIndex += 1;
+  updateProgress({
+    type: 'source-start',
+    id: next.id,
+    index: progressSourceIndex,
+    total: progressBatchTotal || 1,
+    t: performance.now(),
+  });
   worker.postMessage({ type: 'classify', id: next.id, text: next.text });
 }
 
@@ -338,6 +454,12 @@ worker.onmessage = (e) => {
     case 'progress': {
       const pct = Math.round(msg.progress ?? 0);
       setText(modelStatusEls, `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`);
+      updateProgress({
+        type: 'download-progress',
+        file: msg.file,
+        progress: pct,
+        t: performance.now(),
+      });
       break;
     }
     case 'backend-resolved':
@@ -350,6 +472,7 @@ worker.onmessage = (e) => {
     case 'result': {
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
       const id = msg.id;
+      updateProgress({ type: 'result', id, t: performance.now() });
       const s = sources.find((x) => x.id === id);
       if (s) {
         s.entities = msg.data;
@@ -366,6 +489,7 @@ worker.onmessage = (e) => {
         debugSection.hidden = false;
       }
       if (!isAnyClassifyInFlight()) {
+        scheduleProgressHide();
         const allEmpty = sources.every((x) => x.entities.length === 0);
         if (allEmpty) {
           setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
@@ -385,6 +509,7 @@ worker.onmessage = (e) => {
     }
     case 'timing':
       console.log(`[bench-timing] ${msg.mark}${msg.alias ? ' alias=' + msg.alias : ''} t=${msg.t.toFixed(2)}`);
+      updateProgress({ type: 'timing', mark: msg.mark, t: msg.t });
       break;
     case 'error': {
       const id = msg.id;
@@ -395,16 +520,39 @@ worker.onmessage = (e) => {
         sourcesList.setSourceStatus(id, 'error', msg.message);
       }
       if (id) {
+        updateProgress({ type: 'error', id, t: performance.now() });
         inFlightSourceIds.delete(id);
         dispatchNextClassify();
       }
-      if (!isAnyClassifyInFlight()) setText(anonymizeBtns, 'Anonimizuj');
+      if (!isAnyClassifyInFlight()) {
+        setText(anonymizeBtns, 'Anonimizuj');
+        scheduleProgressHide();
+      }
       setText(modelStatusEls, `Błąd: ${msg.message}`);
       refreshAnonymizeButton();
       break;
     }
   }
 };
+
+copyAllBtns.forEach(btn => btn.addEventListener('click', async () => {
+  const ready = sources.filter((s) => s.status === 'ready');
+  if (ready.length === 0) return;
+  const joined = ready
+    .map((s) => {
+      const text = applyTokens(s.text, s.entities, seen);
+      return ready.length === 1 ? text : `── ${s.label} ──\n${text}`;
+    })
+    .join('\n\n');
+  try {
+    await navigator.clipboard.writeText(joined);
+    const originalHtml = btn.innerHTML;
+    btn.textContent = 'Skopiowano!';
+    setTimeout(() => { btn.innerHTML = originalHtml; }, 1500);
+  } catch (err) {
+    console.error('[main] copy-all failed:', err);
+  }
+}));
 
 anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   for (const s of sources) {
@@ -417,6 +565,10 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   const toClassify = sources.filter((s) => (s.text ?? '').trim().length > 0);
   if (toClassify.length === 0) return;
 
+  clearProgressHideTimer();
+  progressBatchTotal = toClassify.length;
+  progressSourceIndex = 0;
+  updateProgress({ type: 'batch-start', total: toClassify.length, t: performance.now() });
   pendingClassifies.length = 0;
   for (const s of toClassify) {
     s.status = 'pending';

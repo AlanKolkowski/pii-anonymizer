@@ -52,9 +52,13 @@
       <div class="tool tool-fullscreen">
         <div class="tool-header">
           <div class="tool-tabs">
-            <button class="tool-tab active" type="button">
+            <button class="tool-tab active" type="button" data-mode-tab="anonymize">
               <span class="num">01</span>
               Anonimizuj
+            </button>
+            <button class="tool-tab" type="button" data-mode-tab="deanonymize">
+              <span class="num">02</span>
+              Deanonimizuj
             </button>
           </div>
           <div class="tool-status">
@@ -63,70 +67,87 @@
           </div>
         </div>
 
-        <div class="tool-body">
-          <aside class="tool-sidebar">
-            <div class="sidebar-section">
-              <div class="sidebar-title">
-                <h4>Encje do anonimizacji</h4>
+        <div class="tool-mode-panel" data-mode-panel="anonymize">
+          <div class="tool-body">
+            <aside class="tool-sidebar">
+              <div id="doc-list-root" class="sidebar-section"></div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">
+                  <h4>Encje do anonimizacji</h4>
+                </div>
+                <div id="entity-selector-root"></div>
               </div>
-              <div id="entity-selector-root"></div>
-            </div>
-          </aside>
+            </aside>
 
-          <section class="tool-main">
-            <div class="workspace-tabs" id="workspace-tabs-root"></div>
-            <div class="editor-pane">
-              <div class="editor-toolbar" id="editor-toolbar-root"></div>
-              <div class="tool-scroll">
-                <section id="sources-section" class="tool-section">
-                  <div id="sources-list-root"></div>
-                </section>
+            <section class="tool-main">
+              <div class="workspace-tabs" id="workspace-tabs-root"></div>
+              <div class="editor-pane">
+                <div class="editor-toolbar" id="editor-toolbar-root"></div>
+                <div class="tool-scroll">
+                  <section id="sources-section" class="tool-section">
+                    <div id="sources-list-root"></div>
+                  </section>
 
-                <section id="result-section" class="tool-section" hidden>
-                  <div class="tool-section-head">
-                    <h3>Legenda</h3>
-                  </div>
-                  <div class="legend">
-                    <table id="legend-table">
-                      <thead>
-                        <tr>
-                          <th>Token</th>
-                          <th>Oryginalna wartość</th>
-                        </tr>
-                      </thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </section>
+                  <section id="result-section" class="tool-section" hidden>
+                    <div class="tool-section-head">
+                      <h3>Legenda</h3>
+                    </div>
+                    <div class="legend">
+                      <table id="legend-table">
+                        <thead>
+                          <tr>
+                            <th>Token</th>
+                            <th>Oryginalna wartość</th>
+                          </tr>
+                        </thead>
+                        <tbody></tbody>
+                      </table>
+                    </div>
+                  </section>
 
-                <section id="outcomes-section" class="tool-section">
-                  <div class="tool-section-head">
-                    <h3>Wyniki LLM</h3>
-                  </div>
-                  <div id="outcomes-list-root"></div>
-                </section>
+                  <section id="outcomes-section" class="tool-section">
+                    <div class="tool-section-head">
+                      <h3>Wyniki LLM</h3>
+                    </div>
+                    <div id="outcomes-list-root"></div>
+                  </section>
 
-                <section id="debug-section" class="tool-section" hidden>
-                  <div class="tool-section-head">
-                    <h3>Debug pipeline'u</h3>
-                  </div>
-                  <div id="debug-panel"></div>
-                </section>
+                  <section id="debug-section" class="tool-section" hidden>
+                    <div class="tool-section-head">
+                      <h3>Debug pipeline'u</h3>
+                    </div>
+                    <div id="debug-panel"></div>
+                  </section>
+                </div>
               </div>
+            </section>
+          </div>
+
+          <div class="run-bar">
+            <div class="left">
+              <span class="run-bar-stats" data-testid="run-bar-stats">
+                <b data-testid="run-bar-docs">0</b> dokumentów · <b data-testid="run-bar-tokens">0</b> tokenów
+              </span>
+              <div class="meter" data-testid="run-bar-meter">
+                <div class="meter-fill" data-testid="run-bar-meter-fill" style="width: 100%"></div>
+              </div>
+              <p data-status="model" class="run-bar-status"></p>
             </div>
-          </section>
+            <div class="right">
+              <button data-action="copy-all" class="btn btn-sm" data-testid="copy-all" disabled>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+                Kopiuj wszystkie
+              </button>
+              <button data-action="anonymize" class="btn btn-sm btn-primary" disabled>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg>
+                Anonimizuj
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="run-bar">
-          <div class="left">
-            <p data-status="model" class="run-bar-status"></p>
-          </div>
-          <div class="right">
-            <button data-action="anonymize" class="btn btn-sm btn-primary" disabled>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg>
-              Anonimizuj
-            </button>
-          </div>
+        <div class="tool-mode-panel" data-mode-panel="deanonymize" hidden>
+          <div id="deanon-workspace-root"></div>
         </div>
       </div>
     </div>
