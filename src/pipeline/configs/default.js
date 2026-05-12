@@ -6,6 +6,7 @@ import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
 import { thresholdStep } from '../steps/threshold.js';
+import { refineFinancialAmountStep } from '../steps/refine-financial-amount.js';
 import { snapStep } from '../steps/snap.js';
 import { trimTrailingPunctuationStep } from '../steps/trim-trailing-punctuation.js';
 import { blocklistStep } from '../steps/blocklist.js';
@@ -53,6 +54,7 @@ export function createPostprocessSteps(options) {
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
       thresholdStep,
+      refineFinancialAmountStep,
       snapStep,
       trimTrailingPunctuationStep,
       blocklistStep,

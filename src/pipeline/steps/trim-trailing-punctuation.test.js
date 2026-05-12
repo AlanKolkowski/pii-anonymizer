@@ -1,13 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { trimTrailingPunctuationStep } from './trim-trailing-punctuation.js';
 
-const mockRules = { trimTrailingPunctuation: true };
+const mockRules = {
+  trimTrailingPunctuation: true,
+  trimLeadingOpeningBrackets: false,
+  trimTrailingClosingBrackets: false,
+};
 vi.mock('../configs/entity-rules.js', () => ({
   rulesFor: () => mockRules,
 }));
 
 beforeEach(() => {
   mockRules.trimTrailingPunctuation = true;
+  mockRules.trimLeadingOpeningBrackets = false;
+  mockRules.trimTrailingClosingBrackets = false;
 });
 
 function makeCtx({ text, entities, segments }) {
@@ -243,6 +249,82 @@ describe('trimTrailingPunctuationStep', () => {
     expect(result.entities[0].start).toBe(7);
     expect(result.entities[0].end).toBe(11);
     expect(result.entities[0].word).toBe('ACME');
+  });
+
+  it('trims leading opening bracket when rule is enabled', () => {
+    mockRules.trimLeadingOpeningBrackets = true;
+    const text = 'nr (WYL/2024/00912) wynosi';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 3, end: 18, score: 0.9, word: '(WYL/2024/00912' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(4);
+    expect(result.entities[0].end).toBe(18);
+    expect(result.entities[0].word).toBe('WYL/2024/00912');
+  });
+
+  it('leaves leading opening bracket when rule is disabled', () => {
+    const text = 'nr (WYL/2024/00912) wynosi';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 3, end: 18, score: 0.9, word: '(WYL/2024/00912' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(3);
+    expect(result.entities[0].word).toBe('(WYL/2024/00912');
+  });
+
+  it('trims trailing closing bracket when rule is enabled', () => {
+    mockRules.trimTrailingClosingBrackets = true;
+    const text = 'nr WYL/2024/00912), wynosi';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 3, end: 18, score: 0.9, word: 'WYL/2024/00912)' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].end).toBe(17);
+    expect(result.entities[0].word).toBe('WYL/2024/00912');
+  });
+
+  it('trims surrounding brackets when both bracket trim rules are enabled', () => {
+    mockRules.trimLeadingOpeningBrackets = true;
+    mockRules.trimTrailingClosingBrackets = true;
+    const text = 'nr (WYL/2024/00912) wynosi';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 3, end: 19, score: 0.9, word: '(WYL/2024/00912)' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].start).toBe(4);
+    expect(result.entities[0].end).toBe(18);
+    expect(result.entities[0].word).toBe('WYL/2024/00912');
+  });
+
+  it('leaves trailing closing bracket when rule is disabled', () => {
+    const text = 'nr WYL/2024/00912), wynosi';
+    const ctx = makeCtx({
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 3, end: 18, score: 0.9, word: 'WYL/2024/00912)' },
+      ],
+    });
+    const result = trimTrailingPunctuationStep(ctx);
+    expect(result.entities[0].end).toBe(18);
+    expect(result.entities[0].word).toBe('WYL/2024/00912)');
   });
 
   it('leaves quotes untouched when rule is disabled', () => {

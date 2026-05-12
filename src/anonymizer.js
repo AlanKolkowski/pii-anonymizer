@@ -267,15 +267,36 @@ export function snapToWordBoundaries(entities, text) {
 
 const DEDUP_SCORE_EPSILON = 0.1;
 
+function spansOverlap(a, b) {
+  return a.start < b.end && b.start < a.end;
+}
+
+function isPreciseRegexEntity(entity) {
+  return entity.source === 'regex' && entity.score === 1.0;
+}
+
+function removeEntitiesCoveredByPreciseRegex(entities) {
+  const preciseRegexEntities = entities.filter(isPreciseRegexEntity);
+  if (preciseRegexEntities.length === 0) return entities;
+
+  return entities.filter((entity) => {
+    if (isPreciseRegexEntity(entity)) return true;
+    return !preciseRegexEntities.some(
+      (regexEntity) => regexEntity.entity_group === entity.entity_group && spansOverlap(regexEntity, entity),
+    );
+  });
+}
+
 export function deduplicateEntities(entities) {
   if (entities.length <= 1) return entities;
 
-  entities.sort((a, b) => a.start - b.start || b.score - a.score);
+  const candidates = removeEntitiesCoveredByPreciseRegex(entities);
+  candidates.sort((a, b) => a.start - b.start || b.score - a.score);
 
-  const result = [entities[0]];
-  for (let i = 1; i < entities.length; i++) {
+  const result = [candidates[0]];
+  for (let i = 1; i < candidates.length; i++) {
     const prev = result[result.length - 1];
-    const curr = entities[i];
+    const curr = candidates[i];
 
     if (curr.start < prev.end) {
       // Perfect-score (regex) entities are precise — prefer them over wider NER

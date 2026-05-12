@@ -2,6 +2,8 @@ import { CAT_A, CAT_B } from '../data/polish-abbreviations.js';
 import { rulesFor } from '../configs/entity-rules.js';
 
 export const TRIM_CHARS = new Set(['.', ',', ';', ':', '!', '?']);
+export const OPENING_BRACKET_CHARS = new Set(['(', '[', '{']);
+export const CLOSING_BRACKET_CHARS = new Set([')', ']', '}']);
 export const QUOTE_CHARS = new Set([
   '"', "'",
   '\u201E', // „ low-9
@@ -39,12 +41,16 @@ export function trimTrailingPunctuationStep(ctx) {
   if (!segments || segments.length === 0) return ctx;
 
   const trimmed = entities.map((entity) => {
-    if (!rulesFor(entity.entity_group).trimTrailingPunctuation) return entity;
+    const rules = rulesFor(entity.entity_group);
+    if (!rules.trimTrailingPunctuation) return entity;
+    const trimOpeningBrackets = Boolean(rules.trimLeadingOpeningBrackets);
+    const trimClosingBrackets = Boolean(rules.trimTrailingClosingBrackets);
     let { start, end } = entity;
     let word = entity.word;
 
-    if (end > start && QUOTE_CHARS.has(text[start])) {
+    while (end > start) {
       const ch = text[start];
+      if (!QUOTE_CHARS.has(ch) && !(trimOpeningBrackets && OPENING_BRACKET_CHARS.has(ch))) break;
       start += 1;
       if (typeof word === 'string' && word.startsWith(ch)) {
         word = word.slice(1);
@@ -79,8 +85,9 @@ export function trimTrailingPunctuationStep(ctx) {
       }
     }
 
-    if (end > start && QUOTE_CHARS.has(text[end - 1])) {
+    while (end > start) {
       const ch = text[end - 1];
+      if (!QUOTE_CHARS.has(ch) && !(trimClosingBrackets && CLOSING_BRACKET_CHARS.has(ch))) break;
       end -= 1;
       if (typeof word === 'string' && word.endsWith(ch)) {
         word = word.slice(0, -1);

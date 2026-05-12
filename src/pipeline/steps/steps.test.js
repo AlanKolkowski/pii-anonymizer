@@ -109,6 +109,24 @@ describe('dedupStep', () => {
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].score).toBe(0.95);
   });
+
+  it('lets precise regex spans replace wider same-type candidates before deduping', () => {
+    const ctx = {
+      text: '',
+      segments: [],
+      entities: [
+        { entity_group: 'DOCUMENT_REFERENCE', start: 0, end: 15, score: 0.98, source: 'polish-q8' },
+        { entity_group: 'FINANCIAL_AMOUNT', start: 10, end: 25, score: 0.99, source: 'multilang-q8' },
+        { entity_group: 'FINANCIAL_AMOUNT', start: 18, end: 25, score: 1.0, source: 'regex' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = dedupStep(ctx);
+    expect(result.entities).toHaveLength(2);
+    expect(result.entities.map(e => e.entity_group)).toEqual(['DOCUMENT_REFERENCE', 'FINANCIAL_AMOUNT']);
+    expect(result.entities[1].source).toBe('regex');
+  });
 });
 
 describe('mergeStep', () => {

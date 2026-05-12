@@ -37,7 +37,7 @@ export const ENTITY_SOURCES = {
   PAYMENT_CARD:             ['multilang-fp16', 'polish-fp16'],
   PAYMENT_CARD_SECURITY:    ['multilang-fp16', 'polish-fp16'],
   DOCUMENT_REFERENCE:       ['multilang-fp16', 'polish-fp16'],
-  FINANCIAL_AMOUNT:         ['multilang-q8', 'polish-q8', 'regex'],
+  FINANCIAL_AMOUNT:         ['multilang-fp16', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['multilang-fp16', 'polish-fp16'],
   VEHICLE_IDENTIFIER:       ['multilang-fp16', 'polish-fp16'],
   HEALTH_DATA:              ['multilang-fp32'], // The only model that catches all

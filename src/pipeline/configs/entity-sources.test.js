@@ -59,7 +59,7 @@ describe('entity-sources config', () => {
 
   it('requiredSources returns union of aliases for selected entities', () => {
     const got = requiredSources(['PERSON_NAME', 'EMAIL_ADDRESS']).sort();
-    expect(got).toEqual(['multilang-q8', 'polish-q8', 'regex'].sort());
+    expect(got).toEqual(['multilang-fp16', 'polish-fp16', 'regex'].sort());
   });
 
   it('requiredSources ignores unknown entity types', () => {

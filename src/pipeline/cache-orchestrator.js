@@ -4,7 +4,6 @@ import {
   createNerSteps,
   createPostprocessSteps,
 } from './configs/default.js';
-import { requiredSources } from './configs/entity-sources.js';
 
 export async function sha256Hex(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -13,6 +12,16 @@ export async function sha256Hex(text) {
 
 function makeSeededCtx({ text, segments, entities }) {
   return { text, segments, entities, anonymized: '', legend: {}, debug: [] };
+}
+
+function requiredSourcesFor(enabledEntities, entitySources) {
+  const set = new Set();
+  for (const type of enabledEntities) {
+    const aliases = entitySources[type];
+    if (!aliases) continue;
+    for (const alias of aliases) set.add(alias);
+  }
+  return [...set];
 }
 
 /**
@@ -51,7 +60,7 @@ export async function classifyWithCache({
   const hash = await sha256Hex(text);
   const hit = cache?.textHash === hash;
 
-  const needed = requiredSources(enabledEntities);
+  const needed = requiredSourcesFor(enabledEntities, entitySources);
   const requiredHf = needed
     .filter((alias) => sources[alias]?.kind === 'hf')
     .map((alias) => ({ alias, id: sources[alias].id, dtype: sources[alias].dtype }));
