@@ -2,14 +2,21 @@
 // First entry = preferred when available; later entries = fallbacks.
 // q8 is wasm-only because ORT-Web's WebNN EP doesn't broadcast `scale` to
 // input rank for per-tensor int8 dequantize and MLGraphBuilder rejects the
-// rank mismatch. fp32 runs on either; we prefer GPU when available.
+// rank mismatch. fp16/fp32 run on either; we prefer GPU when available.
+//
+// `sizeBytes` is the exact ONNX artifact size reported by the Hugging Face
+// model tree. `sizeMB` is rounded-up decimal MB for bench labels and WASM
+// eviction accounting; ORT heap/scratch overhead is handled by the worker's
+// conservative MEMORY_BUDGET_MB rather than by inflating model sizes here.
+const mb = (bytes) => Math.ceil(bytes / 1_000_000);
+
 export const SOURCES = {
-  'multilang-q8': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8', sizeMB: 280, backends: ['wasm'] },
-  'multilang-fp16': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp16',   sizeMB: 550,  backends: ['webnn-gpu', 'wasm'] },
-  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
-  'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeMB: 280,  backends: ['wasm'] },
-  'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeMB: 550, backends: ['webnn-gpu', 'wasm'] },
-  'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeMB: 1100, backends: ['webnn-gpu', 'wasm'] },
+  'multilang-q8':   { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8',   sizeBytes: 278736360,  sizeMB: mb(278736360),  backends: ['wasm'] },
+  'multilang-fp16': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp16', sizeBytes: 555320741,  sizeMB: mb(555320741),  backends: ['webnn-gpu', 'wasm'] },
+  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['webnn-gpu', 'wasm'] },
+  'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeBytes: 278737914,  sizeMB: mb(278737914),  backends: ['wasm'] },
+  'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
+  'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeBytes: 1110253026, sizeMB: mb(1110253026), backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
 };
 

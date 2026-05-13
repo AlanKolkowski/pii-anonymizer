@@ -5,9 +5,11 @@ import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 
 // Memory budget for resident HF models in the WASM heap.
-// Sized so 2× q8 (~280 MB) + 1× fp32 (~1100 MB) ≈ 1.66 GB fits with headroom
-// for ORT scratch / tokenizer / segment buffers, while two fp32 models do not.
-const MEMORY_BUDGET_MB = 1800;
+// SOURCES[*].sizeMB tracks real ONNX artifact size; this lower-than-raw-heap
+// budget reserves headroom for ORT scratch/tokenizer buffers and contiguous
+// fp32 allocations. In forced-WASM mode it intentionally prevents fp16+fp32
+// co-residency, which has proven too tight despite totaling only ~1.67 GB.
+const MEMORY_BUDGET_MB = 1600;
 
 // WebNN compiles a fixed-shape graph at session creation. Pin sequence_length
 // so the tokenizer pads/truncates every input to this length; without it, only
