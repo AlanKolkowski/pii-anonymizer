@@ -1,5 +1,5 @@
 export const PIPELINE_STEPS = [
-  { id: 'load', label: 'Ładowanie modeli NER' },
+  { id: 'load', label: 'Pobieranie modeli' },
   { id: 'pre', label: 'Preprocessing — normalizacja whitespace' },
   { id: 'seg', label: 'Segmentacja zdań (sentencex)' },
   { id: 'ner', label: 'Detekcja encji — modele HF i reguły' },

@@ -81,6 +81,22 @@ describe('progressReducer', () => {
     expect(getProgressView(state).steps[0].durationMs).toBe(300);
   });
 
+  it('keeps model session loads inside the active NER phase after downloads finish', () => {
+    let state = createInitialProgressState();
+    state = progressReducer(state, { type: 'batch-start', total: 1, t: 0 });
+    state = progressReducer(state, { type: 'source-start', id: 'doc-1', index: 1, total: 1, t: 0 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:load:start', t: 0 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:load:end', t: 20 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:preprocess:start', t: 30 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:preprocess:end', t: 40 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:segment:start', t: 50 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:segment:end', t: 60 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:ner:start', t: 70 });
+    state = progressReducer(state, { type: 'timing', mark: 'model:load:start', t: 80 });
+
+    expect(getProgressView(state).activeStep.id).toBe('ner');
+  });
+
   it('does not let download progress shorten the load bucket duration', () => {
     let state = createInitialProgressState();
     state = progressReducer(state, { type: 'batch-start', total: 1, t: 0 });

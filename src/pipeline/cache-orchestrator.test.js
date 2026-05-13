@@ -200,11 +200,14 @@ describe('classifyWithCache', () => {
     ]);
   });
 
-  it('can preload missing HF models before preprocessing for browser progress order', async () => {
+  it('can prepare missing HF artifacts before preprocessing without creating sessions', async () => {
     const events = [];
     const loadModel = async ({ id }) => {
       events.push(`load:${id}`);
       return { infer: async () => [], dispose: async () => {} };
+    };
+    const prepareModel = async ({ id }) => {
+      events.push(`download:${id}`);
     };
 
     await classifyWithCache({
@@ -215,15 +218,16 @@ describe('classifyWithCache', () => {
       entitySources: TEST_ENTITY_SOURCES,
       loadModel,
       getSentenceBoundaries: get_sentence_boundaries,
-      preloadModels: true,
+      prepareModel,
       onTimingMark: (mark) => events.push(mark),
     });
 
     expect(events.slice(0, 3)).toEqual([
       'pipeline:load:start',
-      'load:m-q8',
+      'download:m-q8',
       'pipeline:load:end',
     ]);
-    expect(events.indexOf('load:m-q8')).toBeLessThan(events.indexOf('pipeline:preprocess:start'));
+    expect(events.indexOf('download:m-q8')).toBeLessThan(events.indexOf('pipeline:preprocess:start'));
+    expect(events.indexOf('load:m-q8')).toBeGreaterThan(events.indexOf('pipeline:ner:start'));
   });
 });

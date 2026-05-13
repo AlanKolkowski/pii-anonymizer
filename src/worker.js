@@ -3,6 +3,7 @@ import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
+import { ensureModelSourceCached } from './pipeline/model-download.js';
 
 // Memory budget for resident HF models in the WASM heap.
 // SOURCES[*].sizeMB tracks real ONNX artifact size; this lower-than-raw-heap
@@ -198,6 +199,18 @@ async function loadModelForPipeline({ id, dtype }) {
   };
 }
 
+async function downloadModelFilesForPipeline({ alias }) {
+  const def = SOURCES[alias];
+  if (!def || def.kind !== 'hf') return;
+  await ensureModelSourceCached(def, {
+    progressCallback: (data) => {
+      if (data.status === 'progress') {
+        self.postMessage({ type: 'progress', file: data.file, progress: data.progress });
+      }
+    },
+  });
+}
+
 self.onmessage = async (e) => {
   const { type } = e.data;
 
@@ -268,7 +281,7 @@ self.onmessage = async (e) => {
         loadModel: loadModelForPipeline,
         getSentenceBoundaries: get_sentence_boundaries,
         sortSources,
-        preloadModels: true,
+        prepareModel: downloadModelFilesForPipeline,
         onTimingMark: postTiming,
       });
       nerCache.set(hash, newEntry);

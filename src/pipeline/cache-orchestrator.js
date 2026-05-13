@@ -41,7 +41,7 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {Function} params.getSentenceBoundaries - (lang, text) => boundaries[]
  * @param {Function} [params.sortSources] - optional ordering of HF sources
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
- * @param {boolean} [params.preloadModels] - load missing HF sessions before preprocess/segment
+ * @param {Function} [params.prepareModel] - async hook for downloading/caching model artifacts before inference
  * @returns {Promise<{ ctx: object, cache: object }>}
  */
 export async function classifyWithCache({
@@ -54,7 +54,7 @@ export async function classifyWithCache({
   getSentenceBoundaries,
   sortSources,
   onTimingMark = () => {},
-  preloadModels = false,
+  prepareModel = null,
 }) {
   const emit = (mark) => onTimingMark(mark);
   const hash = await sha256Hex(text);
@@ -70,10 +70,9 @@ export async function classifyWithCache({
   const regexNeeded = needed.includes('regex');
 
   emit('pipeline:load:start');
-  if (preloadModels) {
+  if (prepareModel) {
     for (const source of orderedMissingHf) {
-      const model = await loadModel({ id: source.id, dtype: source.dtype });
-      await model.dispose?.();
+      await prepareModel(source);
     }
   }
   emit('pipeline:load:end');
