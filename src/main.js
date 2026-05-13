@@ -206,6 +206,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     sourcesList.addSource(id, label, {
       text: '', entities: [], status: 'idle', type: 'paste',
     });
+    sourcesList.setActive(id);
     sourcesList.enterTextMode(id);
     refreshAnonymizeButton();
   },
@@ -313,6 +314,8 @@ async function addSourceFromFile(file) {
   sourcesList.addSource(id, label, {
     text: '', entities: [], status: 'pending', type: 'file',
   });
+  sourcesList.setActive(id);
+  refreshAnonymizeButton();
   try {
     const { text, meta } = await extractText(file);
     const s = sources.find((x) => x.id === id);

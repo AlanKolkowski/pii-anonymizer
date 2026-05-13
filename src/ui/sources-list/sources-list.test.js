@@ -37,12 +37,12 @@ describe('createSourcesList', () => {
   }
 
   describe('empty state', () => {
-    it('renders the three "ways" affordances when no sources', () => {
+    it('renders paste and file affordances when no sources', () => {
       createSourcesList(root, defaultOpts());
       expect(root.querySelector('[data-testid="editor-empty"]')).not.toBeNull();
       expect(root.querySelector('[data-testid="sources-add-paste"]')).not.toBeNull();
       expect(root.querySelector('[data-testid="sources-add-file"]')).not.toBeNull();
-      expect(root.querySelector('[data-testid="sources-add-type"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="sources-add-type"]')).toBeNull();
       expect(root.querySelectorAll('[data-testid^="source-card-"]').length).toBe(0);
     });
 
@@ -50,13 +50,6 @@ describe('createSourcesList', () => {
       const opts = defaultOpts();
       createSourcesList(root, opts);
       root.querySelector('[data-testid="sources-add-paste"]').click();
-      expect(opts.onAddPaste).toHaveBeenCalledTimes(1);
-    });
-
-    it('clicking the type way fires onAddPaste', () => {
-      const opts = defaultOpts();
-      createSourcesList(root, opts);
-      root.querySelector('[data-testid="sources-add-type"]').click();
       expect(opts.onAddPaste).toHaveBeenCalledTimes(1);
     });
 
@@ -69,6 +62,21 @@ describe('createSourcesList', () => {
       input.dispatchEvent(new Event('change'));
       expect(opts.onAddFiles).toHaveBeenCalledTimes(1);
       expect(opts.onAddFiles.mock.calls[0][0][0].name).toBe('a.txt');
+    });
+
+    it('dropping a file on the editor area fires onAddFiles', () => {
+      const opts = defaultOpts();
+      createSourcesList(root, opts);
+      const file = new File(['hello'], 'drop.txt', { type: 'text/plain' });
+      const event = new Event('drop', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'dataTransfer', {
+        value: { files: [file], types: ['Files'], dropEffect: 'copy' },
+      });
+
+      root.querySelector('.srclist-cards').dispatchEvent(event);
+
+      expect(opts.onAddFiles).toHaveBeenCalledTimes(1);
+      expect(opts.onAddFiles.mock.calls[0][0][0].name).toBe('drop.txt');
     });
 
     it('removing the last source returns to empty state', () => {
@@ -131,12 +139,51 @@ describe('createSourcesList', () => {
       expect(tabsHost.querySelector('[data-testid="ws-tab-add"]')).not.toBeNull();
     });
 
-    it('clicking the "+" affordance fires onAddPaste', () => {
+    it('clicking the add affordance opens a new-document tab with the initial choices', () => {
       const opts = defaultOpts();
       const list = createSourcesList(root, opts);
       list.addSource('s1', 'a', { text: '', entities: [] });
       tabsHost.querySelector('[data-testid="ws-tab-add"]').click();
+      expect(tabsHost.querySelector('[data-testid="ws-tab-new-source"]')).not.toBeNull();
+      expect(tabsHost.querySelector('[data-testid="ws-tab-new-source"]').classList.contains('active')).toBe(true);
+      expect(root.querySelector('[data-testid="editor-empty"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="sources-add-paste"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="sources-add-file"]')).not.toBeNull();
+      expect(opts.onAddPaste).not.toHaveBeenCalled();
+    });
+
+    it('choosing paste from the new-document tab fires onAddPaste', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'a', { text: '', entities: [] });
+      tabsHost.querySelector('[data-testid="ws-tab-add"]').click();
+      root.querySelector('[data-testid="sources-add-paste"]').click();
       expect(opts.onAddPaste).toHaveBeenCalledTimes(1);
+    });
+
+    it('choosing upload from the new-document tab opens the file input', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'a', { text: '', entities: [] });
+      const input = root.querySelector('[data-testid="sources-add-file-input"]');
+      const click = vi.spyOn(input, 'click').mockImplementation(() => {});
+
+      tabsHost.querySelector('[data-testid="ws-tab-add"]').click();
+      root.querySelector('[data-testid="sources-add-file"]').click();
+
+      expect(click).toHaveBeenCalledTimes(1);
+    });
+
+    it('adding a source while the new-document tab is open replaces the chooser with the new source', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', { text: '', entities: [] });
+      tabsHost.querySelector('[data-testid="ws-tab-add"]').click();
+
+      list.addSource('s2', 'b', { text: 'new', entities: [] });
+
+      expect(tabsHost.querySelector('[data-testid="ws-tab-new-source"]')).toBeNull();
+      expect(root.querySelector('[data-testid="source-card-s2"]').dataset.active).toBe('true');
+      expect(root.querySelector('[data-testid="editor-empty"]')).toBeNull();
     });
 
     it('close button on a tab fires onRemove with the id', () => {
@@ -326,14 +373,17 @@ describe('createSourcesList', () => {
       expect(tabsHost.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('error');
     });
 
-    it('clicking doc list add uses the paste add handler', () => {
+    it('clicking doc list add opens the new-document tab', () => {
       const opts = defaultOpts();
       const list = createSourcesList(root, opts);
       list.renderDocList(docHost);
+      list.addSource('s1', 'first', { text: '', entities: [] });
 
       docHost.querySelector('[data-testid="doc-add"]').click();
 
-      expect(opts.onAddPaste).toHaveBeenCalledTimes(1);
+      expect(tabsHost.querySelector('[data-testid="ws-tab-new-source"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="editor-empty"]')).not.toBeNull();
+      expect(opts.onAddPaste).not.toHaveBeenCalled();
     });
   });
 

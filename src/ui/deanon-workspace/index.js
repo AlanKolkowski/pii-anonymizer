@@ -78,7 +78,7 @@ function emptyState(testid, title, body) {
   el.className = 'editor-empty deanon-empty';
   el.dataset.testid = testid;
   el.innerHTML = `
-    <span class="glyph">+</span>
+    <span class="glyph" aria-hidden="true">↔</span>
     <h3>${title}</h3>
     <p>${body}</p>
   `;
@@ -147,7 +147,7 @@ export function createDeanonWorkspace(rootEl, opts) {
     addBtn.className = 'ws-tab-add';
     addBtn.dataset.testid = 'deanon-add';
     addBtn.title = 'Dodaj wynik';
-    addBtn.textContent = '+';
+    addBtn.textContent = 'Dodaj';
     addBtn.addEventListener('click', () => opts.onAdd?.(defaultOutcomeLabel(outcomes), ''));
     host.appendChild(addBtn);
   }

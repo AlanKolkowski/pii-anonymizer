@@ -37,7 +37,7 @@ export function createSourcesList(rootEl, opts) {
   cardsHost.className = 'srclist-cards';
   rootEl.appendChild(cardsHost);
 
-  const fileInput = createFileInput((files) => opts.onAddFiles(files));
+  const fileInput = createFileInput((files) => opts.onAddFiles?.(files));
   rootEl.appendChild(fileInput);
 
   const cards = new Map();
@@ -45,8 +45,10 @@ export function createSourcesList(rootEl, opts) {
   let activeId = null;
   const docListHosts = new Set();
 
-  // Empty state element (rendered in cardsHost when no sources)
+  // Empty state element (rendered in cardsHost when no sources or in the add-document tab)
   let emptyEl = null;
+  let addChooserTabEl = null;
+  let dragCounter = 0;
 
   // Initialize empty state — sources can be added afterward.
   // We defer rendering to the bottom of this factory after `renderEmptyState`
@@ -67,22 +69,23 @@ export function createSourcesList(rootEl, opts) {
     input.style.display = 'none';
     input.dataset.testid = 'sources-add-file-input';
     input.addEventListener('change', () => {
-      const files = [...(input.files ?? [])];
+      const files = Array.from(input.files ?? []);
       input.value = '';
       if (files.length > 0) onFiles(files);
     });
     return input;
   }
 
-  function renderEmptyState() {
-    if (emptyEl) return;
+  function renderEmptyState({ inAddTab = false } = {}) {
+    if (emptyEl) emptyEl.remove();
     emptyEl = document.createElement('div');
     emptyEl.className = 'editor-empty';
     emptyEl.dataset.testid = 'editor-empty';
+    emptyEl.dataset.mode = inAddTab ? 'add-tab' : 'initial';
     emptyEl.innerHTML = `
-      <span class="glyph">+</span>
+      <span class="glyph" aria-hidden="true">📄</span>
       <h3>Dodaj dokument do analizy</h3>
-      <p>Wybierz źródło — Twoje dane nie opuszczają tego urządzenia.</p>
+      <p>Wklej tekst albo prześlij plik. PDF-y i obrazy mogą zostać odczytane przez OCR lokalnie w przeglądarce.</p>
       <div class="ways"></div>
     `;
     const ways = emptyEl.querySelector('.ways');
@@ -91,28 +94,20 @@ export function createSourcesList(rootEl, opts) {
     pasteWay.type = 'button';
     pasteWay.className = 'way';
     pasteWay.dataset.testid = 'sources-add-paste';
-    pasteWay.innerHTML = '<span class="ico">📋</span><div class="lbl">Wklej tekst</div><div class="hint">⌘V</div>';
-    pasteWay.addEventListener('click', () => opts.onAddPaste());
+    pasteWay.innerHTML = '<span class="ico">📋</span><div class="lbl">Wklej tekst</div><div class="hint">otwórz edytor</div>';
+    pasteWay.addEventListener('click', () => opts.onAddPaste?.());
     ways.appendChild(pasteWay);
 
     const fileWay = document.createElement('button');
     fileWay.type = 'button';
     fileWay.className = 'way';
     fileWay.dataset.testid = 'sources-add-file';
-    fileWay.innerHTML = '<span class="ico">⬆</span><div class="lbl">Prześlij plik</div><div class="hint">.txt .pdf .docx · .jpg .png (OCR)</div>';
+    fileWay.innerHTML = '<span class="ico">⬆</span><div class="lbl">Prześlij plik / OCR</div><div class="hint">albo przeciągnij plik tutaj</div>';
     fileWay.addEventListener('click', () => fileInput.click());
     ways.appendChild(fileWay);
 
-    const typeWay = document.createElement('button');
-    typeWay.type = 'button';
-    typeWay.className = 'way';
-    typeWay.dataset.testid = 'sources-add-type';
-    typeWay.innerHTML = '<span class="ico">✎</span><div class="lbl">Pisz w edytorze</div><div class="hint">nowy dokument</div>';
-    typeWay.addEventListener('click', () => opts.onAddPaste());
-    ways.appendChild(typeWay);
-
     cardsHost.appendChild(emptyEl);
-    tabsHost.hidden = true;
+    tabsHost.hidden = !inAddTab;
     toolbarHost.hidden = true;
   }
 
@@ -125,6 +120,121 @@ export function createSourcesList(rootEl, opts) {
     toolbarHost.hidden = false;
   }
 
+  function clearAddChooser() {
+    if (addChooserTabEl) {
+      addChooserTabEl.remove();
+      addChooserTabEl = null;
+    }
+    if (emptyEl?.dataset.mode === 'add-tab') {
+      emptyEl.remove();
+      emptyEl = null;
+    }
+    toolbarHost.hidden = false;
+  }
+
+  function ensureAddChooserTab() {
+    if (addChooserTabEl) return addChooserTabEl;
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'ws-tab ws-tab-new';
+    tab.dataset.testid = 'ws-tab-new-source';
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    tab.appendChild(dot);
+
+    const label = document.createElement('span');
+    label.className = 'ws-tab-label';
+    label.textContent = 'Nowy dokument';
+    tab.appendChild(label);
+
+    const close = document.createElement('span');
+    close.className = 'close';
+    close.setAttribute('role', 'button');
+    close.setAttribute('aria-label', 'Zamknij dodawanie dokumentu');
+    close.innerHTML = CLOSE_ICON_SVG;
+    close.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      closeAddChooser();
+    });
+    tab.appendChild(close);
+
+    tab.addEventListener('click', () => openAddChooser());
+
+    const addBtn = tabsHost.querySelector('[data-testid="ws-tab-add"]');
+    tabsHost.insertBefore(tab, addBtn ?? null);
+    addChooserTabEl = tab;
+    return tab;
+  }
+
+  function openAddChooser() {
+    if (cards.size === 0) {
+      renderEmptyState();
+      return;
+    }
+    activeId = null;
+    for (const [, card] of cards) {
+      card.wrapper.dataset.active = 'false';
+      card.tabRefs.tab.classList.remove('active');
+    }
+    const tab = ensureAddChooserTab();
+    tab.classList.add('active');
+    toolbarHost.innerHTML = '';
+    renderEmptyState({ inAddTab: true });
+    refreshDocLists();
+  }
+
+  function closeAddChooser() {
+    clearAddChooser();
+    if (cards.size === 0) {
+      activeId = null;
+      renderEmptyState();
+      refreshDocLists();
+      return;
+    }
+    setActive(order[0]);
+  }
+
+  function droppedFiles(ev) {
+    return Array.from(ev.dataTransfer?.files ?? []);
+  }
+
+  function dragHasFiles(ev) {
+    const types = Array.from(ev.dataTransfer?.types ?? []);
+    return types.includes('Files') || droppedFiles(ev).length > 0;
+  }
+
+  function resetDragState() {
+    dragCounter = 0;
+    cardsHost.classList.remove('srclist-dragover');
+  }
+
+  function installFileDropTarget() {
+    cardsHost.addEventListener('dragenter', (ev) => {
+      if (!dragHasFiles(ev)) return;
+      ev.preventDefault();
+      dragCounter++;
+      cardsHost.classList.add('srclist-dragover');
+    });
+    cardsHost.addEventListener('dragover', (ev) => {
+      if (!dragHasFiles(ev)) return;
+      ev.preventDefault();
+      if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'copy';
+    });
+    cardsHost.addEventListener('dragleave', (ev) => {
+      if (!dragHasFiles(ev)) return;
+      dragCounter = Math.max(0, dragCounter - 1);
+      if (dragCounter === 0) cardsHost.classList.remove('srclist-dragover');
+    });
+    cardsHost.addEventListener('drop', (ev) => {
+      if (!dragHasFiles(ev)) return;
+      ev.preventDefault();
+      const files = droppedFiles(ev);
+      resetDragState();
+      if (files.length > 0) opts.onAddFiles?.(files);
+    });
+  }
+
   function ensureAddButton() {
     let addBtn = tabsHost.querySelector('[data-testid="ws-tab-add"]');
     if (!addBtn) {
@@ -133,8 +243,11 @@ export function createSourcesList(rootEl, opts) {
       addBtn.className = 'ws-tab-add';
       addBtn.dataset.testid = 'ws-tab-add';
       addBtn.title = 'Dodaj dokument';
-      addBtn.textContent = '+';
-      addBtn.addEventListener('click', () => opts.onAddPaste());
+      addBtn.innerHTML = `${PLUS_ICON_SVG}<span>Dodaj</span>`;
+      addBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        openAddChooser();
+      });
       tabsHost.appendChild(addBtn);
     } else {
       tabsHost.appendChild(addBtn); // keep at end
@@ -328,6 +441,7 @@ export function createSourcesList(rootEl, opts) {
 
   function setActive(id) {
     if (!cards.has(id)) return;
+    clearAddChooser();
     activeId = id;
     for (const [cid, card] of cards) {
       card.wrapper.dataset.active = cid === id ? 'true' : 'false';
@@ -411,16 +525,21 @@ export function createSourcesList(rootEl, opts) {
     addBtn.className = 'btn btn-sm';
     addBtn.dataset.testid = 'doc-add';
     addBtn.innerHTML = `${PLUS_ICON_SVG} Dodaj`;
-    addBtn.addEventListener('click', () => opts.onAddPaste());
+    addBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      openAddChooser();
+    });
     add.appendChild(addBtn);
     host.appendChild(add);
   }
 
+  installFileDropTarget();
   renderEmptyState();
 
   return {
     addSource(id, label, init = {}) {
       if (cards.has(id)) throw new Error(`source ${id} already exists`);
+      clearAddChooser();
       clearEmptyState();
       const status = normalizeStatus(init.status);
       const type = normalizeSourceType(init.type);
@@ -448,6 +567,7 @@ export function createSourcesList(rootEl, opts) {
       const idx = order.indexOf(id);
       if (idx !== -1) order.splice(idx, 1);
       if (cards.size === 0) {
+        clearAddChooser();
         activeId = null;
         toolbarHost.innerHTML = '';
         tabsHost.innerHTML = '';
@@ -514,6 +634,8 @@ export function createSourcesList(rootEl, opts) {
       renderDocListHost(root);
     },
     dispose() {
+      clearAddChooser();
+      resetDragState();
       for (const id of [...cards.keys()]) this.removeSource(id);
       for (const host of docListHosts) host.innerHTML = '';
       docListHosts.clear();

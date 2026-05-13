@@ -232,7 +232,6 @@ body.has-tool .site-header .wrap {
   font-size: 12px;
   padding: 6px 8px;
 }
-
 /* ---------- Main pane ---------- */
 .tool-main {
   display: flex;
@@ -331,14 +330,20 @@ body.has-tool .site-header .wrap {
 }
 .ws-tab .close:hover { background: var(--bg-tint); color: var(--ink); }
 .ws-tab-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 12px;
   border: 0;
   background: transparent;
   color: var(--ink-3);
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   line-height: 1;
+  white-space: nowrap;
 }
+.ws-tab-add svg { flex-shrink: 0; }
 .ws-tab-add:hover { color: var(--ink); }
 
 /* ---------- Empty editor state ---------- */
@@ -377,11 +382,11 @@ body.has-tool .site-header .wrap {
 }
 .editor-empty .ways {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-top: 20px;
   width: 100%;
-  max-width: 520px;
+  max-width: 430px;
 }
 .editor-empty .way {
   border: 1px solid var(--line);
@@ -817,6 +822,26 @@ body.has-tool .site-header .wrap {
   flex-direction: column;
   min-height: 0;
   flex: 1;
+  position: relative;
+}
+.srclist-cards.srclist-dragover {
+  outline: 2px dashed var(--accent);
+  outline-offset: -8px;
+}
+.srclist-cards.srclist-dragover::after {
+  content: "Upuść plik, aby dodać dokument";
+  position: absolute;
+  inset: 14px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-4);
+  background: color-mix(in oklab, var(--accent-tint) 86%, transparent);
+  border: 1px dashed var(--accent-line);
+  color: var(--accent-ink);
+  font-weight: 600;
+  pointer-events: none;
 }
 .srclist-card {
   display: flex;
