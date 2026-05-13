@@ -9,6 +9,8 @@ const DTYPE_SUFFIX = {
   bnb4: '_bnb4',
 };
 
+const TRANSFORMERS_CACHE = 'transformers-cache';
+
 function pathJoin(...parts) {
   return parts
     .map((part, index) => {
@@ -18,6 +20,15 @@ function pathJoin(...parts) {
       return p;
     })
     .join('/');
+}
+
+function positiveNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function sizeFromHeaders(headers) {
+  return positiveNumber(headers?.get?.('Content-Length') ?? headers?.get?.('content-length'));
 }
 
 export function modelFileForDtype(dtype) {
@@ -50,6 +61,13 @@ export function hfResolveUrl(modelId, filename, {
   );
 }
 
+function cacheKeysForModelFile(modelId, file, { revision = 'main' } = {}) {
+  return {
+    remoteUrl: hfResolveUrl(modelId, file, { revision }),
+    localPath: pathJoin('./models/', modelId, file),
+  };
+}
+
 async function cacheMatchAny(cache, ...keys) {
   for (const key of keys) {
     try {
@@ -60,13 +78,98 @@ async function cacheMatchAny(cache, ...keys) {
   return undefined;
 }
 
+async function remoteContentLength(remoteUrl, fetchFn) {
+  try {
+    const response = await fetchFn(remoteUrl, { method: 'HEAD' });
+    if (!response?.ok) return 0;
+    return sizeFromHeaders(response.headers);
+  } catch {
+    return 0;
+  }
+}
+
+function uniqueFilesForSources(defs, { revision = 'main' } = {}) {
+  const seen = new Set();
+  const out = [];
+
+  for (const def of defs) {
+    if (!def) continue;
+    for (const entry of filesForModelSource(def)) {
+      const key = `${def.id}\0${entry.file}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const { remoteUrl, localPath } = cacheKeysForModelFile(def.id, entry.file, { revision });
+      out.push({
+        key,
+        modelId: def.id,
+        file: entry.file,
+        displayFile: `${def.id}/${entry.file}`,
+        sizeBytes: positiveNumber(entry.sizeBytes),
+        remoteUrl,
+        localPath,
+      });
+    }
+  }
+
+  return out;
+}
+
+async function buildDownloadPlan(defs, {
+  revision = 'main',
+  cacheStorage = globalThis.caches,
+  fetchFn = globalThis.fetch?.bind(globalThis),
+} = {}) {
+  if (!cacheStorage || !fetchFn) {
+    return {
+      skipped: true,
+      cache: null,
+      files: [],
+      totalBytes: 0,
+      cachedFiles: 0,
+      totalFiles: 0,
+    };
+  }
+
+  const cache = await cacheStorage.open(TRANSFORMERS_CACHE);
+  const allFiles = uniqueFilesForSources(defs, { revision });
+  const files = [];
+  let cachedFiles = 0;
+
+  for (const item of allFiles) {
+    if (await cacheMatchAny(cache, item.localPath, item.remoteUrl)) {
+      cachedFiles += 1;
+      continue;
+    }
+
+    if (item.sizeBytes === 0) {
+      item.sizeBytes = await remoteContentLength(item.remoteUrl, fetchFn);
+    }
+    files.push(item);
+  }
+
+  return {
+    skipped: false,
+    cache,
+    files,
+    totalBytes: files.reduce((sum, item) => sum + item.sizeBytes, 0),
+    cachedFiles,
+    totalFiles: allFiles.length,
+  };
+}
+
+export async function planModelDownloads(defs, options = {}) {
+  const { cache, ...plan } = await buildDownloadPlan(defs, options);
+  return plan;
+}
+
 async function putStreamingWithProgress(cache, cacheKey, response, {
   file,
   expectedBytes = 0,
   progressCallback = () => {},
 } = {}) {
-  const headerBytes = Number(response.headers.get('Content-Length') ?? 0);
-  const total = Number.isFinite(headerBytes) && headerBytes > 0 ? headerBytes : (expectedBytes ?? 0);
+  const headerBytes = sizeFromHeaders(response.headers);
+  const total = headerBytes > 0 ? headerBytes : positiveNumber(expectedBytes);
   let loaded = 0;
 
   const body = response.body?.pipeThrough(new TransformStream({
@@ -113,16 +216,16 @@ export async function ensureModelFileCached(modelId, file, {
 } = {}) {
   if (!cacheStorage || !fetchFn) return { skipped: true };
 
-  const cache = await cacheStorage.open('transformers-cache');
-  const remoteUrl = hfResolveUrl(modelId, file, { revision });
-  const localPath = pathJoin('./models/', modelId, file);
+  const cache = await cacheStorage.open(TRANSFORMERS_CACHE);
+  const { remoteUrl, localPath } = cacheKeysForModelFile(modelId, file, { revision });
+  const expectedBytes = positiveNumber(sizeBytes);
 
   if (await cacheMatchAny(cache, localPath, remoteUrl)) {
-    progressCallback({ status: 'progress', file, progress: 100, loaded: sizeBytes, total: sizeBytes });
+    progressCallback({ status: 'progress', file, progress: 100, loaded: expectedBytes, total: expectedBytes });
     return { cached: true };
   }
 
-  progressCallback({ status: 'download', file, progress: 0, loaded: 0, total: sizeBytes });
+  progressCallback({ status: 'download', file, progress: 0, loaded: 0, total: expectedBytes });
   const response = await fetchFn(remoteUrl);
   if (!response.ok) {
     throw new Error(`Could not download model file ${remoteUrl}: ${response.status} ${response.statusText}`);
@@ -131,7 +234,7 @@ export async function ensureModelFileCached(modelId, file, {
   try {
     await putStreamingWithProgress(cache, remoteUrl, response, {
       file,
-      expectedBytes: sizeBytes,
+      expectedBytes,
       progressCallback,
     });
   } catch (err) {
@@ -142,8 +245,132 @@ export async function ensureModelFileCached(modelId, file, {
   return { cached: true };
 }
 
-export async function ensureModelSourceCached(def, options = {}) {
-  for (const { file, sizeBytes } of filesForModelSource(def)) {
-    await ensureModelFileCached(def.id, file, { ...options, sizeBytes });
+async function downloadPlannedFile(cache, item, fetchFn, progressCallback) {
+  progressCallback({
+    status: 'download',
+    file: item.displayFile,
+    modelId: item.modelId,
+    rawFile: item.file,
+    progress: 0,
+    loaded: 0,
+    total: item.sizeBytes,
+  });
+
+  const response = await fetchFn(item.remoteUrl);
+  if (!response.ok) {
+    throw new Error(`Could not download model file ${item.remoteUrl}: ${response.status} ${response.statusText}`);
   }
+
+  try {
+    await putStreamingWithProgress(cache, item.remoteUrl, response, {
+      file: item.displayFile,
+      expectedBytes: item.sizeBytes,
+      progressCallback: (event) => progressCallback({
+        ...event,
+        file: item.displayFile,
+        modelId: item.modelId,
+        rawFile: item.file,
+      }),
+    });
+  } catch (err) {
+    console.warn(`[model-download] unable to cache ${item.displayFile}:`, err);
+    return { cached: false, error: err };
+  }
+
+  return { cached: true };
+}
+
+export async function ensureModelSourcesCached(defs, {
+  progressCallback = () => {},
+  ...options
+} = {}) {
+  const plan = await buildDownloadPlan(defs, options);
+  const publicPlan = {
+    skipped: plan.skipped,
+    totalBytes: plan.totalBytes,
+    cachedFiles: plan.cachedFiles,
+    remainingFiles: plan.files.length,
+    totalFiles: plan.totalFiles,
+    files: plan.files.map(({ displayFile, sizeBytes, modelId, file }) => ({
+      file: displayFile,
+      rawFile: file,
+      modelId,
+      sizeBytes,
+    })),
+  };
+
+  progressCallback({
+    status: 'plan',
+    progress: plan.files.length === 0 ? 100 : 0,
+    loadedBytes: 0,
+    totalBytes: plan.totalBytes,
+    ...publicPlan,
+  });
+
+  if (plan.skipped || !plan.cache) return publicPlan;
+
+  if (plan.files.length === 0) {
+    progressCallback({
+      status: 'progress',
+      progress: 100,
+      loadedBytes: 0,
+      totalBytes: 0,
+      ...publicPlan,
+    });
+    return publicPlan;
+  }
+
+  const loadedByFile = new Map();
+  let totalBytes = plan.totalBytes;
+  const results = [];
+
+  for (const item of plan.files) {
+    loadedByFile.set(item.key, 0);
+    const result = await downloadPlannedFile(
+      plan.cache,
+      item,
+      options.fetchFn ?? globalThis.fetch?.bind(globalThis),
+      (event) => {
+        const eventTotal = positiveNumber(event.total);
+        if (eventTotal > 0 && eventTotal !== item.sizeBytes) {
+          totalBytes += eventTotal - item.sizeBytes;
+          item.sizeBytes = eventTotal;
+        }
+
+        const loaded = positiveNumber(event.loaded);
+        loadedByFile.set(item.key, item.sizeBytes > 0 ? Math.min(loaded, item.sizeBytes) : loaded);
+        const loadedBytes = [...loadedByFile.values()].reduce((sum, value) => sum + value, 0);
+        const progress = totalBytes > 0 ? (loadedBytes / totalBytes) * 100 : positiveNumber(event.progress);
+
+        progressCallback({
+          ...event,
+          progress: Math.max(0, Math.min(100, progress)),
+          fileLoadedBytes: loaded,
+          fileTotalBytes: item.sizeBytes || eventTotal,
+          loadedBytes,
+          totalBytes,
+          cachedFiles: plan.cachedFiles,
+          remainingFiles: plan.files.length,
+          totalFiles: plan.totalFiles,
+        });
+      },
+    );
+    results.push(result);
+  }
+
+  progressCallback({
+    status: 'progress',
+    progress: 100,
+    loadedBytes: totalBytes,
+    totalBytes,
+    cachedFiles: plan.cachedFiles,
+    remainingFiles: plan.files.length,
+    totalFiles: plan.totalFiles,
+  });
+
+  return { ...publicPlan, totalBytes, results };
+}
+
+export async function ensureModelSourceCached(def, options = {}) {
+  return ensureModelSourcesCached([def], options);
 }

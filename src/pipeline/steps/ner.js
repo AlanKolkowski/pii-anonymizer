@@ -5,8 +5,10 @@ import { aggregateEntities } from '../../anonymizer.js';
  *
  * @param {Array<{alias: string, id: string, dtype: string}>} sources - Active HF sources
  * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
+ * @param {object} options
+ * @param {Function} [options.onInference] - called after each model/segment inference
  */
-export function createNerStep(sources, loadModel) {
+export function createNerStep(sources, loadModel, options = {}) {
   return async function nerStep(ctx) {
     const allEntities = [];
 
@@ -15,6 +17,7 @@ export function createNerStep(sources, loadModel) {
 
       for (const segment of ctx.segments) {
         const raw = await ner.infer(segment.text);
+        options.onInference?.({ source: source.alias, segment });
         const chunkEntities = raw[0]?.entity_group
           ? raw
           : aggregateEntities(raw, segment.text);

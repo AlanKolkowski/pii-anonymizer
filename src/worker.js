@@ -3,7 +3,7 @@ import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
-import { ensureModelSourceCached } from './pipeline/model-download.js';
+import { ensureModelSourcesCached } from './pipeline/model-download.js';
 
 // Memory budget for resident HF models in the WASM heap.
 // SOURCES[*].sizeMB tracks real ONNX artifact size; this lower-than-raw-heap
@@ -106,11 +106,10 @@ async function evictForBudget(needSizeMB, protectAlias) {
 async function loadPipelineWithDevice(def, device) {
   const opts = {
     dtype: def.dtype,
-    progress_callback: (data) => {
-      if (data.status === 'progress') {
-        self.postMessage({ type: 'progress', file: data.file, progress: data.progress });
-      }
-    },
+    // Downloads are preflighted and aggregated in the pipeline load phase.
+    // Keep Transformers.js per-file callbacks out of the UI so model session
+    // creation during NER cannot reset the download progress indicator.
+    progress_callback: () => {},
   };
   if (device === 'webnn-gpu') {
     opts.device = device;
@@ -199,14 +198,27 @@ async function loadModelForPipeline({ id, dtype }) {
   };
 }
 
-async function downloadModelFilesForPipeline({ alias }) {
-  const def = SOURCES[alias];
-  if (!def || def.kind !== 'hf') return;
-  await ensureModelSourceCached(def, {
+async function downloadModelFilesForPipeline(sources) {
+  const defs = sources
+    .map(({ alias }) => SOURCES[alias])
+    .filter((def) => def?.kind === 'hf');
+  if (defs.length === 0) {
+    self.postMessage({
+      type: 'download-progress',
+      status: 'plan',
+      progress: 100,
+      loadedBytes: 0,
+      totalBytes: 0,
+      cachedFiles: 0,
+      remainingFiles: 0,
+      totalFiles: 0,
+    });
+    return;
+  }
+
+  await ensureModelSourcesCached(defs, {
     progressCallback: (data) => {
-      if (data.status === 'progress') {
-        self.postMessage({ type: 'progress', file: data.file, progress: data.progress });
-      }
+      self.postMessage({ type: 'download-progress', ...data });
     },
   });
 }
@@ -281,8 +293,9 @@ self.onmessage = async (e) => {
         loadModel: loadModelForPipeline,
         getSentenceBoundaries: get_sentence_boundaries,
         sortSources,
-        prepareModel: downloadModelFilesForPipeline,
+        prepareModels: downloadModelFilesForPipeline,
         onTimingMark: postTiming,
+        onProgress: (event) => self.postMessage(event),
       });
       nerCache.set(hash, newEntry);
 

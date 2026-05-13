@@ -41,9 +41,9 @@ export function createPreSegmentSteps(getSentenceBoundaries) {
   ];
 }
 
-export function createNerSteps(hfSubset, regexActive, loadModel) {
+export function createNerSteps(hfSubset, regexActive, loadModel, options = {}) {
   return [
-    { phase: 'ner', steps: [createNerStep(hfSubset, loadModel), createRegexStep(regexActive)] },
+    { phase: 'ner', steps: [createNerStep(hfSubset, loadModel, options), createRegexStep(regexActive)] },
   ];
 }
 

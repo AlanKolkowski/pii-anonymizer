@@ -200,6 +200,34 @@ describe('classifyWithCache', () => {
     ]);
   });
 
+  it('emits NER progress as completed inferences out of segments times models', async () => {
+    const progress = [];
+    await classifyWithCache({
+      text: 'Jan. Anna.',
+      enabledEntities: ['PERSON_NAME', 'HEALTH_DATA'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: () => [
+        { start_index: 0, end_index: 4, text: 'Jan.' },
+        { start_index: 5, end_index: 10, text: 'Anna.' },
+      ],
+      onProgress: (event) => progress.push(event),
+    });
+
+    expect(progress[0]).toMatchObject({
+      type: 'ner-plan',
+      segments: 2,
+      models: 2,
+      total: 4,
+      completed: 0,
+    });
+    const inferenceEvents = progress.filter((event) => event.type === 'ner-progress');
+    expect(inferenceEvents).toHaveLength(4);
+    expect(inferenceEvents.at(-1)).toMatchObject({ completed: 4, total: 4 });
+  });
+
   it('can prepare missing HF artifacts before preprocessing without creating sessions', async () => {
     const events = [];
     const loadModel = async ({ id }) => {

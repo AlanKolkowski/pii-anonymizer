@@ -41,7 +41,9 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {Function} params.getSentenceBoundaries - (lang, text) => boundaries[]
  * @param {Function} [params.sortSources] - optional ordering of HF sources
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
- * @param {Function} [params.prepareModel] - async hook for downloading/caching model artifacts before inference
+ * @param {Function} [params.onProgress] - optional fine-grained progress hook receiving progress events
+ * @param {Function} [params.prepareModel] - async hook for downloading/caching one model source before inference
+ * @param {Function} [params.prepareModels] - async hook for downloading/caching all missing model sources before inference
  * @returns {Promise<{ ctx: object, cache: object }>}
  */
 export async function classifyWithCache({
@@ -54,9 +56,12 @@ export async function classifyWithCache({
   getSentenceBoundaries,
   sortSources,
   onTimingMark = () => {},
+  onProgress = () => {},
   prepareModel = null,
+  prepareModels = null,
 }) {
   const emit = (mark) => onTimingMark(mark);
+  const emitProgress = (event) => onProgress(event);
   const hash = await sha256Hex(text);
   const hit = cache?.textHash === hash;
 
@@ -70,7 +75,9 @@ export async function classifyWithCache({
   const regexNeeded = needed.includes('regex');
 
   emit('pipeline:load:start');
-  if (prepareModel) {
+  if (prepareModels) {
+    await prepareModels(orderedMissingHf);
+  } else if (prepareModel) {
     for (const source of orderedMissingHf) {
       await prepareModel(source);
     }
@@ -106,11 +113,32 @@ export async function classifyWithCache({
   let regex = hit ? cache.regex : null;
 
   emit('pipeline:ner:start');
+  const totalInferences = segments.length * orderedMissingHf.length;
+  let completedInferences = 0;
+  emitProgress({
+    type: 'ner-plan',
+    segments: segments.length,
+    models: orderedMissingHf.length,
+    total: totalInferences,
+    completed: 0,
+  });
   if (missingHf.length > 0) {
     for (const source of orderedMissingHf) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([source], false, loadModel),
+        createNerSteps([source], false, loadModel, {
+          onInference: () => {
+            completedInferences += 1;
+            emitProgress({
+              type: 'ner-progress',
+              segments: segments.length,
+              models: orderedMissingHf.length,
+              total: totalInferences,
+              completed: completedInferences,
+              source: source.alias,
+            });
+          },
+        }),
       );
       bySource.set(source.alias, ctx.entities);
     }
