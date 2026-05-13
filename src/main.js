@@ -7,6 +7,7 @@ import { createToolModeController } from './ui/tool-mode.js';
 import { createProgressOverlay } from './ui/progress-overlay.js';
 import {
   createInitialProgressState,
+  formatBytes,
   getProgressView,
   progressReducer,
 } from './ui/progress-state.js';
@@ -434,15 +435,31 @@ function dispatchNextClassify() {
 worker.onmessage = (e) => {
   const msg = e.data;
   switch (msg.type) {
-    case 'progress': {
+    case 'progress':
+    case 'download-progress': {
       const pct = Math.round(msg.progress ?? 0);
-      setText(modelStatusEls, `Pobieranie modelu ${msg.file ?? ''}... ${pct}%`);
+      const loadedBytes = Number(msg.loadedBytes ?? 0);
+      const totalBytes = Number(msg.totalBytes ?? 0);
+      const cached = (msg.remainingFiles ?? 1) === 0 && totalBytes === 0;
+      const bytes = totalBytes > 0 ? ` (${formatBytes(loadedBytes)} / ${formatBytes(totalBytes)})` : '';
+      setText(
+        modelStatusEls,
+        cached ? 'Modele są już pobrane.' : `Pobieranie modeli... ${pct}%${bytes}`,
+      );
       updateProgress({
+        ...msg,
         type: 'download-progress',
-        file: msg.file,
         progress: pct,
         t: performance.now(),
       });
+      break;
+    }
+    case 'ner-plan':
+    case 'ner-progress': {
+      updateProgress({ ...msg, t: performance.now() });
+      if ((msg.total ?? 0) > 0) {
+        setText(modelStatusEls, `Analizowanie segmentów ${msg.completed ?? 0}/${msg.total}…`);
+      }
       break;
     }
     case 'backend-resolved':

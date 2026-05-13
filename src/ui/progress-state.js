@@ -33,6 +33,7 @@ function freshSteps(activeIndex = 0, t = null) {
   return PIPELINE_STEPS.map((step, index) => ({
     ...step,
     status: index === activeIndex ? 'active' : 'pending',
+    progress: index === activeIndex ? 0 : null,
     durationMs: null,
     startedAt: index === activeIndex ? t : null,
   }));
@@ -50,6 +51,7 @@ export function createInitialProgressState() {
     stepProgress: 0,
     steps: freshSteps(0),
     download: null,
+    ner: null,
     loadStartedByPipeline: false,
     sourceStartedAt: null,
     lastT: null,
@@ -61,13 +63,23 @@ function cloneState(state) {
     ...state,
     steps: state.steps.map((step) => ({ ...step })),
     download: state.download ? { ...state.download } : null,
+    ner: state.ner ? { ...state.ner } : null,
   };
 }
 
-function clampPercent(value) {
+function clamp01(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, n));
+  return Math.max(0, Math.min(1, n));
+}
+
+function progressFromEvent(event) {
+  const loaded = Number(event.loadedBytes);
+  const total = Number(event.totalBytes);
+  if (Number.isFinite(loaded) && Number.isFinite(total) && total > 0) {
+    return clamp01(loaded / total);
+  }
+  return clamp01(Number(event.progress) / 100);
 }
 
 function markPreviousDone(next, stepIndex, t) {
@@ -75,6 +87,7 @@ function markPreviousDone(next, stepIndex, t) {
     const step = next.steps[i];
     if (step.status === 'done') continue;
     step.status = 'done';
+    step.progress = 1;
     if (step.startedAt != null && t != null) {
       step.durationMs = Math.max(0, t - step.startedAt);
     }
@@ -86,6 +99,7 @@ function activateStep(state, stepId, t) {
   if (stepIndex == null) return state;
 
   const next = cloneState(state);
+  const wasActive = next.activeStepIndex === stepIndex && next.steps[stepIndex]?.status === 'active';
   next.visible = true;
   next.fading = false;
   next.status = 'running';
@@ -96,20 +110,24 @@ function activateStep(state, stepId, t) {
   next.steps.forEach((step, index) => {
     if (index < stepIndex) {
       step.status = 'done';
+      step.progress = 1;
     } else if (index === stepIndex) {
       step.status = 'active';
       step.startedAt = t ?? step.startedAt ?? next.lastT;
       step.durationMs = null;
+      step.progress = wasActive ? clamp01(step.progress ?? 0) : 0;
     } else {
-        step.status = 'pending';
-        step.durationMs = null;
-        step.startedAt = null;
-      }
+      step.status = 'pending';
+      step.progress = null;
+      step.durationMs = null;
+      step.startedAt = null;
+    }
   });
 
   next.activeStepIndex = stepIndex;
-  next.stepProgress = 0;
+  next.stepProgress = next.steps[stepIndex].progress ?? 0;
   if (stepId !== 'load') next.download = null;
+  if (stepId !== 'ner') next.ner = null;
   return next;
 }
 
@@ -130,6 +148,7 @@ function completeStep(state, stepId, t) {
   markPreviousDone(next, stepIndex, t);
   const step = next.steps[stepIndex];
   step.status = 'done';
+  step.progress = 1;
   if (step.startedAt != null && t != null) {
     step.durationMs = Math.max(0, t - step.startedAt);
   }
@@ -137,13 +156,15 @@ function completeStep(state, stepId, t) {
   const nextIndex = Math.min(stepIndex + 1, PIPELINE_STEPS.length - 1);
   if (stepIndex < PIPELINE_STEPS.length - 1) {
     next.steps[nextIndex].status = 'active';
+    next.steps[nextIndex].progress = 0;
     if (next.steps[nextIndex].startedAt == null) next.steps[nextIndex].startedAt = t ?? next.lastT;
     next.activeStepIndex = nextIndex;
   } else {
     next.activeStepIndex = stepIndex;
   }
-  next.stepProgress = 0;
+  next.stepProgress = next.steps[next.activeStepIndex]?.progress ?? 0;
   if (stepId === 'load') next.download = null;
+  if (stepId === 'ner') next.ner = null;
   return next;
 }
 
@@ -153,18 +174,86 @@ function completeAllSteps(state, t) {
   next.fading = false;
   next.status = 'done';
   next.lastT = t ?? next.lastT;
-  next.stepProgress = 0;
+  next.stepProgress = 1;
   next.download = null;
+  next.ner = null;
 
   next.steps.forEach((step, index) => {
     if (step.status !== 'done' && step.startedAt != null && t != null) {
       step.durationMs = Math.max(0, t - step.startedAt);
     }
     step.status = 'done';
+    step.progress = 1;
     if (step.startedAt == null) step.startedAt = next.sourceStartedAt ?? t ?? null;
     next.activeStepIndex = index;
   });
 
+  return next;
+}
+
+function updateLoadProgress(state, event) {
+  const loadStep = state.steps[0];
+  let next;
+  if (state.loadStartedByPipeline && loadStep?.status === 'active') {
+    next = cloneState(state);
+    next.visible = true;
+    next.fading = false;
+    next.status = 'running';
+    next.activeStepIndex = 0;
+  } else if (loadStep?.status === 'done') {
+    return state;
+  } else {
+    next = activateStep(state, 'load', event.t);
+  }
+
+  const progress = progressFromEvent(event);
+  next.steps[0].progress = progress;
+  next.stepProgress = progress;
+  next.download = {
+    status: event.status ?? 'progress',
+    file: event.file ?? '',
+    progress: progress * 100,
+    loadedBytes: Number.isFinite(Number(event.loadedBytes)) ? Number(event.loadedBytes) : null,
+    totalBytes: Number.isFinite(Number(event.totalBytes)) ? Number(event.totalBytes) : null,
+    fileLoadedBytes: Number.isFinite(Number(event.fileLoadedBytes)) ? Number(event.fileLoadedBytes) : null,
+    fileTotalBytes: Number.isFinite(Number(event.fileTotalBytes)) ? Number(event.fileTotalBytes) : null,
+    cachedFiles: Number.isFinite(Number(event.cachedFiles)) ? Number(event.cachedFiles) : null,
+    remainingFiles: Number.isFinite(Number(event.remainingFiles)) ? Number(event.remainingFiles) : null,
+    totalFiles: Number.isFinite(Number(event.totalFiles)) ? Number(event.totalFiles) : null,
+  };
+  next.lastT = event.t ?? next.lastT;
+  return next;
+}
+
+function updateNerProgress(state, event) {
+  const nerIndex = STEP_INDEX.get('ner');
+  const nerStep = state.steps[nerIndex];
+  let next;
+  if (nerStep?.status === 'done') return state;
+  if (nerStep?.status === 'active') {
+    next = cloneState(state);
+    next.visible = true;
+    next.fading = false;
+    next.status = 'running';
+    next.activeStepIndex = nerIndex;
+  } else {
+    next = activateStep(state, 'ner', event.t);
+  }
+
+  const completed = Math.max(0, Number(event.completed ?? 0));
+  const total = Math.max(0, Number(event.total ?? 0));
+  const progress = total > 0 ? clamp01(completed / total) : 0;
+  next.steps[nerIndex].progress = progress;
+  next.stepProgress = progress;
+  next.ner = {
+    completed,
+    total,
+    segments: Math.max(0, Number(event.segments ?? 0)),
+    models: Math.max(0, Number(event.models ?? 0)),
+    source: event.source ?? null,
+    progress: progress * 100,
+  };
+  next.lastT = event.t ?? next.lastT;
   return next;
 }
 
@@ -193,6 +282,7 @@ export function progressReducer(state, event) {
         stepProgress: 0,
         steps: freshSteps(0, event.t ?? state.lastT ?? null),
         download: null,
+        ner: null,
         loadStartedByPipeline: false,
         sourceStartedAt: event.t ?? state.lastT ?? null,
         lastT: event.t ?? state.lastT ?? null,
@@ -211,30 +301,11 @@ export function progressReducer(state, event) {
       if (endStep) return completeStep(state, endStep, event.t);
       return state;
     }
-    case 'download-progress': {
-      const loadStep = state.steps[0];
-      let next;
-      if (state.loadStartedByPipeline && loadStep?.status === 'active') {
-        next = cloneState(state);
-        next.visible = true;
-        next.fading = false;
-        next.status = 'running';
-        next.activeStepIndex = 0;
-      } else if (loadStep?.status === 'done') {
-        return state;
-      } else {
-        next = activateStep(state, 'load', event.t);
-      }
-      const progress = clampPercent(event.progress);
-      next = cloneState(next);
-      next.stepProgress = progress / 100;
-      next.download = {
-        file: event.file ?? '',
-        progress,
-      };
-      next.lastT = event.t ?? next.lastT;
-      return next;
-    }
+    case 'download-progress':
+      return updateLoadProgress(state, event);
+    case 'ner-plan':
+    case 'ner-progress':
+      return updateNerProgress(state, event);
     case 'result':
       return completeAllSteps(state, event.t);
     case 'fade':
@@ -248,49 +319,79 @@ export function progressReducer(state, event) {
   }
 }
 
-function completedCount(steps) {
-  return steps.filter((step) => step.status === 'done').length;
-}
-
-function percentForState(state) {
+function activePercentForState(state) {
   if (!state.visible) return 100;
   if (state.status === 'done' || state.status === 'error') return 100;
-  const done = completedCount(state.steps);
-  const inStep = state.steps[state.activeStepIndex]?.status === 'active'
-    ? Math.max(0, Math.min(1, state.stepProgress ?? 0))
-    : 0;
-  return Math.round(((done + inStep) / PIPELINE_STEPS.length) * 100);
+  const active = state.steps[state.activeStepIndex];
+  return Math.round(clamp01(active?.progress ?? state.stepProgress ?? 0) * 100);
 }
 
-function etaSecondsForState(state) {
-  if (!state.visible || state.status === 'done' || state.status === 'error') return null;
-  const durations = state.steps
-    .filter((step) => step.status === 'done' && step.durationMs != null)
-    .map((step) => step.durationMs);
-  if (durations.length === 0) return null;
-  const avg = durations.reduce((sum, ms) => sum + ms, 0) / durations.length;
-  const remaining = PIPELINE_STEPS.length - completedCount(state.steps);
-  if (remaining <= 0) return null;
-  return Math.max(1, Math.round((avg * remaining) / 1000));
+function etaSecondsForState() {
+  // Per-step progress is measured with different units (bytes, inferences, or
+  // discrete phase completion), so a global ETA would imply a false weighting.
+  return null;
+}
+
+export function formatBytes(bytes) {
+  let value = Number(bytes);
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let unit = 0;
+  while (value >= 1000 && unit < units.length - 1) {
+    value /= 1000;
+    unit += 1;
+  }
+  const digits = unit === 0 ? 0 : (value < 10 ? 1 : 0);
+  return `${value.toFixed(digits)} ${units[unit]}`;
+}
+
+function polishCountWord(count, one, few, many) {
+  const n = Math.abs(Number(count));
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
 }
 
 function currentLabelForState(state) {
   const active = state.steps[state.activeStepIndex] ?? state.steps[0];
   if (active.id === 'load' && state.download) {
     const pct = Math.round(state.download.progress);
-    const file = state.download.file ? ` ${state.download.file}` : '';
-    return `Pobieranie modelu${file} · ${pct}%`;
+    const loaded = state.download.loadedBytes;
+    const total = state.download.totalBytes;
+    const file = state.download.file ? ` · ${state.download.file}` : '';
+    if ((state.download.remainingFiles ?? 0) === 0 && total === 0) {
+      return 'Modele są już w cache';
+    }
+    if (total > 0) {
+      return `Pobieranie modeli · ${pct}% (${formatBytes(loaded)} / ${formatBytes(total)})${file}`;
+    }
+    return state.download.status === 'plan'
+      ? 'Sprawdzanie cache modeli'
+      : `Pobieranie modeli · ${pct}%${file}`;
+  }
+  if (active.id === 'ner' && state.ner) {
+    if (state.ner.total > 0) {
+      const modelWord = polishCountWord(state.ner.models, 'model', 'modele', 'modeli');
+      const segmentWord = polishCountWord(state.ner.segments, 'segment', 'segmenty', 'segmentów');
+      return `Inferencje ${state.ner.completed} z ${state.ner.total} (${state.ner.models} ${modelWord} × ${state.ner.segments} ${segmentWord})`;
+    }
+    if (state.ner.models === 0) return 'Brak inferencji modeli — używam cache lub reguł';
+    return 'Przygotowanie inferencji NER';
   }
   return active.label;
 }
 
 export function getProgressView(state) {
   const activeStep = state.steps[state.activeStepIndex] ?? state.steps[0];
+  const percent = activePercentForState(state);
   return {
     visible: state.visible,
     fading: state.fading,
     status: state.status,
-    percent: percentForState(state),
+    percent,
+    activePercent: percent,
     etaSeconds: etaSecondsForState(state),
     currentLabel: currentLabelForState(state),
     activeStep,

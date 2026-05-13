@@ -51,7 +51,6 @@ function createMeta(view) {
   const parts = [];
   if (view.documentLabel) parts.push(view.documentLabel);
   parts.push(`krok ${view.activeStepIndex + 1} z ${view.totalSteps}`);
-  if (view.etaSeconds != null) parts.push(`~${view.etaSeconds}s pozostało`);
 
   parts.forEach((part, index) => {
     if (index > 0) appendText(meta, 'span', '', '·');
@@ -60,7 +59,42 @@ function createMeta(view) {
   return meta;
 }
 
-function createStepRow(step, index) {
+function createSummary(view) {
+  const summary = document.createElement('div');
+  summary.className = 'progress-summary';
+  appendText(
+    summary,
+    'div',
+    'progress-title',
+    view.status === 'done' ? 'Gotowe' : (view.status === 'error' ? 'Błąd' : 'Anonimizowanie dokumentu'),
+  );
+  const meta = document.createElement('span');
+  meta.className = 'step-meta';
+  const parts = [];
+  if (view.documentLabel) parts.push(view.documentLabel);
+  parts.push(`${view.totalSteps} kroków pipeline'u`);
+  parts.forEach((part, index) => {
+    if (index > 0) appendText(meta, 'span', '', '·');
+    appendText(meta, 'span', '', part);
+  });
+  summary.appendChild(meta);
+  return summary;
+}
+
+function createActiveDetail(view) {
+  const detail = document.createElement('div');
+  detail.className = 'step-detail';
+  detail.appendChild(createRing(view.activePercent));
+
+  const text = document.createElement('div');
+  text.className = 'progress-text';
+  appendText(text, 'span', 'step-name', view.currentLabel);
+  text.appendChild(createMeta(view));
+  detail.appendChild(text);
+  return detail;
+}
+
+function createStepRow(step, index, view) {
   const row = document.createElement('div');
   row.className = `step ${step.status === 'pending' ? '' : step.status}`.trim();
 
@@ -81,6 +115,10 @@ function createStepRow(step, index) {
     step.status === 'done' ? formatStepDuration(step.durationMs) : '',
   );
 
+  if (step.status === 'active') {
+    row.appendChild(createActiveDetail(view));
+  }
+
   return row;
 }
 
@@ -96,22 +134,12 @@ export function renderProgressOverlay(host, state) {
 
   const card = document.createElement('div');
   card.className = 'progress-card';
-
-  const head = document.createElement('div');
-  head.className = 'progress-head';
-  head.appendChild(createRing(view.percent));
-
-  const text = document.createElement('div');
-  text.className = 'progress-text';
-  appendText(text, 'span', 'step-name', view.currentLabel);
-  text.appendChild(createMeta(view));
-  head.appendChild(text);
-  card.appendChild(head);
+  card.appendChild(createSummary(view));
 
   const stepper = document.createElement('div');
   stepper.className = 'stepper';
   view.steps.forEach((step, index) => {
-    stepper.appendChild(createStepRow(step, index));
+    stepper.appendChild(createStepRow(step, index, view));
   });
   card.appendChild(stepper);
 
