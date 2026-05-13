@@ -130,7 +130,7 @@ describe('dedupStep', () => {
 });
 
 describe('mergeStep', () => {
-  it('merges adjacent address entities', () => {
+  it('does not merge address and location by default', () => {
     const text = 'ul. Kwiatowa 5, Warszawa';
     const ctx = {
       text,
@@ -143,10 +143,8 @@ describe('mergeStep', () => {
       legend: {},
     };
     const result = mergeStep(ctx);
-    expect(result.entities).toHaveLength(1);
-    expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
-    expect(result.entities[0].start).toBe(0);
-    expect(result.entities[0].end).toBe(24);
+    expect(result.entities).toHaveLength(2);
+    expect(result.entities.map(e => e.entity_group)).toEqual(['POSTAL_ADDRESS', 'LOCATION']);
   });
 });
 

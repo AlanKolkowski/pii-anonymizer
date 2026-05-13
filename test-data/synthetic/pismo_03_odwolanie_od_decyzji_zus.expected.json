@@ -336,10 +336,16 @@
     "text": "Szpitalu im. Biegańskiego"
   },
   {
-    "entity_group": "POSTAL_ADDRESS",
+    "entity_group": "LOCATION",
     "start": 3552,
+    "end": 3557,
+    "text": "Łodzi"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 3559,
     "end": 3592,
-    "text": "Łodzi,\nul. Kniaziewicza 1/5, 91-347 Łódź"
+    "text": "ul. Kniaziewicza 1/5, 91-347 Łódź"
   },
   {
     "entity_group": "ACCOUNT_IDENTIFIER",

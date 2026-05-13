@@ -45,8 +45,8 @@ export const ENTITY_RULES = {
   PAYMENT_CARD_SECURITY:    IDENTIFIER_RULE,
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
   VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40 },
-  LOCATION:                 { maxLength: 100, threshold: 0.9 },
-  POSTAL_ADDRESS:           { maxLength: 100, mergeWithAdjacent: ['LOCATION'] },
+  LOCATION:                 { maxLength: 100, threshold: 0.9, mergeWithAdjacent: [] },
+  POSTAL_ADDRESS:           { maxLength: 100, mergeWithAdjacent: [] },
   PERSON_ATTRIBUTE:         { maxLength: 80 },
 };
 
