@@ -32,7 +32,9 @@ function noSpaFallbackForLocalModels() {
 }
 
 export default defineConfig({
-  base: '/pii-anonymizer/',
+  // Keep asset URLs deployment-agnostic: Cloudflare Pages serves at /,
+  // while the GitHub Pages fallback serves from /pii-anonymizer/.
+  base: './',
   server: {
     host: true,
   },
