@@ -50,8 +50,14 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 508,
+    "end": 538,
+    "text": "Zakład Ubezpieczeń Społecznych"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 549,
     "end": 554,
-    "text": "Zakład Ubezpieczeń Społecznych\nOddział w Łodzi"
+    "text": "Łodzi"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
@@ -62,8 +68,14 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 602,
+    "end": 605,
+    "text": "ZUS"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 616,
     "end": 621,
-    "text": "ZUS Oddział w Łodzi"
+    "text": "Łodzi"
   },
   {
     "entity_group": "ORGANIZATION_NAME",
@@ -98,8 +110,14 @@
   {
     "entity_group": "ORGANIZATION_NAME",
     "start": 1146,
+    "end": 1177,
+    "text": "Zakładu\nUbezpieczeń Społecznych"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 1188,
     "end": 1193,
-    "text": "Zakładu\nUbezpieczeń Społecznych Oddział w Łodzi"
+    "text": "Łodzi"
   },
   {
     "entity_group": "DOCUMENT_REFERENCE",

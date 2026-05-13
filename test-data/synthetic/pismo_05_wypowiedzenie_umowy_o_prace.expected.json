@@ -332,8 +332,14 @@
   {
     "entity_group": "PERSON_ROLE_OR_TITLE",
     "start": 7483,
+    "end": 7490,
+    "text": "Prezesa"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 7491,
     "end": 7495,
-    "text": "Prezesa UODO"
+    "text": "UODO"
   },
   {
     "entity_group": "POSTAL_ADDRESS",
