@@ -94,15 +94,27 @@ function summarizeTimings(events) {
   return { wallMs, totalLoadMs, netInferenceMs: wallMs - totalLoadMs, loads };
 }
 
+const SELECTORS = {
+  anonymizeButton: '[data-action="anonymize"]',
+  copyAllButton: '[data-action="copy-all"]',
+  modelStatus: '[data-status="model"]',
+  addPaste: '[data-testid="sources-add-paste"]',
+  textarea: '.ann-editor-textarea',
+};
+
 async function runOne(context, baseURL, testText, entities) {
   const page = await context.newPage();
   const events = [];
   const errorMsgs = [];
+  let resolveResult;
+  const resultSeen = new Promise((resolve) => { resolveResult = resolve; });
   page.on('console', (msg) => {
     const text = msg.text();
     const parsed = parseTimingLine(text);
-    if (parsed) events.push(parsed);
-    else if (msg.type() === 'error' || /\[worker\] .* failed:/.test(text)) {
+    if (parsed) {
+      events.push(parsed);
+      if (parsed.mark === 'result') resolveResult();
+    } else if (msg.type() === 'error' || /\[worker\] .* failed:/.test(text)) {
       errorMsgs.push(text);
     }
   });
@@ -112,27 +124,31 @@ async function runOne(context, baseURL, testText, entities) {
   }, entities);
 
   await page.goto(baseURL);
-  await page.waitForSelector('#anonymize-btn:not([disabled])', { timeout: PAGE_READY_TIMEOUT_MS });
+  await page.waitForSelector(SELECTORS.addPaste, { timeout: PAGE_READY_TIMEOUT_MS });
+  await page.locator(SELECTORS.addPaste).click();
 
-  const textarea = page.locator('.ann-editor-textarea');
+  const textarea = page.locator(SELECTORS.textarea);
   await textarea.fill(testText);
+  await page.waitForSelector(`${SELECTORS.anonymizeButton}:not([disabled])`, { timeout: PAGE_READY_TIMEOUT_MS });
 
   let outcome = 'ok';
   let e2eMs = null;
   const clickT = performance.now();
-  await page.locator('#anonymize-btn').click();
+  await page.locator(SELECTORS.anonymizeButton).click();
 
   try {
-    await page.waitForFunction(
-      () => {
-        const r = document.getElementById('result-section');
-        const status = document.getElementById('model-status')?.textContent ?? '';
-        return (r && !r.hidden) || status.startsWith('Błąd');
-      },
-      null,
-      { timeout: RESULT_TIMEOUT_MS },
-    );
-    const status = await page.locator('#model-status').textContent();
+    await Promise.race([
+      resultSeen,
+      page.waitForFunction(
+        (statusSelector) => {
+          const status = document.querySelector(statusSelector)?.textContent ?? '';
+          return status.startsWith('Błąd');
+        },
+        SELECTORS.modelStatus,
+        { timeout: RESULT_TIMEOUT_MS },
+      ),
+    ]);
+    const status = await page.locator(SELECTORS.modelStatus).first().textContent();
     if (status?.startsWith('Błąd')) {
       outcome = 'error';
       errorMsgs.push(status);
@@ -148,11 +164,17 @@ async function runOne(context, baseURL, testText, entities) {
   return { e2eMs, events, summary: outcome === 'ok' ? summarizeTimings(events) : null, outcome, errors: errorMsgs };
 }
 
-const REQUIRED_SELECTORS = ['#anonymize-btn', '#model-status', '#result-section', '.ann-editor-textarea'];
+const REQUIRED_SELECTORS = [
+  SELECTORS.anonymizeButton,
+  SELECTORS.copyAllButton,
+  SELECTORS.modelStatus,
+  SELECTORS.addPaste,
+];
 
 async function preflightAndCaptureSystemInfo(context, baseURL) {
   const page = await context.newPage();
   await page.goto(baseURL);
+  await page.waitForSelector(SELECTORS.addPaste, { timeout: PAGE_READY_TIMEOUT_MS });
 
   // Fail fast if the UI selectors the runner depends on don't exist —
   // otherwise each case hits the 600s result-wait timeout before failing.
@@ -163,6 +185,9 @@ async function preflightAndCaptureSystemInfo(context, baseURL) {
     await page.close();
     throw new Error(`Pre-flight failed: required selectors not found: ${missing.join(', ')}. UI may have changed; update bench/runner.js.`);
   }
+
+  await page.locator(SELECTORS.addPaste).click();
+  await page.waitForSelector(SELECTORS.textarea, { timeout: PAGE_READY_TIMEOUT_MS });
 
   const info = await page.evaluate(() => ({
     userAgent: navigator.userAgent,
