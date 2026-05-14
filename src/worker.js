@@ -16,7 +16,7 @@ env.backends.onnx.wasm.numThreads = Math.min(self.navigator.hardwareConcurrency 
 // budget reserves headroom for ORT scratch/tokenizer buffers and contiguous
 // fp32 allocations. In forced-WASM mode it intentionally prevents fp16+fp32
 // co-residency, which has proven too tight despite totaling only ~1.67 GB.
-const MEMORY_BUDGET_MB = 1600;
+const MEMORY_BUDGET_MB = 1680;
 
 // WebNN compiles a fixed-shape graph at session creation. Pin sequence_length
 // so the tokenizer pads/truncates every input to this length; without it, only
@@ -102,7 +102,7 @@ async function evictForBudget(needSizeMB, protectAlias) {
   // memory but does nothing for WASM heap pressure.
   const candidates = [...loadedModels.entries()]
     .filter(([alias, entry]) => alias !== protectAlias && entry.device === 'wasm')
-    .sort((a, b) => b[1].sizeMB - a[1].sizeMB);
+    .sort((a, b) => a[1].sizeMB - b[1].sizeMB);
   for (const [alias] of candidates) {
     if (totalLoadedMB() + needSizeMB <= MEMORY_BUDGET_MB) return;
     await disposeModel(alias);
