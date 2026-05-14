@@ -82,9 +82,9 @@ describe('deriveCases', () => {
 });
 
 describe('deriveCases against real ENTITY_SOURCES', () => {
-  it('produces 6 cases for the current codebase (5 unique combos + all-entities)', () => {
+  it('produces 4 cases for the current codebase (3 unique combos + all-entities)', () => {
     const cases = deriveCases();
-    expect(cases).toHaveLength(6);
+    expect(cases).toHaveLength(4);
     expect(cases[cases.length - 1].kind).toBe('all-entities');
   });
 });

@@ -47,7 +47,7 @@ export const ENTITY_RULES = {
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
   VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40 },
   LOCATION:                 { maxLength: 100, threshold: 0.9, mergeWithAdjacent: [] },
-  POSTAL_ADDRESS:           { maxLength: 100, mergeWithFollowing: ['LOCATION'] },
+  POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'] },
   PERSON_ATTRIBUTE:         { maxLength: 80 },
 };
 

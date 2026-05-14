@@ -11,12 +11,9 @@
 const mb = (bytes) => Math.ceil(bytes / 1_000_000);
 
 export const SOURCES = {
-  'multilang-q8':   { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'q8',   sizeBytes: 278736360,  sizeMB: mb(278736360),  backends: ['wasm'] },
-  'multilang-fp16': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp16', sizeBytes: 555320741,  sizeMB: mb(555320741),  backends: ['webnn-gpu', 'wasm'] },
-  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['webnn-gpu', 'wasm'] },
+  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['wasm'] },
   'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeBytes: 278737914,  sizeMB: mb(278737914),  backends: ['wasm'] },
   'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
-  'polish-fp32':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp32', sizeBytes: 1110253026, sizeMB: mb(1110253026), backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
 };
 
@@ -25,14 +22,14 @@ export const ENTITY_SOURCES = {
   DATE_OF_BIRTH:            ['polish-fp16'],
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
-  PERSON_IDENTIFIER:        ['multilang-fp16', 'polish-fp16', 'regex'],
+  PERSON_IDENTIFIER:        ['multilang-fp32', 'regex'],
   PERSON_ROLE_OR_TITLE:     ['multilang-fp32'],
   ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32'],
   ORGANIZATION_IDENTIFIER:  ['multilang-fp32', 'regex'],
   EMAIL_ADDRESS:            ['polish-fp16', 'regex'],
   PHONE_NUMBER:             ['polish-fp16', 'regex'],
   CONTACT_HANDLE:           ['polish-fp16'],
-  POSTAL_ADDRESS:           ['multilang-fp16', 'polish-fp16'],
+  POSTAL_ADDRESS:           ['polish-fp16'],
   LOCATION:                 ['polish-fp16'],
   GEO_LOCATION:             ['polish-fp16'],
   IP_ADDRESS:               ['polish-fp16'],
@@ -43,8 +40,8 @@ export const ENTITY_SOURCES = {
   BANK_ACCOUNT_IDENTIFIER:  ['polish-fp16', 'regex'],
   PAYMENT_CARD:             ['polish-fp16'],
   PAYMENT_CARD_SECURITY:    ['polish-fp16'],
-  DOCUMENT_REFERENCE:       ['multilang-fp16', 'polish-fp16'],
-  FINANCIAL_AMOUNT:         ['multilang-fp16', 'polish-fp16', 'regex'],
+  DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16'],
+  FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
   VEHICLE_IDENTIFIER:       ['polish-fp16'],
   HEALTH_DATA:              ['multilang-fp32'], // The only model that catches all
