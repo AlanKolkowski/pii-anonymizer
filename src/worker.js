@@ -1,9 +1,15 @@
-import { pipeline as hfPipeline } from '@huggingface/transformers';
+import { pipeline as hfPipeline, env } from '@huggingface/transformers';
 import init, { get_sentence_boundaries } from 'sentencex-wasm';
 import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 import { ensureModelSourcesCached } from './pipeline/model-download.js';
+
+// ORT-Web's default caps threads aggressively (~min(hw/2, 4)). On 8c+ machines
+// that leaves ~30% perf on the table for BERT matmul. Cap at 8 because gains
+// flatten past that on memory bandwidth, and on lower-core hardware fall back
+// to whatever the machine actually has so we don't oversubscribe.
+env.backends.onnx.wasm.numThreads = Math.min(self.navigator.hardwareConcurrency || 4, 8);
 
 // Memory budget for resident HF models in the WASM heap.
 // SOURCES[*].sizeMB tracks real ONNX artifact size; this lower-than-raw-heap
