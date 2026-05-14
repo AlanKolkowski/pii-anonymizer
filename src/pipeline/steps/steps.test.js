@@ -130,7 +130,7 @@ describe('dedupStep', () => {
 });
 
 describe('mergeStep', () => {
-  it('does not merge address and location by default', () => {
+  it('merges address with a following location by default', () => {
     const text = 'ul. Kwiatowa 5, Warszawa';
     const ctx = {
       text,
@@ -143,8 +143,27 @@ describe('mergeStep', () => {
       legend: {},
     };
     const result = mergeStep(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
+    expect(result.entities[0].start).toBe(0);
+    expect(result.entities[0].end).toBe(24);
+  });
+
+  it('does not merge location before address by default', () => {
+    const text = 'Warszawa, ul. Kwiatowa 5';
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'LOCATION', start: 0, end: 8, score: 0.85 },
+        { entity_group: 'POSTAL_ADDRESS', start: 10, end: 24, score: 0.9 },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = mergeStep(ctx);
     expect(result.entities).toHaveLength(2);
-    expect(result.entities.map(e => e.entity_group)).toEqual(['POSTAL_ADDRESS', 'LOCATION']);
+    expect(result.entities.map(e => e.entity_group)).toEqual(['LOCATION', 'POSTAL_ADDRESS']);
   });
 });
 

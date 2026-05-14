@@ -4,12 +4,21 @@ import { rulesFor } from '../configs/entity-rules.js';
 const MAX_GAP = 3;
 const GAP_RE = /^[\s,\n]*$/;
 
+function hasRule(rule, key, type) {
+  return (rule[key] ?? []).includes(type);
+}
+
 function canMergePair(prev, curr) {
   if (prev.entity_group === curr.entity_group) return { host: prev.entity_group };
   const prevRule = rulesFor(prev.entity_group);
   const currRule = rulesFor(curr.entity_group);
-  if (prevRule.mergeWithAdjacent.includes(curr.entity_group)) return { host: prev.entity_group };
-  if (currRule.mergeWithAdjacent.includes(prev.entity_group)) return { host: curr.entity_group };
+
+  // Directional: the listed type must be after the rule owner in the text.
+  if (hasRule(prevRule, 'mergeWithFollowing', curr.entity_group)) return { host: prev.entity_group };
+
+  // Legacy symmetric adjacency rule.
+  if (hasRule(prevRule, 'mergeWithAdjacent', curr.entity_group)) return { host: prev.entity_group };
+  if (hasRule(currRule, 'mergeWithAdjacent', prev.entity_group)) return { host: curr.entity_group };
   return null;
 }
 

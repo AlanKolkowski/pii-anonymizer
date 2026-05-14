@@ -8,9 +8,10 @@ function ctx(text, entities) {
 vi.mock('../configs/entity-rules.js', () => ({
   rulesFor: (type) => {
     const map = {
-      POSTAL_ADDRESS: { mergeWithAdjacent: ['LOCATION'] },
+      POSTAL_ADDRESS: { mergeWithFollowing: ['LOCATION'] },
       LOCATION: { mergeWithAdjacent: [] },
       PERSON_NAME: { mergeWithAdjacent: [] },
+      ORGANIZATION_NAME: { mergeWithAdjacent: ['LOCATION'] },
     };
     return map[type] || { mergeWithAdjacent: [] };
   },
@@ -29,7 +30,7 @@ describe('mergeStep', () => {
     expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
   });
 
-  it('merges LOCATION into adjacent POSTAL_ADDRESS via mergeWithAdjacent', () => {
+  it('merges LOCATION after POSTAL_ADDRESS via mergeWithFollowing', () => {
     const text = 'ul. Warszawska 5, Kraków';
     const result = mergeStep(ctx(text, [
       { entity_group: 'POSTAL_ADDRESS', start: 0, end: 16, score: 0.9, source: 'polish-q8' },
@@ -40,16 +41,26 @@ describe('mergeStep', () => {
     expect(result.entities[0].end).toBe(24);
   });
 
-  it('merges POSTAL_ADDRESS into adjacent LOCATION (host = POSTAL_ADDRESS)', () => {
+  it('does not merge LOCATION before POSTAL_ADDRESS via mergeWithFollowing', () => {
     const text = 'Kraków, ul. Warszawska';
     const result = mergeStep(ctx(text, [
       { entity_group: 'LOCATION', start: 0, end: 6, score: 0.8, source: 'polish-q8' },
       { entity_group: 'POSTAL_ADDRESS', start: 8, end: 22, score: 0.9, source: 'polish-q8' },
     ]));
+    expect(result.entities).toHaveLength(2);
+    expect(result.entities.map(e => e.entity_group)).toEqual(['LOCATION', 'POSTAL_ADDRESS']);
+  });
+
+  it('keeps mergeWithAdjacent symmetric for legacy adjacency rules', () => {
+    const text = 'Kraków, ACME';
+    const result = mergeStep(ctx(text, [
+      { entity_group: 'LOCATION', start: 0, end: 6, score: 0.8, source: 'polish-q8' },
+      { entity_group: 'ORGANIZATION_NAME', start: 8, end: 12, score: 0.9, source: 'polish-q8' },
+    ]));
     expect(result.entities).toHaveLength(1);
-    expect(result.entities[0].entity_group).toBe('POSTAL_ADDRESS');
+    expect(result.entities[0].entity_group).toBe('ORGANIZATION_NAME');
     expect(result.entities[0].start).toBe(0);
-    expect(result.entities[0].end).toBe(22);
+    expect(result.entities[0].end).toBe(12);
   });
 
   it('does not merge cross-type pairs where neither lists the other', () => {
