@@ -36,7 +36,7 @@ export const ENTITY_SOURCES = {
   LOCATION:                 ['polish-fp16'],
   GEO_LOCATION:             ['multilang-fp16', 'polish-fp16'],
   IP_ADDRESS:               ['multilang-fp16', 'polish-fp16'],
-  DEVICE_IDENTIFIER:        ['multilang-fp16', 'polish-fp16'],
+  DEVICE_IDENTIFIER:        ['multilang-fp32'],
   COOKIE_IDENTIFIER:        ['multilang-fp16', 'polish-fp16'],
   ACCOUNT_IDENTIFIER:       ['multilang-fp16', 'polish-fp16'],
   AUTH_SECRET:              ['multilang-fp16', 'polish-fp16'],
