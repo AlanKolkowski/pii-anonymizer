@@ -285,7 +285,10 @@ self.onmessage = async (e) => {
         const aLoaded = loadedModels.has(a.alias) ? 0 : 1;
         const bLoaded = loadedModels.has(b.alias) ? 0 : 1;
         if (aLoaded !== bLoaded) return aLoaded - bLoaded;
-        return (SOURCES[a.alias]?.sizeMB ?? 0) - (SOURCES[b.alias]?.sizeMB ?? 0);
+        // Big-first: WASM linear memory grows in place when the largest model
+        // is allocated first, avoiding the heap copy/relocation that happens
+        // when a smaller heap has to grow to fit a larger model on top.
+        return (SOURCES[b.alias]?.sizeMB ?? 0) - (SOURCES[a.alias]?.sizeMB ?? 0);
       });
 
       const hash = await sha256Hex(e.data.text);

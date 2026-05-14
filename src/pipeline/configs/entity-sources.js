@@ -11,8 +11,7 @@
 const mb = (bytes) => Math.ceil(bytes / 1_000_000);
 
 export const SOURCES = {
-  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['wasm'] },
-  'polish-q8':      { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'q8',   sizeBytes: 278737914,  sizeMB: mb(278737914),  backends: ['wasm'] },
+  'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['webnn-gpu', 'wasm'] },
   'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
 };
