@@ -225,7 +225,7 @@ async function main() {
   console.log('Starting Vite...');
 
   const vite = await startVite();
-  const toolPath = '/pii-anonymizer/tool.html';
+  const toolPath = '/tool.html';
   const baseURL = backend
     ? `http://localhost:${PORT}${toolPath}?backend=${encodeURIComponent(backend)}`
     : `http://localhost:${PORT}${toolPath}`;
