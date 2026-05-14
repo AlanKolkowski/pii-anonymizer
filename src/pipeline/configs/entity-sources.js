@@ -21,7 +21,7 @@ export const SOURCES = {
 };
 
 export const ENTITY_SOURCES = {
-  PERSON_NAME:              ['multilang-fp16'],
+  PERSON_NAME:              ['multilang-fp32'],
   DATE_OF_BIRTH:            ['multilang-fp16', 'polish-fp16'],
   PERSON_ATTRIBUTE:         ['multilang-fp16'],
   PERSON_ALIAS:             ['multilang-fp16', 'polish-fp16'],
