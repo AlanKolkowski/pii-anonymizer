@@ -37,8 +37,8 @@ const inFlightSourceIds = new Set();
 let configuredOnce = false;
 const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
-const backendOverride = urlParams.get('backend');
 const LS_KEY = 'pii.selected-entities';
+const GPU_LS_KEY = 'pii.allow-gpu';
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 
@@ -68,10 +68,13 @@ const webnnHintTrigger = document.getElementById('webnn-hint-trigger');
 const webnnHintPanel = document.getElementById('webnn-hint-panel');
 const webnnHintClose = document.getElementById('webnn-hint-close');
 const webmcpControlRoot = document.getElementById('webmcp-control-root');
+const allowGpuInput = document.getElementById('allow-gpu-checkbox');
+
+// Keep GPU usage opt-in by default, but persist explicit user choice between sessions.
 
 // Show the hint only when:
 //   - the browser doesn't expose WebNN, AND
-//   - the user hasn't explicitly forced WASM via URL (they know what they're doing), AND
+//   - the user opted into GPU usage, AND
 //   - at least one required source for the current entity selection actually
 //     supports webnn-gpu — no point nagging when the user only enabled q8-backed types.
 const webnnSupported = 'ml' in navigator;
@@ -80,6 +83,8 @@ let progressState = createInitialProgressState();
 let progressHideTimer = null;
 let progressBatchTotal = 0;
 let progressSourceIndex = 0;
+let configureTimer = null;
+let configRequestId = 0;
 
 function renderProgressState() {
   progressOverlay?.render(progressState);
@@ -107,9 +112,41 @@ function scheduleProgressHide() {
   }, 350);
 }
 
+function isGpuAllowed() {
+  return Boolean(allowGpuInput?.checked);
+}
+
+function requestedBackend() {
+  return isGpuAllowed() ? 'auto' : 'wasm';
+}
+
+function beginConfigureRequest() {
+  configRequestId += 1;
+  configuredOnce = false;
+  refreshAnonymizeButton();
+  return configRequestId;
+}
+
+function postConfigureForRequest(enabledEntities, requestId) {
+  worker.postMessage({
+    type: 'configure',
+    enabledEntities,
+    backend: requestedBackend(),
+    configRequestId: requestId,
+  });
+}
+
+function postConfigure(enabledEntities) {
+  postConfigureForRequest(enabledEntities, beginConfigureRequest());
+}
+
+function isCurrentConfigMessage(msg) {
+  return msg.configRequestId == null || msg.configRequestId === configRequestId;
+}
+
 function shouldShowWebnnHint(enabledEntities) {
   if (webnnSupported) return false;
-  if (backendOverride === 'wasm') return false;
+  if (!isGpuAllowed()) return false;
   return requiredSources(enabledEntities).some((alias) => {
     const def = SOURCES[alias];
     return def?.kind === 'hf' && def.backends?.includes('webnn-gpu');
@@ -155,13 +192,25 @@ function loadSelectionFromStorage() {
   }
 }
 
-const initialSelection = loadSelectionFromStorage() ?? defaultEnabledEntities();
+function loadAllowGpuFromStorage() {
+  try {
+    const raw = localStorage.getItem(GPU_LS_KEY);
+    if (!raw) return false;
+    return JSON.parse(raw) === true;
+  } catch {
+    return false;
+  }
+}
 
-let configureTimer = null;
+const initialSelection = loadSelectionFromStorage() ?? defaultEnabledEntities();
+const initialAllowGpu = loadAllowGpuFromStorage();
+if (allowGpuInput) allowGpuInput.checked = initialAllowGpu;
+
 function scheduleConfigure(enabledEntities) {
   clearTimeout(configureTimer);
+  const requestId = beginConfigureRequest();
   configureTimer = setTimeout(() => {
-    worker.postMessage({ type: 'configure', enabledEntities, backend: backendOverride ?? 'auto' });
+    postConfigureForRequest(enabledEntities, requestId);
   }, 300);
 }
 
@@ -177,9 +226,17 @@ const selector = createEntitySelector(selectorRoot, {
   },
 });
 
+allowGpuInput?.addEventListener('change', () => {
+  localStorage.setItem(GPU_LS_KEY, JSON.stringify(isGpuAllowed()));
+  const selected = selector.getSelected();
+  updateWebnnHint(selected);
+  clearTimeout(configureTimer);
+  postConfigure(selected);
+});
+
 updateWebnnHint(initialSelection);
 
-worker.postMessage({ type: 'configure', enabledEntities: selector.getSelected(), backend: backendOverride ?? 'auto' });
+postConfigure(selector.getSelected());
 
 const ocrWarm = urlParams.get('ocr') === 'warm';
 if (ocrWarm) {
@@ -465,10 +522,16 @@ worker.onmessage = (e) => {
       }
       break;
     }
-    case 'backend-resolved':
-      console.log(`[main] WebNN ${msg.webnnAvailable ? 'available — fp32 models will run on GPU' : 'unavailable — all models on WASM'} (requested=${msg.requested})`);
+    case 'backend-resolved': {
+      if (!isCurrentConfigMessage(msg)) break;
+      const detail = msg.requested === 'auto'
+        ? (msg.webnnAvailable ? 'available — fp32 models will run on GPU' : 'unavailable — all models on WASM')
+        : 'GPU disabled — all models on WASM';
+      console.log(`[main] WebNN ${detail} (requested=${msg.requested})`);
       break;
+    }
     case 'configured':
+      if (!isCurrentConfigMessage(msg)) break;
       configuredOnce = true;
       refreshAnonymizeButton();
       break;
@@ -516,6 +579,7 @@ worker.onmessage = (e) => {
       updateProgress({ type: 'timing', mark: msg.mark, t: msg.t });
       break;
     case 'error': {
+      if (msg.configRequestId != null && !isCurrentConfigMessage(msg)) break;
       const id = msg.id;
       const s = id ? sources.find((x) => x.id === id) : null;
       if (s) {

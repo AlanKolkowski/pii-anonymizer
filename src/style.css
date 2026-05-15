@@ -810,6 +810,23 @@ body.has-tool .site-header .wrap {
   padding: 0;
 }
 
+/* ---------- Runtime configuration (sidebar) ---------- */
+.config-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+.config-option input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
 /* ---------- Sources list (cards with annotation editors) ---------- */
 .srclist {
   display: flex;
@@ -1081,24 +1098,6 @@ body.has-tool .site-header .wrap {
   font-size: 12px;
   color: var(--ink-4);
 }
-
-/* ---------- Backend picker ---------- */
-.backend-picker {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 10px;
-}
-.backend-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 400;
-  font-size: 13px;
-  cursor: pointer;
-  color: var(--ink-2);
-}
-.backend-option input[type='radio'] { accent-color: var(--accent); }
-.backend-option input:disabled + span { color: var(--ink-4); }
 
 /* ---------- Workspace action row (kept for sources-list inner UI) ---------- */
 .workspace-actions {

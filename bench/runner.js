@@ -99,10 +99,31 @@ const SELECTORS = {
   copyAllButton: '[data-action="copy-all"]',
   modelStatus: '[data-status="model"]',
   addPaste: '[data-testid="sources-add-paste"]',
+  allowGpu: '[data-testid="allow-gpu-checkbox"]',
   textarea: '.ann-editor-textarea',
 };
 
-async function runOne(context, baseURL, testText, entities) {
+function waitForBackendRequest(page, backend, timeoutMs = PAGE_READY_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error(`Timed out waiting for backend request: ${backend}`));
+    }, timeoutMs);
+    const onConsole = (msg) => {
+      if (msg.text().includes(`(requested=${backend})`)) {
+        cleanup();
+        resolve();
+      }
+    };
+    function cleanup() {
+      clearTimeout(timer);
+      page.off('console', onConsole);
+    }
+    page.on('console', onConsole);
+  });
+}
+
+async function runOne(context, baseURL, testText, entities, { allowGpu = false } = {}) {
   const page = await context.newPage();
   const events = [];
   const errorMsgs = [];
@@ -125,6 +146,11 @@ async function runOne(context, baseURL, testText, entities) {
 
   await page.goto(baseURL);
   await page.waitForSelector(SELECTORS.addPaste, { timeout: PAGE_READY_TIMEOUT_MS });
+  if (allowGpu) {
+    const backendReady = waitForBackendRequest(page, 'auto');
+    await page.locator(SELECTORS.allowGpu).setChecked(true);
+    await backendReady;
+  }
   await page.locator(SELECTORS.addPaste).click();
 
   const textarea = page.locator(SELECTORS.textarea);
@@ -169,6 +195,7 @@ const REQUIRED_SELECTORS = [
   SELECTORS.copyAllButton,
   SELECTORS.modelStatus,
   SELECTORS.addPaste,
+  SELECTORS.allowGpu,
 ];
 
 async function preflightAndCaptureSystemInfo(context, baseURL) {
@@ -210,6 +237,11 @@ async function main() {
   const skipWarmup = args.includes('--no-warmup');
   const headed = args.includes('--headed');
   const backend = args.find((a) => a.startsWith('--backend='))?.slice('--backend='.length) ?? null;
+  if (backend && !['wasm', 'auto'].includes(backend)) {
+    console.error(`--backend must be either "wasm" or "auto" (got: ${backend})`);
+    process.exit(1);
+  }
+  const allowGpu = backend === 'auto';
 
   const cases = deriveCases();
   const testText = await readFile(TEST_DOC_PATH, 'utf-8');
@@ -221,20 +253,18 @@ async function main() {
   console.log(`Bench: ${cases.length} cases × ${runs} measured run(s)${skipWarmup ? '' : ' (+ 1 warmup)'}`);
   console.log(`Run:   ${runId}${label ? ` (${label})` : ''}`);
   console.log(`Doc:   ${TEST_DOC_PATH} (${testText.length} chars)`);
-  if (backend) console.log(`Backend override: ?backend=${backend}`);
+  if (backend) console.log(`Backend: ${allowGpu ? 'GPU allowed (checkbox on / backend=auto)' : 'WASM only (checkbox off)'}`);
   console.log('Starting Vite...');
 
   const vite = await startVite();
   const toolPath = '/tool.html';
-  const baseURL = backend
-    ? `http://localhost:${PORT}${toolPath}?backend=${encodeURIComponent(backend)}`
-    : `http://localhost:${PORT}${toolPath}`;
+  const baseURL = `http://localhost:${PORT}${toolPath}`;
 
   await mkdir(USER_DATA_DIR, { recursive: true });
   console.log('Launching Chromium...');
   // WebNN is behind a feature flag in Chromium. Without --enable-features,
-  // navigator.ml is undefined and our backend detector silently falls back
-  // to WASM, making the bench unable to measure WebNN-GPU.
+  // navigator.ml is undefined and a GPU-enabled bench run falls back to WASM,
+  // making it unable to measure WebNN-GPU.
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: !headed,
     args: ['--enable-features=WebMachineLearningNeuralNetwork'],
@@ -252,9 +282,9 @@ async function main() {
 
   try {
     systemInfo = await preflightAndCaptureSystemInfo(context, baseURL);
-    console.log(`WebNN: ${systemInfo.webnnAvailable ? 'available (fp32 → WebNN-GPU)' : 'NOT available — fp32 will run on WASM'}`);
-    if (!systemInfo.webnnAvailable && backend !== 'wasm') {
-      console.warn('  ⚠ Bench requested non-wasm backend but Chromium did not expose navigator.ml.');
+    console.log(`WebNN: ${systemInfo.webnnAvailable ? 'available' : 'NOT available'} (${allowGpu ? 'GPU checkbox on' : 'GPU checkbox off — WASM only'})`);
+    if (!systemInfo.webnnAvailable && allowGpu) {
+      console.warn('  ⚠ Bench allowed GPU but Chromium did not expose navigator.ml.');
       console.warn('    Try: --headed (some flags require it), or run against system Chrome.');
     }
 
@@ -264,13 +294,13 @@ async function main() {
 
       if (!skipWarmup) {
         process.stdout.write('  warmup...');
-        const w = await runOne(context, baseURL, testText, entities);
+        const w = await runOne(context, baseURL, testText, entities, { allowGpu });
         console.log(` ${w.outcome}${w.summary ? ` (e2e=${w.e2eMs?.toFixed(0)}ms)` : ''}`);
       }
 
       const measurements = [];
       for (let i = 0; i < runs; i++) {
-        const result = await runOne(context, baseURL, testText, entities);
+        const result = await runOne(context, baseURL, testText, entities, { allowGpu });
         if (result.outcome !== 'ok' || !result.summary) {
           console.log(`  run ${i + 1}: ${result.outcome}${result.errors.length ? ' — ' + result.errors[0].slice(0, 100) : ''}`);
           measurements.push({ outcome: result.outcome, e2eMs: result.e2eMs, errors: result.errors });

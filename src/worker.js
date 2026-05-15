@@ -27,7 +27,7 @@ const WEBNN_SEQ_LEN = 512;
 
 let wasmReady = false;
 let currentConfig = null;
-let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto
+let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto/GPU allowed
 let webnnAvailable = false;
 const loadedModels = new Map();
 const nerCache = new Map();
@@ -46,8 +46,7 @@ function isBackendAvailable(backend) {
 
 function isBackendDisabledByUser(backend) {
   // No override → nothing disabled. With an override, only the matching
-  // backend is allowed (so `?backend=wasm` forces WASM, `?backend=webnn-gpu`
-  // forces WebNN, etc.).
+  // backend is allowed (the UI sends 'wasm' when GPU usage is unchecked).
   return backendOverride != null && backendOverride !== backend;
 }
 
@@ -233,10 +232,11 @@ self.onmessage = async (e) => {
   const { type } = e.data;
 
   if (type === 'configure') {
+    const configRequestId = e.data.configRequestId;
     try {
       await ensureWasm();
-      const requestedBackend = e.data.backend ?? 'auto';
-      // 'auto' (default) = no override; any other value forces that backend.
+      const requestedBackend = e.data.backend ?? 'wasm';
+      // 'auto' = no override/GPU allowed; any other value forces that backend.
       const newOverride = requestedBackend === 'auto' ? null : requestedBackend;
       // webnnAvailable reflects raw browser capability; the override is applied
       // separately in deviceFor(), so the two stay decoupled.
@@ -256,15 +256,16 @@ self.onmessage = async (e) => {
         type: 'backend-resolved',
         webnnAvailable,
         requested: requestedBackend,
+        configRequestId,
       });
       const enabledEntities = e.data.enabledEntities ?? [];
       const requiredAliases = requiredSources(enabledEntities).filter((a) => SOURCES[a]?.kind === 'hf');
       currentConfig = { enabledEntities, requiredAliases };
       await disposeUnusedModels(requiredAliases);
-      self.postMessage({ type: 'configured', requiredAliases });
+      self.postMessage({ type: 'configured', requiredAliases, configRequestId });
     } catch (err) {
       console.error('[worker] configure failed:', err);
-      self.postMessage({ type: 'error', message: err.message });
+      self.postMessage({ type: 'error', message: err.message, configRequestId });
     }
     return;
   }
