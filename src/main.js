@@ -514,6 +514,21 @@ worker.onmessage = (e) => {
       });
       break;
     }
+    case 'model-load-plan':
+    case 'model-load-progress': {
+      updateProgress({ ...msg, t: performance.now() });
+      const total = Number(msg.total ?? msg.models ?? 0);
+      const completed = Number(msg.completed ?? 0);
+      if (total > 0) {
+        const text = msg.status === 'loading'
+          ? `Ładowanie modeli ${completed}/${total}…`
+          : `Załadowano modele ${completed}/${total}…`;
+        setText(modelStatusEls, text);
+      } else {
+        setText(modelStatusEls, 'Brak modeli do załadowania — używam cache lub reguł.');
+      }
+      break;
+    }
     case 'ner-plan':
     case 'ner-progress': {
       updateProgress({ ...msg, t: performance.now() });

@@ -12,9 +12,11 @@ function appendText(parent, tag, className, text) {
   return el;
 }
 
-function createRing(percent) {
+function createRing(progress) {
+  const percent = Math.max(0, Math.min(100, Number(progress?.percent ?? 0)));
+  const mode = progress?.mode ?? 'determinate';
   const ring = document.createElement('div');
-  ring.className = 'progress-ring';
+  ring.className = `progress-ring ${mode === 'segment-indeterminate' ? 'segment-indeterminate' : ''}`.trim();
 
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 64 64');
@@ -39,8 +41,32 @@ function createRing(percent) {
   );
   svg.appendChild(fill);
 
+  if (mode === 'segment-indeterminate') {
+    const startPct = Math.max(0, Math.min(100, Number(progress.segmentStartPercent ?? 0)));
+    const endPct = Math.max(startPct, Math.min(100, Number(progress.segmentEndPercent ?? 100)));
+    const spanPct = Math.max(0, endPct - startPct);
+    const sweepPct = spanPct * 0.45;
+    const sweepLength = RING_CIRCUMFERENCE * (sweepPct / 100);
+    const segmentStartLength = RING_CIRCUMFERENCE * (startPct / 100);
+    const segmentEndLength = RING_CIRCUMFERENCE * (endPct / 100);
+    const sweepTravelEnd = Math.max(segmentStartLength, segmentEndLength - sweepLength);
+    const patternLength = RING_CIRCUMFERENCE + sweepLength;
+    const fromOffset = patternLength - segmentStartLength;
+    const toOffset = patternLength - sweepTravelEnd;
+    const sweep = document.createElementNS(SVG_NS, 'circle');
+    sweep.setAttribute('class', 'sweep');
+    sweep.setAttribute('cx', '32');
+    sweep.setAttribute('cy', '32');
+    sweep.setAttribute('r', '28');
+    sweep.setAttribute('stroke-dasharray', `${sweepLength.toFixed(3)} ${RING_CIRCUMFERENCE.toFixed(3)}`);
+    sweep.setAttribute('stroke-dashoffset', fromOffset.toFixed(3));
+    sweep.style.setProperty('--seg-from', fromOffset.toFixed(3));
+    sweep.style.setProperty('--seg-to', toOffset.toFixed(3));
+    svg.appendChild(sweep);
+  }
+
   ring.appendChild(svg);
-  appendText(ring, 'div', 'pct', `${Math.round(percent)}%`);
+  appendText(ring, 'div', 'pct', progress?.label ?? `${Math.round(percent)}%`);
   return ring;
 }
 
@@ -84,11 +110,15 @@ function createSummary(view) {
 function createActiveDetail(view) {
   const detail = document.createElement('div');
   detail.className = 'step-detail';
-  detail.appendChild(createRing(view.activePercent));
+  detail.appendChild(createRing(view.activeProgress));
 
   const text = document.createElement('div');
   text.className = 'progress-text';
-  appendText(text, 'span', 'step-name', view.currentLabel);
+  const titleRow = document.createElement('div');
+  titleRow.className = 'step-name-row';
+  appendText(titleRow, 'span', 'step-name', view.currentLabel);
+  if (view.currentMetric) appendText(titleRow, 'span', 'step-metric', view.currentMetric);
+  text.appendChild(titleRow);
   text.appendChild(createMeta(view));
   detail.appendChild(text);
   return detail;

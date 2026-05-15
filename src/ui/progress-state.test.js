@@ -62,7 +62,8 @@ describe('progressReducer', () => {
 
     const view = getProgressView(state);
     expect(view.activeStep.id).toBe('load');
-    expect(view.currentLabel).toBe('Pobieranie modeli · 42% · eu-pii-pl/model.onnx');
+    expect(view.currentLabel).toBe('Pobieranie modeli · eu-pii-pl/model.onnx');
+    expect(view.currentMetric).toBe('42%');
     expect(view.percent).toBe(42);
   });
 
@@ -81,7 +82,51 @@ describe('progressReducer', () => {
 
     const view = getProgressView(state);
     expect(view.percent).toBe(25);
-    expect(view.currentLabel).toBe('Pobieranie modeli · 25% (250 B / 1.0 KB) · model-a/onnx/model.onnx');
+    expect(view.currentLabel).toBe('Pobieranie modeli · model-a/onnx/model.onnx');
+    expect(view.currentMetric).toBe('25% · 250 B / 1.0 KB');
+  });
+
+  it('tracks model session loading before NER', () => {
+    let state = createInitialProgressState();
+    state = progressReducer(state, { type: 'batch-start', total: 1, t: 0 });
+    state = progressReducer(state, { type: 'source-start', id: 'doc-1', index: 1, total: 1, t: 0 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:model-load:start', t: 100 });
+    state = progressReducer(state, {
+      type: 'model-load-progress',
+      status: 'loading',
+      source: 'polish-fp16',
+      completed: 0,
+      total: 2,
+      t: 250,
+    });
+
+    let view = getProgressView(state);
+    expect(view.activeStep.id).toBe('model-load');
+    expect(view.percent).toBe(0);
+    expect(view.activeProgress).toMatchObject({
+      mode: 'segment-indeterminate',
+      label: '0/2',
+      segmentStartPercent: 0,
+      segmentEndPercent: 50,
+    });
+    expect(view.currentLabel).toBe('Ładowanie modelu · polish-fp16');
+    expect(view.currentMetric).toBe('0/2');
+
+    state = progressReducer(state, {
+      type: 'model-load-progress',
+      status: 'ready',
+      source: 'polish-fp16',
+      device: 'webnn-gpu',
+      completed: 1,
+      total: 2,
+      t: 300,
+    });
+
+    view = getProgressView(state);
+    expect(view.percent).toBe(50);
+    expect(view.activeProgress).toMatchObject({ mode: 'discrete', label: '1/2' });
+    expect(view.currentLabel).toBe('Załadowano model · polish-fp16 (WebNN GPU)');
+    expect(view.currentMetric).toBe('1/2');
   });
 
   it('tracks NER progress by completed model/segment inferences', () => {
@@ -101,24 +146,25 @@ describe('progressReducer', () => {
     const view = getProgressView(state);
     expect(view.activeStep.id).toBe('ner');
     expect(view.percent).toBe(30);
-    expect(view.currentLabel).toBe('Inferencje 3 z 10 (2 modele × 5 segmentów)');
+    expect(view.currentLabel).toBe('Inferencja NER · 2 modele × 5 segmentów');
+    expect(view.currentMetric).toBe('3/10');
   });
 
-  it('does not let individual model-load marks shorten the load bucket duration', () => {
+  it('does not let individual model-load marks shorten the model-load bucket duration', () => {
     let state = createInitialProgressState();
     state = progressReducer(state, { type: 'batch-start', total: 1, t: 0 });
     state = progressReducer(state, { type: 'source-start', id: 'doc-1', index: 1, total: 1, t: 0 });
-    state = progressReducer(state, { type: 'timing', mark: 'pipeline:load:start', t: 100 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:model-load:start', t: 100 });
     state = progressReducer(state, { type: 'timing', mark: 'model:load:start', t: 120 });
     state = progressReducer(state, { type: 'timing', mark: 'model:load:end', t: 180 });
     state = progressReducer(state, { type: 'timing', mark: 'model:load:start', t: 220 });
     state = progressReducer(state, { type: 'timing', mark: 'model:load:end', t: 360 });
-    state = progressReducer(state, { type: 'timing', mark: 'pipeline:load:end', t: 400 });
+    state = progressReducer(state, { type: 'timing', mark: 'pipeline:model-load:end', t: 400 });
 
-    expect(getProgressView(state).steps[0].durationMs).toBe(300);
+    expect(getProgressView(state).steps[3].durationMs).toBe(300);
   });
 
-  it('keeps model session loads inside the active NER phase after downloads finish', () => {
+  it('ignores late model session load marks once NER is active', () => {
     let state = createInitialProgressState();
     state = progressReducer(state, { type: 'batch-start', total: 1, t: 0 });
     state = progressReducer(state, { type: 'source-start', id: 'doc-1', index: 1, total: 1, t: 0 });

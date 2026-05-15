@@ -2,7 +2,8 @@ export const PIPELINE_STEPS = [
   { id: 'load', label: 'Pobieranie modeli' },
   { id: 'pre', label: 'Preprocessing — normalizacja whitespace' },
   { id: 'seg', label: 'Segmentacja zdań (sentencex)' },
-  { id: 'ner', label: 'Detekcja encji — modele HF i reguły' },
+  { id: 'model-load', label: 'Ładowanie modeli (WASM/WebNN)' },
+  { id: 'ner', label: 'Inferencja NER — modele HF i reguły' },
   { id: 'post', label: 'Postprocessing — filtrowanie i granice słów' },
   { id: 'rescan', label: 'Rescan i tokenizacja wykrytych PII' },
 ];
@@ -10,11 +11,11 @@ export const PIPELINE_STEPS = [
 const STEP_INDEX = new Map(PIPELINE_STEPS.map((step, index) => [step.id, index]));
 
 const START_MARK_TO_STEP = {
-  'classify:start': 'load',
   'pipeline:load:start': 'load',
-  'model:load:start': 'load',
+  'model:load:start': 'model-load',
   'pipeline:preprocess:start': 'pre',
   'pipeline:segment:start': 'seg',
+  'pipeline:model-load:start': 'model-load',
   'pipeline:ner:start': 'ner',
   'pipeline:postprocess:start': 'post',
   'pipeline:rescan:start': 'rescan',
@@ -24,6 +25,7 @@ const END_MARK_TO_STEP = {
   'pipeline:load:end': 'load',
   'pipeline:preprocess:end': 'pre',
   'pipeline:segment:end': 'seg',
+  'pipeline:model-load:end': 'model-load',
   'pipeline:ner:end': 'ner',
   'pipeline:postprocess:end': 'post',
   'pipeline:rescan:end': 'rescan',
@@ -51,6 +53,7 @@ export function createInitialProgressState() {
     stepProgress: 0,
     steps: freshSteps(0),
     download: null,
+    modelLoad: null,
     ner: null,
     loadStartedByPipeline: false,
     sourceStartedAt: null,
@@ -63,6 +66,7 @@ function cloneState(state) {
     ...state,
     steps: state.steps.map((step) => ({ ...step })),
     download: state.download ? { ...state.download } : null,
+    modelLoad: state.modelLoad ? { ...state.modelLoad } : null,
     ner: state.ner ? { ...state.ner } : null,
   };
 }
@@ -113,7 +117,7 @@ function activateStep(state, stepId, t) {
       step.progress = 1;
     } else if (index === stepIndex) {
       step.status = 'active';
-      step.startedAt = t ?? step.startedAt ?? next.lastT;
+      step.startedAt = wasActive ? (step.startedAt ?? t ?? next.lastT) : (t ?? step.startedAt ?? next.lastT);
       step.durationMs = null;
       step.progress = wasActive ? clamp01(step.progress ?? 0) : 0;
     } else {
@@ -127,6 +131,7 @@ function activateStep(state, stepId, t) {
   next.activeStepIndex = stepIndex;
   next.stepProgress = next.steps[stepIndex].progress ?? 0;
   if (stepId !== 'load') next.download = null;
+  if (stepId !== 'model-load') next.modelLoad = null;
   if (stepId !== 'ner') next.ner = null;
   return next;
 }
@@ -157,13 +162,14 @@ function completeStep(state, stepId, t) {
   if (stepIndex < PIPELINE_STEPS.length - 1) {
     next.steps[nextIndex].status = 'active';
     next.steps[nextIndex].progress = 0;
-    if (next.steps[nextIndex].startedAt == null) next.steps[nextIndex].startedAt = t ?? next.lastT;
+    next.steps[nextIndex].startedAt = null;
     next.activeStepIndex = nextIndex;
   } else {
     next.activeStepIndex = stepIndex;
   }
   next.stepProgress = next.steps[next.activeStepIndex]?.progress ?? 0;
   if (stepId === 'load') next.download = null;
+  if (stepId === 'model-load') next.modelLoad = null;
   if (stepId === 'ner') next.ner = null;
   return next;
 }
@@ -176,6 +182,7 @@ function completeAllSteps(state, t) {
   next.lastT = t ?? next.lastT;
   next.stepProgress = 1;
   next.download = null;
+  next.modelLoad = null;
   next.ner = null;
 
   next.steps.forEach((step, index) => {
@@ -220,6 +227,40 @@ function updateLoadProgress(state, event) {
     cachedFiles: Number.isFinite(Number(event.cachedFiles)) ? Number(event.cachedFiles) : null,
     remainingFiles: Number.isFinite(Number(event.remainingFiles)) ? Number(event.remainingFiles) : null,
     totalFiles: Number.isFinite(Number(event.totalFiles)) ? Number(event.totalFiles) : null,
+  };
+  next.lastT = event.t ?? next.lastT;
+  return next;
+}
+
+function updateModelLoadProgress(state, event) {
+  const modelLoadIndex = STEP_INDEX.get('model-load');
+  const modelLoadStep = state.steps[modelLoadIndex];
+  let next;
+  if (modelLoadStep?.status === 'done') return state;
+  if (modelLoadStep?.status === 'active') {
+    next = cloneState(state);
+    next.visible = true;
+    next.fading = false;
+    next.status = 'running';
+    next.activeStepIndex = modelLoadIndex;
+  } else {
+    next = activateStep(state, 'model-load', event.t);
+  }
+
+  const total = Math.max(0, Number(event.total ?? event.models ?? 0));
+  const completed = Math.max(0, Number(event.completed ?? 0));
+  const progress = total > 0 ? clamp01(completed / total) : 1;
+  next.steps[modelLoadIndex].progress = progress;
+  next.stepProgress = progress;
+  next.modelLoad = {
+    status: event.status ?? 'loading',
+    completed,
+    total,
+    models: total,
+    source: event.source ?? null,
+    device: event.device ?? null,
+    cached: Boolean(event.cached),
+    progress: progress * 100,
   };
   next.lastT = event.t ?? next.lastT;
   return next;
@@ -280,8 +321,9 @@ export function progressReducer(state, event) {
         sourceId: event.id ?? null,
         activeStepIndex: 0,
         stepProgress: 0,
-        steps: freshSteps(0, event.t ?? state.lastT ?? null),
+        steps: freshSteps(0, null),
         download: null,
+        modelLoad: null,
         ner: null,
         loadStartedByPipeline: false,
         sourceStartedAt: event.t ?? state.lastT ?? null,
@@ -292,17 +334,23 @@ export function progressReducer(state, event) {
       if (event.mark === 'pipeline:load:start') {
         return { ...activateStep(state, 'load', event.t), loadStartedByPipeline: true };
       }
-      if (event.mark === 'model:load:start' && state.loadStartedByPipeline) {
+      if (event.mark === 'model:load:start' && state.activeStepIndex > STEP_INDEX.get('model-load')) {
         return { ...state, lastT: event.t ?? state.lastT };
       }
       const startStep = START_MARK_TO_STEP[event.mark];
       if (startStep) return activateStep(state, startStep, event.t);
       const endStep = END_MARK_TO_STEP[event.mark];
-      if (endStep) return completeStep(state, endStep, event.t);
+      if (endStep) {
+        const next = completeStep(state, endStep, event.t);
+        return event.mark === 'pipeline:load:end' ? { ...next, loadStartedByPipeline: false } : next;
+      }
       return state;
     }
     case 'download-progress':
       return updateLoadProgress(state, event);
+    case 'model-load-plan':
+    case 'model-load-progress':
+      return updateModelLoadProgress(state, event);
     case 'ner-plan':
     case 'ner-progress':
       return updateNerProgress(state, event);
@@ -354,7 +402,33 @@ function polishCountWord(count, one, few, many) {
   return many;
 }
 
-function currentLabelForState(state) {
+function activeProgressForState(state) {
+  const percent = activePercentForState(state);
+  const active = state.steps[state.activeStepIndex] ?? state.steps[0];
+
+  if (active.id === 'model-load' && state.modelLoad) {
+    const total = Math.max(0, Number(state.modelLoad.total ?? state.modelLoad.models ?? 0));
+    const completed = Math.min(total, Math.max(0, Number(state.modelLoad.completed ?? 0)));
+    const discretePercent = total > 0 ? Math.round((completed / total) * 100) : 100;
+    const loading = state.modelLoad.status === 'loading' && completed < total;
+
+    return {
+      mode: loading ? 'segment-indeterminate' : 'discrete',
+      percent: discretePercent,
+      label: `${completed}/${total}`,
+      segmentStartPercent: total > 0 ? (completed / total) * 100 : 0,
+      segmentEndPercent: total > 0 ? (Math.min(completed + 1, total) / total) * 100 : 100,
+    };
+  }
+
+  return {
+    mode: 'determinate',
+    percent,
+    label: `${percent}%`,
+  };
+}
+
+function progressTextForState(state) {
   const active = state.steps[state.activeStepIndex] ?? state.steps[0];
   if (active.id === 'load' && state.download) {
     const pct = Math.round(state.download.progress);
@@ -362,38 +436,58 @@ function currentLabelForState(state) {
     const total = state.download.totalBytes;
     const file = state.download.file ? ` · ${state.download.file}` : '';
     if ((state.download.remainingFiles ?? 0) === 0 && total === 0) {
-      return 'Modele są już w cache';
+      return { label: 'Modele są już w cache', metric: '' };
     }
     if (total > 0) {
-      return `Pobieranie modeli · ${pct}% (${formatBytes(loaded)} / ${formatBytes(total)})${file}`;
+      return {
+        label: `Pobieranie modeli${file}`,
+        metric: `${pct}% · ${formatBytes(loaded)} / ${formatBytes(total)}`,
+      };
     }
     return state.download.status === 'plan'
-      ? 'Sprawdzanie cache modeli'
-      : `Pobieranie modeli · ${pct}%${file}`;
+      ? { label: 'Sprawdzanie cache modeli', metric: '' }
+      : { label: `Pobieranie modeli${file}`, metric: `${pct}%` };
+  }
+  if (active.id === 'model-load' && state.modelLoad) {
+    const { completed, total, source, status, device } = state.modelLoad;
+    if (total === 0) return { label: 'Brak modeli do załadowania — używam cache lub reguł', metric: '' };
+    const sourceText = source ? ` · ${source}` : '';
+    const deviceText = device ? ` (${device === 'webnn-gpu' ? 'WebNN GPU' : 'WASM'})` : '';
+    if (status === 'loading') {
+      return { label: `Ładowanie modelu${sourceText}`, metric: `${completed}/${total}` };
+    }
+    return { label: `Załadowano model${sourceText}${deviceText}`, metric: `${completed}/${total}` };
   }
   if (active.id === 'ner' && state.ner) {
     if (state.ner.total > 0) {
       const modelWord = polishCountWord(state.ner.models, 'model', 'modele', 'modeli');
       const segmentWord = polishCountWord(state.ner.segments, 'segment', 'segmenty', 'segmentów');
-      return `Inferencje ${state.ner.completed} z ${state.ner.total} (${state.ner.models} ${modelWord} × ${state.ner.segments} ${segmentWord})`;
+      return {
+        label: `Inferencja NER · ${state.ner.models} ${modelWord} × ${state.ner.segments} ${segmentWord}`,
+        metric: `${state.ner.completed}/${state.ner.total}`,
+      };
     }
-    if (state.ner.models === 0) return 'Brak inferencji modeli — używam cache lub reguł';
-    return 'Przygotowanie inferencji NER';
+    if (state.ner.models === 0) return { label: 'Brak inferencji modeli — używam cache lub reguł', metric: '' };
+    return { label: 'Przygotowanie inferencji NER', metric: '' };
   }
-  return active.label;
+  return { label: active.label, metric: '' };
 }
 
 export function getProgressView(state) {
   const activeStep = state.steps[state.activeStepIndex] ?? state.steps[0];
-  const percent = activePercentForState(state);
+  const activeProgress = activeProgressForState(state);
+  const progressText = progressTextForState(state);
+  const percent = activeProgress.percent;
   return {
     visible: state.visible,
     fading: state.fading,
     status: state.status,
     percent,
     activePercent: percent,
+    activeProgress,
     etaSeconds: etaSecondsForState(state),
-    currentLabel: currentLabelForState(state),
+    currentLabel: progressText.label,
+    currentMetric: progressText.metric,
     activeStep,
     activeStepIndex: state.activeStepIndex,
     totalSteps: PIPELINE_STEPS.length,
