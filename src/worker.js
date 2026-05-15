@@ -189,15 +189,17 @@ async function ensureModelLoaded(alias) {
   }
 }
 
-async function loadModelForPipeline({ id, dtype }) {
-  const alias = Object.keys(SOURCES).find((k) => {
+async function loadModelForPipeline({ alias: requestedAlias, id, dtype }) {
+  const alias = requestedAlias ?? Object.keys(SOURCES).find((k) => {
     const s = SOURCES[k];
     return s.kind === 'hf' && s.id === id && s.dtype === dtype;
   });
-  if (!alias) throw new Error(`[worker] unknown model ${id}@${dtype}`);
+  if (!alias || SOURCES[alias]?.kind !== 'hf') throw new Error(`[worker] unknown model ${id}@${dtype}`);
   await ensureModelLoaded(alias);
   const entry = loadedModels.get(alias);
   return {
+    alias,
+    device: entry.device,
     infer: async (text) => await entry.ner(text),
     dispose: async () => {},
   };

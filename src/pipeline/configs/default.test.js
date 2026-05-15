@@ -3,6 +3,7 @@ import { get_sentence_boundaries } from 'sentencex';
 import {
   createDefaultPipeline,
   createPreSegmentSteps,
+  createModelLoadSteps,
   createNerSteps,
   createPostprocessSteps,
 } from './default.js';
@@ -74,6 +75,15 @@ describe('stage helpers', () => {
     expect(steps.map(s => s.phase)).toEqual(['preprocess', 'segment']);
   });
 
+  it('createModelLoadSteps returns a model-load phase before NER', () => {
+    const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
+    const steps = createModelLoadSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], noLoad);
+    expect(steps).toHaveLength(1);
+    expect(steps[0].phase).toBe('model-load');
+    expect(steps[0].steps).toHaveLength(1);
+    expect(steps[0].steps[0].name).toBe('loadModelsStep');
+  });
+
   it('createNerSteps returns a single ner phase with hf step (and regex when active)', () => {
     const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
     const withRegex = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, noLoad);
@@ -95,6 +105,6 @@ describe('stage helpers', () => {
   it('createDefaultPipeline composes all three helpers in order', () => {
     const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
     const pipeline = createDefaultPipeline(noLoad, get_sentence_boundaries, { enabledEntities: ALL_ENTITIES });
-    expect(pipeline.map(p => p.phase)).toEqual(['preprocess', 'segment', 'ner', 'postprocess']);
+    expect(pipeline.map(p => p.phase)).toEqual(['preprocess', 'segment', 'model-load', 'ner', 'postprocess']);
   });
 });

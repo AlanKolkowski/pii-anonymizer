@@ -2,6 +2,7 @@ import { normalizeWhitespace } from '../steps/preprocess.js';
 import { createSentencexSegmentStep } from '../steps/segment-sentencex.js';
 import { mergeAbbreviationsStep } from '../steps/merge-abbreviations.js';
 import { tightenSegmentsStep } from '../steps/tighten-segments.js';
+import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
@@ -38,6 +39,12 @@ export function createPreSegmentSteps(getSentenceBoundaries) {
       mergeAbbreviationsStep,
       tightenSegmentsStep,
     ] },
+  ];
+}
+
+export function createModelLoadSteps(hfSubset, loadModel, options = {}) {
+  return [
+    { phase: 'model-load', steps: [createLoadModelsStep(hfSubset, loadModel, options)] },
   ];
 }
 
@@ -83,6 +90,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
 
   return [
     ...createPreSegmentSteps(getSentenceBoundaries),
+    ...createModelLoadSteps(orderedHf, loadModel),
     ...createNerSteps(orderedHf, regexActive, loadModel),
     ...createPostprocessSteps({ enabledEntities, entitySources }),
   ];

@@ -1,6 +1,7 @@
 import { runPipeline } from './runner.js';
 import {
   createPreSegmentSteps,
+  createModelLoadSteps,
   createNerSteps,
   createPostprocessSteps,
 } from './configs/default.js';
@@ -10,8 +11,23 @@ export async function sha256Hex(text) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function makeSeededCtx({ text, segments, entities }) {
-  return { text, segments, entities, anonymized: '', legend: {}, debug: [] };
+function makeSeededCtx({ text, segments, entities, modelHandles = null }) {
+  return {
+    text,
+    segments,
+    entities,
+    anonymized: '',
+    legend: {},
+    debug: [],
+    ...(modelHandles && { modelHandles }),
+  };
+}
+
+async function disposeModelHandles(modelHandles) {
+  if (!(modelHandles instanceof Map)) return;
+  for (const [key, model] of [...modelHandles.entries()]) {
+    try { await model.dispose?.(); } finally { modelHandles.delete(key); }
+  }
 }
 
 function requiredSourcesFor(enabledEntities, entitySources) {
@@ -37,7 +53,7 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {object|null} params.cache - Previous cache, or null
  * @param {object} params.sources - SOURCES map (alias → def)
  * @param {object} params.entitySources - ENTITY_SOURCES map
- * @param {Function} params.loadModel - async ({id, dtype}) => { infer, dispose }
+ * @param {Function} params.loadModel - async ({alias, id, dtype}) => { infer, dispose }
  * @param {Function} params.getSentenceBoundaries - (lang, text) => boundaries[]
  * @param {Function} [params.sortSources] - optional ordering of HF sources
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
@@ -109,8 +125,41 @@ export async function classifyWithCache({
   }
   emit('pipeline:segment:end');
 
-  // --- Stage 2: NER, running only what's missing ---
+  // --- Stage 2: load model sessions, then run pure inference NER for missing sources ---
   let regex = hit ? cache.regex : null;
+  let modelHandles = new Map();
+
+  emit('pipeline:model-load:start');
+  try {
+    const [modelLoadPhase] = createModelLoadSteps(orderedMissingHf, loadModel, {
+      onPlan: ({ total, sources: planSources }) => emitProgress({
+        type: 'model-load-plan',
+        models: total,
+        total,
+        completed: 0,
+        sources: planSources.map((source) => source.alias),
+      }),
+      onProgress: ({ status, source, model, completed, total, cached }) => emitProgress({
+        type: 'model-load-progress',
+        status,
+        source: source?.alias ?? null,
+        device: model?.device ?? null,
+        models: total,
+        total,
+        completed,
+        cached: Boolean(cached),
+      }),
+    });
+    const modelCtx = await runPipeline(
+      makeSeededCtx({ text: normalizedText, segments, entities: [] }),
+      [modelLoadPhase],
+    );
+    modelHandles = modelCtx.modelHandles instanceof Map ? modelCtx.modelHandles : new Map();
+  } catch (err) {
+    await disposeModelHandles(modelHandles);
+    throw err;
+  }
+  emit('pipeline:model-load:end');
 
   emit('pipeline:ner:start');
   const totalInferences = segments.length * orderedMissingHf.length;
@@ -122,34 +171,39 @@ export async function classifyWithCache({
     total: totalInferences,
     completed: 0,
   });
-  if (missingHf.length > 0) {
-    for (const source of orderedMissingHf) {
+  try {
+    if (missingHf.length > 0) {
+      for (const source of orderedMissingHf) {
+        const ctx = await runPipeline(
+          makeSeededCtx({ text: normalizedText, segments, entities: [], modelHandles }),
+          createNerSteps([source], false, loadModel, {
+            onInference: () => {
+              completedInferences += 1;
+              emitProgress({
+                type: 'ner-progress',
+                segments: segments.length,
+                models: orderedMissingHf.length,
+                total: totalInferences,
+                completed: completedInferences,
+                source: source.alias,
+              });
+            },
+          }),
+        );
+        modelHandles = ctx.modelHandles instanceof Map ? ctx.modelHandles : modelHandles;
+        bySource.set(source.alias, ctx.entities);
+      }
+    }
+
+    if (regexNeeded && regex === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([source], false, loadModel, {
-          onInference: () => {
-            completedInferences += 1;
-            emitProgress({
-              type: 'ner-progress',
-              segments: segments.length,
-              models: orderedMissingHf.length,
-              total: totalInferences,
-              completed: completedInferences,
-              source: source.alias,
-            });
-          },
-        }),
+        createNerSteps([], true, loadModel),
       );
-      bySource.set(source.alias, ctx.entities);
+      regex = ctx.entities;
     }
-  }
-
-  if (regexNeeded && regex === null) {
-    const ctx = await runPipeline(
-      makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-      createNerSteps([], true, loadModel),
-    );
-    regex = ctx.entities;
+  } finally {
+    await disposeModelHandles(modelHandles);
   }
   emit('pipeline:ner:end');
 

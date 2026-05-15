@@ -191,6 +191,8 @@ describe('classifyWithCache', () => {
       'pipeline:preprocess:end',
       'pipeline:segment:start',
       'pipeline:segment:end',
+      'pipeline:model-load:start',
+      'pipeline:model-load:end',
       'pipeline:ner:start',
       'pipeline:ner:end',
       'pipeline:postprocess:start',
@@ -217,7 +219,13 @@ describe('classifyWithCache', () => {
     });
 
     expect(progress[0]).toMatchObject({
-      type: 'ner-plan',
+      type: 'model-load-plan',
+      models: 2,
+      total: 2,
+      completed: 0,
+    });
+    const nerPlan = progress.find((event) => event.type === 'ner-plan');
+    expect(nerPlan).toMatchObject({
       segments: 2,
       models: 2,
       total: 4,
@@ -228,7 +236,7 @@ describe('classifyWithCache', () => {
     expect(inferenceEvents.at(-1)).toMatchObject({ completed: 4, total: 4 });
   });
 
-  it('can prepare missing HF artifacts before preprocessing without creating sessions', async () => {
+  it('prepares missing HF artifacts before preprocessing and loads sessions before NER', async () => {
     const events = [];
     const loadModel = async ({ id }) => {
       events.push(`load:${id}`);
@@ -256,6 +264,8 @@ describe('classifyWithCache', () => {
       'pipeline:load:end',
     ]);
     expect(events.indexOf('download:m-q8')).toBeLessThan(events.indexOf('pipeline:preprocess:start'));
-    expect(events.indexOf('load:m-q8')).toBeGreaterThan(events.indexOf('pipeline:ner:start'));
+    expect(events.filter((event) => event === 'load:m-q8')).toEqual(['load:m-q8']);
+    expect(events.indexOf('load:m-q8')).toBeGreaterThan(events.indexOf('pipeline:model-load:start'));
+    expect(events.indexOf('load:m-q8')).toBeLessThan(events.indexOf('pipeline:ner:start'));
   });
 });
