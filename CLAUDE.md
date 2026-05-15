@@ -87,7 +87,7 @@ Test doc: `test-data/bench/single-page.txt` (~2700 chars with all entity types).
 
 ## WebMCP Integration
 
-The app integrates with [WebMCP](https://webmcp.dev/) to expose anonymization/deanonymization as MCP tools for LLM clients.
+The app integrates with [WebMCP](https://webmcp.dev/) to expose a source/outcome workflow for LLM clients. All WebMCP traffic is tokenized text; PII never crosses the MCP boundary and deanonymization happens only in the browser UI.
 
 ### Setup (one-time)
 
@@ -100,13 +100,16 @@ The app integrates with [WebMCP](https://webmcp.dev/) to expose anonymization/de
 ### Usage
 
 1. Start the Vite dev server: `npm run dev`
-2. Open the browser, paste a document, click "Anonimizuj"
+2. Open the browser, add one or more source documents, and anonymize them
 3. In your MCP client, ask it to generate a WebMCP token
 4. Click the blue WebMCP widget (bottom-right corner) in the browser, paste the token
-5. The LLM can now use two tools:
-   - `read_anonymized_text` — reads the anonymized text (legend is never exposed to protect PII)
-   - `write_deanonymize_text` — writes text with tokens, returns deanonymized result
+5. The LLM can now use five tools:
+   - `list_sources` — list ready anonymized source documents (`id`, `label`, `char_count`)
+   - `read_source` — read one tokenized source document by `id`; PII is never returned
+   - `list_outcomes` — list tokenized outcome documents created by the LLM
+   - `read_outcome` — read one tokenized outcome document by `id`
+   - `write_outcome` — create or update a tokenized outcome document; the browser deanonymizes it only for the user
 
 ### Workflow
 
-User anonymizes document → LLM reads anonymized text via MCP → LLM processes it → LLM writes response via MCP → browser shows deanonymized result.
+User anonymizes source documents → LLM calls `list_sources` / `read_source` and works only on tokenized text → LLM writes tokenized results with `write_outcome` → browser shows deanonymized outcomes to the user. Subsequent agent steps can use `list_outcomes` / `read_outcome` without seeing PII.
