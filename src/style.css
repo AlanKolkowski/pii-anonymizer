@@ -494,16 +494,28 @@ body.has-tool .site-header .wrap {
 }
 .run-bar .left {
   display: flex; gap: 18px; align-items: center; flex: 1;
+  min-width: 0;
   color: var(--ink-3);
 }
 .run-bar .right {
   display: flex; gap: 10px; align-items: center;
+  flex-shrink: 0;
 }
-.run-bar-status { margin: 0; }
+.run-bar-stats { flex: 0 0 auto; }
+.run-bar-status {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 16ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
 .run-bar-status:empty { display: none; }
 .run-bar .meter {
-  flex: 1;
-  max-width: 300px;
+  flex: 0 0 240px;
+  min-width: 180px;
+  max-width: 240px;
   height: 4px;
   background: var(--bg-sunk);
   border-radius: 2px;

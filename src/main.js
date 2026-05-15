@@ -16,6 +16,7 @@ import {
   getFileImportProgressView,
 } from './ui/file-import-progress-state.js';
 import { extractText } from './file-import/index.js';
+import { downloadOcrModelAssets } from './ocr/paddle.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
@@ -47,8 +48,10 @@ const GPU_LS_KEY = 'pii.allow-gpu';
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 function isAnyFileImportInFlight() { return inFlightFileImportIds.size > 0; }
+function isAnyModelPredownloadInFlight() { return predownloadInFlight; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
+const predownloadBtns = document.querySelectorAll('[data-action="predownload-models"]');
 const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
 const runBarDocsEl = document.querySelector('[data-testid="run-bar-docs"]');
@@ -95,6 +98,10 @@ let fileImportProgressState = createInitialFileImportProgressState();
 let fileImportProgressHideTimer = null;
 let configureTimer = null;
 let configRequestId = 0;
+let predownloadInFlight = false;
+let predownloadRequestId = 0;
+let predownloadWorkerRequest = null;
+let predownloadRunBarHideTimer = null;
 
 function renderProgressState() {
   progressOverlay?.render(progressState);
@@ -536,10 +543,15 @@ function setsEqual(a, b) {
 function refreshAnonymizeButton() {
   const hasSelection = selector.getSelected().length > 0;
   const hasAnyText = sources.some((s) => (s.text ?? '').trim().length > 0);
-  const blocked = !configuredOnce || isAnyClassifyInFlight() || isAnyFileImportInFlight();
+  const blocked = !configuredOnce
+    || isAnyClassifyInFlight()
+    || isAnyFileImportInFlight()
+    || isAnyModelPredownloadInFlight();
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
   if (isAnyFileImportInFlight() && !isAnyClassifyInFlight()) {
     setText(anonymizeBtns, 'Wczytywanie pliku...');
+  } else if (isAnyModelPredownloadInFlight() && !isAnyClassifyInFlight()) {
+    setText(anonymizeBtns, 'Pobieranie modeli...');
   } else if (!isAnyClassifyInFlight()) {
     const hasReclassify = sources.some((s) =>
       s.lastReadyText !== null && s.text !== s.lastReadyText && (s.text ?? '').trim().length > 0,
@@ -547,8 +559,9 @@ function refreshAnonymizeButton() {
     setText(anonymizeBtns, hasReclassify ? 'Anonimizuj ponownie' : 'Anonimizuj');
   }
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
-  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight()) setText(modelStatusEls, '');
+  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isAnyModelPredownloadInFlight()) setText(modelStatusEls, '');
   refreshRunBar();
+  refreshPredownloadButton();
 }
 
 function clampPercent(value) {
@@ -558,8 +571,7 @@ function clampPercent(value) {
 }
 
 // The bottom run-bar meter/status are intentionally independent from the
-// overlay progress UI. They are idle for now; future workflows can wire them
-// by calling these setters without touching OCR/anonymization overlay state.
+// overlay progress UI and are used for explicit model pre-downloads.
 function setRunBarMeterProgress(percent = 0, { visible = true } = {}) {
   const clamped = clampPercent(percent);
   if (runBarMeterFillEl) runBarMeterFillEl.style.width = `${clamped}%`;
@@ -569,15 +581,159 @@ function setRunBarMeterProgress(percent = 0, { visible = true } = {}) {
   }
 }
 
-function setRunBarStatus(text = '') {
+function setRunBarStatus(text = '', { title = text } = {}) {
   if (!runBarStatusEl) return;
   const value = String(text ?? '');
   runBarStatusEl.textContent = value;
+  runBarStatusEl.title = value.length > 0 ? String(title ?? value) : '';
   runBarStatusEl.hidden = value.length === 0;
 }
 
 setRunBarMeterProgress(0, { visible: false });
 setRunBarStatus('');
+
+const PREDOWNLOAD_PHASES = {
+  ner: { offset: 0, weight: 70 },
+  ocr: { offset: 70, weight: 30 },
+};
+
+function clearPredownloadRunBarHideTimer() {
+  if (predownloadRunBarHideTimer) {
+    clearTimeout(predownloadRunBarHideTimer);
+    predownloadRunBarHideTimer = null;
+  }
+}
+
+function schedulePredownloadRunBarHide() {
+  clearPredownloadRunBarHideTimer();
+  predownloadRunBarHideTimer = setTimeout(() => {
+    predownloadRunBarHideTimer = null;
+    if (isAnyModelPredownloadInFlight()) return;
+    setRunBarMeterProgress(0, { visible: false });
+    setRunBarStatus('');
+  }, 4500);
+}
+
+function refreshPredownloadButton() {
+  const disabled = isAnyModelPredownloadInFlight() || isAnyClassifyInFlight() || isAnyFileImportInFlight();
+  setDisabled(predownloadBtns, disabled);
+  setText(predownloadBtns, isAnyModelPredownloadInFlight() ? 'Pobieranie modeli...' : 'Pobierz modele');
+}
+
+function predownloadOverallPercent(phase, progress) {
+  const def = PREDOWNLOAD_PHASES[phase] ?? PREDOWNLOAD_PHASES.ner;
+  return clampPercent(def.offset + (clampPercent(progress) * def.weight) / 100);
+}
+
+function stablePercent(value) {
+  return `${String(Math.round(clampPercent(value))).padStart(3, '\u00A0')}%`;
+}
+
+function compactPredownloadStatus(label, progress, detail = '') {
+  const text = `${label} — ${stablePercent(progress)}`;
+  return { text, title: detail ? `${text} · ${detail}` : text };
+}
+
+function predownloadProgressText(phase, event, overallPct) {
+  if (phase === 'ner') return nerPredownloadProgressText(event, overallPct);
+  return ocrPredownloadProgressText(event, overallPct);
+}
+
+function nerPredownloadProgressText(event, overallPct) {
+  const totalBytes = Number(event.totalBytes ?? 0);
+  const loadedBytes = Number(event.loadedBytes ?? 0);
+  const file = event.file ?? '';
+  const bytes = totalBytes > 0 ? `${formatBytes(loadedBytes)} / ${formatBytes(totalBytes)}` : '';
+  const detail = [file, bytes].filter(Boolean).join(' · ');
+
+  if (event.status === 'plan') return { text: 'Modele NER — cache', title: 'Sprawdzanie cache modeli NER' };
+  if ((event.remainingFiles ?? 0) === 0 && totalBytes === 0) {
+    return { text: 'Modele NER — gotowe', title: 'Modele NER są już w cache' };
+  }
+  return compactPredownloadStatus('Pobieranie NER', overallPct, detail);
+}
+
+function ocrPredownloadProgressText(event, overallPct) {
+  const totalFiles = Number(event.totalFiles ?? 0);
+  const completedFiles = Number(event.completedFiles ?? 0);
+  const remainingFiles = Number(event.remainingFiles ?? 0);
+  const file = event.file ?? '';
+  const fileLoadedBytes = Number(event.fileLoadedBytes ?? 0);
+  const fileTotalBytes = Number(event.fileTotalBytes ?? 0);
+  const bytes = fileTotalBytes > 0 ? `${formatBytes(fileLoadedBytes)} / ${formatBytes(fileTotalBytes)}` : '';
+  const files = totalFiles > 0 ? `${completedFiles}/${totalFiles} plików` : '';
+  const detail = [file, bytes, files].filter(Boolean).join(' · ');
+
+  if (event.status === 'plan') return { text: 'Modele OCR — cache', title: 'Sprawdzanie cache modeli OCR' };
+  if (event.status === 'complete') return { text: 'Modele OCR — gotowe', title: 'Pobrano modele OCR' };
+  if (event.status === 'cached' && (remainingFiles === 0 || completedFiles === totalFiles)) {
+    return { text: 'Modele OCR — gotowe', title: 'Modele OCR są już w cache' };
+  }
+  if (event.status === 'cached') {
+    return { text: 'Modele OCR — cache', title: detail ? `Model OCR z cache · ${detail}` : 'Model OCR z cache' };
+  }
+  return compactPredownloadStatus('Pobieranie OCR', overallPct, detail);
+}
+
+function updatePredownloadRunBar(phase, event = {}) {
+  const pct = clampPercent(event.progress ?? 0);
+  const overallPct = predownloadOverallPercent(phase, pct);
+  const status = predownloadProgressText(phase, event, overallPct);
+  setRunBarMeterProgress(overallPct, { visible: true });
+  setRunBarStatus(status.text, { title: status.title });
+}
+
+function waitForNerPredownload(requestId) {
+  return new Promise((resolve, reject) => {
+    predownloadWorkerRequest = { requestId, resolve, reject };
+    worker.postMessage({ type: 'predownload-models', requestId });
+  });
+}
+
+async function predownloadOcrModels(requestId) {
+  const downloadedAssets = await downloadOcrModelAssets({
+    onProgress(event) {
+      if (requestId !== predownloadRequestId || !isAnyModelPredownloadInFlight()) return;
+      updatePredownloadRunBar('ocr', event);
+    },
+  });
+  downloadedAssets?.revoke?.();
+}
+
+async function predownloadAllModels() {
+  if (isAnyModelPredownloadInFlight() || isAnyClassifyInFlight() || isAnyFileImportInFlight()) return;
+
+  const requestId = predownloadRequestId + 1;
+  predownloadRequestId = requestId;
+  predownloadInFlight = true;
+  clearPredownloadRunBarHideTimer();
+  setRunBarMeterProgress(0, { visible: true });
+  setRunBarStatus('Modele NER — cache', { title: 'Sprawdzanie cache modeli NER' });
+  refreshAnonymizeButton();
+
+  let errorMessage = '';
+  try {
+    await waitForNerPredownload(requestId);
+    if (requestId !== predownloadRequestId) return;
+    setRunBarMeterProgress(PREDOWNLOAD_PHASES.ocr.offset, { visible: true });
+    setRunBarStatus('Modele OCR — cache', { title: 'Sprawdzanie cache modeli OCR' });
+    await predownloadOcrModels(requestId);
+    setRunBarMeterProgress(100, { visible: true });
+    setRunBarStatus('Modele są pobrane.', { title: 'Modele NER i OCR są pobrane i zapisane w cache' });
+  } catch (err) {
+    errorMessage = err?.message ?? String(err);
+    console.error('[main] model pre-download failed:', err);
+    setRunBarStatus('Błąd pobierania modeli', { title: errorMessage });
+  } finally {
+    if (predownloadWorkerRequest?.requestId === requestId) predownloadWorkerRequest = null;
+    if (requestId === predownloadRequestId) {
+      predownloadInFlight = false;
+      refreshAnonymizeButton();
+      if (errorMessage) setText(modelStatusEls, `Błąd pobierania modeli: ${errorMessage}`);
+      else schedulePredownloadRunBarHide();
+    }
+  }
+}
 
 function refreshRunBar() {
   if (runBarDocsEl) runBarDocsEl.textContent = String(sources.length);
@@ -617,6 +773,27 @@ function dispatchNextClassify() {
 worker.onmessage = (e) => {
   const msg = e.data;
   switch (msg.type) {
+    case 'predownload-progress': {
+      if (msg.requestId !== predownloadRequestId || !isAnyModelPredownloadInFlight()) break;
+      updatePredownloadRunBar(msg.phase, msg);
+      break;
+    }
+    case 'predownload-result': {
+      if (predownloadWorkerRequest?.requestId === msg.requestId) {
+        const { resolve } = predownloadWorkerRequest;
+        predownloadWorkerRequest = null;
+        resolve(msg);
+      }
+      break;
+    }
+    case 'predownload-error': {
+      if (predownloadWorkerRequest?.requestId === msg.requestId) {
+        const { reject } = predownloadWorkerRequest;
+        predownloadWorkerRequest = null;
+        reject(new Error(msg.message));
+      }
+      break;
+    }
     case 'progress':
     case 'download-progress': {
       const pct = Math.round(msg.progress ?? 0);
@@ -739,6 +916,10 @@ worker.onmessage = (e) => {
     }
   }
 };
+
+predownloadBtns.forEach(btn => btn.addEventListener('click', () => {
+  predownloadAllModels();
+}));
 
 copyAllBtns.forEach(btn => btn.addEventListener('click', async () => {
   const ready = sources.filter((s) => s.status === 'ready');

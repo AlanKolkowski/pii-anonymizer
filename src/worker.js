@@ -205,6 +205,10 @@ async function loadModelForPipeline({ alias: requestedAlias, id, dtype }) {
   };
 }
 
+function allHfSourceDefs() {
+  return Object.values(SOURCES).filter((def) => def?.kind === 'hf');
+}
+
 async function downloadModelFilesForPipeline(sources) {
   const defs = sources
     .map(({ alias }) => SOURCES[alias])
@@ -230,8 +234,45 @@ async function downloadModelFilesForPipeline(sources) {
   });
 }
 
+async function predownloadAllNerModelFiles(requestId) {
+  const defs = allHfSourceDefs();
+  if (defs.length === 0) {
+    self.postMessage({
+      type: 'predownload-progress',
+      phase: 'ner',
+      requestId,
+      status: 'plan',
+      progress: 100,
+      loadedBytes: 0,
+      totalBytes: 0,
+      cachedFiles: 0,
+      remainingFiles: 0,
+      totalFiles: 0,
+    });
+    return;
+  }
+
+  await ensureModelSourcesCached(defs, {
+    progressCallback: (data) => {
+      self.postMessage({ type: 'predownload-progress', phase: 'ner', requestId, ...data });
+    },
+  });
+}
+
 self.onmessage = async (e) => {
   const { type } = e.data;
+
+  if (type === 'predownload-models') {
+    const requestId = e.data.requestId;
+    try {
+      await predownloadAllNerModelFiles(requestId);
+      self.postMessage({ type: 'predownload-result', phase: 'ner', requestId });
+    } catch (err) {
+      console.error('[worker] model pre-download failed:', err);
+      self.postMessage({ type: 'predownload-error', phase: 'ner', requestId, message: err.message });
+    }
+    return;
+  }
 
   if (type === 'configure') {
     const configRequestId = e.data.configRequestId;
