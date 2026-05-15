@@ -767,6 +767,9 @@ function escHtml(s) {
 
 refreshAnonymizeButton();
 
+const WEBMCP_CLAUDE_COMMAND = 'npx -y @jason.today/webmcp@latest --config claude';
+const WEBMCP_CLAUDE_TOKEN_PROMPT = 'Wygeneruj token WebMCP dla pii.tools';
+
 const mcp = new WebMCP({ channelName: 'pii' });
 mountWebMcpControl(mcp);
 
@@ -809,8 +812,12 @@ function mountWebMcpControl(instance) {
       bottom: 'calc(100% + 10px)',
       right: '0',
       marginBottom: '0',
-      width: '280px',
+      width: '420px',
     });
+    const connectionForm = panel.children[1];
+    connectionForm?.classList.add('webmcp-connection-form');
+    insertClaudeDesktopGuide(widget, connectionForm);
+    installRegisteredItemsDisclosure(widget);
   }
 
   const updateTrigger = (status = null) => {
@@ -839,11 +846,118 @@ function mountWebMcpControl(instance) {
     instance._updateConnectionUI = (isConnected) => {
       originalUpdateConnectionUI(isConnected);
       widget.dataset.mcpConnected = isConnected ? 'true' : 'false';
+      setClaudeDesktopGuideOpen(widget, !isConnected);
+      setRegisteredItemsDisclosureState(widget, isConnected);
       updateTrigger();
     };
   }
 
   updateTrigger();
+  setClaudeDesktopGuideOpen(widget, !instance.isConnected);
+  setRegisteredItemsDisclosureState(widget, instance.isConnected);
+}
+
+function installRegisteredItemsDisclosure(widget) {
+  const registeredItems = widget.querySelector('.webmcp-registered-items');
+  if (!registeredItems || registeredItems.closest('.webmcp-items-disclosure')) return;
+
+  const disclosure = document.createElement('details');
+  disclosure.className = 'webmcp-items-disclosure';
+  disclosure.hidden = true;
+
+  const summary = document.createElement('summary');
+  summary.innerHTML = '<span>Dostępne w WebMCP</span><strong>Narzędzia, prompty i zasoby</strong>';
+
+  registeredItems.parentElement.insertBefore(disclosure, registeredItems);
+  disclosure.appendChild(summary);
+  disclosure.appendChild(registeredItems);
+}
+
+function setRegisteredItemsDisclosureState(widget, isConnected) {
+  const disclosure = widget.querySelector('.webmcp-items-disclosure');
+  if (!disclosure) return;
+  disclosure.hidden = !isConnected;
+  if (isConnected) disclosure.open = false;
+}
+
+function insertClaudeDesktopGuide(widget, beforeEl = null) {
+  const panel = widget.querySelector('.webmcp-content');
+  if (!panel || panel.querySelector('[data-testid="webmcp-claude-guide"]')) return;
+
+  const guide = document.createElement('details');
+  guide.className = 'webmcp-guide';
+  guide.dataset.testid = 'webmcp-claude-guide';
+  guide.open = true;
+  guide.innerHTML = `
+    <summary>
+      <span class="webmcp-guide-eyebrow">Claude Desktop</span>
+      <strong>Jak połączyć agenta</strong>
+    </summary>
+    <div class="webmcp-guide-body">
+      <p>Claude powinien pracować wyłącznie na tokenach. Konfigurację robisz raz, potem wklejasz tutaj token wygenerowany w Claude.</p>
+      <ol>
+        <li>
+          <span>Otwórz Terminal (macOS) albo PowerShell/Windows Terminal (Windows), uruchom komendę i zrestartuj Claude Desktop:</span>
+          <div class="webmcp-command-row">
+            <code>${WEBMCP_CLAUDE_COMMAND}</code>
+            <button type="button" data-webmcp-copy-command>Skopiuj</button>
+          </div>
+        </li>
+        <li>Jeśli komenda <code>npx</code> nie działa, zainstaluj Node.js LTS z <a href="https://nodejs.org/" target="_blank" rel="noreferrer">nodejs.org</a>, otwórz nowy Terminal/PowerShell i spróbuj ponownie.</li>
+        <li>W Claude poproś: <code>${WEBMCP_CLAUDE_TOKEN_PROMPT}</code>.</li>
+        <li>Wklej token w pole poniżej i kliknij <strong>Połącz</strong>.</li>
+        <li>Zrestartuj Claude Desktop jeszcze raz — często dopiero po tym widzi narzędzia tej strony.</li>
+        <li>Po połączeniu Claude czyta zanonimizowane źródła i zapisuje wyniki przez WebMCP — bez dostępu do oryginałów ani legendy.</li>
+      </ol>
+      <p class="webmcp-guide-note">Nie wklejaj oryginalnego dokumentu ani legendy do czatu — PII zostaje w przeglądarce.</p>
+    </div>
+  `;
+
+  const anchor = beforeEl?.parentElement === panel ? beforeEl : panel.children[1] ?? null;
+  panel.insertBefore(guide, anchor);
+
+  guide.querySelector('[data-webmcp-copy-command]')?.addEventListener('click', (ev) => {
+    copyWebMcpCommand(ev.currentTarget);
+  });
+}
+
+function setClaudeDesktopGuideOpen(widget, open) {
+  const guide = widget.querySelector('[data-testid="webmcp-claude-guide"]');
+  if (guide) guide.open = Boolean(open);
+}
+
+async function copyWebMcpCommand(button) {
+  const original = button.textContent;
+  try {
+    await copyTextToClipboard(WEBMCP_CLAUDE_COMMAND);
+    button.textContent = 'Skopiowano';
+  } catch (err) {
+    console.warn('Nie udało się skopiować komendy WebMCP', err);
+    button.textContent = 'Kopiuj ręcznie';
+  } finally {
+    setTimeout(() => {
+      button.textContent = original;
+    }, 1800);
+  }
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const ok = document.execCommand('copy');
+  textarea.remove();
+  if (!ok) throw new Error('document.execCommand("copy") returned false');
 }
 
 function jsonContent(value) {

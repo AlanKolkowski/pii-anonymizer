@@ -947,7 +947,7 @@ body.has-tool .site-header .wrap {
 .webmcp-run-widget .webmcp-content {
   bottom: calc(100% + 10px) !important;
   right: 0 !important;
-  width: 340px !important;
+  width: min(420px, calc(100vw - 32px)) !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
@@ -981,11 +981,119 @@ body.has-tool .site-header .wrap {
   background: var(--bg-tint) !important;
   color: var(--ink) !important;
 }
-.webmcp-run-widget .webmcp-content > div:nth-child(2) {
+.webmcp-run-widget .webmcp-guide {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: var(--bg-elev) !important;
+}
+.webmcp-run-widget .webmcp-guide summary {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 2px 10px !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+.webmcp-run-widget .webmcp-guide summary::-webkit-details-marker { display: none !important; }
+.webmcp-run-widget .webmcp-guide summary::after {
+  content: '▾' !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  color: var(--ink-4) !important;
+  font-size: 12px !important;
+  transition: transform 0.15s ease !important;
+}
+.webmcp-run-widget .webmcp-guide:not([open]) summary::after { transform: rotate(-90deg) !important; }
+.webmcp-run-widget .webmcp-guide-eyebrow {
+  color: var(--accent-ink) !important;
+  font-family: var(--mono) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+.webmcp-run-widget .webmcp-guide summary strong {
+  color: var(--ink) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+.webmcp-run-widget .webmcp-guide-body {
+  padding: 0 16px 14px !important;
+  color: var(--ink-2) !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+.webmcp-run-widget .webmcp-guide-body p {
+  margin: 0 0 10px !important;
+}
+.webmcp-run-widget .webmcp-guide-body ol {
+  display: grid !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding-left: 18px !important;
+}
+.webmcp-run-widget .webmcp-guide-body li::marker {
+  color: var(--ink-4) !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+}
+.webmcp-run-widget .webmcp-guide-body a {
+  color: var(--accent-ink) !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+.webmcp-run-widget .webmcp-guide-body code {
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: var(--bg-sunk) !important;
+  color: var(--ink) !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  padding: 1px 4px !important;
+}
+.webmcp-run-widget .webmcp-command-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
+}
+.webmcp-run-widget .webmcp-command-row code {
+  display: block !important;
+  overflow-wrap: anywhere !important;
+  padding: 7px 8px !important;
+  white-space: normal !important;
+}
+.webmcp-run-widget .webmcp-command-row button {
+  border: 1px solid var(--line-2) !important;
+  border-radius: var(--r-2) !important;
+  background: var(--bg) !important;
+  color: var(--ink-2) !important;
+  cursor: pointer !important;
+  font-family: var(--sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 0 8px !important;
+}
+.webmcp-run-widget .webmcp-command-row button:hover {
+  border-color: var(--ink-4) !important;
+  color: var(--ink) !important;
+}
+.webmcp-run-widget .webmcp-guide-body .webmcp-guide-note {
+  margin: 18px 0 0 !important;
+  border: 1px solid var(--accent-line) !important;
+  border-radius: var(--r-2) !important;
+  background: var(--accent-tint) !important;
+  color: var(--accent-ink) !important;
+  padding: 8px 10px !important;
+}
+.webmcp-run-widget .webmcp-connection-form {
   margin: 0 !important;
   padding: 14px 16px 8px !important;
 }
-.webmcp-run-widget .webmcp-content > div:nth-child(2) > div {
+.webmcp-run-widget .webmcp-connection-form > div {
   margin-bottom: 8px !important;
 }
 .webmcp-run-widget .webmcp-token-input {
@@ -1047,6 +1155,44 @@ body.has-tool .site-header .wrap {
 .webmcp-run-widget[data-mcp-status="pending-auth"] .webmcp-status {
   background: color-mix(in oklab, var(--accent) 10%, var(--bg-elev)) !important;
   color: var(--accent-ink) !important;
+}
+.webmcp-run-widget .webmcp-items-disclosure {
+  margin: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--bg) !important;
+}
+.webmcp-run-widget .webmcp-items-disclosure[hidden] { display: none !important; }
+.webmcp-run-widget .webmcp-items-disclosure summary {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 2px 10px !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+.webmcp-run-widget .webmcp-items-disclosure summary::-webkit-details-marker { display: none !important; }
+.webmcp-run-widget .webmcp-items-disclosure summary::after {
+  content: '▾' !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  color: var(--ink-4) !important;
+  font-size: 12px !important;
+  transition: transform 0.15s ease !important;
+}
+.webmcp-run-widget .webmcp-items-disclosure:not([open]) summary::after { transform: rotate(-90deg) !important; }
+.webmcp-run-widget .webmcp-items-disclosure summary span {
+  color: var(--ink-4) !important;
+  font-family: var(--mono) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+.webmcp-run-widget .webmcp-items-disclosure summary strong {
+  color: var(--ink) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
 }
 .webmcp-run-widget .webmcp-registered-items {
   margin: 0 !important;
