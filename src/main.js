@@ -8,7 +8,6 @@ import { createProgressOverlay } from './ui/progress-overlay.js';
 import {
   createInitialProgressState,
   formatBytes,
-  getProgressView,
   progressReducer,
 } from './ui/progress-state.js';
 import {
@@ -54,7 +53,9 @@ const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
 const runBarDocsEl = document.querySelector('[data-testid="run-bar-docs"]');
 const runBarTokensEl = document.querySelector('[data-testid="run-bar-tokens"]');
+const runBarMeterEl = document.querySelector('[data-testid="run-bar-meter"]');
 const runBarMeterFillEl = document.querySelector('[data-testid="run-bar-meter-fill"]');
+const runBarStatusEl = document.querySelector('[data-testid="run-bar-status"]');
 
 function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
@@ -95,19 +96,12 @@ let fileImportProgressHideTimer = null;
 let configureTimer = null;
 let configRequestId = 0;
 
-function activeProgressView() {
-  const fileImportView = getFileImportProgressView(fileImportProgressState);
-  return fileImportView.visible ? fileImportView : getProgressView(progressState);
-}
-
 function renderProgressState() {
   progressOverlay?.render(progressState);
-  refreshRunBar();
 }
 
 function renderFileImportProgressState() {
   progressOverlay?.renderView(getFileImportProgressView(fileImportProgressState));
-  refreshRunBar();
 }
 
 function updateProgress(event) {
@@ -557,6 +551,34 @@ function refreshAnonymizeButton() {
   refreshRunBar();
 }
 
+function clampPercent(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, n));
+}
+
+// The bottom run-bar meter/status are intentionally independent from the
+// overlay progress UI. They are idle for now; future workflows can wire them
+// by calling these setters without touching OCR/anonymization overlay state.
+function setRunBarMeterProgress(percent = 0, { visible = true } = {}) {
+  const clamped = clampPercent(percent);
+  if (runBarMeterFillEl) runBarMeterFillEl.style.width = `${clamped}%`;
+  if (runBarMeterEl) {
+    runBarMeterEl.hidden = !visible;
+    runBarMeterEl.setAttribute('aria-valuenow', String(Math.round(clamped)));
+  }
+}
+
+function setRunBarStatus(text = '') {
+  if (!runBarStatusEl) return;
+  const value = String(text ?? '');
+  runBarStatusEl.textContent = value;
+  runBarStatusEl.hidden = value.length === 0;
+}
+
+setRunBarMeterProgress(0, { visible: false });
+setRunBarStatus('');
+
 function refreshRunBar() {
   if (runBarDocsEl) runBarDocsEl.textContent = String(sources.length);
   const totalEntities = sources.reduce(
@@ -564,11 +586,6 @@ function refreshRunBar() {
     0,
   );
   if (runBarTokensEl) runBarTokensEl.textContent = String(totalEntities);
-
-  if (runBarMeterFillEl) {
-    const progressView = activeProgressView();
-    runBarMeterFillEl.style.width = `${progressView.visible ? progressView.percent : 100}%`;
-  }
 
   // Copy-all is meaningful only when at least one source is ready.
   const anyReady = sources.some((s) => s.status === 'ready');

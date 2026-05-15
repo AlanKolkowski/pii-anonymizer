@@ -113,10 +113,10 @@
               <span class="run-bar-stats" data-testid="run-bar-stats">
                 <b data-testid="run-bar-docs">0</b> dokumentów · <b data-testid="run-bar-tokens">0</b> tokenów
               </span>
-              <div class="meter" data-testid="run-bar-meter">
-                <div class="meter-fill" data-testid="run-bar-meter-fill" style="width: 100%"></div>
+              <div class="meter" data-testid="run-bar-meter" role="progressbar" aria-label="Postęp paska dolnego" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+                <div class="meter-fill" data-testid="run-bar-meter-fill" style="width: 0%"></div>
               </div>
-              <p data-status="model" class="run-bar-status"></p>
+              <p data-testid="run-bar-status" class="run-bar-status" hidden></p>
             </div>
             <div class="right">
               <div id="webmcp-control-root" class="webmcp-control-root"></div>
