@@ -99,7 +99,7 @@ class WebMCP {
 
                     // Reconnect directly using the stored session token (skip registration)
                     const serverUrl = `${this.currentServer}${this.currentChannel}?token=${this.currentToken}`;
-                    this._updateStatus('connecting', 'Reconnecting...');
+                    this._updateStatus('connecting', 'Ponowne łączenie…');
                     this.socket = new WebSocket(serverUrl);
                     this._setupSocketListeners();
                     this._resetInactivityTimer();
@@ -330,7 +330,7 @@ class WebMCP {
         });
 
         const title = document.createElement('div');
-        title.textContent = 'WebMCP';
+        title.textContent = 'Podłącz AI';
         Object.assign(title.style, {
             fontWeight: 'bold',
             fontSize: '16px'
@@ -359,7 +359,7 @@ class WebMCP {
         // Add status indicator
         const statusIndicator = document.createElement('div');
         statusIndicator.className = 'webmcp-status';
-        statusIndicator.textContent = 'Disconnected';
+        statusIndicator.textContent = 'Rozłączono';
         Object.assign(statusIndicator.style, {
             padding: '8px',
             borderRadius: '3px',
@@ -400,7 +400,7 @@ class WebMCP {
         });
 
         const toolsHeader = document.createElement('div');
-        toolsHeader.textContent = 'Registered Tools:';
+        toolsHeader.textContent = 'Narzędzia:';
         Object.assign(toolsHeader.style, {
             fontWeight: 'bold',
             marginBottom: '5px'
@@ -427,7 +427,7 @@ class WebMCP {
         });
 
         const promptsHeader = document.createElement('div');
-        promptsHeader.textContent = 'Registered Prompts:';
+        promptsHeader.textContent = 'Prompty:';
         Object.assign(promptsHeader.style, {
             fontWeight: 'bold',
             marginBottom: '5px'
@@ -453,7 +453,7 @@ class WebMCP {
         });
 
         const resourcesHeader = document.createElement('div');
-        resourcesHeader.textContent = 'Registered Resources:';
+        resourcesHeader.textContent = 'Zasoby:';
         Object.assign(resourcesHeader.style, {
             fontWeight: 'bold',
             marginBottom: '5px'
@@ -543,7 +543,7 @@ class WebMCP {
         const tokenInput = document.createElement('input');
         tokenInput.type = 'text';
         tokenInput.className = 'webmcp-token-input';
-        tokenInput.placeholder = 'Paste connection token';
+        tokenInput.placeholder = 'Wklej token połączenia';
         Object.assign(tokenInput.style, {
             flex: '1',
             padding: '8px',
@@ -554,7 +554,7 @@ class WebMCP {
 
         const connectButton = document.createElement('button');
         connectButton.className = 'webmcp-connect-btn';
-        connectButton.textContent = 'Connect';
+        connectButton.textContent = 'Połącz';
         Object.assign(connectButton.style, {
             padding: '8px 12px',
             backgroundColor: this.options.color,
@@ -570,7 +570,7 @@ class WebMCP {
 
         const disconnectButton = document.createElement('button');
         disconnectButton.className = 'webmcp-disconnect-btn';
-        disconnectButton.textContent = 'Disconnect';
+        disconnectButton.textContent = 'Rozłącz';
         Object.assign(disconnectButton.style, {
             padding: '8px 12px',
             backgroundColor: '#dc3545',
@@ -746,7 +746,7 @@ class WebMCP {
 
         if (this.availableTools.size === 0) {
             const emptyMessage = document.createElement('li');
-            emptyMessage.textContent = 'No tools registered';
+            emptyMessage.textContent = 'Brak zarejestrowanych narzędzi';
             emptyMessage.style.fontStyle = 'italic';
             emptyMessage.style.color = '#666';
             toolsContainer.appendChild(emptyMessage);
@@ -791,7 +791,7 @@ class WebMCP {
 
         if (this.availablePrompts.size === 0) {
             const emptyMessage = document.createElement('li');
-            emptyMessage.textContent = 'No prompts registered';
+            emptyMessage.textContent = 'Brak zarejestrowanych promptów';
             emptyMessage.style.fontStyle = 'italic';
             emptyMessage.style.color = '#666';
             promptsContainer.appendChild(emptyMessage);
@@ -836,7 +836,7 @@ class WebMCP {
 
         if (this.availableResources.size === 0) {
             const emptyMessage = document.createElement('li');
-            emptyMessage.textContent = 'No resources registered';
+            emptyMessage.textContent = 'Brak zarejestrowanych zasobów';
             emptyMessage.style.fontStyle = 'italic';
             emptyMessage.style.color = '#666';
             resourcesContainer.appendChild(emptyMessage);
@@ -856,7 +856,7 @@ class WebMCP {
 
             const resourceDesc = document.createElement('div');
             resourceDesc.textContent = resource.description +
-                (resource.isTemplate ? ' (Template)' : '');
+                (resource.isTemplate ? ' (szablon)' : '');
             resourceDesc.style.fontSize = '10px';
             resourceDesc.style.color = '#666';
 
@@ -909,12 +909,12 @@ class WebMCP {
      */
     async connect(connectionToken) {
         if (!connectionToken) {
-            this._updateStatus('disconnected', 'Error: No token provided');
+            this._updateStatus('disconnected', 'Błąd: wklej token połączenia');
             return;
         }
 
         // Update UI to show connecting state
-        this._updateStatus('connecting', 'Connecting...');
+        this._updateStatus('connecting', 'Łączenie…');
 
         try {
             // Process the connection token
@@ -951,7 +951,7 @@ class WebMCP {
                 const response = await this._registerWithServer(connectionToken);
 
                 if (!response.token) {
-                    this._updateStatus('disconnected', 'Registration failed');
+                    this._updateStatus('disconnected', 'Rejestracja nie powiodła się');
                     return;
                 }
 
@@ -966,7 +966,7 @@ class WebMCP {
             const serverUrl = `${this.currentServer}${this.currentChannel}?token=${this.currentToken}`;
 
             // Update UI
-            this._updateStatus('connecting', 'Connecting to channel...');
+            this._updateStatus('connecting', 'Łączenie z kanałem…');
 
             // Create WebSocket connection with the path and token
             this.socket = new WebSocket(serverUrl);
@@ -979,7 +979,7 @@ class WebMCP {
 
         } catch (error) {
             console.error('Connection error:', error);
-            this._updateStatus('disconnected', `Error: ${error.message}`);
+            this._updateStatus('disconnected', `Błąd: ${error.message}`);
         }
     }
 
@@ -995,7 +995,7 @@ class WebMCP {
         }
 
         this.isConnected = false;
-        this._updateStatus('disconnected', 'Disconnected');
+        this._updateStatus('disconnected', 'Rozłączono');
         this._updateConnectionUI(false);
 
         // Reset state
@@ -1026,7 +1026,7 @@ class WebMCP {
             const {server, token} = connectionData;
 
             if (!server || !token) {
-                this._updateStatus('disconnected', 'Invalid token');
+                this._updateStatus('disconnected', 'Nieprawidłowy token');
                 return false;
             }
 
@@ -1039,7 +1039,7 @@ class WebMCP {
 
             return true;
         } catch (error) {
-            this._updateStatus('disconnected', `Unable to parse token`);
+            this._updateStatus('disconnected', 'Nie można odczytać tokena');
             return false;
         }
     }
@@ -1052,7 +1052,7 @@ class WebMCP {
      */
     _registerWithServer(encodedToken) {
         // Update UI
-        this._updateStatus('pending-auth', 'Registering...');
+        this._updateStatus('pending-auth', 'Rejestrowanie…');
 
         // Connect to the registration endpoint
         const regSocket = new WebSocket(`${this.currentServer}${this.REGISTER_PATH}`);
@@ -1081,12 +1081,12 @@ class WebMCP {
                         resolve({ token: message.token });
                     } else if (message.type === 'error') {
                         console.error(`Registration failed: ${message.message}`);
-                        this._updateStatus('disconnected', `Registration failed: ${message.message}`);
+                        this._updateStatus('disconnected', `Rejestracja nie powiodła się: ${message.message}`);
                         reject(new Error(message.message));
                     }
                 } catch (error) {
                     console.error(`Error parsing registration response: ${error.message}`);
-                    this._updateStatus('disconnected', 'Error parsing server response');
+                    this._updateStatus('disconnected', 'Nie udało się odczytać odpowiedzi serwera');
                     reject(error);
                 }
             });
@@ -1094,7 +1094,7 @@ class WebMCP {
             // Handle registration errors
             regSocket.addEventListener('error', (event) => {
                 console.error('Registration connection error');
-                this._updateStatus('disconnected', 'Registration connection error');
+                this._updateStatus('disconnected', 'Błąd połączenia podczas rejestracji');
                 localStorage.removeItem(this.SESSION_STORAGE_KEY);
                 reject(new Error('Connection error'));
             });
@@ -1105,7 +1105,7 @@ class WebMCP {
 
                 if (event.code !== 1000) {
                     // If it wasn't a normal closure, show an error
-                    this._updateStatus('disconnected', 'Registration failed');
+                    this._updateStatus('disconnected', 'Rejestracja nie powiodła się');
                     localStorage.removeItem(this.SESSION_STORAGE_KEY);
                     reject(new Error('Connection closed'));
                 }
@@ -1126,7 +1126,7 @@ class WebMCP {
         // Set up socket open handler
         this.socket.addEventListener('open', () => {
             this.isConnected = true;
-            this._updateStatus('connected', `Connected to ${this.currentChannel}`);
+            this._updateStatus('connected', `Połączono z ${this.currentChannel}`);
             this._updateConnectionUI(true);
             console.log('WebMCP connection established');
             this._registerItemsWithServer();
@@ -1135,13 +1135,13 @@ class WebMCP {
         // Set up socket close handler
         this.socket.addEventListener('close', (event) => {
             this.isConnected = false;
-            this._updateStatus('disconnected', 'Disconnected');
+            this._updateStatus('disconnected', 'Rozłączono');
             this._updateConnectionUI(false);
             console.log(`Connection closed: ${event.code} ${event.reason}`);
 
             // Check if it was an authorization error
             if (event.code === 1001 || event.code === 401) {
-                this._updateStatus('disconnected', 'Authorization failed');
+                this._updateStatus('disconnected', 'Autoryzacja nie powiodła się');
                 this.currentToken = '';
                 this.currentServer = '';
                 this.currentChannel = '';
@@ -1154,9 +1154,9 @@ class WebMCP {
             console.error('WebSocket error');
 
             if (this.isConnected) {
-                this._updateStatus('disconnected', 'Connection error occurred');
+                this._updateStatus('disconnected', 'Wystąpił błąd połączenia');
             } else {
-                this._updateStatus('disconnected', 'Connection failed');
+                this._updateStatus('disconnected', 'Połączenie nie powiodło się');
             }
 
             localStorage.removeItem(this.SESSION_STORAGE_KEY);
@@ -1831,7 +1831,7 @@ class WebMCP {
 
         // Create header
         const header = document.createElement('h3');
-        header.textContent = 'Sampling Request';
+        header.textContent = 'Prośba o odpowiedź AI';
         Object.assign(header.style, {
             margin: '0 0 15px 0',
             padding: '0 0 10px 0',
@@ -1861,13 +1861,13 @@ class WebMCP {
                 });
 
                 const roleSpan = document.createElement('strong');
-                roleSpan.textContent = msg.role === 'user' ? 'User: ' : 'Assistant: ';
+                roleSpan.textContent = msg.role === 'user' ? 'Użytkownik: ' : 'Asystent: ';
 
                 const contentSpan = document.createElement('span');
                 if (msg.content.type === 'text') {
                     contentSpan.textContent = msg.content.text;
                 } else if (msg.content.type === 'image') {
-                    contentSpan.textContent = '[Image data]';
+                    contentSpan.textContent = '[dane obrazu]';
                 }
 
                 msgDiv.appendChild(roleSpan);
@@ -1875,7 +1875,7 @@ class WebMCP {
                 content.appendChild(msgDiv);
             });
         } else {
-            content.textContent = 'No messages provided in sampling request';
+            content.textContent = 'Brak wiadomości w prośbie o odpowiedź';
         }
 
         // System prompt if available
@@ -1888,7 +1888,7 @@ class WebMCP {
             });
 
             const sysPromptLabel = document.createElement('strong');
-            sysPromptLabel.textContent = 'System Prompt: ';
+            sysPromptLabel.textContent = 'Prompt systemowy: ';
 
             const sysPromptContent = document.createElement('span');
             sysPromptContent.textContent = systemPrompt;
@@ -1900,7 +1900,7 @@ class WebMCP {
 
         // Create response input
         const responseLabel = document.createElement('label');
-        responseLabel.textContent = 'Assistant Response:';
+        responseLabel.textContent = 'Odpowiedź asystenta:';
         Object.assign(responseLabel.style, {
             display: 'block',
             marginBottom: '5px',
@@ -1924,7 +1924,7 @@ class WebMCP {
         });
 
         const submitButton = document.createElement('button');
-        submitButton.textContent = 'Submit Response';
+        submitButton.textContent = 'Wyślij odpowiedź';
         Object.assign(submitButton.style, {
             padding: '8px 15px',
             backgroundColor: '#4CAF50',
@@ -1935,7 +1935,7 @@ class WebMCP {
         });
 
         const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
+        cancelButton.textContent = 'Anuluj';
         Object.assign(cancelButton.style, {
             padding: '8px 15px',
             backgroundColor: '#f44336',
@@ -1982,7 +1982,7 @@ class WebMCP {
                 // Remove modal
                 document.body.removeChild(modal);
             } else {
-                alert('Please enter a response');
+                alert('Wpisz odpowiedź');
             }
         });
 
@@ -1991,7 +1991,7 @@ class WebMCP {
             this._sendMessage({
                 id,
                 type: 'samplingResponse',
-                error: 'User cancelled sampling request'
+                error: 'Użytkownik anulował prośbę o odpowiedź'
             });
 
             // Remove modal

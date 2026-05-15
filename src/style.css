@@ -947,10 +947,159 @@ body.has-tool .site-header .wrap {
 .webmcp-run-widget .webmcp-content {
   bottom: calc(100% + 10px) !important;
   right: 0 !important;
+  width: 340px !important;
   margin-bottom: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-3) !important;
+  box-shadow: var(--shadow-3) !important;
   font-family: var(--sans) !important;
-  color: #111827 !important;
+  color: var(--ink) !important;
   text-align: left !important;
+}
+.webmcp-run-widget .webmcp-content > div:first-child {
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: linear-gradient(180deg, var(--bg-elev), var(--bg)) !important;
+}
+.webmcp-run-widget .webmcp-content > div:first-child > div:first-child {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+}
+.webmcp-run-widget .webmcp-close {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: var(--r-1) !important;
+  color: var(--ink-4) !important;
+  line-height: 22px !important;
+}
+.webmcp-run-widget .webmcp-close:hover {
+  background: var(--bg-tint) !important;
+  color: var(--ink) !important;
+}
+.webmcp-run-widget .webmcp-content > div:nth-child(2) {
+  margin: 0 !important;
+  padding: 14px 16px 8px !important;
+}
+.webmcp-run-widget .webmcp-content > div:nth-child(2) > div {
+  margin-bottom: 8px !important;
+}
+.webmcp-run-widget .webmcp-token-input {
+  min-width: 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--line-2) !important;
+  border-right: 0 !important;
+  border-radius: var(--r-2) 0 0 var(--r-2) !important;
+  background: var(--bg) !important;
+  color: var(--ink) !important;
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  outline: none !important;
+}
+.webmcp-run-widget .webmcp-token-input::placeholder { color: var(--ink-4) !important; }
+.webmcp-run-widget .webmcp-token-input:focus {
+  border-color: var(--accent-line) !important;
+  box-shadow: inset 0 0 0 1px var(--accent-line) !important;
+}
+.webmcp-run-widget .webmcp-connect-btn,
+.webmcp-run-widget .webmcp-disconnect-btn {
+  padding: 8px 12px !important;
+  border: 1px solid var(--ink) !important;
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.webmcp-run-widget .webmcp-connect-btn {
+  border-radius: 0 var(--r-2) var(--r-2) 0 !important;
+  background: var(--ink) !important;
+  color: var(--bg) !important;
+}
+.webmcp-run-widget .webmcp-connect-btn:hover { background: var(--ink-2) !important; }
+.webmcp-run-widget .webmcp-disconnect-btn {
+  border-color: var(--line-2) !important;
+  border-radius: var(--r-2) !important;
+  background: var(--bg-elev) !important;
+  color: var(--ink-2) !important;
+}
+.webmcp-run-widget .webmcp-disconnect-btn:hover {
+  border-color: var(--ink-4) !important;
+  color: var(--ink) !important;
+}
+.webmcp-run-widget .webmcp-status {
+  margin: 0 16px 12px !important;
+  padding: 7px 10px !important;
+  border-radius: var(--r-2) !important;
+  background: var(--bg-sunk) !important;
+  color: var(--ink-3) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+.webmcp-run-widget[data-mcp-status="connected"] .webmcp-status {
+  background: var(--accent-tint) !important;
+  color: var(--accent-ink) !important;
+}
+.webmcp-run-widget[data-mcp-status="connecting"] .webmcp-status,
+.webmcp-run-widget[data-mcp-status="pending-auth"] .webmcp-status {
+  background: color-mix(in oklab, var(--accent) 10%, var(--bg-elev)) !important;
+  color: var(--accent-ink) !important;
+}
+.webmcp-run-widget .webmcp-registered-items {
+  margin: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  background: var(--bg) !important;
+  max-height: 240px !important;
+}
+.webmcp-run-widget .webmcp-tools-list,
+.webmcp-run-widget .webmcp-prompts-list,
+.webmcp-run-widget .webmcp-resources-list {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+.webmcp-run-widget .webmcp-resources-list { border-bottom: 0 !important; }
+.webmcp-run-widget .webmcp-tools-list > div:first-child,
+.webmcp-run-widget .webmcp-prompts-list > div:first-child,
+.webmcp-run-widget .webmcp-resources-list > div:first-child {
+  margin-bottom: 6px !important;
+  color: var(--ink-3) !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+.webmcp-run-widget .webmcp-tools-container li,
+.webmcp-run-widget .webmcp-prompts-container li,
+.webmcp-run-widget .webmcp-resources-container li {
+  padding: 7px 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+}
+.webmcp-run-widget .webmcp-tools-container li:last-child,
+.webmcp-run-widget .webmcp-prompts-container li:last-child,
+.webmcp-run-widget .webmcp-resources-container li:last-child { border-bottom: 0 !important; }
+.webmcp-run-widget .webmcp-tools-container strong,
+.webmcp-run-widget .webmcp-prompts-container strong,
+.webmcp-run-widget .webmcp-resources-container strong {
+  display: block !important;
+  margin-bottom: 2px !important;
+  color: var(--ink) !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+.webmcp-run-widget .webmcp-tools-container li > div,
+.webmcp-run-widget .webmcp-prompts-container li > div,
+.webmcp-run-widget .webmcp-resources-container li > div {
+  color: var(--ink-3) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
 }
 
 /* ---------- Debug ---------- */

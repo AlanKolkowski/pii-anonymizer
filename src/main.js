@@ -855,7 +855,7 @@ function textContent(value) {
 
 mcp.registerTool(
   'list_sources',
-  'List all anonymized source documents that are ready. Returns id, label, and char_count for each. Text contents are token-form (PII never crosses this boundary).',
+  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. Treść jest tokenizowana — PII nigdy nie opuszcza przeglądarki.',
   { type: 'object', properties: {} },
   () => {
     const ready = sources.filter((s) => s.status === 'ready');
@@ -869,7 +869,7 @@ mcp.registerTool(
 
 mcp.registerTool(
   'read_source',
-  'Read the anonymized (token-form) text of a single source by id. PII is never returned.',
+  'Odczytaj zanonimizowaną, tokenizowaną treść pojedynczego dokumentu źródłowego po id. PII nigdy nie jest zwracane.',
   {
     type: 'object',
     properties: { id: { type: 'string' } },
@@ -877,21 +877,21 @@ mcp.registerTool(
   },
   ({ id }) => {
     const s = sources.find((x) => x.id === id);
-    if (!s || s.status !== 'ready') return jsonContent({ error: `Source ${id} not ready` });
+    if (!s || s.status !== 'ready') return jsonContent({ error: `Dokument źródłowy ${id} nie jest gotowy` });
     return textContent(applyTokens(s.text, s.entities, seen));
   },
 );
 
 mcp.registerTool(
   'list_outcomes',
-  'List all outcome documents (LLM-produced, in token form). Returns id, label, char_count.',
+  'Wypisz dokumenty wynikowe utworzone przez LLM w formie tokenów. Zwraca id, label i char_count.',
   { type: 'object', properties: {} },
   () => jsonContent(outcomes.map((o) => ({ id: o.id, label: o.label, char_count: o.text.length }))),
 );
 
 mcp.registerTool(
   'read_outcome',
-  'Read the tokenized text of an outcome by id (the LLM\'s own previous output).',
+  'Odczytaj tokenizowaną treść dokumentu wynikowego po id (wcześniejsza odpowiedź LLM).',
   {
     type: 'object',
     properties: { id: { type: 'string' } },
@@ -899,14 +899,14 @@ mcp.registerTool(
   },
   ({ id }) => {
     const o = outcomes.find((x) => x.id === id);
-    if (!o) return jsonContent({ error: `Outcome ${id} not found` });
+    if (!o) return jsonContent({ error: `Dokument wynikowy ${id} nie istnieje` });
     return textContent(o.text);
   },
 );
 
 mcp.registerTool(
   'write_outcome',
-  'Create or update an outcome document. Provide id to update an existing outcome; omit id to create a new one. text MUST be in token form (e.g. [PERSON_NAME_1]); the browser deanonymizes it for the human user only and never returns PII.',
+  'Utwórz lub zaktualizuj dokument wynikowy. Podaj id, aby zaktualizować istniejący dokument; pomiń id, aby utworzyć nowy. text MUSI być w formie tokenów (np. [PERSON_NAME_1]); przeglądarka deanonimizuje go tylko dla użytkownika i nigdy nie zwraca PII.',
   {
     type: 'object',
     properties: {
@@ -918,14 +918,14 @@ mcp.registerTool(
   },
   ({ id, label, text }) => {
     if (typeof label !== 'string' || label.trim().length === 0) {
-      return jsonContent({ error: 'label must be a non-empty string' });
+      return jsonContent({ error: 'label musi być niepustym ciągiem znaków' });
     }
     if (typeof text !== 'string') {
-      return jsonContent({ error: 'text must be a string' });
+      return jsonContent({ error: 'text musi być ciągiem znaków' });
     }
     if (id) {
       if (!updateOutcomeFields(id, label, text)) {
-        return jsonContent({ error: `Outcome ${id} not found` });
+        return jsonContent({ error: `Dokument wynikowy ${id} nie istnieje` });
       }
       return jsonContent({ id, success: true });
     }
