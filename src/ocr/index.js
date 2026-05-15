@@ -25,6 +25,10 @@ export function createOcr(deps = {}) {
   }
 
   async function init() {
+    if (typeof engine.init === 'function') {
+      await engine.init();
+      return;
+    }
     if (deps.eagerInit) {
       await engine.run({ width: 1, height: 1, _warmup: true }).catch(() => undefined);
     }

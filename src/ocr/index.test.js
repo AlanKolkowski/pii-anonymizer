@@ -48,7 +48,18 @@ describe('createOcr', () => {
     await expect(ocr.ocrBitmap({})).rejects.toBeInstanceOf(OcrCancelledError);
   });
 
-  it('init() runs the engine warmup but does not throw if not implemented', async () => {
+  it('init() forwards to engine.init when available', async () => {
+    let initCalls = 0;
+    const engine = {
+      ...makeFakeEngine(async () => ({ text: '', confidence: 0, backend: 'wasm' })),
+      init: async () => { initCalls++; },
+    };
+    const ocr = createOcr({ engine });
+    await ocr.init();
+    expect(initCalls).toBe(1);
+  });
+
+  it('init() does not throw when the engine has no explicit init()', async () => {
     const engine = makeFakeEngine(async () => ({ text: '', confidence: 0, backend: 'wasm' }));
     const ocr = createOcr({ engine });
     await expect(ocr.init()).resolves.toBeUndefined();

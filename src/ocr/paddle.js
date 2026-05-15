@@ -300,7 +300,7 @@ export function createPaddleEngine(deps = {}) {
     return initPromise;
   }
 
-  async function run(input, options = {}) {
+  async function init() {
     if (cancelRequested) {
       cancelRequested = false;
       throw new OcrCancelledError();
@@ -311,6 +311,20 @@ export function createPaddleEngine(deps = {}) {
         cancelRequested = false;
         throw new OcrCancelledError();
       }
+    } catch (err) {
+      if (cancelRequested) {
+        cancelRequested = false;
+        throw new OcrCancelledError();
+      }
+      if (err instanceof OcrCancelledError) throw err;
+      if (err instanceof OcrFailedError) throw err;
+      throw new OcrFailedError(err);
+    }
+  }
+
+  async function run(input, options = {}) {
+    try {
+      await init();
       options.onRunStart?.();
       emitProgress({ stage: 'ocr-run', status: 'start' });
       const results = await instance.predict(input);
@@ -354,6 +368,7 @@ export function createPaddleEngine(deps = {}) {
   }
 
   return {
+    init,
     run,
     cancel,
     onModelLoad,

@@ -49,6 +49,16 @@ describe('createPaddleEngine', () => {
     expect(calls.create).toBe(1);
   });
 
+  it('init() creates sessions without running prediction and caches the instance', async () => {
+    let predictCalls = 0;
+    const { sdk, calls } = fakeSdkFactory(async () => { predictCalls++; return okResult([]); });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
+    await engine.init();
+    await engine.init();
+    expect(calls.create).toBe(1);
+    expect(predictCalls).toBe(0);
+  });
+
   it('passes worker:true and the provided ortOptions to PaddleOCR.create', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
     const engine = createTestEngine({

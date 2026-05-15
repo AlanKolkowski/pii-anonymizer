@@ -69,6 +69,27 @@ async function ensureWasm() {
   }
 }
 
+async function applyBackendPreference(requestedBackend = 'wasm') {
+  await ensureWasm();
+  // 'auto' = no override/GPU allowed; any other value forces that backend.
+  const newOverride = requestedBackend === 'auto' ? null : requestedBackend;
+  // webnnAvailable reflects raw browser capability; the override is applied
+  // separately in deviceFor(), so the two stay decoupled.
+  const newWebnnAvailable = 'ml' in self.navigator;
+  // Backend selection changed mid-session: drop sessions so they reload
+  // on the new device.
+  if (newOverride !== backendOverride || newWebnnAvailable !== webnnAvailable) {
+    if (loadedModels.size > 0) {
+      for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
+    }
+    // Backend semantics may differ; drop entity cache too.
+    nerCache.clear();
+  }
+  backendOverride = newOverride;
+  webnnAvailable = newWebnnAvailable;
+  return { requested: requestedBackend, webnnAvailable };
+}
+
 function totalLoadedMB() {
   // Budget tracks WASM heap occupancy only. WebNN-GPU sessions live in GPU
   // memory and don't pressure the WASM heap, so they don't count here and
@@ -145,7 +166,7 @@ async function loadPipelineWithDevice(def, device) {
 // path to dispose it. Dedupe via in-flight load promises keyed by alias.
 const inFlightLoads = new Map();
 
-async function ensureModelLoaded(alias) {
+async function ensureModelLoaded(alias, { emitTiming = true } = {}) {
   if (loadedModels.has(alias)) return;
   const existing = inFlightLoads.get(alias);
   if (existing) {
@@ -160,7 +181,7 @@ async function ensureModelLoaded(alias) {
     const targetDevice = deviceFor(def);
     // Only evict for WASM loads; GPU sessions don't pressure the WASM heap.
     if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
-    postTiming('model:load:start', { alias });
+    if (emitTiming) postTiming('model:load:start', { alias });
     let ner;
     let device = targetDevice;
     try {
@@ -176,7 +197,7 @@ async function ensureModelLoaded(alias) {
         throw err;
       }
     }
-    postTiming('model:load:end', { alias });
+    if (emitTiming) postTiming('model:load:end', { alias });
     loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
     console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
   })();
@@ -205,8 +226,28 @@ async function loadModelForPipeline({ alias: requestedAlias, id, dtype }) {
   };
 }
 
-function allHfSourceDefs() {
-  return Object.values(SOURCES).filter((def) => def?.kind === 'hf');
+function allHfSourceAliases() {
+  return Object.keys(SOURCES).filter((alias) => SOURCES[alias]?.kind === 'hf');
+}
+
+function hfAliasesForEntities(enabledEntities) {
+  if (Array.isArray(enabledEntities) && enabledEntities.length > 0) {
+    return requiredSources(enabledEntities).filter((alias) => SOURCES[alias]?.kind === 'hf');
+  }
+  return currentConfig?.requiredAliases?.length ? [...currentConfig.requiredAliases] : allHfSourceAliases();
+}
+
+function hfDefsForAliases(aliases) {
+  return aliases.map((alias) => SOURCES[alias]).filter((def) => def?.kind === 'hf');
+}
+
+function sortHfAliasesForLoad(aliases) {
+  return [...aliases].sort((a, b) => {
+    const aLoaded = loadedModels.has(a) ? 0 : 1;
+    const bLoaded = loadedModels.has(b) ? 0 : 1;
+    if (aLoaded !== bLoaded) return aLoaded - bLoaded;
+    return (SOURCES[b]?.sizeMB ?? 0) - (SOURCES[a]?.sizeMB ?? 0);
+  });
 }
 
 async function downloadModelFilesForPipeline(sources) {
@@ -234,8 +275,11 @@ async function downloadModelFilesForPipeline(sources) {
   });
 }
 
-async function predownloadAllNerModelFiles(requestId) {
-  const defs = allHfSourceDefs();
+async function predownloadAndLoadNerModels(requestId, { enabledEntities, backend } = {}) {
+  if (backend) await applyBackendPreference(backend);
+
+  const aliases = sortHfAliasesForLoad(hfAliasesForEntities(enabledEntities));
+  const defs = hfDefsForAliases(aliases);
   if (defs.length === 0) {
     self.postMessage({
       type: 'predownload-progress',
@@ -249,6 +293,15 @@ async function predownloadAllNerModelFiles(requestId) {
       remainingFiles: 0,
       totalFiles: 0,
     });
+    self.postMessage({
+      type: 'predownload-progress',
+      phase: 'ner-load',
+      requestId,
+      status: 'complete',
+      progress: 100,
+      completed: 0,
+      total: 0,
+    });
     return;
   }
 
@@ -256,6 +309,61 @@ async function predownloadAllNerModelFiles(requestId) {
     progressCallback: (data) => {
       self.postMessage({ type: 'predownload-progress', phase: 'ner', requestId, ...data });
     },
+  });
+
+  const total = aliases.length;
+  let completed = 0;
+  self.postMessage({
+    type: 'predownload-progress',
+    phase: 'ner-load',
+    requestId,
+    status: 'plan',
+    progress: 0,
+    completed,
+    total,
+    aliases,
+  });
+
+  for (const alias of aliases) {
+    const wasLoaded = loadedModels.has(alias);
+    self.postMessage({
+      type: 'predownload-progress',
+      phase: 'ner-load',
+      requestId,
+      status: wasLoaded ? 'ready' : 'loading',
+      alias,
+      source: alias,
+      progress: total > 0 ? (completed / total) * 100 : 100,
+      completed,
+      total,
+      cached: wasLoaded,
+      device: loadedModels.get(alias)?.device ?? null,
+    });
+    await ensureModelLoaded(alias, { emitTiming: false });
+    completed += 1;
+    self.postMessage({
+      type: 'predownload-progress',
+      phase: 'ner-load',
+      requestId,
+      status: 'ready',
+      alias,
+      source: alias,
+      progress: total > 0 ? (completed / total) * 100 : 100,
+      completed,
+      total,
+      cached: wasLoaded,
+      device: loadedModels.get(alias)?.device ?? null,
+    });
+  }
+
+  self.postMessage({
+    type: 'predownload-progress',
+    phase: 'ner-load',
+    requestId,
+    status: 'complete',
+    progress: 100,
+    completed,
+    total,
   });
 }
 
@@ -265,10 +373,13 @@ self.onmessage = async (e) => {
   if (type === 'predownload-models') {
     const requestId = e.data.requestId;
     try {
-      await predownloadAllNerModelFiles(requestId);
+      await predownloadAndLoadNerModels(requestId, {
+        enabledEntities: e.data.enabledEntities,
+        backend: e.data.backend,
+      });
       self.postMessage({ type: 'predownload-result', phase: 'ner', requestId });
     } catch (err) {
-      console.error('[worker] model pre-download failed:', err);
+      console.error('[worker] model pre-download/load failed:', err);
       self.postMessage({ type: 'predownload-error', phase: 'ner', requestId, message: err.message });
     }
     return;
@@ -277,28 +388,12 @@ self.onmessage = async (e) => {
   if (type === 'configure') {
     const configRequestId = e.data.configRequestId;
     try {
-      await ensureWasm();
       const requestedBackend = e.data.backend ?? 'wasm';
-      // 'auto' = no override/GPU allowed; any other value forces that backend.
-      const newOverride = requestedBackend === 'auto' ? null : requestedBackend;
-      // webnnAvailable reflects raw browser capability; the override is applied
-      // separately in deviceFor(), so the two stay decoupled.
-      const newWebnnAvailable = 'ml' in self.navigator;
-      // Backend selection changed mid-session: drop sessions so they reload
-      // on the new device.
-      if (newOverride !== backendOverride || newWebnnAvailable !== webnnAvailable) {
-        if (loadedModels.size > 0) {
-          for (const alias of [...loadedModels.keys()]) await disposeModel(alias);
-        }
-        // Backend semantics may differ; drop entity cache too.
-        nerCache.clear();
-      }
-      backendOverride = newOverride;
-      webnnAvailable = newWebnnAvailable;
+      const backendInfo = await applyBackendPreference(requestedBackend);
       self.postMessage({
         type: 'backend-resolved',
-        webnnAvailable,
-        requested: requestedBackend,
+        webnnAvailable: backendInfo.webnnAvailable,
+        requested: backendInfo.requested,
         configRequestId,
       });
       const enabledEntities = e.data.enabledEntities ?? [];
