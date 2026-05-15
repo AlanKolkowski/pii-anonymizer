@@ -92,13 +92,15 @@ function createSummary(view) {
     summary,
     'div',
     'progress-title',
-    view.status === 'done' ? 'Gotowe' : (view.status === 'error' ? 'Błąd' : 'Anonimizowanie dokumentu'),
+    view.status === 'done'
+      ? (view.doneTitle ?? 'Gotowe')
+      : (view.status === 'error' ? (view.errorTitle ?? 'Błąd') : (view.title ?? 'Anonimizowanie dokumentu')),
   );
   const meta = document.createElement('span');
   meta.className = 'step-meta';
   const parts = [];
   if (view.documentLabel) parts.push(view.documentLabel);
-  parts.push(`${view.totalSteps} kroków pipeline'u`);
+  parts.push(view.stepsSummaryLabel ?? `${view.totalSteps} kroków pipeline'u`);
   parts.forEach((part, index) => {
     if (index > 0) appendText(meta, 'span', '', '·');
     appendText(meta, 'span', '', part);
@@ -152,8 +154,7 @@ function createStepRow(step, index, view) {
   return row;
 }
 
-export function renderProgressOverlay(host, state) {
-  const view = getProgressView(state);
+export function renderProgressViewOverlay(host, view) {
   host.innerHTML = '';
   if (!view.visible) return;
 
@@ -177,6 +178,10 @@ export function renderProgressOverlay(host, state) {
   host.appendChild(overlay);
 }
 
+export function renderProgressOverlay(host, state) {
+  renderProgressViewOverlay(host, getProgressView(state));
+}
+
 export function createProgressOverlay(parentEl) {
   const host = document.createElement('div');
   host.dataset.testid = 'progress-overlay-host';
@@ -185,6 +190,9 @@ export function createProgressOverlay(parentEl) {
     element: host,
     render(state) {
       renderProgressOverlay(host, state);
+    },
+    renderView(view) {
+      renderProgressViewOverlay(host, view);
     },
   };
 }

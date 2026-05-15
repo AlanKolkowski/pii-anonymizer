@@ -11,6 +11,11 @@ import {
   getProgressView,
   progressReducer,
 } from './ui/progress-state.js';
+import {
+  createInitialFileImportProgressState,
+  fileImportProgressReducer,
+  getFileImportProgressView,
+} from './ui/file-import-progress-state.js';
 import { extractText } from './file-import/index.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
@@ -34,6 +39,7 @@ let legend = {};
 let seen = {};
 let lastRun = null;
 const inFlightSourceIds = new Set();
+const inFlightFileImportIds = new Set();
 let configuredOnce = false;
 const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
@@ -41,6 +47,7 @@ const LS_KEY = 'pii.selected-entities';
 const GPU_LS_KEY = 'pii.allow-gpu';
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
+function isAnyFileImportInFlight() { return inFlightFileImportIds.size > 0; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
 const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
@@ -83,17 +90,42 @@ let progressState = createInitialProgressState();
 let progressHideTimer = null;
 let progressBatchTotal = 0;
 let progressSourceIndex = 0;
+let fileImportProgressState = createInitialFileImportProgressState();
+let fileImportProgressHideTimer = null;
 let configureTimer = null;
 let configRequestId = 0;
+
+function activeProgressView() {
+  const fileImportView = getFileImportProgressView(fileImportProgressState);
+  return fileImportView.visible ? fileImportView : getProgressView(progressState);
+}
 
 function renderProgressState() {
   progressOverlay?.render(progressState);
   refreshRunBar();
 }
 
+function renderFileImportProgressState() {
+  progressOverlay?.renderView(getFileImportProgressView(fileImportProgressState));
+  refreshRunBar();
+}
+
 function updateProgress(event) {
   progressState = progressReducer(progressState, event);
   renderProgressState();
+}
+
+function fileImportStatusText() {
+  const view = getFileImportProgressView(fileImportProgressState);
+  if (!view.visible || view.status !== 'running') return '';
+  return view.currentMetric ? `${view.currentLabel} — ${view.currentMetric}` : view.currentLabel;
+}
+
+function updateFileImportProgress(event) {
+  fileImportProgressState = fileImportProgressReducer(fileImportProgressState, event);
+  renderFileImportProgressState();
+  const status = fileImportStatusText();
+  if (status) setText(modelStatusEls, status);
 }
 
 function clearProgressHideTimer() {
@@ -103,12 +135,29 @@ function clearProgressHideTimer() {
   }
 }
 
+function clearFileImportProgressHideTimer() {
+  if (fileImportProgressHideTimer) {
+    clearTimeout(fileImportProgressHideTimer);
+    fileImportProgressHideTimer = null;
+  }
+}
+
 function scheduleProgressHide() {
   clearProgressHideTimer();
   updateProgress({ type: 'fade' });
   progressHideTimer = setTimeout(() => {
     progressHideTimer = null;
     updateProgress({ type: 'hide' });
+  }, 350);
+}
+
+function scheduleFileImportProgressHide() {
+  if (!getFileImportProgressView(fileImportProgressState).visible) return;
+  clearFileImportProgressHideTimer();
+  updateFileImportProgress({ type: 'fade' });
+  fileImportProgressHideTimer = setTimeout(() => {
+    fileImportProgressHideTimer = null;
+    updateFileImportProgress({ type: 'hide' });
   }, 350);
 }
 
@@ -268,7 +317,14 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     refreshAnonymizeButton();
   },
   async onAddFiles(files) {
-    for (const file of files) await addSourceFromFile(file);
+    const batch = Array.from(files ?? []);
+    if (batch.length === 0) return;
+    updateFileImportProgress({ type: 'batch-start', total: batch.length, t: performance.now() });
+    let index = 0;
+    for (const file of batch) {
+      index += 1;
+      await addSourceFromFile(file, { index, total: batch.length });
+    }
   },
   onRemove(id) {
     const idx = sources.findIndex((s) => s.id === id);
@@ -362,7 +418,10 @@ function nextPasteLabel() {
   return `Wklejony tekst ${next}`;
 }
 
-async function addSourceFromFile(file) {
+async function addSourceFromFile(file, batch = {}) {
+  const batchIndex = batch.index ?? 1;
+  const batchTotal = batch.total ?? 1;
+  const isLastInBatch = batchIndex >= batchTotal;
   const id = crypto.randomUUID();
   const label = file.name || `Plik ${sources.length + 1}`;
   sources.push({
@@ -372,25 +431,69 @@ async function addSourceFromFile(file) {
     text: '', entities: [], status: 'pending', type: 'file',
   });
   sourcesList.setActive(id);
+  inFlightFileImportIds.add(id);
+  clearFileImportProgressHideTimer();
+  updateFileImportProgress({
+    type: 'file-start',
+    id,
+    label,
+    index: batchIndex,
+    total: batchTotal,
+    t: performance.now(),
+  });
   refreshAnonymizeButton();
+
+  const onProgress = (event) => updateFileImportProgress({
+    ...event,
+    type: 'progress',
+    id,
+    label,
+    batchIndex,
+    batchTotal,
+    t: performance.now(),
+  });
+  const onModelLoad = (event) => updateFileImportProgress({
+    type: 'model-load',
+    mark: event.type,
+    engine: event.engine,
+    id,
+    label,
+    batchIndex,
+    batchTotal,
+    t: performance.now(),
+  });
+
   try {
-    const { text, meta } = await extractText(file);
+    const { text, meta } = await extractText(file, { onProgress, onModelLoad });
     const s = sources.find((x) => x.id === id);
-    if (!s) return;
-    s.text = text;
-    s.meta = meta;
-    s.status = 'idle';
-    s.error = null;
-    sourcesList.setSourceText(id, text);
-    sourcesList.setSourceStatus(id, 'idle');
+    if (s) {
+      s.text = text;
+      s.meta = meta;
+      s.status = 'idle';
+      s.error = null;
+      sourcesList.setSourceText(id, text);
+      sourcesList.setSourceStatus(id, 'idle');
+    }
+    if (isLastInBatch) {
+      updateFileImportProgress({ type: 'file-result', id, label, t: performance.now() });
+      scheduleFileImportProgressHide();
+    }
   } catch (err) {
     const s = sources.find((x) => x.id === id);
-    if (!s) return;
-    s.status = 'error';
-    s.error = err.message;
-    sourcesList.setSourceStatus(id, 'error', err.message);
+    if (s) {
+      s.status = 'error';
+      s.error = err.message;
+      sourcesList.setSourceStatus(id, 'error', err.message);
+    }
+    updateFileImportProgress({ type: 'error', id, label, message: err.message, t: performance.now() });
+    if (isLastInBatch) scheduleFileImportProgressHide();
+  } finally {
+    inFlightFileImportIds.delete(id);
+    if (isLastInBatch) {
+      if (!isAnyFileImportInFlight() && !isAnyClassifyInFlight()) setText(modelStatusEls, '');
+      refreshAnonymizeButton();
+    }
   }
-  refreshAnonymizeButton();
 }
 
 function updateSourceDirtyState(id, dirty) {
@@ -439,16 +542,18 @@ function setsEqual(a, b) {
 function refreshAnonymizeButton() {
   const hasSelection = selector.getSelected().length > 0;
   const hasAnyText = sources.some((s) => (s.text ?? '').trim().length > 0);
-  const blocked = !configuredOnce || isAnyClassifyInFlight();
+  const blocked = !configuredOnce || isAnyClassifyInFlight() || isAnyFileImportInFlight();
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
-  if (!isAnyClassifyInFlight()) {
+  if (isAnyFileImportInFlight() && !isAnyClassifyInFlight()) {
+    setText(anonymizeBtns, 'Wczytywanie pliku...');
+  } else if (!isAnyClassifyInFlight()) {
     const hasReclassify = sources.some((s) =>
       s.lastReadyText !== null && s.text !== s.lastReadyText && (s.text ?? '').trim().length > 0,
     );
     setText(anonymizeBtns, hasReclassify ? 'Anonimizuj ponownie' : 'Anonimizuj');
   }
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
-  else if (!isAnyClassifyInFlight()) setText(modelStatusEls, '');
+  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight()) setText(modelStatusEls, '');
   refreshRunBar();
 }
 
@@ -461,7 +566,7 @@ function refreshRunBar() {
   if (runBarTokensEl) runBarTokensEl.textContent = String(totalEntities);
 
   if (runBarMeterFillEl) {
-    const progressView = getProgressView(progressState);
+    const progressView = activeProgressView();
     runBarMeterFillEl.style.width = `${progressView.visible ? progressView.percent : 100}%`;
   }
 
