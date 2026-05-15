@@ -47,6 +47,32 @@ describe('extractImage', () => {
     ).rejects.toBeInstanceOf(ExtractionFailedError);
   });
 
+  it('emits OCR plan/page progress and forwards model lifecycle listeners', async () => {
+    const file = makeFile('photo.png', 'image/png');
+    const progress = [];
+    const modelLoad = [];
+    await extractImage(file, {
+      loadOcr: async () => ({
+        onProgress: (listener) => listener({ stage: 'model-download', status: 'progress', progress: 50 }),
+        onModelLoad: (listener) => listener({ type: 'model:load:start' }),
+        ocrImage: async (_blob, options = {}) => {
+          options.onRunStart?.();
+          return { text: 'ok', confidence: 0.9, backend: 'wasm' };
+        },
+      }),
+      onProgress: (event) => progress.push(event),
+      onModelLoad: (event) => modelLoad.push(event),
+    });
+
+    expect(progress).toEqual([
+      { stage: 'ocr-plan', kind: 'image', current: 0, completed: 0, total: 1, pageCount: 1 },
+      { stage: 'model-download', status: 'progress', progress: 50 },
+      { stage: 'ocr', kind: 'image', status: 'page-start', current: 1, completed: 0, total: 1, page: 1 },
+      { stage: 'ocr', kind: 'image', status: 'page-done', current: 1, completed: 1, total: 1, page: 1 },
+    ]);
+    expect(modelLoad).toEqual([{ type: 'model:load:start' }]);
+  });
+
   it('does not call heic-to for non-HEIC inputs', async () => {
     const file = makeFile('photo.png', 'image/png');
     let heicCalled = false;

@@ -4,12 +4,12 @@ import { OcrCancelledError } from './errors.js';
 function makeFakeEngine(impl) {
   let cancelled = false;
   return {
-    run: async (input) => {
+    run: async (input, options = {}) => {
       if (cancelled) {
         cancelled = false;
         throw new OcrCancelledError();
       }
-      return impl(input);
+      return impl(input, options);
     },
     cancel: () => { cancelled = true; },
     getBackend: () => 'wasm',
@@ -17,13 +17,18 @@ function makeFakeEngine(impl) {
 }
 
 describe('createOcr', () => {
-  it('ocrBitmap returns text + meta', async () => {
-    const engine = makeFakeEngine(async () => ({ text: 'hello', confidence: 0.9, backend: 'wasm' }));
+  it('ocrBitmap returns text + meta and forwards run options', async () => {
+    let started = false;
+    const engine = makeFakeEngine(async (_input, options) => {
+      options.onRunStart?.();
+      return { text: 'hello', confidence: 0.9, backend: 'wasm' };
+    });
     const ocr = createOcr({ engine });
-    const out = await ocr.ocrBitmap({ width: 100, height: 100 });
+    const out = await ocr.ocrBitmap({ width: 100, height: 100 }, { onRunStart: () => { started = true; } });
     expect(out.text).toBe('hello');
     expect(out.confidence).toBe(0.9);
     expect(out.backend).toBe('wasm');
+    expect(started).toBe(true);
   });
 
   it('ocrImage decodes a blob via createImageBitmap and forwards', async () => {
@@ -60,6 +65,20 @@ describe('createOcr', () => {
     const ocr = createOcr({ engine });
     const fn = () => {};
     ocr.onModelLoad(fn);
+    expect(listenerSet).toBe(fn);
+  });
+
+  it('onProgress forwards to the engine listener', async () => {
+    let listenerSet = null;
+    const engine = {
+      run: async () => ({ text: '', confidence: 0, backend: 'wasm' }),
+      cancel: () => {},
+      getBackend: () => 'wasm',
+      onProgress: (l) => { listenerSet = l; },
+    };
+    const ocr = createOcr({ engine });
+    const fn = () => {};
+    ocr.onProgress(fn);
     expect(listenerSet).toBe(fn);
   });
 });

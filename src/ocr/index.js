@@ -11,14 +11,14 @@ export function createOcr(deps = {}) {
   const engine = deps.engine ?? createPaddleEngine();
   const decodeBitmap = deps.decodeBitmap ?? defaultDecodeBitmap;
 
-  async function ocrBitmap(bitmap) {
-    return await engine.run(bitmap);
+  async function ocrBitmap(bitmap, options = {}) {
+    return await engine.run(bitmap, options);
   }
 
-  async function ocrImage(blob) {
+  async function ocrImage(blob, options = {}) {
     const bitmap = await decodeBitmap(blob);
     try {
-      return await engine.run(bitmap);
+      return await engine.run(bitmap, options);
     } finally {
       bitmap.close?.();
     }
@@ -36,6 +36,7 @@ export function createOcr(deps = {}) {
     init,
     cancel: () => engine.cancel(),
     onModelLoad: (listener) => engine.onModelLoad?.(listener),
+    onProgress: (listener) => engine.onProgress?.(listener),
     getBackend: () => engine.getBackend(),
   };
 }

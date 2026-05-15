@@ -26,6 +26,7 @@ function isHeic(file) {
 export async function extractImage(file, deps = {}) {
   const loadOcr = deps.loadOcr ?? defaultLoadOcr;
   const loadHeicTo = deps.loadHeicTo ?? defaultLoadHeicTo;
+  const onProgress = deps.onProgress ?? (() => {});
 
   let blob = file;
   try {
@@ -34,10 +35,25 @@ export async function extractImage(file, deps = {}) {
       blob = await mod.heicTo({ blob: file, type: 'image/jpeg', quality: 0.95 });
     }
     const ocr = await loadOcr();
+    onProgress({ stage: 'ocr-plan', kind: 'image', current: 0, completed: 0, total: 1, pageCount: 1 });
+    if (typeof ocr.onProgress === 'function') {
+      ocr.onProgress(onProgress);
+    }
     if (typeof ocr.onModelLoad === 'function' && deps.onModelLoad) {
       ocr.onModelLoad(deps.onModelLoad);
     }
-    const result = await ocr.ocrImage(blob);
+    const result = await ocr.ocrImage(blob, {
+      onRunStart: () => onProgress({
+        stage: 'ocr',
+        kind: 'image',
+        status: 'page-start',
+        current: 1,
+        completed: 0,
+        total: 1,
+        page: 1,
+      }),
+    });
+    onProgress({ stage: 'ocr', kind: 'image', status: 'page-done', current: 1, completed: 1, total: 1, page: 1 });
     return {
       text: result.text,
       meta: {

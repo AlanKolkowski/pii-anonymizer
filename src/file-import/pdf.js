@@ -84,6 +84,9 @@ export async function extractPdf(file, deps = {}) {
   }
 
   const ocrTotal = classifications.filter((c) => c.source === 'ocr').length;
+  if (ocrTotal > 0) {
+    onProgress({ stage: 'ocr-plan', kind: 'pdf', current: 0, completed: 0, total: ocrTotal, pageCount });
+  }
   let ocr = null;
   let ocrBackend = null;
   let ocrDone = 0;
@@ -97,28 +100,57 @@ export async function extractPdf(file, deps = {}) {
     }
     if (!ocr) {
       ocr = await loadOcr();
+      if (typeof ocr.onProgress === 'function') {
+        ocr.onProgress(onProgress);
+      }
       if (typeof ocr.onModelLoad === 'function' && deps.onModelLoad) {
         ocr.onModelLoad(deps.onModelLoad);
       }
     }
-    ocrDone++;
-    onProgress({ stage: 'ocr', current: ocrDone, total: ocrTotal });
 
     const viewport = c.page.getViewport({ scale: RENDER_SCALE });
     const canvas = makeCanvas({ width: viewport.width, height: viewport.height });
     const ctx = canvas.getContext('2d');
     let bitmap;
+    let counted = false;
+    const markPageStart = () => onProgress({
+      stage: 'ocr',
+      kind: 'pdf',
+      status: 'page-start',
+      current: ocrDone + 1,
+      completed: ocrDone,
+      total: ocrTotal,
+      page: c.index,
+      pageCount,
+    });
+    const markPageDone = () => {
+      if (counted) return;
+      counted = true;
+      ocrDone++;
+      onProgress({
+        stage: 'ocr',
+        kind: 'pdf',
+        status: 'page-done',
+        current: ocrDone,
+        completed: ocrDone,
+        total: ocrTotal,
+        page: c.index,
+        pageCount,
+      });
+    };
     try {
       await c.page.render({ canvasContext: ctx, viewport }).promise;
       bitmap = canvas.transferToImageBitmap();
-      const out = await ocr.ocrBitmap(bitmap);
+      const out = await ocr.ocrBitmap(bitmap, { onRunStart: markPageStart });
       ocrBackend = ocrBackend ?? out.backend;
       c.text = out.text;
       c.confidence = out.confidence;
+      markPageDone();
     } catch (err) {
       if (err.name === 'OcrCancelledError' || err.name === 'WebNNUnavailableError') throw err;
       c.text = `[OCR strony ${c.index} nie powiódł się]`;
       c.confidence = null;
+      markPageDone();
     } finally {
       bitmap?.close?.();
     }

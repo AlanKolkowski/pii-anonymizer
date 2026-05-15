@@ -1,6 +1,17 @@
 import { createPaddleEngine } from './paddle.js';
 import { OcrFailedError, OcrCancelledError } from './errors.js';
-import { TEXT_RECOGNITION_MODEL_NAME, TEXT_RECOGNITION_MODEL_URL } from './models.js';
+import {
+  TEXT_DETECTION_MODEL_NAME,
+  TEXT_DETECTION_MODEL_URL,
+  TEXT_RECOGNITION_MODEL_NAME,
+  TEXT_RECOGNITION_MODEL_URL,
+} from './models.js';
+
+const noDownload = async () => ({});
+
+function createTestEngine(options) {
+  return createPaddleEngine({ downloadModelAssets: noDownload, ...options });
+}
 
 function fakeSdkFactory(predictImpl, opts = {}) {
   const calls = { create: 0, dispose: 0, lastOptions: null };
@@ -32,7 +43,7 @@ function okResult(items, runtime = {}) {
 describe('createPaddleEngine', () => {
   it('lazy-initializes on first run and caches the instance', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     await engine.run({ kind: 'fake' });
     await engine.run({ kind: 'fake' });
     expect(calls.create).toBe(1);
@@ -40,7 +51,7 @@ describe('createPaddleEngine', () => {
 
   it('passes worker:true and the provided ortOptions to PaddleOCR.create', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({
+    const engine = createTestEngine({
       loadSdk: async () => sdk,
       ortOptions: { backend: 'wasm', wasmPaths: '/local/' },
     });
@@ -51,15 +62,17 @@ describe('createPaddleEngine', () => {
 
   it('overrides the rec model with the Latin PP-OCRv5 build by default', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     await engine.run({ kind: 'fake' });
+    expect(calls.lastOptions.textDetectionModelName).toBe(TEXT_DETECTION_MODEL_NAME);
+    expect(calls.lastOptions.textDetectionModelAsset).toEqual({ url: TEXT_DETECTION_MODEL_URL });
     expect(calls.lastOptions.textRecognitionModelName).toBe(TEXT_RECOGNITION_MODEL_NAME);
     expect(calls.lastOptions.textRecognitionModelAsset).toEqual({ url: TEXT_RECOGNITION_MODEL_URL });
   });
 
   it('lets sdkOptions override the default rec model wiring', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({
+    const engine = createTestEngine({
       loadSdk: async () => sdk,
       sdkOptions: {
         textRecognitionModelName: 'custom_rec',
@@ -74,7 +87,7 @@ describe('createPaddleEngine', () => {
   it('passes a custom createWorker when provided', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
     const fakeCreateWorker = () => ({ postMessage: () => {}, terminate: () => {} });
-    const engine = createPaddleEngine({
+    const engine = createTestEngine({
       loadSdk: async () => sdk,
       createWorker: fakeCreateWorker,
     });
@@ -87,7 +100,7 @@ describe('createPaddleEngine', () => {
       { poly: [], text: 'Jan Kowalski', score: 0.9 },
       { poly: [], text: 'PESEL 80010112345', score: 0.8 },
     ]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     const out = await engine.run({ kind: 'fake' });
     expect(out.text).toBe('Jan Kowalski\nPESEL 80010112345');
     expect(out.confidence).toBeCloseTo(0.85, 5);
@@ -96,7 +109,7 @@ describe('createPaddleEngine', () => {
 
   it('returns null confidence and empty text when no items detected', async () => {
     const { sdk } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     const out = await engine.run({ kind: 'fake' });
     expect(out.text).toBe('');
     expect(out.confidence).toBeNull();
@@ -104,7 +117,7 @@ describe('createPaddleEngine', () => {
 
   it('reports the backend from runtime.requestedBackend', async () => {
     const { sdk } = fakeSdkFactory(async () => okResult([{ poly: [], text: 'x', score: 0.7 }], { requestedBackend: 'webgpu' }));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     const out = await engine.run({ kind: 'fake' });
     expect(out.backend).toBe('webgpu');
   });
@@ -112,38 +125,65 @@ describe('createPaddleEngine', () => {
   it('emits model:load:start and model:load:end exactly once per init', async () => {
     const events = [];
     const { sdk } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     engine.onModelLoad((e) => events.push(e.type));
     await engine.run({ kind: 'fake' });
     await engine.run({ kind: 'fake' });
     expect(events).toEqual(['model:load:start', 'model:load:end']);
   });
 
+  it('downloads OCR model assets before session loading and forwards progress', async () => {
+    const events = [];
+    let revoked = false;
+    const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
+    const engine = createPaddleEngine({
+      loadSdk: async () => sdk,
+      downloadModelAssets: async ({ onProgress }) => {
+        onProgress({ stage: 'model-download', status: 'plan', progress: 0, totalFiles: 2 });
+        onProgress({ stage: 'model-download', status: 'progress', progress: 50, file: 'detekcja tekstu' });
+        return {
+          textDetectionModelAsset: { url: 'blob:det' },
+          textRecognitionModelAsset: { url: 'blob:rec' },
+          revoke: () => { revoked = true; },
+        };
+      },
+    });
+    engine.onProgress((event) => events.push(event));
+
+    await engine.run({ kind: 'fake' });
+
+    expect(events.map((event) => event.status)).toEqual(['plan', 'progress', 'start', 'done']);
+    expect(calls.lastOptions.textDetectionModelAsset).toEqual({ url: 'blob:det' });
+    expect(calls.lastOptions.textRecognitionModelAsset).toEqual({ url: 'blob:rec' });
+    expect(revoked).toBe(true);
+  });
+
   it('wraps predict failures in OcrFailedError', async () => {
     const { sdk } = fakeSdkFactory(async () => { throw new Error('boom'); });
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     await expect(engine.run({ kind: 'fake' })).rejects.toBeInstanceOf(OcrFailedError);
   });
 
   it('wraps create failures in OcrFailedError', async () => {
     const { sdk } = fakeSdkFactory(async () => okResult([]), { throwOnCreate: new Error('cdn down') });
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     await expect(engine.run({ kind: 'fake' })).rejects.toBeInstanceOf(OcrFailedError);
   });
 
   it('cancel() before run rejects with OcrCancelledError', async () => {
     const { sdk } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     engine.cancel();
     await expect(engine.run({ kind: 'fake' })).rejects.toBeInstanceOf(OcrCancelledError);
   });
 
-  it('cancel() during init rejects with OcrCancelledError and disposes the just-made instance', async () => {
+  it('cancel() during init rejects with OcrCancelledError and avoids creating sessions if cancellation is noticed early', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
-    const engine = createPaddleEngine({ loadSdk: async () => sdk });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
     const p = engine.run({ kind: 'fake' });
     engine.cancel();
     await expect(p).rejects.toBeInstanceOf(OcrCancelledError);
-    expect(calls.dispose).toBe(1);
+    expect(calls.create).toBe(0);
+    expect(calls.dispose).toBe(0);
   });
 });

@@ -44,7 +44,8 @@ function ocrSpy(perPageText, opts = {}) {
     spy: calls,
     deps: {
       loadOcr: async () => ({
-        ocrBitmap: async () => {
+        ocrBitmap: async (_bitmap, runOptions = {}) => {
+          runOptions.onRunStart?.();
           calls.push({});
           if (opts.throwOnIndex === calls.length - 1) {
             throw new Error('boom');
@@ -187,8 +188,11 @@ describe('extractPdf — progress and cancellation', () => {
       onProgress: (e) => events.push(e),
     });
     expect(events).toEqual([
-      { stage: 'ocr', current: 1, total: 2 },
-      { stage: 'ocr', current: 2, total: 2 },
+      { stage: 'ocr-plan', kind: 'pdf', current: 0, completed: 0, total: 2, pageCount: 2 },
+      { stage: 'ocr', kind: 'pdf', status: 'page-start', current: 1, completed: 0, total: 2, page: 1, pageCount: 2 },
+      { stage: 'ocr', kind: 'pdf', status: 'page-done', current: 1, completed: 1, total: 2, page: 1, pageCount: 2 },
+      { stage: 'ocr', kind: 'pdf', status: 'page-start', current: 2, completed: 1, total: 2, page: 2, pageCount: 2 },
+      { stage: 'ocr', kind: 'pdf', status: 'page-done', current: 2, completed: 2, total: 2, page: 2, pageCount: 2 },
     ]);
   });
 

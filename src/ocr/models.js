@@ -2,6 +2,12 @@
 export const ENGINE = 'paddleocr-v5';
 export const CACHE_KEY = `ocr-${ENGINE}`;
 
+// PaddleOCR's default detector is still the PP-OCRv5 mobile detector. We make
+// the URL explicit so the app can pre-download/cache it with progress before
+// the SDK's worker initializes the model sessions.
+export const TEXT_DETECTION_MODEL_NAME = 'PP-OCRv5_mobile_det';
+export const TEXT_DETECTION_MODEL_URL = 'https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx.tar';
+
 // PaddleOCR's default rec model is Chinese+English. We override it with the
 // Latin PP-OCRv5 mobile recognizer (ONNX-converted from
 // PaddlePaddle/latin_PP-OCRv5_mobile_rec) so Polish diacritics work. The tar
@@ -46,3 +52,18 @@ export function resolvePublicAssetUrl(path, options = {}) {
 export const TEXT_RECOGNITION_MODEL_URL = resolvePublicAssetUrl(
   `ocr-models/${TEXT_RECOGNITION_MODEL_NAME}.tar`
 );
+
+export const OCR_MODEL_ASSETS = [
+  {
+    key: 'det',
+    name: TEXT_DETECTION_MODEL_NAME,
+    label: 'detekcja tekstu',
+    url: TEXT_DETECTION_MODEL_URL,
+  },
+  {
+    key: 'rec',
+    name: TEXT_RECOGNITION_MODEL_NAME,
+    label: 'rozpoznawanie tekstu',
+    url: TEXT_RECOGNITION_MODEL_URL,
+  },
+];
