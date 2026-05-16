@@ -44,10 +44,13 @@ const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
 const LS_KEY = 'pii.selected-entities';
 const GPU_LS_KEY = 'pii.allow-gpu';
+const PRELOAD_OCR_LS_KEY = 'pii.preload-ocr';
+const PRELOAD_NER_LS_KEY = 'pii.preload-ner';
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 function isAnyFileImportInFlight() { return inFlightFileImportIds.size > 0; }
 function isAnyModelPredownloadInFlight() { return predownloadInFlight; }
+function isBlockingModelPredownloadInFlight() { return predownloadInFlight && predownloadBlocking; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
 const predownloadBtns = document.querySelectorAll('[data-action="predownload-models"]');
@@ -79,6 +82,8 @@ const webnnHintPanel = document.getElementById('webnn-hint-panel');
 const webnnHintClose = document.getElementById('webnn-hint-close');
 const webmcpControlRoot = document.getElementById('webmcp-control-root');
 const allowGpuInput = document.getElementById('allow-gpu-checkbox');
+const preloadOcrInput = document.getElementById('preload-ocr-checkbox');
+const preloadNerInput = document.getElementById('preload-ner-checkbox');
 
 // Keep GPU usage opt-in by default, but persist explicit user choice between sessions.
 
@@ -98,9 +103,13 @@ let fileImportProgressHideTimer = null;
 let configureTimer = null;
 let configRequestId = 0;
 let predownloadInFlight = false;
+let predownloadBlocking = false;
 let predownloadRequestId = 0;
 let predownloadWorkerRequest = null;
 let predownloadRunBarHideTimer = null;
+let ocrPreloadStarted = false;
+let autoNerPreloadSatisfiedSignature = null;
+let autoNerPreloadInFlightSignature = null;
 
 function renderProgressState() {
   progressOverlay?.render(progressState);
@@ -165,6 +174,14 @@ function isGpuAllowed() {
   return Boolean(allowGpuInput?.checked);
 }
 
+function isOcrPreloadEnabled() {
+  return Boolean(preloadOcrInput?.checked);
+}
+
+function isNerPreloadEnabled() {
+  return Boolean(preloadNerInput?.checked);
+}
+
 function requestedBackend() {
   return isGpuAllowed() ? 'auto' : 'wasm';
 }
@@ -172,6 +189,7 @@ function requestedBackend() {
 function beginConfigureRequest() {
   configRequestId += 1;
   configuredOnce = false;
+  autoNerPreloadSatisfiedSignature = null;
   refreshAnonymizeButton();
   return configRequestId;
 }
@@ -241,19 +259,27 @@ function loadSelectionFromStorage() {
   }
 }
 
-function loadAllowGpuFromStorage() {
+function loadBooleanFromStorage(key, fallback = false) {
   try {
-    const raw = localStorage.getItem(GPU_LS_KEY);
-    if (!raw) return false;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
     return JSON.parse(raw) === true;
   } catch {
-    return false;
+    return fallback;
   }
 }
 
+function persistBoolean(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(Boolean(value))); } catch {}
+}
+
 const initialSelection = loadSelectionFromStorage() ?? defaultEnabledEntities();
-const initialAllowGpu = loadAllowGpuFromStorage();
+const initialAllowGpu = loadBooleanFromStorage(GPU_LS_KEY);
+const initialPreloadOcr = loadBooleanFromStorage(PRELOAD_OCR_LS_KEY);
+const initialPreloadNer = loadBooleanFromStorage(PRELOAD_NER_LS_KEY);
 if (allowGpuInput) allowGpuInput.checked = initialAllowGpu;
+if (preloadOcrInput) preloadOcrInput.checked = initialPreloadOcr;
+if (preloadNerInput) preloadNerInput.checked = initialPreloadNer;
 
 function scheduleConfigure(enabledEntities) {
   clearTimeout(configureTimer);
@@ -268,7 +294,7 @@ const selector = createEntitySelector(selectorRoot, {
   labels: ENTITY_LABELS,
   initial: initialSelection,
   onChange(selected) {
-    localStorage.setItem(LS_KEY, JSON.stringify(selected));
+    try { localStorage.setItem(LS_KEY, JSON.stringify(selected)); } catch {}
     refreshAnonymizeButton();
     updateWebnnHint(selected);
     scheduleConfigure(selected);
@@ -276,24 +302,57 @@ const selector = createEntitySelector(selectorRoot, {
 });
 
 allowGpuInput?.addEventListener('change', () => {
-  localStorage.setItem(GPU_LS_KEY, JSON.stringify(isGpuAllowed()));
+  persistBoolean(GPU_LS_KEY, isGpuAllowed());
   const selected = selector.getSelected();
   updateWebnnHint(selected);
   clearTimeout(configureTimer);
   postConfigure(selected);
 });
 
+preloadOcrInput?.addEventListener('change', () => {
+  persistBoolean(PRELOAD_OCR_LS_KEY, isOcrPreloadEnabled());
+  if (isOcrPreloadEnabled()) scheduleOcrPreload();
+});
+
+preloadNerInput?.addEventListener('change', () => {
+  persistBoolean(PRELOAD_NER_LS_KEY, isNerPreloadEnabled());
+  if (isNerPreloadEnabled()) maybeAutoPreloadNer();
+});
+
 updateWebnnHint(initialSelection);
 
 postConfigure(selector.getSelected());
 
-const ocrWarm = urlParams.get('ocr') === 'warm';
-if (ocrWarm) {
-  import('./ocr/index.js').then(({ getWorkerBackedOcr }) => {
-    const ocr = getWorkerBackedOcr();
-    ocr.init?.().catch((err) => console.warn('[main] OCR warm-up failed:', err));
+function runWhenIdle(fn) {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(fn, { timeout: 1500 });
+    return;
+  }
+  setTimeout(fn, 0);
+}
+
+function scheduleOcrPreload() {
+  if (ocrPreloadStarted) return;
+  ocrPreloadStarted = true;
+  runWhenIdle(() => {
+    import('./ocr/index.js').then(({ getWorkerBackedOcr }) => {
+      const ocr = getWorkerBackedOcr();
+      if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isAnyModelPredownloadInFlight()) {
+        setText(modelStatusEls, 'Przygotowywanie OCR…');
+      }
+      return ocr.init?.();
+    }).catch((err) => {
+      console.warn('[main] OCR preload failed:', err);
+    }).finally(() => {
+      if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isAnyModelPredownloadInFlight()) {
+        setText(modelStatusEls, '');
+      }
+    });
   });
 }
+
+const ocrWarm = urlParams.get('ocr') === 'warm';
+if (initialPreloadOcr || ocrWarm) scheduleOcrPreload();
 
 const sourcesList = createSourcesList(sourcesListRoot, {
   tabsHost: workspaceTabsRoot,
@@ -354,6 +413,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     if (!s) return;
     s.text = text;
     refreshAnonymizeButton();
+    maybeAutoPreloadNer();
   },
   onTextDirtyChange(id, dirty) {
     updateSourceDirtyState(id, dirty);
@@ -492,6 +552,7 @@ async function addSourceFromFile(file, batch = {}) {
     if (isLastInBatch) {
       if (!isAnyFileImportInFlight() && !isAnyClassifyInFlight()) setText(modelStatusEls, '');
       refreshAnonymizeButton();
+      maybeAutoPreloadNer();
     }
   }
 }
@@ -545,11 +606,11 @@ function refreshAnonymizeButton() {
   const blocked = !configuredOnce
     || isAnyClassifyInFlight()
     || isAnyFileImportInFlight()
-    || isAnyModelPredownloadInFlight();
+    || isBlockingModelPredownloadInFlight();
   setDisabled(anonymizeBtns, blocked || !hasSelection || !hasAnyText);
   if (isAnyFileImportInFlight() && !isAnyClassifyInFlight()) {
     setText(anonymizeBtns, 'Wczytywanie pliku...');
-  } else if (isAnyModelPredownloadInFlight() && !isAnyClassifyInFlight()) {
+  } else if (isBlockingModelPredownloadInFlight() && !isAnyClassifyInFlight()) {
     setText(anonymizeBtns, 'Pobieranie modeli...');
   } else if (!isAnyClassifyInFlight()) {
     const hasReclassify = sources.some((s) =>
@@ -558,10 +619,58 @@ function refreshAnonymizeButton() {
     setText(anonymizeBtns, hasReclassify ? 'Anonimizuj ponownie' : 'Anonimizuj');
   }
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
-  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isAnyModelPredownloadInFlight()) setText(modelStatusEls, '');
+  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isBlockingModelPredownloadInFlight()) setText(modelStatusEls, '');
   refreshRunBar();
   refreshPredownloadButton();
 }
+
+function hasAnyNonEmptyDocument() {
+  return sources.some((s) => (s.text ?? '').trim().length > 0);
+}
+
+function currentNerPreloadSignature() {
+  const enabledEntities = selector.getSelected();
+  if (enabledEntities.length === 0) return null;
+  const aliases = requiredSources(enabledEntities)
+    .filter((alias) => SOURCES[alias]?.kind === 'hf')
+    .sort();
+  if (aliases.length === 0) return null;
+  return JSON.stringify({ aliases, backend: requestedBackend() });
+}
+
+function markCurrentNerPreloadSatisfied() {
+  const signature = currentNerPreloadSignature();
+  if (signature) autoNerPreloadSatisfiedSignature = signature;
+}
+
+function maybeAutoPreloadNer() {
+  if (!isNerPreloadEnabled()) return;
+  if (!configuredOnce) return;
+  if (!hasAnyNonEmptyDocument()) return;
+  if (document.visibilityState === 'hidden') return;
+  if (isAnyModelPredownloadInFlight() || isAnyClassifyInFlight() || isAnyFileImportInFlight()) return;
+
+  const signature = currentNerPreloadSignature();
+  if (!signature) return;
+  if (signature === autoNerPreloadSatisfiedSignature) return;
+  if (signature === autoNerPreloadInFlightSignature) return;
+
+  autoNerPreloadInFlightSignature = signature;
+  predownloadModels({ includeOcr: false, includeNer: true, auto: true })
+    .then((ok) => {
+      if (ok && currentNerPreloadSignature() === signature) {
+        autoNerPreloadSatisfiedSignature = signature;
+      }
+    })
+    .catch((err) => console.warn('[main] automatic NER preload failed:', err))
+    .finally(() => {
+      if (autoNerPreloadInFlightSignature === signature) autoNerPreloadInFlightSignature = null;
+    });
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') maybeAutoPreloadNer();
+});
 
 function clampPercent(value) {
   const n = Number(value);
@@ -571,13 +680,60 @@ function clampPercent(value) {
 
 // The bottom run-bar meter/status are intentionally independent from the
 // overlay progress UI and are used for explicit model pre-downloads.
+function ensureRunBarMeterSweep() {
+  if (!runBarMeterEl) return null;
+  let sweep = runBarMeterEl.querySelector('.meter-sweep');
+  if (!sweep) {
+    sweep = document.createElement('div');
+    sweep.className = 'meter-sweep';
+    sweep.setAttribute('aria-hidden', 'true');
+    runBarMeterEl.appendChild(sweep);
+  }
+  return sweep;
+}
+
 function setRunBarMeterProgress(percent = 0, { visible = true } = {}) {
   const clamped = clampPercent(percent);
+  const sweep = ensureRunBarMeterSweep();
   if (runBarMeterFillEl) runBarMeterFillEl.style.width = `${clamped}%`;
   if (runBarMeterEl) {
     runBarMeterEl.hidden = !visible;
+    runBarMeterEl.classList.remove('meter-segment-indeterminate');
     runBarMeterEl.setAttribute('aria-valuenow', String(Math.round(clamped)));
+    runBarMeterEl.setAttribute('aria-valuetext', `${Math.round(clamped)}%`);
   }
+  if (sweep) sweep.hidden = true;
+}
+
+function setRunBarMeterSegmentProgress({ completed = 0, total = 0, status = 'loading', visible = true } = {}) {
+  const safeTotal = Math.max(0, Number(total) || 0);
+  const safeCompleted = safeTotal > 0
+    ? Math.min(safeTotal, Math.max(0, Number(completed) || 0))
+    : 0;
+  const percent = safeTotal > 0 ? (safeCompleted / safeTotal) * 100 : 100;
+  const loading = status === 'loading' && safeCompleted < safeTotal;
+  const sweep = ensureRunBarMeterSweep();
+
+  if (runBarMeterFillEl) runBarMeterFillEl.style.width = `${clampPercent(percent)}%`;
+  if (runBarMeterEl) {
+    runBarMeterEl.hidden = !visible;
+    runBarMeterEl.classList.toggle('meter-segment-indeterminate', loading);
+    runBarMeterEl.setAttribute('aria-valuenow', String(Math.round(clampPercent(percent))));
+    runBarMeterEl.setAttribute('aria-valuetext', safeTotal > 0 ? `${safeCompleted}/${safeTotal}` : '');
+  }
+
+  if (!sweep) return;
+  sweep.hidden = !loading;
+  if (!loading || safeTotal <= 0) return;
+
+  const segmentStart = (safeCompleted / safeTotal) * 100;
+  const segmentEnd = (Math.min(safeCompleted + 1, safeTotal) / safeTotal) * 100;
+  const segmentWidth = Math.max(0, segmentEnd - segmentStart);
+  const sweepWidth = segmentWidth * 0.45;
+  const sweepTo = Math.max(segmentStart, segmentEnd - sweepWidth);
+  sweep.style.setProperty('--sweep-from', `${segmentStart}%`);
+  sweep.style.setProperty('--sweep-to', `${sweepTo}%`);
+  sweep.style.setProperty('--sweep-width', `${sweepWidth}%`);
 }
 
 function setRunBarStatus(text = '', { title = text } = {}) {
@@ -590,13 +746,6 @@ function setRunBarStatus(text = '', { title = text } = {}) {
 
 setRunBarMeterProgress(0, { visible: false });
 setRunBarStatus('');
-
-const PREDOWNLOAD_PHASES = {
-  ocr: { offset: 0, weight: 20 },
-  'ocr-load': { offset: 20, weight: 10 },
-  ner: { offset: 30, weight: 50 },
-  'ner-load': { offset: 80, weight: 20 },
-};
 
 function clearPredownloadRunBarHideTimer() {
   if (predownloadRunBarHideTimer) {
@@ -624,11 +773,6 @@ function refreshPredownloadButton() {
     || isAnyFileImportInFlight();
   setDisabled(predownloadBtns, disabled);
   setText(predownloadBtns, isAnyModelPredownloadInFlight() ? 'Przygotowywanie modeli...' : 'Pobierz modele');
-}
-
-function predownloadOverallPercent(phase, progress) {
-  const def = PREDOWNLOAD_PHASES[phase] ?? PREDOWNLOAD_PHASES.ner;
-  return clampPercent(def.offset + (clampPercent(progress) * def.weight) / 100);
 }
 
 function stablePercent(value) {
@@ -667,18 +811,31 @@ function deviceLabel(device) {
   return device || '';
 }
 
-function nerLoadProgressText(event, overallPct) {
-  const total = Number(event.total ?? 0);
-  const completed = Number(event.completed ?? 0);
+function nerLoadProgressText(event) {
+  const total = Math.max(0, Number(event.total ?? 0));
+  const completed = total > 0 ? Math.min(total, Math.max(0, Number(event.completed ?? 0))) : 0;
   const source = event.source ?? event.alias ?? '';
   const device = deviceLabel(event.device);
-  const count = total > 0 ? `${completed}/${total} modeli` : '';
-  const detail = [source, device, count].filter(Boolean).join(' · ');
+  const count = total > 0 ? `${completed}/${total}` : '';
+  const countDetail = total > 0 ? `${completed}/${total} modeli` : '';
+  const detail = [source, device, countDetail].filter(Boolean).join(' · ');
 
-  if (event.status === 'plan') return { text: 'Modele NER — ładowanie', title: 'Ładowanie sesji modeli NER do wybranego runtime' };
-  if (event.status === 'complete') return { text: 'Modele NER — załadowane', title: detail || 'Modele NER są załadowane' };
-  if (event.status === 'ready') return compactPredownloadStatus('Ładowanie NER', overallPct, detail);
-  return compactPredownloadStatus('Ładowanie NER', overallPct, detail);
+  if (event.status === 'plan') {
+    return {
+      text: count ? `Ładowanie NER — ${count}` : 'Modele NER — ładowanie',
+      title: detail || 'Ładowanie sesji modeli NER do wybranego runtime',
+    };
+  }
+  if (event.status === 'complete') {
+    return {
+      text: count ? `Modele NER — ${count}` : 'Modele NER — załadowane',
+      title: detail || 'Modele NER są załadowane',
+    };
+  }
+  return {
+    text: count ? `Ładowanie NER — ${count}` : 'Ładowanie NER',
+    title: detail || 'Ładowanie sesji modeli NER do wybranego runtime',
+  };
 }
 
 function ocrPredownloadProgressText(event, overallPct) {
@@ -712,9 +869,17 @@ function ocrLoadProgressText(event, overallPct) {
 
 function updatePredownloadRunBar(phase, event = {}) {
   const pct = clampPercent(event.progress ?? 0);
-  const overallPct = predownloadOverallPercent(phase, pct);
-  const status = predownloadProgressText(phase, event, overallPct);
-  setRunBarMeterProgress(overallPct, { visible: true });
+  const status = predownloadProgressText(phase, event, pct);
+  if (phase === 'ner-load') {
+    setRunBarMeterSegmentProgress({
+      completed: event.completed ?? 0,
+      total: event.total ?? 0,
+      status: event.status ?? 'loading',
+      visible: true,
+    });
+  } else {
+    setRunBarMeterProgress(pct, { visible: true });
+  }
   setRunBarStatus(status.text, { title: status.title });
 }
 
@@ -757,39 +922,71 @@ async function predownloadOcrModels(requestId) {
   }
 }
 
-async function predownloadAllModels() {
-  if (!configuredOnce || selector.getSelected().length === 0 || isAnyModelPredownloadInFlight() || isAnyClassifyInFlight() || isAnyFileImportInFlight()) return;
+async function predownloadModels({ includeOcr = true, includeNer = true, auto = false } = {}) {
+  if (!configuredOnce || selector.getSelected().length === 0 || isAnyModelPredownloadInFlight() || isAnyClassifyInFlight() || isAnyFileImportInFlight()) {
+    return false;
+  }
+  if (!includeOcr && !includeNer) return true;
 
   const requestId = predownloadRequestId + 1;
   predownloadRequestId = requestId;
   predownloadInFlight = true;
+  predownloadBlocking = !auto;
   clearPredownloadRunBarHideTimer();
   setRunBarMeterProgress(0, { visible: true });
-  setRunBarStatus('Modele OCR — cache', { title: 'Sprawdzanie cache modeli OCR' });
+  setRunBarStatus(
+    includeOcr ? 'Modele OCR — cache' : 'Modele NER — cache',
+    { title: includeOcr ? 'Sprawdzanie cache modeli OCR' : 'Sprawdzanie cache modeli NER' },
+  );
   refreshAnonymizeButton();
 
+  const nerSignatureAtStart = includeNer ? currentNerPreloadSignature() : null;
   let errorMessage = '';
   try {
-    await predownloadOcrModels(requestId);
-    if (requestId !== predownloadRequestId) return;
-    setRunBarMeterProgress(PREDOWNLOAD_PHASES.ner.offset, { visible: true });
-    setRunBarStatus('Modele NER — cache', { title: 'Sprawdzanie cache modeli NER' });
-    await waitForNerPredownload(requestId);
+    if (includeOcr) {
+      await predownloadOcrModels(requestId);
+      if (requestId !== predownloadRequestId) return false;
+    }
+    if (includeNer) {
+      setRunBarMeterProgress(0, { visible: true });
+      setRunBarStatus('Modele NER — cache', { title: 'Sprawdzanie cache modeli NER' });
+      await waitForNerPredownload(requestId);
+      if (requestId !== predownloadRequestId) return false;
+      if (nerSignatureAtStart && currentNerPreloadSignature() === nerSignatureAtStart) {
+        autoNerPreloadSatisfiedSignature = nerSignatureAtStart;
+      }
+    }
     setRunBarMeterProgress(100, { visible: true });
-    setRunBarStatus('Modele są pobrane i załadowane.', { title: 'Modele OCR i NER są pobrane, zapisane w cache i załadowane' });
+    if (includeOcr && includeNer) {
+      setRunBarStatus('Modele są pobrane i załadowane.', { title: 'Modele OCR i NER są pobrane, zapisane w cache i załadowane' });
+    } else if (includeNer) {
+      setRunBarStatus('Modele NER są pobrane i załadowane.', { title: 'Modele NER są pobrane, zapisane w cache i załadowane' });
+    } else {
+      setRunBarStatus('Modele OCR są pobrane i załadowane.', { title: 'Modele OCR są pobrane, zapisane w cache i załadowane' });
+    }
+    return true;
   } catch (err) {
     errorMessage = err?.message ?? String(err);
     console.error('[main] model pre-download/load failed:', err);
     setRunBarStatus('Błąd pobierania modeli', { title: errorMessage });
+    return false;
   } finally {
     if (predownloadWorkerRequest?.requestId === requestId) predownloadWorkerRequest = null;
     if (requestId === predownloadRequestId) {
       predownloadInFlight = false;
+      predownloadBlocking = false;
       refreshAnonymizeButton();
       if (errorMessage) setText(modelStatusEls, `Błąd pobierania modeli: ${errorMessage}`);
-      else schedulePredownloadRunBarHide();
+      else {
+        schedulePredownloadRunBarHide();
+        maybeAutoPreloadNer();
+      }
     }
   }
+}
+
+async function predownloadAllModels() {
+  return predownloadModels({ includeOcr: true, includeNer: true, auto: false });
 }
 
 function refreshRunBar() {
@@ -905,6 +1102,7 @@ worker.onmessage = (e) => {
       if (!isCurrentConfigMessage(msg)) break;
       configuredOnce = true;
       refreshAnonymizeButton();
+      maybeAutoPreloadNer();
       break;
     case 'result': {
       console.log(`[bench-timing] result t=${performance.now().toFixed(2)}`);
@@ -938,6 +1136,7 @@ worker.onmessage = (e) => {
           texts: new Map(sources.map((x) => [x.id, x.text])),
           enabledEntities: [...selector.getSelected()].sort(),
         };
+        markCurrentNerPreloadSatisfied();
         setText(anonymizeBtns, 'Anonimizuj');
       } else {
         setText(modelStatusEls, `Analizowanie ${sources.length - inFlightSourceIds.size}/${sources.length}…`);

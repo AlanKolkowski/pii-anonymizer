@@ -81,10 +81,26 @@
                 <div class="sidebar-title">
                   <h4>Konfiguracja</h4>
                 </div>
-                <label class="config-option">
-                  <input id="allow-gpu-checkbox" data-testid="allow-gpu-checkbox" type="checkbox" autocomplete="off">
-                  <span>Pozwól na użycie GPU</span>
-                </label>
+                <div class="config-options">
+                  <label class="config-option">
+                    <input id="allow-gpu-checkbox" data-testid="allow-gpu-checkbox" type="checkbox" autocomplete="off">
+                    <span>Pozwól na użycie GPU</span>
+                  </label>
+                  <label class="config-option">
+                    <input id="preload-ocr-checkbox" data-testid="preload-ocr-checkbox" type="checkbox" autocomplete="off">
+                    <span class="config-option-text">
+                      <span>Załaduj OCR po otwarciu strony</span>
+                      <small>Lżejszy model do odczytu PDF-ów i obrazów.</small>
+                    </span>
+                  </label>
+                  <label class="config-option">
+                    <input id="preload-ner-checkbox" data-testid="preload-ner-checkbox" type="checkbox" autocomplete="off">
+                    <span class="config-option-text">
+                      <span>Załaduj NER po dodaniu tekstu</span>
+                      <small>Duże modele PII startują dopiero przy pierwszym niepustym dokumencie.</small>
+                    </span>
+                  </label>
+                </div>
               </div>
             </aside>
 
