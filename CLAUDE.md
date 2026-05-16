@@ -83,7 +83,7 @@ Test doc: `test-data/bench/single-page.txt` (~2700 chars with all entity types).
 - Pipeline steps are named functions (name appears in debug output)
 - Entity format: `{ entity_group, start, end, score, word }`
 - **Always tag eval runs** with `--label=<short-descriptive-slug>` (e.g. `npm run eval -- --label=trim-trailing-dot`) so `eval:list` stays navigable and `eval:compare` is meaningful.
-- ALWAYS run `eval` (tagged) and `eval:score` after finishing implementation
+- Run `eval` (tagged) and `eval:score` after modifying `src/pipeline`
 
 ## WebMCP Integration
 
