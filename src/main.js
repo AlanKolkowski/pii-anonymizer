@@ -53,7 +53,6 @@ function isAnyModelPredownloadInFlight() { return predownloadInFlight; }
 function isBlockingModelPredownloadInFlight() { return predownloadInFlight && predownloadBlocking; }
 
 const anonymizeBtns = document.querySelectorAll('[data-action="anonymize"]');
-const predownloadBtns = document.querySelectorAll('[data-action="predownload-models"]');
 const copyAllBtns = document.querySelectorAll('[data-action="copy-all"]');
 const modelStatusEls = document.querySelectorAll('[data-status="model"]');
 const runBarDocsEl = document.querySelector('[data-testid="run-bar-docs"]');
@@ -621,7 +620,6 @@ function refreshAnonymizeButton() {
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
   else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isBlockingModelPredownloadInFlight()) setText(modelStatusEls, '');
   refreshRunBar();
-  refreshPredownloadButton();
 }
 
 function hasAnyNonEmptyDocument() {
@@ -679,7 +677,7 @@ function clampPercent(value) {
 }
 
 // The bottom run-bar meter/status are intentionally independent from the
-// overlay progress UI and are used for explicit model pre-downloads.
+// overlay progress UI and are used for background model preloads.
 function ensureRunBarMeterSweep() {
   if (!runBarMeterEl) return null;
   let sweep = runBarMeterEl.querySelector('.meter-sweep');
@@ -762,17 +760,6 @@ function schedulePredownloadRunBarHide() {
     setRunBarMeterProgress(0, { visible: false });
     setRunBarStatus('');
   }, 4500);
-}
-
-function refreshPredownloadButton() {
-  const hasSelection = selector.getSelected().length > 0;
-  const disabled = !configuredOnce
-    || !hasSelection
-    || isAnyModelPredownloadInFlight()
-    || isAnyClassifyInFlight()
-    || isAnyFileImportInFlight();
-  setDisabled(predownloadBtns, disabled);
-  setText(predownloadBtns, isAnyModelPredownloadInFlight() ? 'Przygotowywanie modeli...' : 'Pobierz modele');
 }
 
 function stablePercent(value) {
@@ -985,10 +972,6 @@ async function predownloadModels({ includeOcr = true, includeNer = true, auto = 
   }
 }
 
-async function predownloadAllModels() {
-  return predownloadModels({ includeOcr: true, includeNer: true, auto: false });
-}
-
 function refreshRunBar() {
   if (runBarDocsEl) runBarDocsEl.textContent = String(sources.length);
   const totalEntities = sources.reduce(
@@ -1172,10 +1155,6 @@ worker.onmessage = (e) => {
     }
   }
 };
-
-predownloadBtns.forEach(btn => btn.addEventListener('click', () => {
-  predownloadAllModels();
-}));
 
 copyAllBtns.forEach(btn => btn.addEventListener('click', async () => {
   const ready = sources.filter((s) => s.status === 'ready');
