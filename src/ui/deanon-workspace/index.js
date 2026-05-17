@@ -4,6 +4,7 @@ import { applyPaletteVars } from '../entity-colors.js';
 const CLOSE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
 const COPY_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>';
 const PASTE_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h4l1 2H5l1-2Z"/><path d="M5 3.5H4a1.5 1.5 0 0 0-1.5 1.5v7.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V5A1.5 1.5 0 0 0 12 3.5h-1"/><path d="M5.5 7h5M5.5 10h4"/></svg>';
+const DOWNLOAD_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8"/><path d="M4.5 6.5 8 10l3.5-3.5"/><path d="M3 13.5h10"/></svg>';
 
 const TOKEN_RE = /\[([A-Z_]+_\d+)\]/g;
 
@@ -43,6 +44,78 @@ function tokenParts(text, legend) {
 
 function countRestored(text, legend) {
   return tokenParts(text, legend).filter((part) => part.token && part.orig).length;
+}
+
+function countTokenStats(outcomes, legend) {
+  const stats = { restored: 0, unresolved: 0 };
+  for (const outcome of outcomes) {
+    for (const part of tokenParts(outcome.text ?? '', legend)) {
+      if (!part.token) continue;
+      if (part.orig) stats.restored += 1;
+      else stats.unresolved += 1;
+    }
+  }
+  return stats;
+}
+
+function pluralPl(n, one, few, many) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+function docsLabel(n) {
+  return `${n} ${pluralPl(n, 'dokument wynikowy', 'dokumenty wynikowe', 'dokumentów wynikowych')}`;
+}
+
+function tokensLabel(n) {
+  return `${n} ${pluralPl(n, 'token odtworzony', 'tokeny odtworzone', 'tokenów odtworzonych')}`;
+}
+
+function unresolvedLabel(n) {
+  const word = pluralPl(n, 'token', 'tokeny', 'tokenów');
+  const verb = pluralPl(n, 'pozostanie', 'pozostaną', 'pozostanie');
+  const adjective = pluralPl(n, 'niezmieniony', 'niezmienione', 'niezmienionych');
+  return `${n} ${word} ${verb} ${adjective}`;
+}
+
+function formatRunBarStats(outcomes, legend, exportState) {
+  if (exportState.message) return exportState.message;
+  if (outcomes.length === 0) return '0 dokumentów wynikowych';
+  if (Object.keys(legend).length === 0) {
+    return `${docsLabel(outcomes.length)} · brak legendy tokenów`;
+  }
+  const stats = countTokenStats(outcomes, legend);
+  const parts = [docsLabel(outcomes.length), tokensLabel(stats.restored)];
+  if (stats.unresolved > 0) parts.push(unresolvedLabel(stats.unresolved));
+  return parts.join(' · ');
+}
+
+function exportFormatName(format) {
+  return format === 'pdf' ? 'PDF' : 'DOCX';
+}
+
+function exportBusyLabel(format, count) {
+  const ext = exportFormatName(format);
+  return count === 1 ? `Tworzę ${ext}…` : `Tworzę ${ext}-y…`;
+}
+
+function exportDefaultLabel(format, count) {
+  const ext = exportFormatName(format);
+  return count === 1 ? `Eksportuj ${ext}` : `Eksportuj ${ext}-y`;
+}
+
+function exportStartMessage(format, count) {
+  const ext = exportFormatName(format);
+  return count === 1 ? `Generuję plik ${ext}…` : `Generuję ${ext}-y i pakuję do ZIP…`;
+}
+
+function exportSuccessLabel(format, count, archive) {
+  const ext = exportFormatName(format);
+  if (!archive || count === 1) return `Pobrano plik ${ext}`;
+  return `Pobrano ${count} ${pluralPl(count, `plik ${ext}`, `pliki ${ext}`, `plików ${ext}`)} w paczce ZIP`;
 }
 
 function renderTokenPill(part, labels, mode) {
@@ -99,6 +172,35 @@ export function createDeanonWorkspace(rootEl, opts) {
   const getOutcomes = opts.getOutcomes ?? (() => []);
   const getLegend = opts.getLegend ?? (() => ({}));
   const labels = opts.entityLabels ?? {};
+  const exportState = { busy: false, format: null, message: '' };
+
+  function setExportState(next) {
+    Object.assign(exportState, next);
+  }
+
+  async function runExport(format) {
+    const outcomes = getOutcomes();
+    const legend = getLegend();
+    if (exportState.busy || outcomes.length === 0 || Object.keys(legend).length === 0) return;
+    if (typeof opts.onExport !== 'function') return;
+
+    setExportState({ busy: true, format, message: exportStartMessage(format, outcomes.length) });
+    render();
+    try {
+      const result = await opts.onExport(format);
+      setExportState({
+        busy: false,
+        format: null,
+        message: exportSuccessLabel(format, result?.count ?? outcomes.length, result?.archive),
+      });
+    } catch (err) {
+      const fallback = format === 'pdf'
+        ? 'Nie udało się wygenerować PDF-ów'
+        : 'Nie udało się wygenerować DOCX-ów';
+      setExportState({ busy: false, format: null, message: err?.message || fallback });
+    }
+    render();
+  }
 
   function currentOutcome(outcomes) {
     if (activeId && outcomes.some((o) => o.id === activeId)) {
@@ -304,6 +406,55 @@ export function createDeanonWorkspace(rootEl, opts) {
     parent.appendChild(pane);
   }
 
+  function renderRunBar(parent, outcomes, legend) {
+    const bar = document.createElement('div');
+    bar.className = 'run-bar deanon-run-bar';
+    bar.dataset.testid = 'deanon-run-bar';
+
+    const left = document.createElement('div');
+    left.className = 'left';
+    const stats = document.createElement('span');
+    stats.className = 'run-bar-stats';
+    stats.dataset.testid = 'deanon-run-bar-stats';
+    stats.textContent = formatRunBarStats(outcomes, legend, exportState);
+    stats.title = outcomes.length === 1
+      ? 'Eksport tworzy lokalnie pojedynczy plik dla aktywnego dokumentu wynikowego.'
+      : 'Eksport tworzy lokalnie paczkę ZIP z osobnym plikiem dla każdego dokumentu wynikowego.';
+    left.appendChild(stats);
+    bar.appendChild(left);
+
+    const right = document.createElement('div');
+    right.className = 'right';
+    const canExport = outcomes.length > 0 && Object.keys(legend).length > 0 && typeof opts.onExport === 'function';
+    const disabledReason = outcomes.length === 0
+      ? 'Dodaj przynajmniej jeden dokument wynikowy'
+      : Object.keys(legend).length === 0
+        ? 'Eksport wymaga legendy tokenów z anonimizacji'
+        : 'Eksport chwilowo niedostępny';
+
+    for (const format of ['pdf', 'docx']) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm';
+      btn.dataset.testid = `deanon-export-${format}`;
+      btn.disabled = exportState.busy || !canExport;
+      btn.title = canExport
+        ? outcomes.length === 1
+          ? `Pobierz plik ${format.toUpperCase()} dla dokumentu wynikowego`
+          : `Pobierz ZIP z osobnymi plikami ${format.toUpperCase()} dla wszystkich wyników`
+        : disabledReason;
+      const label = exportState.busy && exportState.format === format
+        ? exportBusyLabel(format, outcomes.length)
+        : exportDefaultLabel(format, outcomes.length);
+      btn.innerHTML = `${DOWNLOAD_ICON_SVG} ${label}`;
+      btn.addEventListener('click', () => { void runExport(format); });
+      right.appendChild(btn);
+    }
+
+    bar.appendChild(right);
+    parent.appendChild(bar);
+  }
+
   function render() {
     const outcomes = getOutcomes();
     const legend = getLegend();
@@ -316,6 +467,7 @@ export function createDeanonWorkspace(rootEl, opts) {
     renderInputPane(body, outcomes, active, legend);
     renderOutputPane(body, active, legend);
     rootEl.appendChild(body);
+    renderRunBar(rootEl, outcomes, legend);
   }
 
   return {

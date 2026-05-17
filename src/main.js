@@ -434,6 +434,9 @@ const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
   onRemove(id) {
     removeOutcome(id);
   },
+  onExport(format) {
+    return exportDeanonDocuments(format);
+  },
 });
 
 const outcomeCoordinator = createOutcomesCoordinator({
@@ -466,6 +469,17 @@ function updateOutcomeFields(id, label, text) {
 
 function removeOutcome(id) {
   return outcomeCoordinator.removeOutcome(id);
+}
+
+async function exportDeanonDocuments(format) {
+  const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
+  const result = await exportDeanonOutcomes({
+    outcomes: outcomes.map((o) => ({ id: o.id, label: o.label, text: o.text })),
+    legend: { ...legend },
+    format,
+  });
+  downloadBlob(result.blob, result.fileName);
+  return result;
 }
 
 function nextPasteLabel() {

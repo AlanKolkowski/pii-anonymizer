@@ -502,6 +502,13 @@ body.has-tool .site-header .wrap {
   flex-shrink: 0;
 }
 .run-bar-stats { flex: 0 0 auto; }
+.deanon-run-bar .run-bar-stats {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .run-bar-status {
   margin: 0;
   min-width: 0;

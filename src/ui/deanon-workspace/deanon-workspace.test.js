@@ -8,6 +8,7 @@ function mount({ outcomes = [], legend = {} } = {}) {
   const onAdd = vi.fn();
   const onUpdate = vi.fn();
   const onRemove = vi.fn();
+  const onExport = vi.fn().mockResolvedValue({ count: outcomes.length, archive: outcomes.length > 1 });
   const workspace = createDeanonWorkspace(root, {
     getOutcomes: () => outcomes,
     getLegend: () => legend,
@@ -18,9 +19,15 @@ function mount({ outcomes = [], legend = {} } = {}) {
     onAdd,
     onUpdate,
     onRemove,
+    onExport,
   });
   workspace.render();
-  return { root, workspace, onAdd, onUpdate, onRemove };
+  return { root, workspace, onAdd, onUpdate, onRemove, onExport };
+}
+
+async function flushPromises() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe('createDeanonWorkspace', () => {
@@ -116,5 +123,57 @@ describe('createDeanonWorkspace', () => {
     await Promise.resolve();
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Witaj Jan Kowalski.');
+  });
+
+  it('shows deanon export stats and calls export callback for all PDF files', async () => {
+    const { root, onExport } = mount({
+      outcomes: [
+        { id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' },
+        { id: 'o2', label: 'b.txt', text: 'B [FINANCIAL_AMOUNT_1]' },
+      ],
+      legend: {
+        '[PERSON_NAME_1]': 'Jan Kowalski',
+        '[FINANCIAL_AMOUNT_1]': '123 zł',
+      },
+    });
+
+    expect(root.querySelector('[data-testid="deanon-run-bar-stats"]').textContent).toContain(
+      '2 dokumenty wynikowe · 2 tokeny odtworzone',
+    );
+
+    root.querySelector('[data-testid="deanon-export-pdf"]').click();
+    await flushPromises();
+
+    expect(onExport).toHaveBeenCalledWith('pdf');
+  });
+
+  it('uses direct-file labels and success message for a single exported outcome', async () => {
+    const { root, onExport } = mount({
+      outcomes: [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+    });
+    onExport.mockResolvedValueOnce({ count: 1, archive: false });
+
+    const pdfBtn = root.querySelector('[data-testid="deanon-export-pdf"]');
+    expect(pdfBtn.textContent).toContain('Eksportuj PDF');
+    expect(pdfBtn.textContent).not.toContain('PDF-y');
+
+    pdfBtn.click();
+    await flushPromises();
+
+    expect(root.querySelector('[data-testid="deanon-run-bar-stats"]').textContent).toBe('Pobrano plik PDF');
+  });
+
+  it('disables deanon export buttons without a legend', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'odpowiedz.txt', text: 'Witaj [PERSON_NAME_1].' }],
+      legend: {},
+    });
+
+    expect(root.querySelector('[data-testid="deanon-export-pdf"]').disabled).toBe(true);
+    expect(root.querySelector('[data-testid="deanon-export-docx"]').disabled).toBe(true);
+    expect(root.querySelector('[data-testid="deanon-run-bar-stats"]').textContent).toContain(
+      'brak legendy tokenów',
+    );
   });
 });
