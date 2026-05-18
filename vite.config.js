@@ -81,6 +81,8 @@ export default defineConfig({
   base: './',
   server: {
     host: true,
+    port: process.env.PORT ? Number(process.env.PORT) : undefined,
+    strictPort: !!process.env.PORT,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'credentialless',
