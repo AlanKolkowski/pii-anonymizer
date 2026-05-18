@@ -127,6 +127,72 @@ button { font-family: inherit; cursor: pointer; }
 }
 .site-nav a:not(.btn):hover { color: var(--ink); }
 
+.site-nav-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.bmc-nav-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 32px;
+}
+.site-nav .bmc-nav-slot .bmc-fallback {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: var(--r-2);
+  background: #228466;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.site-nav .bmc-nav-slot .bmc-fallback:hover {
+  background: #1d765b;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-3);
+}
+.site-nav .bmc-btn-container {
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+.site-nav .bmc-btn-container .bmc-btn {
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 0 11px !important;
+  border-radius: var(--r-2) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  box-shadow: var(--shadow-1) !important;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;
+}
+.site-nav .bmc-btn-container .bmc-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-3) !important;
+}
+.site-nav .bmc-btn-container .bmc-btn-text {
+  width: auto !important;
+  margin-left: 6px !important;
+  line-height: 1 !important;
+  letter-spacing: -0.01em;
+}
+.site-nav .bmc-btn-container .bmc-btn svg {
+  width: auto !important;
+  height: 18px !important;
+  transform: none !important;
+}
+
 .site-nav .pill.pill-pl {
   display: inline-flex;
   align-items: center;
@@ -553,6 +619,19 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Responsive */
 @media (max-width: 960px) {
+  .site-nav { gap: 16px; }
+  .site-nav-actions { gap: 8px; }
+  .site-nav .bmc-nav-slot .bmc-fallback,
+  .site-nav .bmc-btn-container .bmc-btn {
+    width: 32px !important;
+    min-width: 32px !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+  .site-nav .bmc-nav-slot .bmc-fallback span:last-child,
+  .site-nav .bmc-btn-container .bmc-btn-text {
+    display: none !important;
+  }
   .feat-grid { grid-template-columns: 1fr; }
   .feat-grid-five {
     gap: 1px;
