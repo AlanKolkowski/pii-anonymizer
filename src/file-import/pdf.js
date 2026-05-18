@@ -12,6 +12,15 @@ async function defaultLoadPdfWorkerUrl() {
   return (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
 }
 
+// PDF.js v5 needs a directory URL (trailing slash) to fetch wasm/JS fallbacks
+// for JBig2/OpenJPEG/QCMS. The directory is served by the pdfjs-wasm-assets
+// Vite plugin (see vite.config.js). Resolve against `document.baseURI` so the
+// URL is correct under both `/` and `/pii-anonymizer/` deployments.
+function defaultGetPdfWasmUrl() {
+  if (typeof document === 'undefined') return null;
+  return new URL('./vendor/pdfjs/wasm/', document.baseURI).href;
+}
+
 async function defaultLoadOcr() {
   const { getWorkerBackedOcr } = await import('../ocr/index.js');
   return getWorkerBackedOcr();
@@ -41,6 +50,7 @@ function joinPageItems(items) {
 export async function extractPdf(file, deps = {}) {
   const loadPdfjs = deps.loadPdfjs ?? defaultLoadPdfjs;
   const loadPdfWorkerUrl = deps.loadPdfWorkerUrl ?? defaultLoadPdfWorkerUrl;
+  const getPdfWasmUrl = deps.getPdfWasmUrl ?? defaultGetPdfWasmUrl;
   const loadOcr = deps.loadOcr ?? defaultLoadOcr;
   const makeCanvas = deps.makeCanvas ?? defaultMakeCanvas;
   const onProgress = deps.onProgress ?? (() => {});
@@ -62,7 +72,7 @@ export async function extractPdf(file, deps = {}) {
   let pdf;
   let pageCount = 0;
   try {
-    pdf = await pdfjs.getDocument({ data: buf }).promise;
+    pdf = await pdfjs.getDocument({ data: buf, wasmUrl: getPdfWasmUrl() }).promise;
     pageCount = pdf.numPages;
   } catch (err) {
     throw new ExtractionFailedError('pdf', err);
