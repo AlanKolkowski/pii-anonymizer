@@ -22,7 +22,7 @@ const IDENTIFIER_RULE = {
 
 export const ENTITY_RULES = {
   PERSON_NAME:              { maxLength: 50, threshold: 0.5, fuzzyBackfill: true },
-  PERSON_IDENTIFIER:        IDENTIFIER_RULE,
+  PERSON_IDENTIFIER:        { ...IDENTIFIER_RULE, threshold: 0.9 },
   PERSON_ROLE_OR_TITLE:     {
     maxLength: 70,
     threshold: 0.9,
@@ -45,10 +45,10 @@ export const ENTITY_RULES = {
   PAYMENT_CARD:             IDENTIFIER_RULE,
   PAYMENT_CARD_SECURITY:    IDENTIFIER_RULE,
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
-  VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40 },
+  VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40, threshold: 0.7 },
   LOCATION:                 { maxLength: 100, threshold: 0.9, mergeWithAdjacent: [] },
   POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'] },
-  PERSON_ATTRIBUTE:         { maxLength: 80 },
+  PERSON_ATTRIBUTE:         { maxLength: 80, threshold: 0.6 },
 };
 
 export function rulesFor(type) {
