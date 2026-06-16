@@ -1,4 +1,5 @@
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
+import { buildSourceListing, buildOutcomeListing, createLabelSequence } from './mcp/listings.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
@@ -36,6 +37,8 @@ const sources = [];
 const outcomes = [];
 let legend = {};
 let seen = {};
+const nextSourceMcpLabel = createLabelSequence('Źródło');
+const nextOutcomeMcpLabel = createLabelSequence('Wynik');
 let lastRun = null;
 const inFlightSourceIds = new Set();
 const inFlightFileImportIds = new Set();
@@ -364,11 +367,12 @@ const sourcesList = createSourcesList(sourcesListRoot, {
   onAddPaste() {
     const id = crypto.randomUUID();
     const label = nextPasteLabel();
+    const mcpLabel = nextSourceMcpLabel();
     sources.push({
-      id, label, text: '', entities: [], meta: null, status: 'idle', error: null, lastReadyText: null,
+      id, label, mcpLabel, text: '', entities: [], meta: null, status: 'idle', error: null, lastReadyText: null,
     });
     sourcesList.addSource(id, label, {
-      text: '', entities: [], status: 'idle', type: 'paste',
+      text: '', entities: [], status: 'idle', type: 'paste', mcpLabel,
     });
     sourcesList.setActive(id);
     sourcesList.enterTextMode(id);
@@ -497,11 +501,12 @@ async function addSourceFromFile(file, batch = {}) {
   const isLastInBatch = batchIndex >= batchTotal;
   const id = crypto.randomUUID();
   const label = file.name || `Plik ${sources.length + 1}`;
+  const mcpLabel = nextSourceMcpLabel();
   sources.push({
-    id, label, text: '', entities: [], meta: null, status: 'pending', error: null, lastReadyText: null,
+    id, label, mcpLabel, text: '', entities: [], meta: null, status: 'pending', error: null, lastReadyText: null,
   });
   sourcesList.addSource(id, label, {
-    text: '', entities: [], status: 'pending', type: 'file',
+    text: '', entities: [], status: 'pending', type: 'file', mcpLabel,
   });
   sourcesList.setActive(id);
   inFlightFileImportIds.add(id);
@@ -1538,14 +1543,7 @@ mcp.registerTool(
   'list_sources',
   'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. Treść jest tokenizowana — PII nigdy nie opuszcza przeglądarki.',
   { type: 'object', properties: {} },
-  () => {
-    const ready = sources.filter((s) => s.status === 'ready');
-    const items = ready.map((s) => {
-      const anonymized = applyTokens(s.text, s.entities, seen);
-      return { id: s.id, label: s.label, char_count: anonymized.length };
-    });
-    return jsonContent(items);
-  },
+  () => jsonContent(buildSourceListing(sources, seen)),
 );
 
 mcp.registerTool(
