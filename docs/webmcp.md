@@ -1,6 +1,6 @@
 # WebMCP — konfiguracja i użycie
 
-pii.tools udostępnia dokumenty agentowi przez WebMCP bez wysyłania jawnych danych osobowych do LLM. Przez MCP przechodzą wyłącznie teksty w formie tokenów, np. `[PERSON_NAME_1]`. Legenda oraz deanonimizacja zostają w przeglądarce użytkownika.
+pii.tools udostępnia dokumenty agentowi przez WebMCP bez wysyłania jawnych danych osobowych do LLM. Przez MCP przechodzą wyłącznie teksty w formie tokenów, np. `[PERSON_NAME_1]`, oraz nazwy dokumentów (`label`), które są syntetyczne (np. „Źródło 1") albo jawnie udostępnione przez użytkownika — nigdy surowe nazwy plików. Legenda oraz deanonimizacja zostają w przeglądarce użytkownika.
 
 ## Szybki start: Claude Desktop
 

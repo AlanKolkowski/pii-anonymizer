@@ -1541,7 +1541,7 @@ function textContent(value) {
 
 mcp.registerTool(
   'list_sources',
-  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. Treść jest tokenizowana — PII nigdy nie opuszcza przeglądarki.',
+  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. label to nazwa syntetyczna (np. „Źródło 1") albo nazwa jawnie udostępniona przez użytkownika — nigdy surowa nazwa pliku. Treść jest tokenizowana; PII nigdy nie opuszcza przeglądarki.',
   { type: 'object', properties: {} },
   () => jsonContent(buildSourceListing(sources, seen)),
 );
@@ -1563,7 +1563,7 @@ mcp.registerTool(
 
 mcp.registerTool(
   'list_outcomes',
-  'Wypisz dokumenty wynikowe utworzone przez LLM w formie tokenów. Zwraca id, label i char_count.',
+  'Wypisz dokumenty wynikowe w formie tokenów. Zwraca id, label i char_count. label to nazwa syntetyczna (np. „Wynik 1") albo nazwa nadana przez asystenta — nigdy prywatna nazwa użytkownika.',
   { type: 'object', properties: {} },
   () => jsonContent(buildOutcomeListing(outcomes)),
 );

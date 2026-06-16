@@ -87,7 +87,7 @@ Test doc: `test-data/bench/single-page.txt` (~2700 chars with all entity types).
 
 ## WebMCP Integration
 
-The app integrates with [WebMCP](https://webmcp.dev/) to expose a source/outcome workflow for LLM clients. All WebMCP traffic is tokenized text; PII never crosses the MCP boundary and deanonymization happens only in the browser UI. Full user/agent setup docs live in `docs/webmcp.md`.
+The app integrates with [WebMCP](https://webmcp.dev/) to expose a source/outcome workflow for LLM clients. Document bodies cross the boundary only as tokenized text; document labels cross only as synthetic names (`Źródło N` / `Wynik N`) or names the user explicitly chose to share — never raw filenames. Deanonymization happens only in the browser UI. Full user/agent setup docs live in `docs/webmcp.md`.
 
 ### Setup (one-time)
 
