@@ -4,6 +4,11 @@ import { applyTokens } from '../anonymizer.js';
 // user-shared name) crosses the boundary — never the private `label`, which may
 // be a raw upload filename. `char_count` is derived from the tokenized text so
 // it never reflects raw PII length.
+//
+// Precondition: `seen` must contain a token for every entity in the ready
+// sources; otherwise `applyTokens` leaves that span untokenized and its raw PII
+// length leaks into `char_count`. The production caller satisfies this by
+// building `seen` from those same ready sources.
 export function buildSourceListing(sources, seen) {
   return sources
     .filter((s) => s.status === 'ready')
