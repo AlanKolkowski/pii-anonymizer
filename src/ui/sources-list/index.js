@@ -337,6 +337,23 @@ export function createSourcesList(rootEl, opts) {
     labelEl.textContent = card.label;
     left.appendChild(labelEl);
 
+    const mcpLabelEl = document.createElement('span');
+    mcpLabelEl.className = 'meta srclist-mcp-label';
+    mcpLabelEl.dataset.testid = 'editor-toolbar-mcp-label';
+    mcpLabelEl.title = 'Nazwa widoczna dla asystenta (wysyłana przez MCP). Kliknij, aby zmienić.';
+    mcpLabelEl.setAttribute('role', 'button');
+    mcpLabelEl.tabIndex = 0;
+    mcpLabelEl.textContent = `Asystent widzi: ${card.mcpLabel}`;
+    const openMcpRename = () => beginMcpRename(activeId);
+    mcpLabelEl.addEventListener('click', openMcpRename);
+    mcpLabelEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMcpRename();
+    });
+    left.appendChild(sep());
+    left.appendChild(mcpLabelEl);
+
     const text = card.editor.getText();
     const mode = card.editor.getMode();
     const dirty = card.editor.isTextDirty?.() ?? false;
@@ -435,6 +452,35 @@ export function createSourcesList(rootEl, opts) {
       opts.onRename(id, trimmed);
     });
     labelEl.replaceWith(input);
+    input.focus();
+    input.select();
+  }
+
+  function beginMcpRename(id) {
+    const card = cards.get(id);
+    if (!card || id !== activeId) return;
+    const el = toolbarHost.querySelector('[data-testid="editor-toolbar-mcp-label"]');
+    if (!el) return;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'srclist-label-input';
+    input.dataset.testid = `source-mcp-label-input-${id}`;
+    input.title = 'Ta nazwa jest wysyłana do asystenta przez MCP.';
+    input.value = card.mcpLabel;
+    let next = input.value;
+    input.addEventListener('change', () => { next = input.value; });
+    input.addEventListener('blur', () => {
+      const trimmed = next.trim();
+      input.replaceWith(el);
+      if (trimmed.length === 0 || trimmed === card.mcpLabel) {
+        el.textContent = `Asystent widzi: ${card.mcpLabel}`;
+        return;
+      }
+      card.mcpLabel = trimmed;
+      el.textContent = `Asystent widzi: ${trimmed}`;
+      opts.onMcpLabelChange?.(id, trimmed);
+    });
+    el.replaceWith(input);
     input.focus();
     input.select();
   }
@@ -547,7 +593,7 @@ export function createSourcesList(rootEl, opts) {
       tabsHost.appendChild(tabRefs.tab);
       ensureAddButton();
       const card = makeCard(id, init);
-      cards.set(id, { ...card, tabRefs, label, status, type });
+      cards.set(id, { ...card, tabRefs, label, mcpLabel: init.mcpLabel ?? label, status, type });
       order.push(id);
       if (activeId === null) {
         setActive(id);

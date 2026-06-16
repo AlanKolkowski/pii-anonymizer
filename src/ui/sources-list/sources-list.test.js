@@ -437,4 +437,49 @@ describe('createSourcesList', () => {
       expect(root.querySelector('[data-testid="editor-toolbar-label"]')).not.toBeNull();
     });
   });
+
+  describe('assistant-visible label', () => {
+    it('shows the mcpLabel in the toolbar and edits it through onMcpLabelChange', () => {
+      const opts = defaultOpts({ onMcpLabelChange: vi.fn() });
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'Jan_Kowalski_pozew.pdf', {
+        text: 'tekst', entities: [], status: 'idle', type: 'file', mcpLabel: 'Źródło 1',
+      });
+
+      const tag = toolbarHost.querySelector('[data-testid="editor-toolbar-mcp-label"]');
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toContain('Źródło 1');
+
+      tag.click();
+      const input = toolbarHost.querySelector('[data-testid="source-mcp-label-input-s1"]');
+      expect(input).not.toBeNull();
+      input.value = 'Sprawa rozwodowa';
+      input.dispatchEvent(new Event('change'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(opts.onMcpLabelChange).toHaveBeenCalledWith('s1', 'Sprawa rozwodowa');
+      expect(
+        toolbarHost.querySelector('[data-testid="editor-toolbar-mcp-label"]').textContent,
+      ).toContain('Sprawa rozwodowa');
+    });
+
+    it('an empty edit keeps the current mcpLabel and does not fire the callback', () => {
+      const opts = defaultOpts({ onMcpLabelChange: vi.fn() });
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'plik.pdf', {
+        text: 't', entities: [], status: 'idle', type: 'file', mcpLabel: 'Źródło 1',
+      });
+
+      toolbarHost.querySelector('[data-testid="editor-toolbar-mcp-label"]').click();
+      const input = toolbarHost.querySelector('[data-testid="source-mcp-label-input-s1"]');
+      input.value = '   ';
+      input.dispatchEvent(new Event('change'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(opts.onMcpLabelChange).not.toHaveBeenCalled();
+      expect(
+        toolbarHost.querySelector('[data-testid="editor-toolbar-mcp-label"]').textContent,
+      ).toContain('Źródło 1');
+    });
+  });
 });

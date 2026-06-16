@@ -405,6 +405,10 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     const s = sources.find((x) => x.id === id);
     if (s) s.label = label;
   },
+  onMcpLabelChange(id, mcpLabel) {
+    const s = sources.find((x) => x.id === id);
+    if (s) s.mcpLabel = mcpLabel;
+  },
   onAnnotationChange(id, entities) {
     const s = sources.find((x) => x.id === id);
     if (!s) return;
