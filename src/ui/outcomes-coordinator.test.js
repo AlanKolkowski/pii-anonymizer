@@ -56,6 +56,45 @@ describe('createOutcomesCoordinator', () => {
     );
   });
 
+  it('tracks mcpLabel: synthetic or LLM-authored, unaffected by display renames', () => {
+    document.body.innerHTML = '<div id="deanon"></div>';
+    const outcomes = [];
+    const deanon = createDeanonWorkspace(document.getElementById('deanon'), {
+      getOutcomes: () => outcomes,
+      getLegend: () => ({}),
+      onAdd: vi.fn(),
+      onUpdate: vi.fn(),
+      onRemove: vi.fn(),
+      entityLabels: {},
+    });
+    deanon.render();
+    let n = 0;
+    const coordinator = createOutcomesCoordinator({
+      outcomes,
+      deanonWorkspace: deanon,
+      getLegend: () => ({}),
+      makeId: () => `o-${(n += 1)}`,
+    });
+
+    // LLM-authored: caller passes mcpLabel = supplied label.
+    const llmId = coordinator.createOutcome('Pozew [PERSON_NAME_1]', 'Treść.', 'Pozew [PERSON_NAME_1]');
+    expect(outcomes.find((o) => o.id === llmId).mcpLabel).toBe('Pozew [PERSON_NAME_1]');
+
+    // UI-created: synthetic mcpLabel, private label kept separate.
+    const uiId = coordinator.createOutcome('Moja prywatna nazwa', 'Tekst.', 'Wynik 7');
+    expect(outcomes.find((o) => o.id === uiId).mcpLabel).toBe('Wynik 7');
+
+    // User display-rename (no mcpLabel option) must NOT change mcpLabel.
+    coordinator.updateOutcomeFields(uiId, 'Inna prywatna nazwa', 'Tekst.');
+    const afterRename = outcomes.find((o) => o.id === uiId);
+    expect(afterRename.label).toBe('Inna prywatna nazwa');
+    expect(afterRename.mcpLabel).toBe('Wynik 7');
+
+    // LLM write (with mcpLabel option) updates mcpLabel.
+    coordinator.updateOutcomeFields(uiId, 'Z LLM', 'Tekst 2.', { mcpLabel: 'Z LLM' });
+    expect(outcomes.find((o) => o.id === uiId).mcpLabel).toBe('Z LLM');
+  });
+
   it('can drive the deanon workspace without rendering the legacy outcomes list', () => {
     document.body.innerHTML = '<div id="deanon"></div>';
     const outcomes = [];

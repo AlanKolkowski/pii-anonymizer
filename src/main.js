@@ -430,7 +430,7 @@ const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
   getLegend: () => legend,
   entityLabels: ENTITY_LABELS,
   onAdd(label, text) {
-    createOutcome(label, text);
+    createOutcome(label, text, nextOutcomeMcpLabel());
   },
   onUpdate(id, label, text) {
     updateOutcomeFields(id, label, text);
@@ -460,15 +460,15 @@ const modeController = createToolModeController(toolRoot, {
 // Single code path for outcome creation — used by both the deanonymize-tab UI
 // affordance and the write_outcome MCP handler. Caller is responsible for
 // validating `label` and `text` are non-empty strings.
-function createOutcome(label, text) {
-  return outcomeCoordinator.createOutcome(label, text);
+function createOutcome(label, text, mcpLabel) {
+  return outcomeCoordinator.createOutcome(label, text, mcpLabel);
 }
 
 // Single code path for outcome updates — used by both the inline edit
 // affordance and the write_outcome MCP handler's update branch. Returns
 // true on success, false if the id is unknown.
-function updateOutcomeFields(id, label, text) {
-  return outcomeCoordinator.updateOutcomeFields(id, label, text);
+function updateOutcomeFields(id, label, text, opts) {
+  return outcomeCoordinator.updateOutcomeFields(id, label, text, opts);
 }
 
 function removeOutcome(id) {
@@ -1565,7 +1565,7 @@ mcp.registerTool(
   'list_outcomes',
   'Wypisz dokumenty wynikowe utworzone przez LLM w formie tokenów. Zwraca id, label i char_count.',
   { type: 'object', properties: {} },
-  () => jsonContent(outcomes.map((o) => ({ id: o.id, label: o.label, char_count: o.text.length }))),
+  () => jsonContent(buildOutcomeListing(outcomes)),
 );
 
 mcp.registerTool(
@@ -1603,12 +1603,12 @@ mcp.registerTool(
       return jsonContent({ error: 'text musi być ciągiem znaków' });
     }
     if (id) {
-      if (!updateOutcomeFields(id, label, text)) {
+      if (!updateOutcomeFields(id, label, text, { mcpLabel: label })) {
         return jsonContent({ error: `Dokument wynikowy ${id} nie istnieje` });
       }
       return jsonContent({ id, success: true });
     }
-    const newId = createOutcome(label, text);
+    const newId = createOutcome(label, text, label);
     return jsonContent({ id: newId, success: true });
   },
 );

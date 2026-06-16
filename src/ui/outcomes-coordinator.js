@@ -16,19 +16,20 @@ export function createOutcomesCoordinator({
     return typeof getLegend === 'function' ? getLegend() : {};
   }
 
-  function createOutcome(label, text) {
+  function createOutcome(label, text, mcpLabel = label) {
     const id = makeId();
-    outcomes.push({ id, label, text });
+    outcomes.push({ id, label, mcpLabel, text });
     outcomesList.addOutcome(id, label, text, currentLegend());
     deanonWorkspace.activateOutcome(id);
     return id;
   }
 
-  function updateOutcomeFields(id, label, text) {
+  function updateOutcomeFields(id, label, text, { mcpLabel } = {}) {
     const outcome = outcomes.find((x) => x.id === id);
     if (!outcome) return false;
     outcome.label = label;
     outcome.text = text;
+    if (mcpLabel !== undefined) outcome.mcpLabel = mcpLabel;
     outcomesList.updateOutcome(id, label, text, currentLegend());
     deanonWorkspace.activateOutcome(id);
     return true;
