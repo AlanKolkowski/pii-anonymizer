@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { readdir, readFile, readlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   classifyEntities,
   buildAnnotatedText,
@@ -250,7 +251,7 @@ function buildEntityFilterBar(unionTypes, preds, expected, docName) {
 
 // ── Dynamic report rendering ───────────────────────────────────────
 
-async function renderReport(runIds, baselineId) {
+export async function renderReport(runIds, baselineId) {
   const { runs } = await listRuns();
   const selectedRuns = runIds.map(id => runs.find(r => r.runId === id)).filter(Boolean);
 
@@ -423,7 +424,7 @@ async function renderReport(runIds, baselineId) {
 
     sections.push(`
       <details data-doc="${escapeHtml(docName)}">
-        <summary>${humanizeDocName(docName)}</summary>
+        <summary>${escapeHtml(humanizeDocName(docName))}</summary>
         <div>
           <div class="tabs-bar">${tabs.join('')}</div>
           <div class="tab-panes">${panes.join('')}</div>
@@ -808,6 +809,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Eval viewer: http://localhost:${PORT}`);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  server.listen(PORT, () => {
+    console.log(`Eval viewer: http://localhost:${PORT}`);
+  });
+}

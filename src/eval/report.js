@@ -194,7 +194,7 @@ export function classifyEntities(expected, predicted) {
 // ── HTML helpers ───────────────────────────────────────────────────
 
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -768,11 +768,13 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
       }
       return `<td>${content}</td>`;
     }).join('');
-    return `<tr><td><strong>${label}</strong></td>${cells}</tr>`;
+    return `<tr><td><strong>${escapeHtml(label)}</strong></td>${cells}</tr>`;
   }
 
   const headerCells = columns.map(c => {
-    const label = c.label ? `${c.runId}<br><small>${c.label}</small>` : c.runId;
+    const label = c.label
+      ? `${escapeHtml(c.runId)}<br><small>${escapeHtml(c.label)}</small>`
+      : escapeHtml(c.runId);
     const highlight = c.runId === currentRunId ? ' style="background:#e3f2fd"' : '';
     return `<th${highlight}>${label}</th>`;
   }).join('');
@@ -803,10 +805,10 @@ export function buildComparisonTable(columns, currentRunId, { docRows = null, ty
       isType ? e.key : null,
     )).join('');
     return `<details class="breakdown">
-      <summary>${title}</summary>
+      <summary>${escapeHtml(title)}</summary>
       <div class="breakdown-body">
         <table class="comparison-table">
-          <thead><tr><th>${rowHeader}</th>${headerCells}</tr></thead>
+          <thead><tr><th>${escapeHtml(rowHeader)}</th>${headerCells}</tr></thead>
           <tbody>${body}</tbody>
         </table>
       </div>
@@ -1154,8 +1156,8 @@ export async function generateReport(runId, scoresData) {
     });
 
     docSections.push(`
-      <details data-doc="${docName}">
-        <summary>${humanizeDocName(docName)} ${f1Badge(docScores.f1)}</summary>
+      <details data-doc="${escapeHtml(docName)}">
+        <summary>${escapeHtml(humanizeDocName(docName))} ${f1Badge(docScores.f1)}</summary>
         <div>
           <details class="section"><summary>Annotated Text</summary><div class="section-body">
             <div class="annotated-text">${annotatedHtml}</div>
@@ -1175,16 +1177,16 @@ export async function generateReport(runId, scoresData) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eval Report — ${runId}</title>
+  <title>Eval Report — ${escapeHtml(runId)}</title>
   <style>${buildCss()}</style>
 </head>
 <body>
   <div class="header">
     <h1>Eval Report</h1>
     <div class="meta">
-      Run: <strong>${runId}</strong>
+      Run: <strong>${escapeHtml(runId)}</strong>
       ${currentSummary.label ? ` — ${escapeHtml(currentSummary.label)}` : ''}
-      &nbsp;|&nbsp; ${currentSummary.timestamp || ''}
+      &nbsp;|&nbsp; ${escapeHtml(currentSummary.timestamp || '')}
       &nbsp;|&nbsp; ${docNames.length} documents
       ${(() => {
         const ee = scoresData.enabledEntities || currentSummary.enabledEntities;

@@ -1,3 +1,5 @@
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
   buildAnnotatedText, classifyEntities, humanizeDocName,
@@ -228,6 +230,33 @@ describe('humanizeDocName', () => {
 describe('generateReport', () => {
   it('exports a function', () => {
     expect(typeof generateReport).toBe('function');
+  });
+
+  it('escapes fixture-derived document names in generated report HTML', async () => {
+    const runId = `vitest-report-xss-${process.pid}`;
+    const runDir = join(import.meta.dirname, '../../test-data/results', runId);
+    const attackDoc = 'pismo_01_"><img src=x onerror=alert(1)>';
+    const scoresData = {
+      overall: { f1: 1, precision: 1, recall: 1, byType: {} },
+      documents: {
+        [attackDoc]: { f1: 1, precision: 1, recall: 1, byType: {} },
+      },
+    };
+
+    await rm(runDir, { recursive: true, force: true });
+    await mkdir(runDir, { recursive: true });
+    await writeFile(join(runDir, 'summary.json'), JSON.stringify({ label: 'xss-repro' }), 'utf-8');
+
+    try {
+      const reportPath = await generateReport(runId, scoresData);
+      const html = await readFile(reportPath, 'utf-8');
+
+      expect(html).not.toContain('<img src=x onerror=alert(1)>');
+      expect(html).not.toContain(`data-doc="${attackDoc}"`);
+      expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    } finally {
+      await rm(runDir, { recursive: true, force: true });
+    }
   });
 });
 
