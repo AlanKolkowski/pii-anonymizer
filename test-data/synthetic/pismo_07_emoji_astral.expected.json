@@ -1,0 +1,5 @@
+[
+  { "entity_group": "PERSON_NAME", "start": 73, "end": 85, "text": "Jan Kowalski" },
+  { "entity_group": "PERSON_IDENTIFIER", "start": 104, "end": 115, "text": "85010112345" },
+  { "entity_group": "EMAIL_ADDRESS", "start": 125, "end": 151, "text": "jan.kowalski@kancelaria.pl" }
+]

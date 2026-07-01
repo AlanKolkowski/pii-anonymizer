@@ -67,6 +67,23 @@ describe('default pipeline (with mock NER)', () => {
     const after = segmentDebug[1].changes.segments.count.after;
     expect(after).toBeLessThan(before);
   });
+
+  it('does not leak a name preceded by astral characters in an earlier sentence (issue #16)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => (text.indexOf('Kowalski') >= 0
+        ? [{ word: 'Kowalski', entity: 'B-PERSON_NAME', score: 0.97, index: 0 }]
+        : []),
+      dispose: async () => {},
+    });
+
+    const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, { enabledEntities: ALL_ENTITIES });
+    const text = '😀😀😀😀😀😀😀😀😀😀😀😀😀😀 Pierwsze zdanie. Pan Kowalski zapłacił.';
+    const result = await runPipeline(text, pipeline);
+
+    expect(result.anonymized).not.toContain('Kowalski');
+    expect(result.anonymized).toContain('[PERSON_NAME_');
+    expect(Object.values(result.legend)).toContain('Kowalski');
+  });
 });
 
 describe('stage helpers', () => {
