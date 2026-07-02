@@ -507,6 +507,27 @@ describe('findRegexEntities', () => {
     expect(text.slice(iban.start, iban.end)).toBe('PL61109010140000071219812874');
   });
 
+  it('does not let a phone-number suffix displace a bare bank account', () => {
+    const text = 'Konto: 61109010140000071219812874 koniec';
+    const account = '61109010140000071219812874';
+    const start = text.indexOf(account);
+    const modelBankAccount = {
+      entity_group: 'BANK_ACCOUNT_IDENTIFIER',
+      start,
+      end: start + account.length,
+      score: 0.95,
+      source: 'model',
+    };
+
+    const entities = deduplicateEntities([
+      modelBankAccount,
+      ...findRegexEntities(text),
+    ]);
+    const { anonymized } = anonymizeText(text, entities);
+
+    expect(anonymized).toBe('Konto: [BANK_ACCOUNT_IDENTIFIER_1] koniec');
+  });
+
   it('detects phone number with country code', () => {
     const text = 'Tel: +48 600 123 45 67';
     const entities = findRegexEntities(text);

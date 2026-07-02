@@ -224,8 +224,8 @@ export function findRegexEntities(text) {
     { regex: /\b\d{11}\b/g, entity_group: 'PERSON_IDENTIFIER' },
     { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
     { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
-    { regex: /\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
-    { regex: /\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /(?<!\d)\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
+    { regex: /(?<!\d)\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
     { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
