@@ -25,6 +25,12 @@ function isReadableSource(source) {
   return source?.status === 'ready' && hasDetectedEntities(source);
 }
 
+const TOKEN_PATTERN = /\[[A-Z][A-Z0-9_]*_\d+\]/;
+
+function hasAnonymizationToken(text) {
+  return typeof text === 'string' && TOKEN_PATTERN.test(text);
+}
+
 export function buildSourceListing(sources, seen) {
   return sources
     .filter(isReadableSource)
@@ -51,14 +57,31 @@ export function buildReadSourceContent(sources, seen, id) {
   return textContent(applyTokens(source.text, source.entities, seen));
 }
 
-// Payload for the `list_outcomes` MCP tool. Emits the assistant-visible
-// `mcpLabel`; outcome `text` is already token-only.
+// Payload for the `list_outcomes` MCP tool. Emits only outcomes that still
+// contain anonymization tokens; tokenless freeform text may be raw user data
+// pasted into the outcome workspace, so it cannot cross the MCP boundary.
 export function buildOutcomeListing(outcomes) {
-  return outcomes.map((o) => ({
-    id: o.id,
-    label: o.mcpLabel,
-    char_count: o.text.length,
-  }));
+  return outcomes
+    .filter((o) => hasAnonymizationToken(o.text))
+    .map((o) => ({
+      id: o.id,
+      label: o.mcpLabel,
+      char_count: o.text.length,
+    }));
+}
+
+// Payload for the `read_outcome` MCP tool. Outcomes are assistant-authored or
+// user-pasted freeform text, so tokenless outcomes are treated as unreadable
+// rather than echoed back over MCP.
+export function buildReadOutcomeContent(outcomes, id) {
+  const outcome = outcomes.find((x) => x.id === id);
+  if (!outcome) return jsonContent({ error: `Dokument wynikowy ${id} nie istnieje` });
+  if (!hasAnonymizationToken(outcome.text)) {
+    return jsonContent({
+      error: `Dokument wynikowy ${id} nie zawiera tokenów anonimizacji; nie można bezpiecznie udostępnić treści przez MCP`,
+    });
+  }
+  return textContent(outcome.text);
 }
 
 // Stable, monotonically increasing synthetic labels ("Źródło 1", "Źródło 2", …).

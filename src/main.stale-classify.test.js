@@ -11,6 +11,10 @@ const PERSON_ENTITY_FOR_DISPATCH_TEXT = {
   source: 'ner',
 };
 
+const TOKENIZED_OUTCOME_TEXT = 'Cześć [PERSON_NAME_1].';
+const RAW_OUTCOME_TEXT = 'Jan Kowalski zaakceptował ugodę bez anonimizacji.';
+const SECOND_QUEUED_TEXT = 'Anna Nowak czeka na decyzję.';
+
 class FakeWorker {
   static instances = [];
 
@@ -100,8 +104,8 @@ async function bootApp() {
   installToolDom();
   const tools = installWebMcpFake();
   globalThis.Worker = FakeWorker;
-  globalThis.requestAnimationFrame = (callback) => setTimeout(callback, 0);
-  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('s2');
+  let nextUuid = 2;
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(() => `s${nextUuid++}`);
 
   await import('./main.js');
 
@@ -112,14 +116,31 @@ async function bootApp() {
 }
 
 function addPasteSourceWithText(text) {
-  document.querySelector('[data-testid="sources-add-paste"]').click();
-  const textarea = document.querySelector('.ann-editor-textarea');
+  let pasteButton = document.querySelector('[data-testid="sources-add-paste"]');
+  if (!pasteButton) {
+    document.querySelector('[data-testid="ws-tab-add"]')?.click();
+    pasteButton = document.querySelector('[data-testid="sources-add-paste"]');
+  }
+  expect(pasteButton).not.toBeNull();
+  pasteButton.click();
+  const activeCard = document.querySelector('[data-testid^="source-card-"][data-active="true"]');
+  const textarea = activeCard?.querySelector('.ann-editor-textarea')
+    ?? document.querySelector('.ann-editor-textarea');
+  expect(textarea).not.toBeNull();
   textarea.value = text;
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function clickAnonymize() {
   document.querySelector('[data-action="anonymize"]').click();
+}
+
+function classifyMessages(worker) {
+  return worker.messages.filter((message) => message.type === 'classify');
+}
+
+function outcomeListingIsUnreadable(entry) {
+  return entry == null || entry.readable === false || entry.status === 'unreadable';
 }
 
 describe('classify result text snapshots', () => {
@@ -166,5 +187,96 @@ describe('classify result text snapshots', () => {
       { id: 's2', label: 'Źródło 1', char_count: '[PERSON_NAME_1] podpisał umowę.'.length },
     ]);
     expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[PERSON_NAME_1] podpisał umowę.');
+  });
+});
+
+describe('MCP outcome boundary', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete globalThis.Worker;
+    delete globalThis.WebMCP;
+  });
+
+  it('read_outcome rejects raw freeform outcome text without echoing it while tokenized outcomes stay readable', async () => {
+    const { tools } = await bootApp();
+    const tokenized = mcpJson(tools, 'write_outcome', {
+      label: 'Tokenized draft',
+      text: TOKENIZED_OUTCOME_TEXT,
+    });
+    const raw = mcpJson(tools, 'write_outcome', {
+      label: 'Raw draft',
+      text: RAW_OUTCOME_TEXT,
+    });
+
+    expect(mcpText(tools, 'read_outcome', { id: tokenized.id })).toBe(TOKENIZED_OUTCOME_TEXT);
+
+    const responseText = mcpText(tools, 'read_outcome', { id: raw.id });
+    let responseBody;
+    try {
+      responseBody = JSON.parse(responseText);
+    } catch {
+      throw new Error('read_outcome for raw freeform text must return JSON error content, not raw outcome text');
+    }
+
+    expect(responseBody).toEqual({ error: expect.any(String) });
+    expect(responseText).not.toContain(RAW_OUTCOME_TEXT);
+    expect(responseText).not.toContain('Jan Kowalski');
+  });
+
+  it('list_outcomes keeps tokenized outcomes readable but omits or marks raw freeform outcomes unreadable', async () => {
+    const { tools } = await bootApp();
+    const tokenized = mcpJson(tools, 'write_outcome', {
+      label: 'Tokenized draft',
+      text: TOKENIZED_OUTCOME_TEXT,
+    });
+    const raw = mcpJson(tools, 'write_outcome', {
+      label: 'Raw draft',
+      text: RAW_OUTCOME_TEXT,
+    });
+
+    const listing = mcpJson(tools, 'list_outcomes');
+    expect(listing).toContainEqual({
+      id: tokenized.id,
+      label: 'Tokenized draft',
+      char_count: TOKENIZED_OUTCOME_TEXT.length,
+    });
+
+    const rawListing = listing.find((entry) => entry.id === raw.id);
+    expect(
+      outcomeListingIsUnreadable(rawListing),
+      `raw outcome listing must be omitted or marked unreadable; got ${JSON.stringify(rawListing)}`,
+    ).toBe(true);
+  });
+});
+
+describe('queued source removal', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete globalThis.Worker;
+    delete globalThis.WebMCP;
+  });
+
+  it('does not dispatch text for a queued source removed before its turn', async () => {
+    const { worker, tools } = await bootApp();
+    addPasteSourceWithText(TEXT_AT_DISPATCH);
+    addPasteSourceWithText(SECOND_QUEUED_TEXT);
+
+    clickAnonymize();
+    expect(classifyMessages(worker)).toEqual([
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+    ]);
+
+    document.querySelector('[data-testid="source-remove-s3"]').click();
+    expect(document.querySelector('[data-testid="source-card-s3"]')).toBeNull();
+
+    worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY_FOR_DISPATCH_TEXT] });
+
+    expect(classifyMessages(worker)).toEqual([
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+    ]);
+    expect(JSON.stringify(classifyMessages(worker))).not.toContain(SECOND_QUEUED_TEXT);
+    expect(mcpJson(tools, 'list_sources')).toEqual([
+      { id: 's2', label: 'Źródło 1', char_count: '[PERSON_NAME_1] podpisał umowę.'.length },
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
-import { buildSourceListing, buildReadSourceContent, buildOutcomeListing, createLabelSequence } from './mcp/listings.js';
+import { buildSourceListing, buildReadSourceContent, buildOutcomeListing, buildReadOutcomeContent, createLabelSequence } from './mcp/listings.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
@@ -398,6 +398,8 @@ const sourcesList = createSourcesList(sourcesListRoot, {
       if (!ok) return;
     }
     sources.splice(idx, 1);
+    const removedQueued = removePendingClassify(id);
+    if (removedQueued) inFlightSourceIds.delete(id);
     sourcesList.removeSource(id);
     refreshLegend();
     refreshAnonymizeButton();
@@ -1016,9 +1018,25 @@ function refreshRunBar() {
 // in a batch cheap, so the perceived overhead is small.
 const pendingClassifies = [];
 
+function removePendingClassify(id) {
+  const before = pendingClassifies.length;
+  for (let i = pendingClassifies.length - 1; i >= 0; i -= 1) {
+    if (pendingClassifies[i].id === id) pendingClassifies.splice(i, 1);
+  }
+  return pendingClassifies.length !== before;
+}
+
 function dispatchNextClassify() {
-  if (pendingClassifies.length === 0) return;
-  const next = pendingClassifies.shift();
+  let next = null;
+  while (pendingClassifies.length > 0) {
+    const candidate = pendingClassifies.shift();
+    if (sources.some((s) => s.id === candidate.id)) {
+      next = candidate;
+      break;
+    }
+    inFlightSourceIds.delete(candidate.id);
+  }
+  if (!next) return;
   inFlightClassifyTexts.set(next.id, next.text);
   clearProgressHideTimer();
   progressSourceIndex += 1;
@@ -1576,24 +1594,20 @@ mcp.registerTool(
 
 mcp.registerTool(
   'list_outcomes',
-  'Wypisz dokumenty wynikowe w formie tokenów. Zwraca id, label i char_count. label to nazwa syntetyczna (np. „Wynik 1") albo nazwa nadana przez asystenta — nigdy prywatna nazwa użytkownika.',
+  'Wypisz dokumenty wynikowe w formie tokenów. Zwraca id, label i char_count. label to nazwa syntetyczna (np. „Wynik 1") albo nazwa nadana przez asystenta — nigdy prywatna nazwa użytkownika. Wyniki bez tokenów anonimizacji nie są udostępniane przez MCP.',
   { type: 'object', properties: {} },
   () => jsonContent(buildOutcomeListing(outcomes)),
 );
 
 mcp.registerTool(
   'read_outcome',
-  'Odczytaj tokenizowaną treść dokumentu wynikowego po id (wcześniejsza odpowiedź LLM).',
+  'Odczytaj tokenizowaną treść dokumentu wynikowego po id (wcześniejsza odpowiedź LLM). Wyniki bez tokenów anonimizacji zwracają błąd zamiast tekstu.',
   {
     type: 'object',
     properties: { id: { type: 'string' } },
     required: ['id'],
   },
-  ({ id }) => {
-    const o = outcomes.find((x) => x.id === id);
-    if (!o) return jsonContent({ error: `Dokument wynikowy ${id} nie istnieje` });
-    return textContent(o.text);
-  },
+  ({ id }) => buildReadOutcomeContent(outcomes, id),
 );
 
 mcp.registerTool(

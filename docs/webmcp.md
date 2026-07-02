@@ -55,11 +55,11 @@ Przeglądarka pokaże użytkownikowi zdeanonimizowaną wersję outcome'u. Agent 
 | --- | --- | --- | --- |
 | `list_sources` | brak | JSON: `id`, `label`, `char_count` | Lista gotowych, zanonimizowanych dokumentów źródłowych; źródła bez wykrytych encji są pomijane. |
 | `read_source` | `{ id }` | tekst tokenizowany albo JSON `error` | Odczyt jednego dokumentu źródłowego; zwraca błąd, jeśli nie można potwierdzić tokenizacji. |
-| `list_outcomes` | brak | JSON: `id`, `label`, `char_count` | Lista wyników zapisanych przez agenta. |
-| `read_outcome` | `{ id }` | tekst tokenizowany | Odczyt wcześniejszego wyniku agenta. |
+| `list_outcomes` | brak | JSON: `id`, `label`, `char_count` | Lista wyników zapisanych przez agenta; wyniki bez tokenów anonimizacji są pomijane. |
+| `read_outcome` | `{ id }` | tekst tokenizowany albo JSON `error` | Odczyt wcześniejszego wyniku agenta; zwraca błąd dla tekstu bez tokenów. |
 | `write_outcome` | `{ id?, label, text }` | JSON: `id`, `success` albo `error` | Utworzenie albo aktualizacja wyniku w tokenach. |
 
-`write_outcome` akceptuje zwykły tekst, ale agent powinien zachowywać tokeny z dokumentów źródłowych. Wszystko, co nie jest znanym tokenem, zostanie wyświetlone bez zmian.
+`write_outcome` akceptuje zwykły tekst, ale agent powinien zachowywać tokeny z dokumentów źródłowych. Wynik bez tokenów anonimizacji zostanie pokazany użytkownikowi w przeglądarce, ale nie będzie później czytelny przez MCP.
 
 ## Instrukcja dla agenta
 
@@ -71,8 +71,8 @@ Jeśli tworzysz skill, custom instruction albo prompt systemowy dla klienta LLM,
 - Jeśli narzędzia są dostępne, ale nie ma połączenia z przeglądarką, poproś użytkownika o wygenerowanie tokenu WebMCP i wklejenie go w widget **Podłącz AI**.
 - Najpierw użyj `list_sources`; jeśli lista jest pusta, poproś użytkownika o dodanie dokumentów i kliknięcie **Anonimizuj**. Pusta lista może też oznaczać, że w gotowych źródłach nie wykryto żadnych encji, więc aplikacja nie udostępnia ich przez MCP.
 - Czytaj źródła przez `read_source` i pracuj wyłącznie na tekście tokenizowanym. Jeśli `read_source` zwróci błąd, poproś użytkownika o sprawdzenie dokumentu w przeglądarce zamiast żądać oryginalnej treści w czacie.
-- Wynik zapisuj przez `write_outcome` z opisowym `label`.
-- Jeżeli późniejsze kroki wymagają poprzednich wyników, użyj `list_outcomes` i `read_outcome`.
+- Wynik zapisuj przez `write_outcome` z opisowym `label`; zachowuj tokeny z dokumentów źródłowych, jeśli późniejsze kroki mają odczytać wynik przez MCP.
+- Jeżeli późniejsze kroki wymagają poprzednich wyników, użyj `list_outcomes` i `read_outcome`. Jeśli wynik nie pojawia się na liście albo `read_outcome` zwraca błąd, poproś użytkownika o sprawdzenie go w przeglądarce zamiast prosić o surową treść.
 - Nie wypisuj jawnych danych osobowych w czacie. Deanonimizacja ma nastąpić tylko w przeglądarce użytkownika.
 
 Przykładowa prośba użytkownika do agenta:

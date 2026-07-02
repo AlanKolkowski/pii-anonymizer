@@ -4,6 +4,7 @@ import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 import { ensureModelSourcesCached } from './pipeline/model-download.js';
+import { createBoundedNerCache } from './worker-cache.js';
 
 // ORT-Web's default caps threads aggressively (~min(hw/2, 4)). On 8c+ machines
 // that leaves ~30% perf on the table for BERT matmul. Cap at 8 because gains
@@ -30,7 +31,7 @@ let currentConfig = null;
 let backendOverride = null; // 'wasm' to force-disable WebNN; null = auto/GPU allowed
 let webnnAvailable = false;
 const loadedModels = new Map();
-const nerCache = new Map();
+const nerCache = createBoundedNerCache(20);
 
 function postTiming(mark, extra = {}) {
   self.postMessage({ type: 'timing', mark, ...extra, t: performance.now() });
