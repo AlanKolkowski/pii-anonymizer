@@ -46,10 +46,15 @@ function countRestored(text, legend) {
   return tokenParts(text, legend).filter((part) => part.token && part.orig).length;
 }
 
+function effectiveOutcomeLegend(outcome, liveLegend) {
+  return outcome?.legendSnapshot ?? liveLegend ?? {};
+}
+
 function countTokenStats(outcomes, legend) {
   const stats = { restored: 0, unresolved: 0 };
   for (const outcome of outcomes) {
-    for (const part of tokenParts(outcome.text ?? '', legend)) {
+    const outcomeLegend = effectiveOutcomeLegend(outcome, legend);
+    for (const part of tokenParts(outcome.text ?? '', outcomeLegend)) {
       if (!part.token) continue;
       if (part.orig) stats.restored += 1;
       else stats.unresolved += 1;
@@ -181,7 +186,7 @@ export function createDeanonWorkspace(rootEl, opts) {
   async function runExport(format) {
     const outcomes = getOutcomes();
     const legend = getLegend();
-    if (exportState.busy || outcomes.length === 0 || Object.keys(legend).length === 0) return;
+    if (exportState.busy || outcomes.length === 0) return;
     if (typeof opts.onExport !== 'function') return;
 
     setExportState({ busy: true, format, message: exportStartMessage(format, outcomes.length) });
@@ -266,7 +271,7 @@ export function createDeanonWorkspace(rootEl, opts) {
 
   async function copyActive(active, legend) {
     if (!active) return;
-    await navigator.clipboard?.writeText?.(deanonymizeText(active.text, legend));
+    await navigator.clipboard?.writeText?.(deanonymizeText(active.text, effectiveOutcomeLegend(active, legend)));
   }
 
   function renderInputPane(parent, outcomes, active, legend) {
@@ -359,11 +364,12 @@ export function createDeanonWorkspace(rootEl, opts) {
     meta.className = 'meta';
     meta.textContent = 'wyjście · zdeanonimizowane';
     left.appendChild(meta);
-    if (active && Object.keys(legend).length > 0) {
+    const activeLegend = effectiveOutcomeLegend(active, legend);
+    if (active && Object.keys(activeLegend).length > 0) {
       const restored = document.createElement('span');
       restored.className = 'meta deanon-restored-count';
       restored.dataset.testid = 'deanon-restored-count';
-      restored.textContent = `${countRestored(active.text, legend)} tokenów odtworzonych`;
+      restored.textContent = `${countRestored(active.text, activeLegend)} tokenów odtworzonych`;
       left.appendChild(makeSep());
       left.appendChild(restored);
     }
@@ -375,30 +381,30 @@ export function createDeanonWorkspace(rootEl, opts) {
     copyBtn.type = 'button';
     copyBtn.className = 'btn btn-sm btn-primary';
     copyBtn.dataset.testid = 'deanon-copy';
-    copyBtn.disabled = !active || Object.keys(legend).length === 0;
+    copyBtn.disabled = !active || Object.keys(activeLegend).length === 0;
     copyBtn.innerHTML = `${COPY_ICON_SVG} Kopiuj`;
     copyBtn.addEventListener('click', () => { void copyActive(active, legend); });
     right.appendChild(copyBtn);
     toolbar.appendChild(right);
     editorPane.appendChild(toolbar);
 
-    if (Object.keys(legend).length === 0) {
-      editorPane.appendChild(emptyState(
-        'deanon-empty-legend',
-        'Brak legendy tokenów',
-        'Deanonimizacja wymaga przynajmniej jednego zanonimizowanego dokumentu źródłowego.',
-      ));
-    } else if (!active) {
+    if (!active) {
       editorPane.appendChild(emptyState(
         'deanon-empty-output',
         'Brak wyniku do odtworzenia',
         'Dodaj wynik LLM po lewej stronie.',
       ));
+    } else if (Object.keys(activeLegend).length === 0) {
+      editorPane.appendChild(emptyState(
+        'deanon-empty-legend',
+        'Brak legendy tokenów',
+        'Deanonimizacja wymaga przynajmniej jednego zanonimizowanego dokumentu źródłowego.',
+      ));
     } else {
       const body = document.createElement('div');
       body.className = 'deanon-editor deanon-editor-output anno-style-highlight';
       body.dataset.testid = 'deanon-output-body';
-      renderParts(body, active.text, legend, labels, 'output');
+      renderParts(body, active.text, activeLegend, labels, 'output');
       editorPane.appendChild(body);
     }
 
@@ -425,10 +431,12 @@ export function createDeanonWorkspace(rootEl, opts) {
 
     const right = document.createElement('div');
     right.className = 'right';
-    const canExport = outcomes.length > 0 && Object.keys(legend).length > 0 && typeof opts.onExport === 'function';
+    const canExport = outcomes.length > 0
+      && outcomes.some((outcome) => Object.keys(effectiveOutcomeLegend(outcome, legend)).length > 0)
+      && typeof opts.onExport === 'function';
     const disabledReason = outcomes.length === 0
       ? 'Dodaj przynajmniej jeden dokument wynikowy'
-      : Object.keys(legend).length === 0
+      : !outcomes.some((outcome) => Object.keys(effectiveOutcomeLegend(outcome, legend)).length > 0)
         ? 'Eksport wymaga legendy tokenów z anonimizacji'
         : 'Eksport chwilowo niedostępny';
 

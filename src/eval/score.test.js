@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeSegmentMetrics, filterByTypes, resolveScoringFilter } from './score.js';
+import { computeOverallFromDocuments, computeSegmentMetrics, filterByTypes, resolveScoringFilter } from './score.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 
 describe('computeSegmentMetrics', () => {
@@ -71,6 +71,66 @@ describe('computeSegmentMetrics', () => {
     expect(m.precision).toBe(0);
     expect(m.recall).toBe(0);
     expect(m.f1).toBe(0);
+  });
+});
+
+describe('computeOverallFromDocuments', () => {
+  it('micro-averages entity scores by summing per-document counts, not rematching pooled offsets', () => {
+    const { overall } = computeOverallFromDocuments([
+      {
+        name: 'doc-with-false-negative-at-zero',
+        expected: [
+          { entity_group: 'PERSON_NAME', start: 0, end: 5, word: 'Anna' },
+        ],
+        predicted: [],
+      },
+      {
+        name: 'doc-with-false-positive-at-zero',
+        expected: [],
+        predicted: [
+          { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.99, word: 'Anna' },
+        ],
+      },
+    ]);
+
+    expect(overall.tp).toBe(0);
+    expect(overall.fp).toBe(1);
+    expect(overall.fn).toBe(1);
+    expect(overall.tpPartial).toBe(0);
+    expect(overall.precision).toBe(0);
+    expect(overall.recall).toBe(0);
+    expect(overall.f1).toBe(0);
+  });
+
+  it('micro-averages segment scores by summing per-document counts, not rematching pooled offset-zero segments', () => {
+    const { overallSegments } = computeOverallFromDocuments([
+      {
+        name: 'doc-with-missing-leading-segment',
+        expected: [],
+        predicted: [],
+        expectedSegments: [
+          { start: 0, end: 12, text: 'first doc' },
+        ],
+        predictedSegments: [],
+      },
+      {
+        name: 'doc-with-extra-leading-segment',
+        expected: [],
+        predicted: [],
+        expectedSegments: [],
+        predictedSegments: [
+          { start: 0, end: 12, text: 'second doc' },
+        ],
+      },
+    ]);
+
+    expect(overallSegments.tp).toBe(0);
+    expect(overallSegments.fp).toBe(1);
+    expect(overallSegments.fn).toBe(1);
+    expect(overallSegments.tpPartial).toBe(0);
+    expect(overallSegments.precision).toBe(0);
+    expect(overallSegments.recall).toBe(0);
+    expect(overallSegments.f1).toBe(0);
   });
 });
 

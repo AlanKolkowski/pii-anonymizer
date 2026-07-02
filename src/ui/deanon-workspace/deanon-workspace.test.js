@@ -147,6 +147,28 @@ describe('createDeanonWorkspace', () => {
     expect(onExport).toHaveBeenCalledWith('pdf');
   });
 
+  it('exports snapshot-backed outcomes even after the live legend is empty', async () => {
+    const { root, onExport } = mount({
+      outcomes: [
+        {
+          id: 'o1',
+          label: 'a.txt',
+          text: 'A [PERSON_NAME_1]',
+          legendSnapshot: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+        },
+      ],
+      legend: {},
+    });
+
+    const pdfBtn = root.querySelector('[data-testid="deanon-export-pdf"]');
+    expect(pdfBtn.disabled).toBe(false);
+
+    pdfBtn.click();
+    await flushPromises();
+
+    expect(onExport).toHaveBeenCalledWith('pdf');
+  });
+
   it('uses direct-file labels and success message for a single exported outcome', async () => {
     const { root, onExport } = mount({
       outcomes: [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }],

@@ -14,6 +14,15 @@ const PERSON_ENTITY_FOR_DISPATCH_TEXT = {
 const TOKENIZED_OUTCOME_TEXT = 'Cześć [PERSON_NAME_1].';
 const RAW_OUTCOME_TEXT = 'Jan Kowalski zaakceptował ugodę bez anonimizacji.';
 const SECOND_QUEUED_TEXT = 'Anna Nowak czeka na decyzję.';
+const DOC_B_TEXT = 'Anna Nowak czeka na decyzję.';
+const DOC_B_EDITED_TEXT = 'Anna Nowak czeka na pilną decyzję.';
+const PERSON_ENTITY_FOR_DOC_B = {
+  entity_group: 'PERSON_NAME',
+  start: 0,
+  end: 'Anna Nowak'.length,
+  score: 0.98,
+  source: 'ner',
+};
 
 class FakeWorker {
   static instances = [];
@@ -139,6 +148,12 @@ function classifyMessages(worker) {
   return worker.messages.filter((message) => message.type === 'classify');
 }
 
+function switchToSource(id) {
+  const tab = document.querySelector(`[data-testid="ws-tab-${id}"]`);
+  expect(tab).not.toBeNull();
+  tab.click();
+}
+
 function outcomeListingIsUnreadable(entry) {
   return entry == null || entry.readable === false || entry.status === 'unreadable';
 }
@@ -187,6 +202,62 @@ describe('classify result text snapshots', () => {
       { id: 's2', label: 'Źródło 1', char_count: '[PERSON_NAME_1] podpisał umowę.'.length },
     ]);
     expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[PERSON_NAME_1] podpisał umowę.');
+  });
+});
+
+describe('re-anonymize source selection', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete globalThis.Worker;
+    delete globalThis.WebMCP;
+  });
+
+  it('re-classifies only changed ready sources and preserves manual annotation edits on unchanged sources', async () => {
+    const { worker, tools } = await bootApp();
+    addPasteSourceWithText(TEXT_AT_DISPATCH);
+    addPasteSourceWithText(DOC_B_TEXT);
+
+    clickAnonymize();
+    expect(classifyMessages(worker)).toEqual([
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+    ]);
+
+    worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY_FOR_DISPATCH_TEXT] });
+    expect(classifyMessages(worker)).toEqual([
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+      { type: 'classify', id: 's3', text: DOC_B_TEXT },
+    ]);
+
+    worker.emit({ type: 'result', id: 's3', data: [PERSON_ENTITY_FOR_DOC_B] });
+    expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
+    expect(document.querySelector('[data-testid="source-status-s3"]').dataset.status).toBe('ready');
+
+    switchToSource('s2');
+    document.querySelector('[data-testid="source-card-s2"] .ann-ent').click();
+    const typeSelect = document.querySelector('.ann-popover select');
+    expect(typeSelect).not.toBeNull();
+    typeSelect.value = 'LOCATION';
+    typeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[LOCATION_1] podpisał umowę.');
+
+    switchToSource('s3');
+    document.querySelector('[data-testid="source-edit-s3"]').click();
+    const docBTextarea = document.querySelector('[data-testid="source-card-s3"] .ann-editor-textarea');
+    expect(docBTextarea).not.toBeNull();
+    docBTextarea.value = DOC_B_EDITED_TEXT;
+    docBTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const anonymizeButton = document.querySelector('[data-action="anonymize"]');
+    expect(anonymizeButton.textContent).toBe('Anonimizuj ponownie');
+    clickAnonymize();
+
+    expect(classifyMessages(worker)).toEqual([
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+      { type: 'classify', id: 's3', text: DOC_B_TEXT },
+      { type: 'classify', id: 's3', text: DOC_B_EDITED_TEXT },
+    ]);
+    expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
+    expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[LOCATION_1] podpisał umowę.');
   });
 });
 

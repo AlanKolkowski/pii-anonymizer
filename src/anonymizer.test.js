@@ -69,6 +69,27 @@ describe('anonymizeText', () => {
     expect(anonymized).toBe('[PERSON_NAME_1] called [PERSON_NAME_1]');
   });
 
+  it('keeps Jan and Janusz as separate PERSON_NAME tokens when deanonymizing', () => {
+    const text = 'Pozwany Jan Kowalski oraz świadek Janusz Kowalski stawili się.';
+    const jan = 'Jan Kowalski';
+    const janusz = 'Janusz Kowalski';
+    const janStart = text.indexOf(jan);
+    const januszStart = text.indexOf(janusz);
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: janStart, end: janStart + jan.length, score: 0.98, word: jan },
+      { entity_group: 'PERSON_NAME', start: januszStart, end: januszStart + janusz.length, score: 0.97, word: janusz },
+    ];
+
+    const { anonymized, legend } = anonymizeText(text, entities);
+
+    expect(anonymized).toBe('Pozwany [PERSON_NAME_1] oraz świadek [PERSON_NAME_2] stawili się.');
+    expect(legend).toEqual({
+      '[PERSON_NAME_1]': 'Jan Kowalski',
+      '[PERSON_NAME_2]': 'Janusz Kowalski',
+    });
+    expect(deanonymizeText(anonymized, legend)).toBe(text);
+  });
+
   it('handles entities not sorted by position', () => {
     const text = 'Jan Kowalski works at Example Corp';
     const entities = [
@@ -372,6 +393,11 @@ describe('couldBeSamePerson', () => {
     expect(couldBeSamePerson('Nowak', 'Nowaka')).toBe(true);
   });
 
+  it('matches Polish ending substitutions without conflating distinct names', () => {
+    expect(couldBeSamePerson('Anna Kowalska', 'Anną Kowalską')).toBe(true);
+    expect(couldBeSamePerson('Marek Nowak', 'Marka Nowaka')).toBe(true);
+  });
+
   it('matches last name only vs full name', () => {
     expect(couldBeSamePerson('Wiśniewski', 'Tomasz Wiśniewski')).toBe(true);
   });
@@ -386,6 +412,15 @@ describe('couldBeSamePerson', () => {
 
   it('rejects different first names even with similar surnames', () => {
     expect(couldBeSamePerson('Jan Kowalski', 'Adam Kowalski')).toBe(false);
+  });
+
+  it('rejects first names that only share a prefix', () => {
+    expect(couldBeSamePerson('Jan', 'Janina')).toBe(false);
+    expect(couldBeSamePerson('Jan', 'Janusz')).toBe(false);
+  });
+
+  it('rejects gendered surname endings as different people', () => {
+    expect(couldBeSamePerson('Jan Kowalski', 'Jan Kowalska')).toBe(false);
   });
 });
 

@@ -34,6 +34,32 @@ describe('deanon export helpers', () => {
     ]);
   });
 
+  it('deanonymizes export entries with the outcome legend snapshot instead of the live legend', () => {
+    const entries = buildDeanonExportEntries(
+      [
+        {
+          id: 'o1',
+          label: 'Odpowiedź.txt',
+          text: 'Zobowiązuje się [PERSON_NAME_1] wobec [PERSON_NAME_2].',
+          legendSnapshot: {
+            '[PERSON_NAME_1]': 'Adam Nowicki',
+            '[PERSON_NAME_2]': 'Barbara Lis',
+          },
+        },
+      ],
+      { '[PERSON_NAME_1]': 'Barbara Lis' },
+      'docx',
+    );
+
+    expect(entries).toEqual([
+      {
+        name: '01-odpowiedz-deanon.docx',
+        label: 'Odpowiedź.txt',
+        text: 'Zobowiązuje się Adam Nowicki wobec Barbara Lis.',
+      },
+    ]);
+  });
+
   it('exports a single outcome directly instead of wrapping it in ZIP', async () => {
     const result = await exportDeanonOutcomes({
       outcomes: [{ id: 'o1', label: 'Jedyny wynik.txt', text: 'A [PERSON_NAME_1]' }],

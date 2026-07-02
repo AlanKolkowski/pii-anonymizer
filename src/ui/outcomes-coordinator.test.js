@@ -56,6 +56,54 @@ describe('createOutcomesCoordinator', () => {
     );
   });
 
+  it('keeps written outcomes tied to the legend snapshot captured before later renumbering', () => {
+    document.body.innerHTML = '<div id="legacy"></div><div id="deanon"></div>';
+    const outcomes = [];
+    const writeLegend = {
+      '[PERSON_NAME_1]': 'Adam Nowicki',
+      '[PERSON_NAME_2]': 'Barbara Lis',
+    };
+    let legend = writeLegend;
+    const tokenText = 'Zobowiązuje się [PERSON_NAME_1] wobec [PERSON_NAME_2].';
+    const expectedText = 'Zobowiązuje się Adam Nowicki wobec Barbara Lis.';
+
+    const legacy = createOutcomesList(document.getElementById('legacy'), {
+      onRemove: vi.fn(),
+      onAdd: vi.fn(),
+      onEdit: vi.fn(),
+    });
+    const deanon = createDeanonWorkspace(document.getElementById('deanon'), {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      onAdd: vi.fn(),
+      onUpdate: vi.fn(),
+      onRemove: vi.fn(),
+      entityLabels: { PERSON_NAME: 'Imię i nazwisko' },
+    });
+    deanon.render();
+
+    const coordinator = createOutcomesCoordinator({
+      outcomes,
+      outcomesList: legacy,
+      deanonWorkspace: deanon,
+      getLegend: () => legend,
+      makeId: () => 'mcp-1',
+    });
+
+    coordinator.createOutcome('Odpowiedź', tokenText);
+
+    legend = { '[PERSON_NAME_1]': 'Barbara Lis' };
+    coordinator.refreshLegend(legend);
+
+    expect(document.querySelector('[data-testid="outcome-body-mcp-1"]').textContent).toBe(
+      expectedText,
+    );
+    expect(document.querySelector('[data-testid="deanon-output-body"]').textContent).toBe(
+      expectedText,
+    );
+    expect(outcomes[0].legendSnapshot).toEqual(writeLegend);
+  });
+
   it('tracks mcpLabel: synthetic or LLM-authored, unaffected by display renames', () => {
     document.body.innerHTML = '<div id="deanon"></div>';
     const outcomes = [];

@@ -58,13 +58,22 @@ export function uniqueDeanonFileName(label, index, format, used = new Set(), opt
   return candidate;
 }
 
+function effectiveOutcomeLegend(outcome, liveLegend) {
+  return outcome?.legendSnapshot ?? liveLegend ?? {};
+}
+
+function hasEffectiveLegend(outcomes, liveLegend) {
+  if (liveLegend && Object.keys(liveLegend).length > 0) return true;
+  return outcomes.some((outcome) => Object.keys(outcome?.legendSnapshot ?? {}).length > 0);
+}
+
 export function buildDeanonExportEntries(outcomes, legend, format, options = {}) {
   assertFormat(format);
   const used = new Set();
   return outcomes.map((outcome, index) => ({
     name: uniqueDeanonFileName(outcome.label, index, format, used, options),
     label: outcome.label,
-    text: deanonymizeText(outcome.text ?? '', legend),
+    text: deanonymizeText(outcome.text ?? '', effectiveOutcomeLegend(outcome, legend)),
   }));
 }
 
@@ -230,7 +239,7 @@ export async function exportDeanonOutcomes({ outcomes, legend, format }) {
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
     throw new Error('Brak dokumentów wynikowych do eksportu');
   }
-  if (!legend || Object.keys(legend).length === 0) {
+  if (!hasEffectiveLegend(outcomes, legend)) {
     throw new Error('Eksport wymaga legendy tokenów');
   }
 

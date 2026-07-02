@@ -102,6 +102,69 @@ function computeByType(expected, predicted, options) {
   return byType;
 }
 
+function metricsFromCounts({ tp = 0, fp = 0, fn = 0, tpPartial = 0 }) {
+  const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
+  const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
+  const f1 = precision + recall > 0 ? 2 * precision * recall / (precision + recall) : 0;
+  return { tp, fp, fn, tpPartial, precision, recall, f1 };
+}
+
+function sumMetrics(metrics) {
+  return metricsFromCounts(metrics.reduce(
+    (total, metric) => ({
+      tp: total.tp + (metric?.tp ?? 0),
+      fp: total.fp + (metric?.fp ?? 0),
+      fn: total.fn + (metric?.fn ?? 0),
+      tpPartial: total.tpPartial + (metric?.tpPartial ?? 0),
+    }),
+    { tp: 0, fp: 0, fn: 0, tpPartial: 0 },
+  ));
+}
+
+function sumByType(byTypeEntries) {
+  const totals = {};
+  for (const byType of byTypeEntries) {
+    for (const [type, metric] of Object.entries(byType)) {
+      totals[type] ??= { tp: 0, fp: 0, fn: 0, tpPartial: 0 };
+      totals[type].tp += metric.tp;
+      totals[type].fp += metric.fp;
+      totals[type].fn += metric.fn;
+      totals[type].tpPartial += metric.tpPartial;
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(totals)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([type, counts]) => [type, metricsFromCounts(counts)]),
+  );
+}
+
+export function computeOverallFromDocuments(documents, options = { overlapThreshold: 0.5, requireTypeMatch: true }) {
+  const entityMetrics = [];
+  const byTypeEntries = [];
+  const segmentMetrics = [];
+
+  for (const doc of documents) {
+    const expected = doc.expected ?? [];
+    const predicted = doc.predicted ?? [];
+    const metrics = doc.metrics ?? computeMetrics(expected, predicted, options);
+    entityMetrics.push(metrics);
+    byTypeEntries.push(doc.byType ?? computeByType(expected, predicted, options));
+
+    if (doc.segmentMetrics) {
+      segmentMetrics.push(doc.segmentMetrics);
+    } else if (doc.expectedSegments || doc.predictedSegments) {
+      segmentMetrics.push(computeSegmentMetrics(doc.expectedSegments ?? [], doc.predictedSegments ?? []));
+    }
+  }
+
+  return {
+    overall: sumMetrics(entityMetrics),
+    overallByType: sumByType(byTypeEntries),
+    overallSegments: segmentMetrics.length > 0 ? sumMetrics(segmentMetrics) : null,
+  };
+}
+
 // ── Formatting ──────────────────────────────────────────────────────
 
 function pct(v) { return (v * 100).toFixed(1).padStart(5) + '%'; }
@@ -204,10 +267,7 @@ async function main() {
   }
 
   const options = { overlapThreshold: 0.5, requireTypeMatch: true };
-  const allExpected = [];
-  const allPredicted = [];
-  const allExpectedSegments = [];
-  const allPredictedSegments = [];
+  const docAggregates = [];
   const docScores = {};
   let totalDroppedExpected = 0;
 
@@ -263,8 +323,6 @@ async function main() {
     } catch {}
     if (expectedSegments && predictedSegments) {
       segmentMetrics = computeSegmentMetrics(expectedSegments, predictedSegments);
-      allExpectedSegments.push(...expectedSegments);
-      allPredictedSegments.push(...predictedSegments);
     }
 
     printDocScores(name, metrics, byType);
@@ -292,13 +350,18 @@ async function main() {
       }),
     };
 
-    allExpected.push(...expected);
-    allPredicted.push(...predicted);
+    docAggregates.push({
+      expected,
+      predicted,
+      metrics,
+      byType,
+      ...(segmentMetrics && { expectedSegments, predictedSegments, segmentMetrics }),
+    });
   }
 
-  // Overall (micro-averaged)
-  const overall = computeMetrics(allExpected, allPredicted, options);
-  const overallByType = computeByType(allExpected, allPredicted, options);
+  // Overall (micro-averaged): sum per-document counts so offset collisions in
+  // different documents cannot fabricate matches.
+  const { overall, overallByType, overallSegments } = computeOverallFromDocuments(docAggregates, options);
 
   console.log('\n=== OVERALL (micro-averaged, strict exact matching) ===');
   if (!isFullSet) {
@@ -312,10 +375,6 @@ async function main() {
   for (const [type, m] of Object.entries(overallByType)) {
     console.log(`    ${pad(type, 34)} ${pct(m.precision)} ${pct(m.recall)} ${pct(m.f1)}  ${String(m.tp).padStart(2)}  ${String(m.fp).padStart(2)}  ${String(m.fn).padStart(2)}`);
   }
-
-  const overallSegments = (allExpectedSegments.length > 0 || allPredictedSegments.length > 0)
-    ? computeSegmentMetrics(allExpectedSegments, allPredictedSegments)
-    : null;
 
   if (overallSegments) {
     console.log('\n=== OVERALL SEGMENTATION ===');

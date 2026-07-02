@@ -37,7 +37,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body { margin: 0; padding: 0; overflow-x: clip; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -78,6 +78,7 @@ button { font-family: inherit; cursor: pointer; }
   backdrop-filter: saturate(140%) blur(8px);
   -webkit-backdrop-filter: saturate(140%) blur(8px);
   border-bottom: 1px solid var(--line);
+  overflow-x: clip;
 }
 .site-header .row {
   display: flex;
@@ -648,4 +649,21 @@ button { font-family: inherit; cursor: pointer; }
   .mcp-card { grid-template-columns: 1fr; gap: 28px; padding: 24px; }
   .hero { padding: 56px 0 32px; }
   .section { padding: 56px 0; }
+}
+
+@media (max-width: 700px) {
+  .wrap { padding: 0 18px; }
+  .site-header .row { gap: 14px; }
+  .site-nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0;
+    min-width: 0;
+  }
+  .site-nav > a,
+  .site-nav .pill.pill-pl,
+  .site-nav .bmc-nav-slot {
+    display: none;
+  }
+  .site-nav-actions { gap: 0; }
 }

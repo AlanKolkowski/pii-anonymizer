@@ -1,18 +1,68 @@
-function commonPrefixLength(a, b) {
-  let i = 0;
-  while (i < a.length && i < b.length && a[i] === b[i]) i++;
-  return i;
+const INFLECTION_SUFFIXES = ['a', 'ą', 'ę', 'em', 'owi', 'u', 'ie'];
+const ADJECTIVAL_SURNAME_FAMILIES = [
+  { lemma: 'ski', forms: ['ski', 'skiego', 'skiemu', 'skim', 'skich'] },
+  { lemma: 'ska', forms: ['ska', 'skiej', 'ską'] },
+  { lemma: 'cki', forms: ['cki', 'ckiego', 'ckiemu', 'ckim', 'ckich'] },
+  { lemma: 'cka', forms: ['cka', 'ckiej', 'cką'] },
+  { lemma: 'dzki', forms: ['dzki', 'dzkiego', 'dzkiemu', 'dzkim', 'dzkich'] },
+  { lemma: 'dzka', forms: ['dzka', 'dzkiej', 'dzką'] },
+];
+
+function adjectivalSurnameStem(word) {
+  for (const family of ADJECTIVAL_SURNAME_FAMILIES) {
+    for (const form of family.forms) {
+      if (word.endsWith(form) && word.length > form.length) {
+        return { family: family.lemma, stem: word.slice(0, -form.length) };
+      }
+    }
+  }
+  return null;
+}
+
+function sameAdjectivalSurnameForm(a, b) {
+  const left = adjectivalSurnameStem(a);
+  const right = adjectivalSurnameStem(b);
+  if (!left || !right) return null;
+  return left.family === right.family && left.stem === right.stem;
+}
+
+function inflectionStems(word) {
+  const stems = new Set([word]);
+  for (const suffix of INFLECTION_SUFFIXES) {
+    if (word.endsWith(suffix) && word.length > suffix.length + 2) {
+      stems.add(word.slice(0, -suffix.length));
+    }
+  }
+  if (word.endsWith('ek') && word.length > 4) {
+    stems.add(`${word.slice(0, -2)}k`);
+  }
+  if (word.endsWith('ka') && word.length > 4) {
+    stems.add(word.slice(0, -1));
+  }
+  if (word.endsWith('kiem') && word.length > 6) {
+    stems.add(`${word.slice(0, -4)}k`);
+  }
+  return stems;
+}
+
+function hasSharedInflectionStem(a, b) {
+  const left = inflectionStems(a);
+  const right = inflectionStems(b);
+  for (const stem of left) {
+    if (stem.length >= 3 && right.has(stem)) return true;
+  }
+  return false;
 }
 
 function wordsMatch(w1, w2) {
   const a = w1.toLowerCase();
   const b = w2.toLowerCase();
-  const shorter = Math.min(a.length, b.length);
-  const prefixLen = commonPrefixLength(a, b);
-  // The shorter word must match all but at most 2 ending characters.
-  // This handles Polish declension where endings change by 1-2 chars
-  // while the stem (prefix) stays the same.
-  return prefixLen >= Math.max(3, shorter - 2);
+  if (a === b) return true;
+
+  const surnameMatch = sameAdjectivalSurnameForm(a, b);
+  if (surnameMatch !== null) return surnameMatch;
+
+  return hasSharedInflectionStem(a, b);
 }
 
 export function couldBeSamePerson(name1, name2) {

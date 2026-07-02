@@ -5,6 +5,14 @@ const NOOP_OUTCOMES_LIST = {
   refreshLegend() {},
 };
 
+function legendSnapshot(legend) {
+  return legend && Object.keys(legend).length > 0 ? { ...legend } : null;
+}
+
+function effectiveLegend(outcome, liveLegend) {
+  return outcome?.legendSnapshot ?? liveLegend ?? {};
+}
+
 export function createOutcomesCoordinator({
   outcomes,
   outcomesList = NOOP_OUTCOMES_LIST,
@@ -18,8 +26,10 @@ export function createOutcomesCoordinator({
 
   function createOutcome(label, text, mcpLabel = label) {
     const id = makeId();
-    outcomes.push({ id, label, mcpLabel, text });
-    outcomesList.addOutcome(id, label, text, currentLegend());
+    const liveLegend = currentLegend();
+    const outcome = { id, label, mcpLabel, text, legendSnapshot: legendSnapshot(liveLegend) };
+    outcomes.push(outcome);
+    outcomesList.addOutcome(id, label, text, effectiveLegend(outcome, liveLegend));
     deanonWorkspace.activateOutcome(id);
     return id;
   }
@@ -27,10 +37,12 @@ export function createOutcomesCoordinator({
   function updateOutcomeFields(id, label, text, { mcpLabel } = {}) {
     const outcome = outcomes.find((x) => x.id === id);
     if (!outcome) return false;
+    const liveLegend = currentLegend();
     outcome.label = label;
     outcome.text = text;
     if (mcpLabel !== undefined) outcome.mcpLabel = mcpLabel;
-    outcomesList.updateOutcome(id, label, text, currentLegend());
+    outcome.legendSnapshot = legendSnapshot(liveLegend) ?? outcome.legendSnapshot ?? null;
+    outcomesList.updateOutcome(id, label, text, effectiveLegend(outcome, liveLegend));
     deanonWorkspace.activateOutcome(id);
     return true;
   }
@@ -45,7 +57,9 @@ export function createOutcomesCoordinator({
   }
 
   function refreshLegend(legend = currentLegend()) {
-    outcomesList.refreshLegend(legend);
+    for (const outcome of outcomes) {
+      outcomesList.updateOutcome(outcome.id, outcome.label, outcome.text, effectiveLegend(outcome, legend));
+    }
     deanonWorkspace.refreshLegend();
   }
 

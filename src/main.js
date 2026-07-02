@@ -485,7 +485,7 @@ function removeOutcome(id) {
 async function exportDeanonDocuments(format) {
   const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
   const result = await exportDeanonOutcomes({
-    outcomes: outcomes.map((o) => ({ id: o.id, label: o.label, text: o.text })),
+    outcomes: outcomes.map((o) => ({ id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot })),
     legend: { ...legend },
     format,
   });
@@ -1236,7 +1236,12 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
       s.text = sourcesList.getText(s.id);
     }
   }
-  const toClassify = sources.filter((s) => (s.text ?? '').trim().length > 0);
+  const selectedEntities = [...selector.getSelected()].sort();
+  const selectionChanged = !lastRun || !setsEqual(selectedEntities, lastRun.enabledEntities);
+  const toClassify = sources.filter((s) =>
+    (s.text ?? '').trim().length > 0
+    && (selectionChanged || s.lastReadyText === null || s.text !== s.lastReadyText || s.status !== 'ready'),
+  );
   if (toClassify.length === 0) return;
 
   clearProgressHideTimer();
