@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildSourceListing, buildOutcomeListing, createLabelSequence } from './listings.js';
+import * as listings from './listings.js';
+
+const { buildSourceListing, buildOutcomeListing, createLabelSequence } = listings;
 
 describe('buildSourceListing', () => {
   const seen = { 'PERSON_NAME::Jan Kowalski': '[PERSON_NAME_1]' };
@@ -37,6 +39,51 @@ describe('buildSourceListing', () => {
     );
     expect(listing.map((x) => x.id)).toEqual(['s1']);
   });
+  it('excludes ready sources with zero detected entities', () => {
+    const listing = buildSourceListing(
+      [
+        readySource(),
+        readySource({
+          id: 's-passport',
+          mcpLabel: 'Źródło 2',
+          text: 'Paszport AB1234567.',
+          entities: [],
+        }),
+      ],
+      seen,
+    );
+
+    expect(listing.map((x) => x.id)).toEqual(['s1']);
+  });
+});
+
+describe('buildReadSourceContent', () => {
+  it('denies ready sources with zero detected entities without returning raw text', () => {
+    const source = {
+      id: 's-passport',
+      label: 'paszport.txt',
+      mcpLabel: 'Źródło 1',
+      text: 'Paszport AB1234567.',
+      entities: [],
+      status: 'ready',
+    };
+
+    const response = listings.buildReadSourceContent?.([source], {}, source.id);
+
+    expect(response).toEqual({ content: [{ type: 'text', text: expect.any(String) }] });
+
+    let body;
+    try {
+      body = JSON.parse(response.content[0].text);
+    } catch {
+      throw new Error('read_source zero-entity denial must be JSON error content, not raw text');
+    }
+
+    expect(body).toEqual({ error: expect.any(String) });
+    expect(response.content[0].text).not.toContain(source.text);
+    expect(response.content[0].text).not.toContain('AB1234567');
+  });
+
 });
 
 describe('buildOutcomeListing', () => {

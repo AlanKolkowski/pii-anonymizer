@@ -1,6 +1,6 @@
 # WebMCP — konfiguracja i użycie
 
-pii.tools udostępnia dokumenty agentowi przez WebMCP bez wysyłania jawnych danych osobowych do LLM. Przez MCP przechodzą wyłącznie teksty w formie tokenów, np. `[PERSON_NAME_1]`, oraz nazwy dokumentów (`label`), które są syntetyczne (np. „Źródło 1") albo jawnie udostępnione przez użytkownika — nigdy surowe nazwy plików. Legenda oraz deanonimizacja zostają w przeglądarce użytkownika.
+pii.tools udostępnia dokumenty agentowi przez WebMCP bez wysyłania jawnych danych osobowych do LLM. Przez MCP przechodzą wyłącznie teksty w formie tokenów, np. `[PERSON_NAME_1]`, oraz nazwy dokumentów (`label`), które są syntetyczne (np. „Źródło 1") albo jawnie udostępnione przez użytkownika — nigdy surowe nazwy plików. Źródła, w których pipeline nie wykrył żadnej encji, nie są udostępniane przez MCP, bo tokenizacja byłaby identyczna z oryginalnym tekstem. Legenda oraz deanonimizacja zostają w przeglądarce użytkownika.
 
 ## Szybki start: Claude Desktop
 
@@ -53,8 +53,8 @@ Przeglądarka pokaże użytkownikowi zdeanonimizowaną wersję outcome'u. Agent 
 
 | Narzędzie | Argumenty | Wynik | Zastosowanie |
 | --- | --- | --- | --- |
-| `list_sources` | brak | JSON: `id`, `label`, `char_count` | Lista gotowych, zanonimizowanych dokumentów źródłowych. |
-| `read_source` | `{ id }` | tekst tokenizowany | Odczyt jednego dokumentu źródłowego. |
+| `list_sources` | brak | JSON: `id`, `label`, `char_count` | Lista gotowych, zanonimizowanych dokumentów źródłowych; źródła bez wykrytych encji są pomijane. |
+| `read_source` | `{ id }` | tekst tokenizowany albo JSON `error` | Odczyt jednego dokumentu źródłowego; zwraca błąd, jeśli nie można potwierdzić tokenizacji. |
 | `list_outcomes` | brak | JSON: `id`, `label`, `char_count` | Lista wyników zapisanych przez agenta. |
 | `read_outcome` | `{ id }` | tekst tokenizowany | Odczyt wcześniejszego wyniku agenta. |
 | `write_outcome` | `{ id?, label, text }` | JSON: `id`, `success` albo `error` | Utworzenie albo aktualizacja wyniku w tokenach. |
@@ -69,8 +69,8 @@ Jeśli tworzysz skill, custom instruction albo prompt systemowy dla klienta LLM,
 - Nie proś o legendę anonimizacji.
 - Jeśli narzędzia WebMCP nie są dostępne, poprowadź użytkownika przez konfigurację Claude Desktop i restart klienta.
 - Jeśli narzędzia są dostępne, ale nie ma połączenia z przeglądarką, poproś użytkownika o wygenerowanie tokenu WebMCP i wklejenie go w widget **Podłącz AI**.
-- Najpierw użyj `list_sources`; jeśli lista jest pusta, poproś użytkownika o dodanie dokumentów i kliknięcie **Anonimizuj**.
-- Czytaj źródła przez `read_source` i pracuj wyłącznie na tekście tokenizowanym.
+- Najpierw użyj `list_sources`; jeśli lista jest pusta, poproś użytkownika o dodanie dokumentów i kliknięcie **Anonimizuj**. Pusta lista może też oznaczać, że w gotowych źródłach nie wykryto żadnych encji, więc aplikacja nie udostępnia ich przez MCP.
+- Czytaj źródła przez `read_source` i pracuj wyłącznie na tekście tokenizowanym. Jeśli `read_source` zwróci błąd, poproś użytkownika o sprawdzenie dokumentu w przeglądarce zamiast żądać oryginalnej treści w czacie.
 - Wynik zapisuj przez `write_outcome` z opisowym `label`.
 - Jeżeli późniejsze kroki wymagają poprzednich wyników, użyj `list_outcomes` i `read_outcome`.
 - Nie wypisuj jawnych danych osobowych w czacie. Deanonimizacja ma nastąpić tylko w przeglądarce użytkownika.

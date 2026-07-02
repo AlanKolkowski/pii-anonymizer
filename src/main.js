@@ -1,5 +1,5 @@
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
-import { buildSourceListing, buildOutcomeListing, createLabelSequence } from './mcp/listings.js';
+import { buildSourceListing, buildReadSourceContent, buildOutcomeListing, createLabelSequence } from './mcp/listings.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
@@ -1545,24 +1545,20 @@ function textContent(value) {
 
 mcp.registerTool(
   'list_sources',
-  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. label to nazwa syntetyczna (np. „Źródło 1") albo nazwa jawnie udostępniona przez użytkownika — nigdy surowa nazwa pliku. Treść jest tokenizowana; PII nigdy nie opuszcza przeglądarki.',
+  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. label to nazwa syntetyczna (np. „Źródło 1") albo nazwa jawnie udostępniona przez użytkownika — nigdy surowa nazwa pliku. Źródła bez wykrytych encji nie są udostępniane przez MCP, bo nie można potwierdzić tokenizacji.',
   { type: 'object', properties: {} },
   () => jsonContent(buildSourceListing(sources, seen)),
 );
 
 mcp.registerTool(
   'read_source',
-  'Odczytaj zanonimizowaną, tokenizowaną treść pojedynczego dokumentu źródłowego po id. PII nigdy nie jest zwracane.',
+  'Odczytaj tokenizowaną treść pojedynczego dokumentu źródłowego po id. Źródła bez wykrytych encji zwracają błąd zamiast tekstu, bo nie można potwierdzić anonimizacji.',
   {
     type: 'object',
     properties: { id: { type: 'string' } },
     required: ['id'],
   },
-  ({ id }) => {
-    const s = sources.find((x) => x.id === id);
-    if (!s || s.status !== 'ready') return jsonContent({ error: `Dokument źródłowy ${id} nie jest gotowy` });
-    return textContent(applyTokens(s.text, s.entities, seen));
-  },
+  ({ id }) => buildReadSourceContent(sources, seen, id),
 );
 
 mcp.registerTool(
