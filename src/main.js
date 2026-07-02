@@ -41,6 +41,7 @@ const nextSourceMcpLabel = createLabelSequence('Źródło');
 const nextOutcomeMcpLabel = createLabelSequence('Wynik');
 let lastRun = null;
 const inFlightSourceIds = new Set();
+const inFlightClassifyTexts = new Map();
 const inFlightFileImportIds = new Set();
 let configuredOnce = false;
 const urlParams = new URLSearchParams(window.location.search);
@@ -1018,6 +1019,7 @@ const pendingClassifies = [];
 function dispatchNextClassify() {
   if (pendingClassifies.length === 0) return;
   const next = pendingClassifies.shift();
+  inFlightClassifyTexts.set(next.id, next.text);
   clearProgressHideTimer();
   progressSourceIndex += 1;
   updateProgress({
@@ -1115,14 +1117,23 @@ worker.onmessage = (e) => {
       const id = msg.id;
       updateProgress({ type: 'result', id, t: performance.now() });
       const s = sources.find((x) => x.id === id);
-      if (s) {
+      const dispatchedText = inFlightClassifyTexts.get(id);
+      if (s && dispatchedText === s.text) {
         s.entities = msg.data;
         s.status = 'ready';
         s.error = null;
         s.lastReadyText = s.text;
         sourcesList.setSourceEntities(id, msg.data);
         sourcesList.setSourceStatus(id, 'ready');
+      } else if (s) {
+        s.entities = [];
+        s.status = 'idle';
+        s.error = null;
+        s.lastReadyText = null;
+        sourcesList.setSourceEntities(id, []);
+        sourcesList.setSourceStatus(id, 'idle');
       }
+      inFlightClassifyTexts.delete(id);
       inFlightSourceIds.delete(id);
       dispatchNextClassify();
       refreshLegend();
@@ -1166,6 +1177,7 @@ worker.onmessage = (e) => {
       if (id) {
         updateProgress({ type: 'error', id, t: performance.now() });
         inFlightSourceIds.delete(id);
+        inFlightClassifyTexts.delete(id);
         dispatchNextClassify();
       }
       if (!isAnyClassifyInFlight()) {
@@ -1214,6 +1226,7 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
   progressSourceIndex = 0;
   updateProgress({ type: 'batch-start', total: toClassify.length, t: performance.now() });
   pendingClassifies.length = 0;
+  inFlightClassifyTexts.clear();
   for (const s of toClassify) {
     s.status = 'pending';
     s.error = null;
