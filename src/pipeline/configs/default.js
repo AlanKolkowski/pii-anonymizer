@@ -77,7 +77,7 @@ export function createPostprocessSteps(options) {
 /**
  * Creates the default PII anonymization pipeline.
  *
- * @param {Function} loadModel - async ({id, dtype}) => { infer(text), dispose() }
+ * @param {Function} loadModel - async ({id, dtype}) => { infer(text), countTokens(text), dispose() }
  * @param {Function} getSentenceBoundaries - (lang, text) => [{start_index, end_index, text}, ...]
  * @param {object} options - { enabledEntities, entitySources?, sources?, sortSources? }
  */

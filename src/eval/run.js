@@ -65,6 +65,10 @@ async function loadModelNode(model) {
   const ner = await hfPipeline('token-classification', model.id, { dtype: model.dtype });
   return {
     infer: async (text) => await ner(text),
+    countTokens: async (text) => {
+      const enc = await ner.tokenizer([text], { add_special_tokens: true, truncation: false, padding: false });
+      return enc.input_ids.dims.at(-1);
+    },
     dispose: async () => await ner.dispose(),
   };
 }

@@ -145,6 +145,11 @@ async function loadPipelineWithDevice(def, device) {
     };
   }
   const ner = await hfPipeline('token-classification', def.id, opts);
+  const rawTokenize = ner.tokenizer._call.bind(ner.tokenizer);
+  const countTokens = async (text) => {
+    const enc = await rawTokenize([text], { add_special_tokens: true, truncation: false, padding: false });
+    return enc.input_ids.dims.at(-1);
+  };
   if (device === 'webnn-gpu') {
     // The token-classification pipeline calls tokenizer with `padding: true`
     // (= pad to longest in batch), which leaves single-input batches unpadded.
@@ -158,7 +163,7 @@ async function loadPipelineWithDevice(def, device) {
       truncation: true,
     });
   }
-  return ner;
+  return { ner, countTokens };
 }
 
 // Concurrent classify messages can race past the loadedModels.has() check
@@ -184,22 +189,23 @@ async function ensureModelLoaded(alias, { emitTiming = true } = {}) {
     if (targetDevice === 'wasm') await evictForBudget(sizeMB, alias);
     if (emitTiming) postTiming('model:load:start', { alias });
     let ner;
+    let countTokens;
     let device = targetDevice;
     try {
-      ner = await loadPipelineWithDevice(def, targetDevice);
+      ({ ner, countTokens } = await loadPipelineWithDevice(def, targetDevice));
     } catch (err) {
       if (targetDevice === 'webnn-gpu') {
         console.warn(`[worker] WebNN session failed for ${alias}, falling back to WASM:`, err);
         // Fallback lands on WASM heap, so evict now.
         await evictForBudget(sizeMB, alias);
-        ner = await loadPipelineWithDevice(def, 'wasm');
+        ({ ner, countTokens } = await loadPipelineWithDevice(def, 'wasm'));
         device = 'wasm';
       } else {
         throw err;
       }
     }
     if (emitTiming) postTiming('model:load:end', { alias });
-    loadedModels.set(alias, { ner, sizeMB, device, dispose: async () => await ner.dispose() });
+    loadedModels.set(alias, { ner, countTokens, sizeMB, device, dispose: async () => await ner.dispose() });
     console.log(`[worker] loaded ${alias} on ${device} (${def.id}, ${def.dtype}, ${sizeMB}MB; wasm-resident=${totalLoadedMB()}MB)`);
   })();
 
@@ -223,6 +229,7 @@ async function loadModelForPipeline({ alias: requestedAlias, id, dtype }) {
     alias,
     device: entry.device,
     infer: async (text) => await entry.ner(text),
+    countTokens: entry.countTokens,
     dispose: async () => {},
   };
 }

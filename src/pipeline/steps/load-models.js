@@ -14,7 +14,7 @@ function getModelHandles(ctx) {
  * ignored by the debug diffing code.
  *
  * @param {Array<{alias: string, id: string, dtype: string}>} sources
- * @param {Function} loadModel - async ({alias, id, dtype}) => { infer, dispose }
+ * @param {Function} loadModel - async ({alias, id, dtype}) => { infer, countTokens, dispose }
  * @param {object} options
  * @param {Function} [options.onPlan]
  * @param {Function} [options.onProgress]

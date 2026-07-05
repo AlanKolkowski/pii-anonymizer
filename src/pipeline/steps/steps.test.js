@@ -420,3 +420,52 @@ describe('createNerStep', () => {
     expect(result.entities[0].source).toBe('multilang-q8');
   });
 });
+
+describe('nerStep token budget', () => {
+  it('splits over-budget segments so every infer call fits the token budget', async () => {
+    const seen = [];
+    const stub = {
+      infer: async (text) => { seen.push(text); return []; },
+      countTokens: async (t) => t.length,
+      dispose: async () => {},
+    };
+    const segment = { text: ('ab '.repeat(400)).trim(), offset: 100 };
+    const step = createNerStep([{ alias: 'a', id: 'x', dtype: 'q8' }], async () => stub);
+    await step({ text: '', segments: [segment], entities: [] });
+
+    for (const t of seen) expect(t.length).toBeLessThanOrEqual(512);
+    expect(seen.join('')).toBe(segment.text);
+  });
+
+  it('maps per-piece entity offsets back to the original segment coordinates', async () => {
+    const stub = {
+      infer: async () => [{ entity_group: 'X', start: 0, end: 2, score: 0.9, word: 'ab' }],
+      countTokens: async (t) => t.length,
+      dispose: async () => {},
+    };
+    const segment = { text: ('ab '.repeat(400)).trim(), offset: 100 };
+    const step = createNerStep([{ alias: 'a', id: 'x', dtype: 'q8' }], async () => stub);
+    const result = await step({ text: '', segments: [segment], entities: [] });
+
+    const starts = result.entities.map((e) => e.start);
+    expect(new Set(starts).size).toBeGreaterThan(1);
+    for (const e of result.entities) {
+      expect(e.end - e.start).toBe(2);
+      expect(e.start).toBeGreaterThanOrEqual(100);
+      expect(segment.text.slice(e.start - 100, e.end - 100)).toBe('ab');
+    }
+  });
+
+  it('does not split when the handle lacks countTokens (fallback)', async () => {
+    const seen = [];
+    const stub = {
+      infer: async (text) => { seen.push(text); return []; },
+      dispose: async () => {},
+    };
+    const segment = { text: ('ab '.repeat(400)).trim(), offset: 100 };
+    const step = createNerStep([{ alias: 'a', id: 'x', dtype: 'q8' }], async () => stub);
+    await step({ text: '', segments: [segment], entities: [] });
+
+    expect(seen).toEqual([segment.text]);
+  });
+});
