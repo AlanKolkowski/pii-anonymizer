@@ -1023,7 +1023,9 @@ body.has-tool .site-header .wrap {
   position: relative !important;
   inset: auto !important;
   padding: 0 !important;
-  z-index: 30 !important;
+  /* Above .site-header (z-index 40) so a taller/wrapped header can never
+     re-occlude the open panel; still below the z-index 100 toast. */
+  z-index: 45 !important;
   font-family: var(--sans) !important;
   font-size: 13px !important;
 }
@@ -1058,7 +1060,11 @@ body.has-tool .site-header .wrap {
   width: min(420px, calc(100vw - 32px)) !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
-  max-height: calc(100dvh - 80px) !important;
+  /* Reserve the sticky .site-header band (61px, z-index 40) at top plus the
+     run-bar offset (~66px) at bottom, so the bottom-anchored panel's top lands
+     BELOW the header instead of behind it — otherwise the header occludes the
+     panel's own header and first guide lines on short viewports. */
+  max-height: calc(100dvh - 144px) !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   background: var(--bg-elev) !important;
