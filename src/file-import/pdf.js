@@ -44,7 +44,12 @@ function nonWhitespaceLength(items) {
 }
 
 function joinPageItems(items) {
-  return items.map((it) => it?.str ?? '').join(' ');
+  let out = '';
+  for (const it of items) {
+    out += it?.str ?? '';
+    if (it?.hasEOL) out += '\n';
+  }
+  return out.trimEnd();
 }
 
 export async function extractPdf(file, deps = {}) {

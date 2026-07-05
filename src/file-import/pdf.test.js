@@ -15,7 +15,7 @@ function fakePdfjs(pages, opts = {}) {
         numPages: pages.length,
         getPage: (n) => Promise.resolve({
           getTextContent: () => Promise.resolve({
-            items: pages[n - 1].map((str) => ({ str, hasEOL: true })),
+            items: pages[n - 1].map((s) => (typeof s === 'string' ? { str: s, hasEOL: true } : s)),
           }),
           getViewport: ({ scale }) => ({ width: 800 * scale, height: 1000 * scale }),
           render: ({ canvasContext, viewport }) => {
@@ -101,6 +101,20 @@ describe('extractPdf — text-only PDFs', () => {
     expect(out.text).toContain('Hello');
     expect(out.text).toContain('World');
     expect(out.text).toMatch(/Hello.*\n\n.*World/s);
+  });
+
+  it('does not split identifiers across mid-line font changes (PESEL net)', async () => {
+    const out = await extractPdf(fakeFile(), {
+      ...pdfjs([[
+        { str: 'Dokument tożsamości obywatela', hasEOL: true },
+        { str: 'PESEL: 920508', hasEOL: false },
+        { str: '12345', hasEOL: true },
+      ]]),
+      ...makeOffscreenCanvasFakes().deps,
+    });
+    expect(out.text).toContain('PESEL: 92050812345');
+    expect(/\b\d{11}\b/.test(out.text)).toBe(true);
+    expect(out.meta.pages).toEqual([{ index: 1, source: 'text' }]);
   });
 });
 
