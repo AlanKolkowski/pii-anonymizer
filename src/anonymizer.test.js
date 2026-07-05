@@ -44,6 +44,22 @@ describe('buildTokenMap', () => {
     const { legend } = buildTokenMap([], 'no PII');
     expect(legend).toEqual({});
   });
+  it('skips a generated token whose literal already occurs in the source text', () => {
+    const text = 'Szablon [PERSON_NAME_1] i Jan Kowalski';
+    const name = 'Jan Kowalski';
+    const nameStart = text.indexOf(name);
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: nameStart, end: nameStart + name.length, score: 0.98 },
+    ];
+    const { legend } = buildTokenMap(entities, text);
+    expect(legend).toEqual({ '[PERSON_NAME_2]': 'Jan Kowalski' });
+    expect(legend).not.toHaveProperty('[PERSON_NAME_1]');
+
+    const { anonymized } = anonymizeText(text, entities);
+    expect(anonymized).toBe('Szablon [PERSON_NAME_1] i [PERSON_NAME_2]');
+    // Round-trip: pre-existing literal survives, real name is restored.
+    expect(deanonymizeText(anonymized, legend)).toBe(text);
+  });
 });
 
 describe('anonymizeText', () => {
@@ -129,6 +145,25 @@ describe('deanonymizeText', () => {
 
   it('handles empty legend', () => {
     expect(deanonymizeText('some text', {})).toBe('some text');
+  });
+  it('returns $& in legend value verbatim (no $-pattern interpolation)', () => {
+    expect(
+      deanonymizeText('A [FINANCIAL_AMOUNT_1] B', { '[FINANCIAL_AMOUNT_1]': 'USD 100 $&' }),
+    ).toBe('A USD 100 $& B');
+  });
+
+  it("returns $' in legend value verbatim", () => {
+    expect(
+      deanonymizeText('A [ORGANIZATION_NAME_1] B', {
+        '[ORGANIZATION_NAME_1]': "Firma $' Sp. z o.o.",
+      }),
+    ).toBe("A Firma $' Sp. z o.o. B");
+  });
+
+  it('returns $$ and $` in legend value verbatim', () => {
+    expect(
+      deanonymizeText('A [FINANCIAL_AMOUNT_1] B', { '[FINANCIAL_AMOUNT_1]': '$$ and $` end' }),
+    ).toBe('A $$ and $` end B');
   });
 });
 
@@ -603,6 +638,36 @@ describe('findRegexEntities', () => {
     expect(phone).toBeDefined();
     expect(text.slice(phone.start, phone.end)).toBe('+48-722-334-556');
   });
+  it('excludes the trailing sentence dot from an email match', () => {
+    const text = 'Kontakt: jan.kowalski+prawo@kancelaria-abc.com.pl.';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe(
+      'jan.kowalski+prawo@kancelaria-abc.com.pl',
+    );
+  });
+
+  it('clamps non-overlapping email matches (a@b.co@c.de → one)', () => {
+    const text = 'a@b.co@c.de';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(emails[0].start).toBe(0);
+    expect(emails[0].end).toBe(6);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('a@b.co');
+  });
+
+  it('rejects malformed emails (@nodomain, user@, user@nodot)', () => {
+    for (const text of ['@nodomain', 'user@', 'user@nodot']) {
+      const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+      expect(emails).toEqual([]);
+    }
+  });
+
+  it('does not freeze on a very long word-char run without @', () => {
+    const text = 'a'.repeat(300000);
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toEqual([]);
+  });
 });
 
 describe('findRegexEntities — financial amounts', () => {
@@ -739,6 +804,19 @@ describe('buildTokenMapMulti', () => {
     const { seen } = buildTokenMapMulti([docA, docB]);
     expect(applyTokens(docA.text, docA.entities, seen)).toBe('[PERSON_NAME_1] tu jest.');
     expect(applyTokens(docB.text, docB.entities, seen)).toBe('I [PERSON_NAME_1] tam był.');
+  });
+  it('reserves a token literal from a later doc against an earlier doc', async () => {
+    const { buildTokenMapMulti } = await import('./anonymizer.js');
+    const docA = {
+      text: 'Anna Nowak',
+      entities: [{ entity_group: 'PERSON_NAME', start: 0, end: 10, score: 0.98 }],
+    };
+    const docB = {
+      text: 'Wzór [PERSON_NAME_1] tutaj',
+      entities: [],
+    };
+    const { legend } = buildTokenMapMulti([docA, docB]);
+    expect(legend).toEqual({ '[PERSON_NAME_2]': 'Anna Nowak' });
   });
 });
 

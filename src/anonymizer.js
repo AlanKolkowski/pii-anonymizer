@@ -120,8 +120,11 @@ function ingestSource({ text, entities }, state) {
     const canonicalKey = `${type}::${normalizedValue}`;
 
     if (!state.seen[canonicalKey]) {
-      state.counters[type] = (state.counters[type] || 0) + 1;
-      const token = `[${type}_${state.counters[type]}]`;
+      let token;
+      do {
+        state.counters[type] = (state.counters[type] || 0) + 1;
+        token = `[${type}_${state.counters[type]}]`;
+      } while (state.reserved.has(token));
       state.seen[canonicalKey] = token;
       state.legend[token] = value;
     }
@@ -133,12 +136,23 @@ function ingestSource({ text, entities }, state) {
   }
 }
 
+const TOKEN_LITERAL_RE = /\[[A-Z][A-Z0-9_]*_\d+\]/g;
+
+function collectReservedTokens(texts) {
+  const reserved = new Set();
+  for (const text of texts) {
+    if (!text) continue;
+    for (const m of text.matchAll(TOKEN_LITERAL_RE)) reserved.add(m[0]);
+  }
+  return reserved;
+}
 export function buildTokenMap(entities, originalText) {
   const state = {
     counters: {},
     seen: {},
     legend: {},
     normalizeName: createNameNormalizer(),
+    reserved: collectReservedTokens([originalText]),
   };
   ingestSource({ text: originalText, entities }, state);
   return { seen: state.seen, legend: state.legend };
@@ -150,6 +164,7 @@ export function buildTokenMapMulti(sources) {
     seen: {},
     legend: {},
     normalizeName: createNameNormalizer(),
+    reserved: collectReservedTokens(sources.map((s) => s.text)),
   };
   for (const source of sources) ingestSource(source, state);
   return { seen: state.seen, legend: state.legend };
@@ -268,9 +283,40 @@ export function chunkText(text, maxChars) {
   return chunks;
 }
 
+const EMAIL_ANCHORED_RE = /^[\w.+-]+@[\w.-]+\.\w{2,}/;
+const EMAIL_LOCAL_CHAR = /[\w.+-]/;
+const EMAIL_DOMAIN_CHAR = /[\w.-]/;
+
+function findEmailEntities(text) {
+  const entities = [];
+  let searchFrom = 0;
+  let lastEnd = 0; // matches never overlap, mirroring global-regex semantics
+  let at;
+  while ((at = text.indexOf('@', searchFrom)) !== -1) {
+    let start = at;
+    while (start > lastEnd && EMAIL_LOCAL_CHAR.test(text[start - 1])) start--;
+    if (start === at) { searchFrom = at + 1; continue; }
+    let end = at + 1;
+    while (end < text.length && EMAIL_DOMAIN_CHAR.test(text[end])) end++;
+    const m = EMAIL_ANCHORED_RE.exec(text.slice(start, end));
+    if (m) {
+      entities.push({
+        entity_group: 'EMAIL_ADDRESS',
+        start,
+        end: start + m[0].length,
+        score: 1.0,
+        source: 'regex',
+      });
+      lastEnd = start + m[0].length;
+      searchFrom = lastEnd;
+    } else {
+      searchFrom = at + 1;
+    }
+  }
+  return entities;
+}
 export function findRegexEntities(text) {
   const patterns = [
-    { regex: /[\w.+-]+@[\w.-]+\.\w{2,}/g, entity_group: 'EMAIL_ADDRESS' },
     { regex: /\b\d{11}\b/g, entity_group: 'PERSON_IDENTIFIER' },
     { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
     { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
@@ -279,7 +325,7 @@ export function findRegexEntities(text) {
     { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
-  const entities = [];
+  const entities = findEmailEntities(text);
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {
       entities.push({
@@ -379,7 +425,7 @@ export function deduplicateEntities(entities) {
 export function deanonymizeText(text, legend) {
   let result = text;
   for (const [token, value] of Object.entries(legend)) {
-    result = result.replaceAll(token, value);
+    result = result.replaceAll(token, () => value);
   }
   return result;
 }
