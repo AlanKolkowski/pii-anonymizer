@@ -119,3 +119,46 @@ describe('annotation-editor — pill rendering', () => {
     expect(editor.getMode()).toBe('text');
   });
 });
+
+describe('annotation-editor — global token IDs', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  it('uses getGlobalSeen() token in the pill title', () => {
+    const { root } = mount({
+      getGlobalSeen: () => ({ 'PERSON_NAME::Anna': '[PERSON_NAME_7]' }),
+    });
+    const personPill = root.querySelector('.anno[data-type="PERSON_NAME"]');
+    expect(personPill.title).toBe('[PERSON_NAME_7] · Anna');
+    expect(personPill.dataset.token).toBe('[PERSON_NAME_7]');
+  });
+
+  it('data-token follows globalSeen so hover grouping stays self-consistent', () => {
+    const { root } = mount({
+      text: 'Anna and Anna again',
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 0, end: 4, score: 1 },
+        { entity_group: 'PERSON_NAME', start: 9, end: 13, score: 1 },
+      ],
+      getGlobalSeen: () => ({ 'PERSON_NAME::Anna': '[PERSON_NAME_7]' }),
+    });
+    const pills = [...root.querySelectorAll('.anno[data-type="PERSON_NAME"]')];
+    expect(pills).toHaveLength(2);
+    expect(pills[0].dataset.token).toBe('[PERSON_NAME_7]');
+    expect(pills[1].dataset.token).toBe('[PERSON_NAME_7]');
+  });
+
+  it('falls back to per-doc numbering when globalSeen has no matching key', () => {
+    const { root } = mount({
+      getGlobalSeen: () => ({ 'PERSON_NAME::SomeoneElse': '[PERSON_NAME_99]' }),
+    });
+    const personPill = root.querySelector('.anno[data-type="PERSON_NAME"]');
+    expect(personPill.title).toMatch(/^\[PERSON_NAME_\d+\] · Anna$/);
+    expect(personPill.dataset.token).not.toBe('[PERSON_NAME_99]');
+  });
+
+  it('defaults to per-doc numbering when getGlobalSeen is not provided', () => {
+    const { root } = mount();
+    const personPill = root.querySelector('.anno[data-type="PERSON_NAME"]');
+    expect(personPill.title).toMatch(/^\[PERSON_NAME_\d+\] · Anna$/);
+  });
+});

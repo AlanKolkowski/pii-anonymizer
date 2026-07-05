@@ -27,14 +27,26 @@ export async function extractImage(file, deps = {}) {
   const loadOcr = deps.loadOcr ?? defaultLoadOcr;
   const loadHeicTo = deps.loadHeicTo ?? defaultLoadHeicTo;
   const onProgress = deps.onProgress ?? (() => {});
+  const signal = deps.signal;
+
+  if (signal?.aborted) {
+    const { OcrCancelledError } = await import('../ocr/errors.js');
+    throw new OcrCancelledError();
+  }
 
   let blob = file;
+  let ocr = null;
+  let onAbort = null;
   try {
     if (isHeic(file)) {
       const mod = await loadHeicTo();
       blob = await mod.heicTo({ blob: file, type: 'image/jpeg', quality: 0.95 });
     }
-    const ocr = await loadOcr();
+    ocr = await loadOcr();
+    if (signal) {
+      onAbort = () => ocr.cancel?.();
+      signal.addEventListener('abort', onAbort);
+    }
     onProgress({ stage: 'ocr-plan', kind: 'image', current: 0, completed: 0, total: 1, pageCount: 1 });
     if (typeof ocr.onProgress === 'function') {
       ocr.onProgress(onProgress);
@@ -68,5 +80,9 @@ export async function extractImage(file, deps = {}) {
       throw err;
     }
     throw new ExtractionFailedError('image', err);
+  } finally {
+    if (onAbort && signal) {
+      try { signal.removeEventListener('abort', onAbort); } catch { /* swallow */ }
+    }
   }
 }

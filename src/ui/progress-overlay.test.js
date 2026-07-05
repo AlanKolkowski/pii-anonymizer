@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { createInitialProgressState, progressReducer } from './progress-state.js';
-import { renderProgressOverlay } from './progress-overlay.js';
+import { renderProgressOverlay, renderProgressViewOverlay, createProgressOverlay } from './progress-overlay.js';
 
 function renderHost(state) {
   const host = document.createElement('div');
@@ -72,5 +72,55 @@ describe('renderProgressOverlay', () => {
     state = progressReducer(state, { type: 'result', id: 'doc-1', t: 1120 });
 
     expect(render(state)).toMatchInlineSnapshot(`"<div class="progress-overlay" data-testid="progress-overlay" aria-live="polite"><div class="progress-card"><div class="progress-summary"><div class="progress-title">Gotowe</div><span class="step-meta"><span>7 kroków pipeline'u</span></span></div><div class="stepper"><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Pobieranie modeli</div><div class="step-time">0.12s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Preprocessing — normalizacja whitespace</div><div class="step-time">0.06s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Segmentacja zdań (sentencex)</div><div class="step-time">0.12s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Ładowanie modeli (WASM/WebNN)</div><div class="step-time">0.13s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Inferencja NER — modele HF i reguły</div><div class="step-time">0.52s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Postprocessing — filtrowanie i granice słów</div><div class="step-time">0.06s</div></div><div class="step done"><div class="step-dot"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3L13 4"></path></svg></div><div class="step-label">Rescan i tokenizacja wykrytych PII</div><div class="step-time">0.11s</div></div></div></div></div>"`);
+  });
+});
+
+describe('renderProgressViewOverlay — cancel affordance (#32)', () => {
+  function runningView(overrides = {}) {
+    return {
+      visible: true,
+      fading: false,
+      status: 'running',
+      steps: [],
+      activeStepIndex: 0,
+      totalSteps: 1,
+      documentLabel: '',
+      ...overrides,
+    };
+  }
+
+  it('renders an import-cancel button bound to onCancel when running', () => {
+    const host = document.createElement('div');
+    let cancelled = 0;
+    renderProgressViewOverlay(host, runningView(), { onCancel: () => cancelled++ });
+    const btn = host.querySelector('[data-testid="import-cancel"]');
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toBe('Anuluj');
+    expect(btn.className).toBe('progress-cancel');
+    btn.click();
+    expect(cancelled).toBe(1);
+  });
+
+  it('does not render a cancel button without onCancel', () => {
+    const host = document.createElement('div');
+    renderProgressViewOverlay(host, runningView());
+    expect(host.querySelector('[data-testid="import-cancel"]')).toBeNull();
+  });
+
+  it('does not render a cancel button when the view is not running', () => {
+    const host = document.createElement('div');
+    renderProgressViewOverlay(host, runningView({ status: 'done' }), { onCancel: () => {} });
+    expect(host.querySelector('[data-testid="import-cancel"]')).toBeNull();
+  });
+
+  it('threads onCancel through createProgressOverlay.renderView', () => {
+    const parent = document.createElement('div');
+    const overlay = createProgressOverlay(parent);
+    let cancelled = 0;
+    overlay.renderView(runningView(), { onCancel: () => cancelled++ });
+    const btn = parent.querySelector('[data-testid="import-cancel"]');
+    expect(btn).not.toBeNull();
+    btn.click();
+    expect(cancelled).toBe(1);
   });
 });

@@ -699,7 +699,7 @@ export async function loadHistoricalScores(currentRunId) {
       runs.push({
         runId: entry,
         label: summary.label || null,
-        enabledEntities: summary.enabledEntities || scores.enabledEntities || null,
+        enabledEntities: scores.enabledEntities ?? summary.enabledEntities ?? null,
         scores,
       });
     } catch {
@@ -1060,7 +1060,7 @@ export async function generateReport(runId, scoresData) {
     {
       runId,
       label: currentSummary.label || null,
-      enabledEntities: currentSummary.enabledEntities || scoresData.enabledEntities || null,
+      enabledEntities: scoresData.enabledEntities ?? currentSummary.enabledEntities ?? null,
       f1: scoresData.overall.f1,
       precision: scoresData.overall.precision,
       recall: scoresData.overall.recall,

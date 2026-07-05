@@ -146,9 +146,10 @@ async function runOne(context, baseURL, testText, entities, { allowGpu = false }
 
   await page.goto(baseURL);
   await page.waitForSelector(SELECTORS.addPaste, { timeout: PAGE_READY_TIMEOUT_MS });
-  if (allowGpu) {
-    const backendReady = waitForBackendRequest(page, 'auto');
-    await page.locator(SELECTORS.allowGpu).setChecked(true);
+  const gpuBox = page.locator(SELECTORS.allowGpu);
+  if (await gpuBox.isChecked() !== allowGpu) {
+    const backendReady = waitForBackendRequest(page, allowGpu ? 'auto' : 'wasm');
+    await gpuBox.setChecked(allowGpu);
     await backendReady;
   }
   await page.locator(SELECTORS.addPaste).click();

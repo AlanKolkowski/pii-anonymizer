@@ -1,4 +1,5 @@
 import {
+  ensureModelFileCached,
   ensureModelSourcesCached,
   filesForModelSource,
   hfResolveUrl,
@@ -95,6 +96,76 @@ describe('model-download helpers', () => {
     });
     const aggregateEvents = events.filter((event) => event.loadedBytes != null && event.totalBytes > 0);
     expect(aggregateEvents.every((event) => event.totalBytes === 160)).toBe(true);
+  });
+});
+
+describe('model-download in-flight dedup', () => {
+  it('fetches once for concurrent ensureModelFileCached calls on the same URL', async () => {
+    const modelId = 'test/dedupe-file';
+    const file = 'onnx/model_fp16.onnx';
+    const { cacheStorage } = makeCacheStorage();
+
+    let resolveFetch;
+    const fetchFn = vi.fn(async (url) => {
+      if (url !== hfResolveUrl(modelId, file)) {
+        return new Response(new Uint8Array(0), { status: 200 });
+      }
+      return new Promise((resolve) => {
+        resolveFetch = () =>
+          resolve(new Response(new Uint8Array(100), { status: 200, headers: { 'Content-Length': '100' } }));
+      });
+    });
+
+    const p1 = ensureModelFileCached(modelId, file, { sizeBytes: 100, cacheStorage, fetchFn });
+    const p2 = ensureModelFileCached(modelId, file, { sizeBytes: 100, cacheStorage, fetchFn });
+
+    // Flush the microtask queue so both calls clear the cache check and reach
+    // dedupeDownload before the fetch resolves.
+    await new Promise((r) => setTimeout(r));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+
+    resolveFetch();
+    const [r1, r2] = await Promise.all([p1, p2]);
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(r1).toMatchObject({ cached: true });
+    expect(r2).toMatchObject({ cached: true });
+  });
+
+  it('fetches once for concurrent ensureModelSourcesCached + ensureModelFileCached on the same URL', async () => {
+    const modelId = 'test/dedupe-mixed';
+    const file = 'onnx/model_fp16.onnx';
+    const targetUrl = hfResolveUrl(modelId, file);
+    const { cacheStorage } = makeCacheStorage();
+
+    let resolveTargetFetch;
+    const fetchFn = vi.fn(async (url, options = {}) => {
+      if (options.method === 'HEAD') {
+        return new Response(null, { status: 200, headers: { 'Content-Length': '10' } });
+      }
+      if (url === targetUrl) {
+        return new Promise((resolve) => {
+          resolveTargetFetch = () =>
+            resolve(new Response(new Uint8Array(100), { status: 200, headers: { 'Content-Length': '100' } }));
+        });
+      }
+      // Non-target files resolve immediately so the plan loop advances to the
+      // shared onnx file while the ensureModelFileCached download is still pending.
+      return new Response(new Uint8Array(10), { status: 200, headers: { 'Content-Length': '10' } });
+    });
+
+    const def = { id: modelId, dtype: 'fp16', sizeBytes: 100 };
+    const p1 = ensureModelSourcesCached([def], { cacheStorage, fetchFn });
+    const p2 = ensureModelFileCached(modelId, file, { sizeBytes: 100, cacheStorage, fetchFn });
+
+    await new Promise((r) => setTimeout(r));
+    resolveTargetFetch();
+    await Promise.all([p1, p2]);
+
+    const targetGetCalls = fetchFn.mock.calls.filter(
+      ([url, options]) => url === targetUrl && options?.method !== 'HEAD',
+    );
+    expect(targetGetCalls).toHaveLength(1);
   });
 });
 

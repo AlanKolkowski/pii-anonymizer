@@ -482,4 +482,63 @@ describe('createSourcesList', () => {
       ).toContain('Źródło 1');
     });
   });
+  describe('rename trigger', () => {
+    it('clicking the toolbar label opens the rename input and commits via onRename', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'Jan_Kowalski_pozew.pdf', {
+        text: 'tekst', entities: [], status: 'idle', type: 'file',
+      });
+
+      const label = toolbarHost.querySelector('[data-testid="editor-toolbar-label"]');
+      expect(label).not.toBeNull();
+      label.click();
+
+      const input = toolbarHost.querySelector('[data-testid="source-label-input-s1"]');
+      expect(input).not.toBeNull();
+      expect(input.value).toBe('Jan_Kowalski_pozew.pdf');
+
+      input.value = 'Umowa';
+      input.dispatchEvent(new Event('change'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(opts.onRename).toHaveBeenCalledWith('s1', 'Umowa');
+      expect(
+        toolbarHost.querySelector('[data-testid="editor-toolbar-label"]').textContent,
+      ).toBe('Umowa');
+      expect(
+        tabsHost.querySelector('[data-testid="ws-tab-label-s1"]').textContent,
+      ).toBe('Umowa');
+    });
+
+    it('Enter on the focused toolbar label opens the rename input', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'notatka.txt', { text: 't', entities: [] });
+
+      const label = toolbarHost.querySelector('[data-testid="editor-toolbar-label"]');
+      label.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(
+        toolbarHost.querySelector('[data-testid="source-label-input-s1"]'),
+      ).not.toBeNull();
+    });
+
+    it('an empty rename keeps the current label and does not fire onRename', () => {
+      const opts = defaultOpts();
+      const list = createSourcesList(root, opts);
+      list.addSource('s1', 'plik.pdf', { text: 't', entities: [] });
+
+      toolbarHost.querySelector('[data-testid="editor-toolbar-label"]').click();
+      const input = toolbarHost.querySelector('[data-testid="source-label-input-s1"]');
+      input.value = '   ';
+      input.dispatchEvent(new Event('change'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(opts.onRename).not.toHaveBeenCalled();
+      expect(
+        toolbarHost.querySelector('[data-testid="editor-toolbar-label"]').textContent,
+      ).toBe('plik.pdf');
+    });
+  });
 });

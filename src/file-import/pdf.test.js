@@ -1,4 +1,4 @@
-import { extractPdf, PAGE_TEXT_THRESHOLD } from './pdf.js';
+import { extractPdf, PAGE_TEXT_THRESHOLD, PAGE_TEXT_DENSE_THRESHOLD } from './pdf.js';
 import { ExtractionFailedError } from './errors.js';
 
 function fakeFile(name = 'a.pdf', size = 100) {
@@ -8,24 +8,47 @@ function fakeFile(name = 'a.pdf', size = 100) {
 
 function fakePdfjs(pages, opts = {}) {
   const renderCalls = [];
+  const destroy = vi.fn();
+  const operatorListCalls = [];
+  const OPS = {
+    paintImageXObject: 85,
+    paintInlineImageXObject: 87,
+    paintImageXObjectRepeat: 88,
+  };
+  const pageOps = opts.pageOps || [];
   return {
     GlobalWorkerOptions: {},
+    OPS,
     getDocument: () => ({
       promise: Promise.resolve({
         numPages: pages.length,
-        getPage: (n) => Promise.resolve({
-          getTextContent: () => Promise.resolve({
-            items: pages[n - 1].map((s) => (typeof s === 'string' ? { str: s, hasEOL: true } : s)),
+        getPage: (n) =>
+          Promise.resolve({
+            getTextContent: () =>
+              opts.rejectTextContent
+                ? Promise.reject(new Error('boom'))
+                : Promise.resolve({
+                    items: pages[n - 1].map((s) =>
+                      typeof s === 'string' ? { str: s, hasEOL: true } : s,
+                    ),
+                  }),
+            getViewport: ({ scale }) => ({ width: 800 * scale, height: 1000 * scale }),
+            render: ({ canvasContext, viewport }) => {
+              renderCalls.push({ page: n, scale: viewport.width / 800 });
+              return { promise: Promise.resolve() };
+            },
+            getOperatorList: () => {
+              operatorListCalls.push(n);
+              const fnArray = pageOps[n - 1] || [];
+              return Promise.resolve({ fnArray });
+            },
           }),
-          getViewport: ({ scale }) => ({ width: 800 * scale, height: 1000 * scale }),
-          render: ({ canvasContext, viewport }) => {
-            renderCalls.push({ page: n, scale: viewport.width / 800 });
-            return { promise: Promise.resolve() };
-          },
-        }),
       }),
+      destroy,
     }),
     _renderCalls: renderCalls,
+    _destroy: destroy,
+    _operatorListCalls: operatorListCalls,
   };
 }
 
@@ -231,5 +254,137 @@ describe('extractPdf — progress and cancellation', () => {
     });
     await expect(promise).rejects.toMatchObject({ name: 'OcrCancelledError' });
     expect(invocations).toBe(1);
+  });
+});
+
+describe('extractPdf — loadingTask lifecycle (#37)', () => {
+  it('destroys the loadingTask exactly once after a successful text-only extraction', async () => {
+    const pdf = pdfjs([['x'.repeat(PAGE_TEXT_DENSE_THRESHOLD + 1)]]);
+    const out = await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+    });
+    expect(out.meta.pages).toEqual([{ index: 1, source: 'text' }]);
+    expect(pdf.pdfjsRef._destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroys the loadingTask exactly once after a successful OCR extraction', async () => {
+    const ocr = ocrSpy(['OCR']);
+    const pdf = pdfjs([['']]);
+    await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr.deps,
+    });
+    expect(pdf.pdfjsRef._destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroys the loadingTask when getTextContent rejects', async () => {
+    const pdf = pdfjs([['x'.repeat(100)]], { rejectTextContent: true });
+    await expect(
+      extractPdf(fakeFile(), {
+        ...pdf,
+        ...makeOffscreenCanvasFakes().deps,
+      }),
+    ).rejects.toBeInstanceOf(ExtractionFailedError);
+    expect(pdf.pdfjsRef._destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroys the loadingTask when the run is cancelled', async () => {
+    const controller = new AbortController();
+    const ocr = {
+      loadOcr: async () => ({
+        ocrBitmap: async () => {
+          controller.abort();
+          return { text: 'p', confidence: 0.9, backend: 'wasm' };
+        },
+        cancel: () => {},
+      }),
+    };
+    const pdf = pdfjs([[''], ['']]);
+    await expect(
+      extractPdf(fakeFile(), {
+        ...pdf,
+        ...makeOffscreenCanvasFakes().deps,
+        ...ocr,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'OcrCancelledError' });
+    expect(pdf.pdfjsRef._destroy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('extractPdf — image-aware sparse-text classification (#23)', () => {
+  it('OCRs a sparse page that carries a painted image (Bates stamp)', async () => {
+    const ocr = ocrSpy(['BATES 0001']);
+    const pdf = pdfjs([['x'.repeat(22)]], { pageOps: [[85]] });
+    const out = await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr.deps,
+    });
+    expect(out.meta.pages).toEqual([{ index: 1, source: 'ocr', confidence: 0.9 }]);
+    expect(ocr.spy).toHaveLength(1);
+  });
+
+  it('keeps a sparse image-free page on the text path', async () => {
+    const ocr = ocrSpy(['SHOULD NOT RUN']);
+    const pdf = pdfjs([['x'.repeat(22)]], { pageOps: [[]] });
+    const out = await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr.deps,
+    });
+    expect(out.meta.pages).toEqual([{ index: 1, source: 'text' }]);
+    expect(ocr.spy).toHaveLength(0);
+  });
+
+  it('never calls getOperatorList for dense pages', async () => {
+    const pdf = pdfjs([['x'.repeat(PAGE_TEXT_DENSE_THRESHOLD + 100)]], { pageOps: [[85]] });
+    await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+    });
+    expect(pdf.pdfjsRef._operatorListCalls).toEqual([]);
+  });
+
+  it('classifies sub-threshold pages as OCR without consulting the operator list', async () => {
+    const ocr = ocrSpy(['p1']);
+    const pdf = pdfjs([['']], { pageOps: [[85]] });
+    await extractPdf(fakeFile(), {
+      ...pdf,
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocr.deps,
+    });
+    expect(ocr.spy).toHaveLength(1);
+    expect(pdf.pdfjsRef._operatorListCalls).toEqual([]);
+  });
+});
+
+describe('extractPdf — mid-OCR abort listener (#32)', () => {
+  it('cancels in-flight OCR when the signal aborts during ocrBitmap', async () => {
+    const controller = new AbortController();
+    let cancelCount = 0;
+    const ocr = {
+      loadOcr: async () => ({
+        ocrBitmap: async () => {
+          controller.abort();
+          const { OcrCancelledError } = await import('../ocr/errors.js');
+          throw new OcrCancelledError();
+        },
+        cancel: () => { cancelCount++; },
+      }),
+    };
+    const pdf = pdfjs([['']]);
+    await expect(
+      extractPdf(fakeFile(), {
+        ...pdf,
+        ...makeOffscreenCanvasFakes().deps,
+        ...ocr,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'OcrCancelledError' });
+    expect(cancelCount).toBe(1);
+    expect(pdf.pdfjsRef._destroy).toHaveBeenCalledTimes(1);
   });
 });

@@ -5,6 +5,7 @@ import { runPipeline } from '../src/pipeline/runner.js';
 import { normalizeWhitespace } from '../src/pipeline/steps/preprocess.js';
 import { createSentencexSegmentStep } from '../src/pipeline/steps/segment-sentencex.js';
 import { mergeAbbreviationsStep } from '../src/pipeline/steps/merge-abbreviations.js';
+import { tightenSegmentsStep } from '../src/pipeline/steps/tighten-segments.js';
 
 const DOCS_DIR = join(import.meta.dirname, '..', 'test-data', 'synthetic');
 
@@ -13,6 +14,7 @@ const pipelineConfig = [
   { phase: 'segment', steps: [
     createSentencexSegmentStep(get_sentence_boundaries),
     mergeAbbreviationsStep,
+    tightenSegmentsStep,
   ] },
 ];
 

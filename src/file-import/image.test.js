@@ -83,3 +83,48 @@ describe('extractImage', () => {
     expect(heicCalled).toBe(false);
   });
 });
+
+describe('extractImage — cancellation signal (#32)', () => {
+  it('throws OcrCancelledError when the signal is already aborted at entry', async () => {
+    const file = makeFile('photo.png', 'image/png');
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      extractImage(file, {
+        loadOcr: async () => ({ ocrImage: async () => ({ text: 'x', confidence: 0.9, backend: 'wasm' }) }),
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'OcrCancelledError' });
+  });
+
+  it('calls ocr.cancel and rejects when the signal aborts during ocrImage', async () => {
+    const file = makeFile('photo.png', 'image/png');
+    const controller = new AbortController();
+    let cancelCount = 0;
+    const { OcrCancelledError } = await import('../ocr/errors.js');
+    await expect(
+      extractImage(file, {
+        loadOcr: async () => ({
+          ocrImage: async () => {
+            controller.abort();
+            throw new OcrCancelledError();
+          },
+          cancel: () => { cancelCount++; },
+        }),
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'OcrCancelledError' });
+    expect(cancelCount).toBe(1);
+  });
+
+  it('still returns normally when no signal is provided (no behavior change)', async () => {
+    const file = makeFile('photo.png', 'image/png');
+    const out = await extractImage(file, {
+      loadOcr: async () => ({
+        ocrImage: async () => ({ text: 'ok', confidence: 0.9, backend: 'wasm' }),
+        cancel: () => { throw new Error('cancel must not be called without a signal'); },
+      }),
+    });
+    expect(out.text).toBe('ok');
+  });
+});

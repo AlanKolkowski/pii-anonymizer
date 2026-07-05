@@ -27,6 +27,7 @@ export function createAnnotationEditor(rootEl, options) {
     onTextChange = () => {},
     onModeChange = () => {},
     onDirtyChange = () => {},
+    getGlobalSeen = () => null,
   } = options ?? {};
 
   let text = initialText;
@@ -103,7 +104,7 @@ export function createAnnotationEditor(rootEl, options) {
       return;
     }
 
-    const tokens = tokensFromEntities(entities, text);
+    const tokens = tokensFromEntities(entities, text, getGlobalSeen());
     const sortedIndices = entities
       .map((_, i) => i)
       .sort((a, b) => entities[a].start - entities[b].start);
@@ -348,7 +349,7 @@ export function createAnnotationEditor(rootEl, options) {
   // ── Confirm delete ────────────────────────────────────────
   function openConfirmDelete(anchorEl, entity, token) {
     closeAllOverlays();
-    const tokens = tokensFromEntities(entities, text);
+    const tokens = tokensFromEntities(entities, text, getGlobalSeen());
     const anchorIndex = entities.indexOf(entity);
     const targetToken = tokens.get(anchorIndex);
     let count = 0;

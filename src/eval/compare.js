@@ -120,8 +120,11 @@ async function main() {
   const oldLabel = oldSummary.label ? ` (${oldSummary.label})` : '';
   const newLabel = newSummary.label ? ` (${newSummary.label})` : '';
 
-  const oldEnabled = oldSummary.enabledEntities || allEntityTypes();
-  const newEnabled = newSummary.enabledEntities || allEntityTypes();
+  const oldScores = await loadScores(oldId);
+  const newScores = await loadScores(newId);
+
+  const oldEnabled = oldScores?.enabledEntities ?? oldSummary.enabledEntities ?? allEntityTypes();
+  const newEnabled = newScores?.enabledEntities ?? newSummary.enabledEntities ?? allEntityTypes();
   const sameEnabled = sameEnabledSets(oldEnabled, newEnabled);
 
   console.log(`\nComparing eval runs:`);
@@ -145,8 +148,6 @@ async function main() {
   console.log(formatRow('Time (s)', oldSummary.totals.elapsed, newSummary.totals.elapsed));
 
   // Scores comparison
-  const oldScores = await loadScores(oldId);
-  const newScores = await loadScores(newId);
 
   if (oldScores && newScores) {
     console.log('\n=== Scores ===');

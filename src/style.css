@@ -578,6 +578,25 @@ body.has-tool .site-header .wrap {
   box-shadow: var(--shadow-3);
   padding: 24px 28px;
 }
+.progress-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 6px 14px;
+  border-radius: var(--r-2);
+  border: 1px solid var(--line-2);
+  background: var(--bg-elev);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.progress-cancel:hover {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
 .progress-summary {
   display: flex;
   align-items: baseline;
@@ -1039,7 +1058,9 @@ body.has-tool .site-header .wrap {
   width: min(420px, calc(100vw - 32px)) !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
-  overflow: hidden !important;
+  max-height: calc(100dvh - 80px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   background: var(--bg-elev) !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-3) !important;

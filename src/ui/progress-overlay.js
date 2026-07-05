@@ -154,7 +154,7 @@ function createStepRow(step, index, view) {
   return row;
 }
 
-export function renderProgressViewOverlay(host, view) {
+export function renderProgressViewOverlay(host, view, opts = {}) {
   host.innerHTML = '';
   if (!view.visible) return;
 
@@ -174,12 +174,22 @@ export function renderProgressViewOverlay(host, view) {
   });
   card.appendChild(stepper);
 
+  if (typeof opts.onCancel === 'function' && view.status === 'running') {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'progress-cancel';
+    cancelBtn.dataset.testid = 'import-cancel';
+    cancelBtn.textContent = 'Anuluj';
+    cancelBtn.addEventListener('click', opts.onCancel);
+    card.appendChild(cancelBtn);
+  }
+
   overlay.appendChild(card);
   host.appendChild(overlay);
 }
 
-export function renderProgressOverlay(host, state) {
-  renderProgressViewOverlay(host, getProgressView(state));
+export function renderProgressOverlay(host, state, opts = {}) {
+  renderProgressViewOverlay(host, getProgressView(state), opts);
 }
 
 export function createProgressOverlay(parentEl) {
@@ -191,8 +201,8 @@ export function createProgressOverlay(parentEl) {
     render(state) {
       renderProgressOverlay(host, state);
     },
-    renderView(view) {
-      renderProgressViewOverlay(host, view);
+    renderView(view, opts = {}) {
+      renderProgressViewOverlay(host, view, opts);
     },
   };
 }

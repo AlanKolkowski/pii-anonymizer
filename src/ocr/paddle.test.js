@@ -180,13 +180,6 @@ describe('createPaddleEngine', () => {
     await expect(engine.run({ kind: 'fake' })).rejects.toBeInstanceOf(OcrFailedError);
   });
 
-  it('cancel() before run rejects with OcrCancelledError', async () => {
-    const { sdk } = fakeSdkFactory(async () => okResult([]));
-    const engine = createTestEngine({ loadSdk: async () => sdk });
-    engine.cancel();
-    await expect(engine.run({ kind: 'fake' })).rejects.toBeInstanceOf(OcrCancelledError);
-  });
-
   it('cancel() during init rejects with OcrCancelledError and avoids creating sessions if cancellation is noticed early', async () => {
     const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
     const engine = createTestEngine({ loadSdk: async () => sdk });
@@ -195,5 +188,45 @@ describe('createPaddleEngine', () => {
     await expect(p).rejects.toBeInstanceOf(OcrCancelledError);
     expect(calls.create).toBe(0);
     expect(calls.dispose).toBe(0);
+  });
+
+  it('cancel() aborts an in-flight model download and rejects with OcrCancelledError', async () => {
+    let downloadStarted;
+    const started = new Promise((resolve) => { downloadStarted = resolve; });
+    const download = ({ signal }) => new Promise((_, reject) => {
+      downloadStarted();
+      signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    });
+    const { sdk, calls } = fakeSdkFactory(async () => okResult([]));
+    const engine = createPaddleEngine({ loadSdk: async () => sdk, downloadModelAssets: download });
+    const p = engine.run({ kind: 'fake' });
+    await started;
+    engine.cancel();
+    await expect(p).rejects.toBeInstanceOf(OcrCancelledError);
+    expect(calls.create).toBe(0);
+  });
+
+  it('cancel() while idle does not poison the next run', async () => {
+    const { sdk } = fakeSdkFactory(async () => okResult([]));
+    const engine = createTestEngine({ loadSdk: async () => sdk });
+    await engine.run({ kind: 'fake' });
+    engine.cancel();
+    const out = await engine.run({ kind: 'fake' });
+    expect(out.text).toBe('');
+    expect(out.confidence).toBeNull();
+  });
+
+  it('cancel() during an in-flight run() rejects that run with OcrCancelledError', async () => {
+    let startedPredict;
+    const started = new Promise((resolve) => { startedPredict = resolve; });
+    let rejectPredict;
+    const stuck = new Promise((_, reject) => { rejectPredict = reject; });
+    const { sdk } = fakeSdkFactory(() => { startedPredict(); return stuck; });
+    const engine = createTestEngine({ loadSdk: async () => sdk });
+    const p = engine.run({ kind: 'fake' });
+    await started;
+    engine.cancel();
+    rejectPredict(new Error('instance disposed'));
+    await expect(p).rejects.toBeInstanceOf(OcrCancelledError);
   });
 });

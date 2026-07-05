@@ -8,6 +8,7 @@ import {
   generateReport,
   buildSegmentationSection,
 } from './report.js';
+import { NEQ_DELTA_HTML } from './enabled-entities.js';
 
 describe('classifyEntities', () => {
   it('classifies matched entities as TP, unmatched expected as FN, unmatched predicted as FP', () => {
@@ -256,6 +257,46 @@ describe('generateReport', () => {
       expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
     } finally {
       await rm(runDir, { recursive: true, force: true });
+    }
+  });
+  it('prefers scores.enabledEntities over summary.enabledEntities in the comparison table', async () => {
+    const pid = process.pid;
+    const prevRunId = `zzz-vitest-report-ee-${pid}`;
+    const curRunId = `vitest-report-ee-${pid}`;
+    const prevDir = join(import.meta.dirname, '../../test-data/results', prevRunId);
+    const curDir = join(import.meta.dirname, '../../test-data/results', curRunId);
+    const full = ['PERSON_NAME', 'ADDRESS', 'DATE'];
+    const subset = ['PERSON_NAME'];
+
+    // Historical run: scores.json carries a subset; summary.json the full set.
+    const prevScores = {
+      overall: { f1: 0.70, precision: 0.70, recall: 0.70, byType: {} },
+      enabledEntities: subset,
+      documents: {},
+    };
+    const scoresData = {
+      overall: { f1: 0.90, precision: 0.90, recall: 0.90, byType: {} },
+      enabledEntities: full,
+      documents: {},
+    };
+
+    await rm(prevDir, { recursive: true, force: true });
+    await rm(curDir, { recursive: true, force: true });
+    await mkdir(prevDir, { recursive: true });
+    await mkdir(curDir, { recursive: true });
+    await writeFile(join(prevDir, 'scores.json'), JSON.stringify(prevScores), 'utf-8');
+    await writeFile(join(prevDir, 'summary.json'), JSON.stringify({ label: 'ee-prev', enabledEntities: full }), 'utf-8');
+    await writeFile(join(curDir, 'summary.json'), JSON.stringify({ label: 'ee-cur', enabledEntities: full }), 'utf-8');
+
+    try {
+      const reportPath = await generateReport(curRunId, scoresData);
+      const html = await readFile(reportPath, 'utf-8');
+      // Precedence resolves the historical run to the scores subset; it differs
+      // from the current run's full set, so deltas are misleading → ≠types.
+      expect(html).toContain(NEQ_DELTA_HTML);
+    } finally {
+      await rm(prevDir, { recursive: true, force: true });
+      await rm(curDir, { recursive: true, force: true });
     }
   });
 });

@@ -57,7 +57,7 @@ async function listRuns() {
         runId: entry,
         label: summary.label || null,
         timestamp: summary.timestamp || null,
-        enabledEntities: summary.enabledEntities || scores.enabledEntities || null,
+        enabledEntities: scores.enabledEntities ?? summary.enabledEntities ?? null,
         scores,
       });
     } catch {

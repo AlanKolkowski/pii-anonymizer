@@ -316,6 +316,7 @@ export function createSourcesList(rootEl, opts) {
         opts.onTextDirtyChange?.(id, dirty);
         if (id === activeId) refreshToolbar();
       },
+      getGlobalSeen: opts.getGlobalSeen,
     });
 
     cardsHost.appendChild(wrapper);
@@ -335,6 +336,16 @@ export function createSourcesList(rootEl, opts) {
     labelEl.className = 'meta';
     labelEl.dataset.testid = 'editor-toolbar-label';
     labelEl.textContent = card.label;
+    labelEl.title = 'Kliknij, aby zmienić nazwę dokumentu.';
+    labelEl.setAttribute('role', 'button');
+    labelEl.tabIndex = 0;
+    const openRename = () => beginRename(activeId);
+    labelEl.addEventListener('click', openRename);
+    labelEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openRename();
+    });
     left.appendChild(labelEl);
 
     const mcpLabelEl = document.createElement('span');

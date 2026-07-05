@@ -179,4 +179,57 @@ describe('tokensFromEntities', () => {
     const labels = [tokens.get(0), tokens.get(1)].sort();
     expect(labels).toEqual(['[PERSON_NAME_1]', '[PERSON_NAME_2]']);
   });
+
+  it('overlays globalSeen token when the key is present', () => {
+    const text = 'Anna.';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const globalSeen = { 'PERSON_NAME::Anna': '[PERSON_NAME_2]' };
+    const tokens = tokensFromEntities([a], text, globalSeen);
+    expect(tokens.get(0)).toBe('[PERSON_NAME_2]');
+  });
+
+  it('falls back to the per-doc token when the key is missing from globalSeen', () => {
+    const text = 'Anna.';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const globalSeen = { 'PERSON_NAME::SomeoneElse': '[PERSON_NAME_9]' };
+    const tokens = tokensFromEntities([a], text, globalSeen);
+    expect(tokens.get(0)).toBe('[PERSON_NAME_1]');
+  });
+
+  it('defaults to per-doc numbering when globalSeen is null', () => {
+    const text = 'Anna i Adam.';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const b = { entity_group: 'PERSON_NAME', start: 7, end: 11 };
+    const tokens = tokensFromEntities([a, b], text, null);
+    const labels = [tokens.get(0), tokens.get(1)].sort();
+    expect(labels).toEqual(['[PERSON_NAME_1]', '[PERSON_NAME_2]']);
+  });
+
+  it('groups same-key entities under the global token', () => {
+    const text = 'Anna and Anna again';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const b = { entity_group: 'PERSON_NAME', start: 9, end: 13 };
+    const globalSeen = { 'PERSON_NAME::Anna': '[PERSON_NAME_7]' };
+    const tokens = tokensFromEntities([a, b], text, globalSeen);
+    expect(tokens.get(0)).toBe('[PERSON_NAME_7]');
+    expect(tokens.get(1)).toBe('[PERSON_NAME_7]');
+  });
+
+  it('threads globalSeen through removeToken', () => {
+    const text = 'Anna and Anna again';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const b = { entity_group: 'PERSON_NAME', start: 9, end: 13 };
+    const globalSeen = { 'PERSON_NAME::Anna': '[PERSON_NAME_7]' };
+    const result = removeToken([a, b], a, text, globalSeen);
+    expect(result).toHaveLength(0);
+  });
+
+  it('threads globalSeen through updateTypeForToken', () => {
+    const text = 'Anna and Anna again';
+    const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
+    const b = { entity_group: 'PERSON_NAME', start: 9, end: 13 };
+    const globalSeen = { 'PERSON_NAME::Anna': '[PERSON_NAME_7]' };
+    const result = updateTypeForToken([a, b], a, 'PERSON_ALIAS', text, globalSeen);
+    expect(result.every((e) => e.entity_group === 'PERSON_ALIAS')).toBe(true);
+  });
 });

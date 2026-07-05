@@ -14,14 +14,14 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   use: {
-    baseURL: `http://localhost:${PORT}/pii-anonymizer/`,
+    baseURL: `http://localhost:${PORT}/`,
     trace: 'retain-on-failure',
     headless: true,
   },
   webServer: {
     command: `npx vite --strictPort --port ${PORT}`,
     cwd: ROOT,
-    url: `http://localhost:${PORT}/pii-anonymizer/`,
+    url: `http://localhost:${PORT}/tool.html`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
     stdout: 'pipe',

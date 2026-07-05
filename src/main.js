@@ -32,6 +32,11 @@ import './ui/sources-list/styles.css';
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
 });
+worker.onerror = () => {
+  if (everConfigured) setResultStatus('Błąd analizatora: odśwież stronę, jeśli problem się powtarza.');
+  else handleWorkerBootFailure();
+};
+worker.onmessageerror = worker.onerror;
 
 const sources = [];
 const outcomes = [];
@@ -44,6 +49,10 @@ const inFlightSourceIds = new Set();
 const inFlightClassifyTexts = new Map();
 const inFlightFileImportIds = new Set();
 let configuredOnce = false;
+let everConfigured = false;
+let workerBootFailed = false;
+let handshakeTimer = null;
+const CONFIGURE_HANDSHAKE_TIMEOUT_MS = 20000;
 const urlParams = new URLSearchParams(window.location.search);
 const isDebug = urlParams.get('debug') === '1';
 const LS_KEY = 'pii.selected-entities';
@@ -68,6 +77,14 @@ const runBarStatusEl = document.querySelector('[data-testid="run-bar-status"]');
 function setHidden(els, hidden) { els.forEach(el => { el.hidden = hidden; }); }
 function setDisabled(els, disabled) { els.forEach(el => { el.disabled = disabled; }); }
 function setText(els, text) { els.forEach(el => { el.textContent = text; }); }
+let resultStatus = '';
+function setResultStatus(text) { resultStatus = text; setText(modelStatusEls, text); }
+function handleWorkerBootFailure() {
+  if (everConfigured || workerBootFailed) return;
+  workerBootFailed = true;
+  setResultStatus('Nie udało się uruchomić modułu analizy. Odśwież stronę (Ctrl+R / Cmd+R), aby spróbować ponownie.');
+  refreshAnonymizeButton();
+}
 
 const debugSection = document.getElementById('debug-section');
 const debugPanel = document.getElementById('debug-panel');
@@ -103,6 +120,7 @@ let progressBatchTotal = 0;
 let progressSourceIndex = 0;
 let fileImportProgressState = createInitialFileImportProgressState();
 let fileImportProgressHideTimer = null;
+let fileImportAbortController = null;
 let configureTimer = null;
 let configRequestId = 0;
 let predownloadInFlight = false;
@@ -119,7 +137,7 @@ function renderProgressState() {
 }
 
 function renderFileImportProgressState() {
-  progressOverlay?.renderView(getFileImportProgressView(fileImportProgressState));
+  progressOverlay?.renderView(getFileImportProgressView(fileImportProgressState), { onCancel: () => fileImportAbortController?.abort() });
 }
 
 function updateProgress(event) {
@@ -325,6 +343,7 @@ preloadNerInput?.addEventListener('change', () => {
 updateWebnnHint(initialSelection);
 
 postConfigure(selector.getSelected());
+handshakeTimer = setTimeout(handleWorkerBootFailure, CONFIGURE_HANDSHAKE_TIMEOUT_MS);
 
 function runWhenIdle(fn) {
   if ('requestIdleCallback' in window) {
@@ -382,9 +401,11 @@ const sourcesList = createSourcesList(sourcesListRoot, {
   async onAddFiles(files) {
     const batch = Array.from(files ?? []);
     if (batch.length === 0) return;
+    fileImportAbortController = new AbortController();
     updateFileImportProgress({ type: 'batch-start', total: batch.length, t: performance.now() });
     let index = 0;
     for (const file of batch) {
+      if (fileImportAbortController.signal.aborted) break;
       index += 1;
       await addSourceFromFile(file, { index, total: batch.length });
     }
@@ -408,6 +429,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     const s = sources.find((x) => x.id === id);
     if (s) s.label = label;
   },
+  getGlobalSeen: () => seen,
   onMcpLabelChange(id, mcpLabel) {
     const s = sources.find((x) => x.id === id);
     if (s) s.mcpLabel = mcpLabel;
@@ -549,7 +571,7 @@ async function addSourceFromFile(file, batch = {}) {
   });
 
   try {
-    const { text, meta } = await extractText(file, { onProgress, onModelLoad });
+    const { text, meta } = await extractText(file, { onProgress, onModelLoad, signal: fileImportAbortController?.signal });
     const s = sources.find((x) => x.id === id);
     if (s) {
       s.text = text;
@@ -564,13 +586,14 @@ async function addSourceFromFile(file, batch = {}) {
       scheduleFileImportProgressHide();
     }
   } catch (err) {
+    const message = err.name === 'OcrCancelledError' ? 'Import anulowany' : err.message;
     const s = sources.find((x) => x.id === id);
     if (s) {
       s.status = 'error';
-      s.error = err.message;
-      sourcesList.setSourceStatus(id, 'error', err.message);
+      s.error = message;
+      sourcesList.setSourceStatus(id, 'error', message);
     }
-    updateFileImportProgress({ type: 'error', id, label, message: err.message, t: performance.now() });
+    updateFileImportProgress({ type: 'error', id, label, message, t: performance.now() });
     if (isLastInBatch) scheduleFileImportProgressHide();
   } finally {
     inFlightFileImportIds.delete(id);
@@ -644,7 +667,7 @@ function refreshAnonymizeButton() {
     setText(anonymizeBtns, hasReclassify ? 'Anonimizuj ponownie' : 'Anonimizuj');
   }
   if (!hasSelection) setText(modelStatusEls, 'Wybierz przynajmniej jedną encję.');
-  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isBlockingModelPredownloadInFlight()) setText(modelStatusEls, '');
+  else if (!isAnyClassifyInFlight() && !isAnyFileImportInFlight() && !isBlockingModelPredownloadInFlight()) setText(modelStatusEls, resultStatus);
   refreshRunBar();
 }
 
@@ -989,7 +1012,7 @@ async function predownloadModels({ includeOcr = true, includeNer = true, auto = 
       predownloadInFlight = false;
       predownloadBlocking = false;
       refreshAnonymizeButton();
-      if (errorMessage) setText(modelStatusEls, `Błąd pobierania modeli: ${errorMessage}`);
+      if (errorMessage) setResultStatus(`Błąd pobierania modeli: ${errorMessage}`);
       else {
         schedulePredownloadRunBarHide();
         maybeAutoPreloadNer();
@@ -1126,6 +1149,8 @@ worker.onmessage = (e) => {
     }
     case 'configured':
       if (!isCurrentConfigMessage(msg)) break;
+      everConfigured = true;
+      clearTimeout(handshakeTimer);
       configuredOnce = true;
       refreshAnonymizeButton();
       maybeAutoPreloadNer();
@@ -1163,9 +1188,9 @@ worker.onmessage = (e) => {
         scheduleProgressHide();
         const allEmpty = sources.every((x) => x.entities.length === 0);
         if (allEmpty) {
-          setText(modelStatusEls, 'Nie znaleziono żadnych danych osobowych w tekście.');
+          setResultStatus('Nie znaleziono żadnych danych osobowych w tekście.');
         } else {
-          setText(modelStatusEls, '');
+          setResultStatus('');
         }
         lastRun = {
           texts: new Map(sources.map((x) => [x.id, x.text])),
@@ -1202,7 +1227,7 @@ worker.onmessage = (e) => {
         setText(anonymizeBtns, 'Anonimizuj');
         scheduleProgressHide();
       }
-      setText(modelStatusEls, `Błąd: ${msg.message}`);
+      setResultStatus(`Błąd: ${msg.message}`);
       refreshAnonymizeButton();
       break;
     }
@@ -1257,6 +1282,7 @@ anonymizeBtns.forEach(btn => btn.addEventListener('click', () => {
     inFlightSourceIds.add(s.id);
     pendingClassifies.push({ id: s.id, text: s.text });
   }
+  resultStatus = '';
   setText(modelStatusEls, `Analizowanie 0/${toClassify.length}…`);
   setText(anonymizeBtns, 'Analizowanie...');
   refreshAnonymizeButton();

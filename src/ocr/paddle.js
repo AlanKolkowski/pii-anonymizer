@@ -50,7 +50,7 @@ async function openCache(cacheStorage = globalThis.caches) {
   }
 }
 
-async function responseToBlobWithProgress(response, asset, onChunk) {
+async function responseToBlobWithProgress(response, asset, onChunk, signal) {
   const total = sizeFromHeaders(response.headers);
   const type = response.headers?.get?.('content-type') || 'application/x-tar';
   const chunks = [];
@@ -59,6 +59,10 @@ async function responseToBlobWithProgress(response, asset, onChunk) {
   if (response.body?.getReader) {
     const reader = response.body.getReader();
     while (true) {
+      if (signal?.aborted) {
+        try { await reader.cancel(); } catch { /* swallow */ }
+        throw new DOMException('Aborted', 'AbortError');
+      }
       const { done, value } = await reader.read();
       if (done) break;
       if (!value) continue;
@@ -89,6 +93,7 @@ export async function downloadOcrModelAssets({
   cacheStorage = globalThis.caches,
   fetchFn = globalThis.fetch?.bind(globalThis),
   onProgress = () => {},
+  signal,
 } = {}) {
   if (!fetchFn) {
     return {};
@@ -157,7 +162,8 @@ export async function downloadOcrModelAssets({
         });
       } else {
         emit('download', asset, { fileLoadedBytes: 0, fileTotalBytes: 0 });
-        const response = await fetchFn(asset.url);
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+        const response = await fetchFn(asset.url, { signal });
         if (!response?.ok) {
           throw new Error(`Could not download OCR model ${asset.url}: ${response?.status ?? 'unknown'} ${response?.statusText ?? ''}`.trim());
         }
@@ -166,7 +172,7 @@ export async function downloadOcrModelAssets({
             fileLoadedBytes: loaded,
             fileTotalBytes: total,
           });
-        });
+        }, signal);
         if (cache) {
           try {
             await cache.put(asset.url, new Response(blob, {
@@ -232,6 +238,8 @@ export function createPaddleEngine(deps = {}) {
   let instance = null;
   let initPromise = null;
   let cancelRequested = false;
+  let runInFlight = false;
+  let downloadAbort = null;
   let onModelLoadListener = null;
   let onProgressListener = null;
   let modelLoadAnnounced = false;
@@ -264,7 +272,8 @@ export function createPaddleEngine(deps = {}) {
         throw new OcrFailedError(new Error('PaddleOCR.create not exported by @paddleocr/paddleocr-js'));
       }
       try {
-        downloadedAssets = await downloadModelAssets({ onProgress: emitProgress });
+        downloadAbort = new AbortController();
+        downloadedAssets = await downloadModelAssets({ onProgress: emitProgress, signal: downloadAbort.signal });
         if (cancelRequested) {
           initPromise = null;
           return;
@@ -289,12 +298,14 @@ export function createPaddleEngine(deps = {}) {
         }
         instance = made;
         emitLoadEnd();
+        initPromise = null;
       } catch (err) {
         initPromise = null;
         modelLoadAnnounced = false;
         throw new OcrFailedError(err);
       } finally {
         downloadedAssets?.revoke?.();
+        downloadAbort = null;
       }
     })();
     return initPromise;
@@ -323,6 +334,7 @@ export function createPaddleEngine(deps = {}) {
   }
 
   async function run(input, options = {}) {
+    runInFlight = true;
     try {
       await init();
       options.onRunStart?.();
@@ -345,11 +357,14 @@ export function createPaddleEngine(deps = {}) {
       if (err instanceof OcrCancelledError) throw err;
       if (err instanceof OcrFailedError) throw err;
       throw new OcrFailedError(err);
+    } finally {
+      runInFlight = false;
     }
   }
 
   function cancel() {
-    cancelRequested = true;
+    if (initPromise || runInFlight) cancelRequested = true;
+    downloadAbort?.abort();
     if (instance) {
       const i = instance;
       instance = null;

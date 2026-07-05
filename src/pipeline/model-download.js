@@ -207,6 +207,27 @@ async function putStreamingWithProgress(cache, cacheKey, response, {
   progressCallback({ status: 'progress', file, progress: 100, loaded, total: total || loaded });
 }
 
+// Concurrent callers racing past the cache-miss check for the same remote file
+// each kick off a fetch; the second cache.put clobbers the first mid-stream.
+// Dedupe by remoteUrl: the first caller's fetch wins, joiners await the shared
+// promise. get/set are synchronous within a single task, so two racers cannot
+// both register.
+const inFlightDownloads = new Map();
+
+async function dedupeDownload(remoteUrl, fn) {
+  const existing = inFlightDownloads.get(remoteUrl);
+  if (existing) return existing;
+  const promise = (async () => {
+    try {
+      return await fn();
+    } finally {
+      inFlightDownloads.delete(remoteUrl);
+    }
+  })();
+  inFlightDownloads.set(remoteUrl, promise);
+  return promise;
+}
+
 export async function ensureModelFileCached(modelId, file, {
   sizeBytes = 0,
   revision = 'main',
@@ -225,59 +246,71 @@ export async function ensureModelFileCached(modelId, file, {
     return { cached: true };
   }
 
-  progressCallback({ status: 'download', file, progress: 0, loaded: 0, total: expectedBytes });
-  const response = await fetchFn(remoteUrl);
-  if (!response.ok) {
-    throw new Error(`Could not download model file ${remoteUrl}: ${response.status} ${response.statusText}`);
-  }
+  const result = await dedupeDownload(remoteUrl, async () => {
+    progressCallback({ status: 'download', file, progress: 0, loaded: 0, total: expectedBytes });
+    const response = await fetchFn(remoteUrl);
+    if (!response.ok) {
+      throw new Error(`Could not download model file ${remoteUrl}: ${response.status} ${response.statusText}`);
+    }
 
-  try {
-    await putStreamingWithProgress(cache, remoteUrl, response, {
-      file,
-      expectedBytes,
-      progressCallback,
-    });
-  } catch (err) {
-    console.warn(`[model-download] unable to cache ${file}:`, err);
-    return { cached: false, error: err };
-  }
+    try {
+      await putStreamingWithProgress(cache, remoteUrl, response, {
+        file,
+        expectedBytes,
+        progressCallback,
+      });
+    } catch (err) {
+      console.warn(`[model-download] unable to cache ${file}:`, err);
+      return { cached: false, error: err };
+    }
 
-  return { cached: true };
+    return { cached: true };
+  });
+
+  // Complete the progress UI for a caller that joined an in-flight download
+  // (its own download/progress events never fired). Idempotent for the caller
+  // that drove the download, which already reached 100% via putStreamingWithProgress.
+  if (result.cached) {
+    progressCallback({ status: 'progress', file, progress: 100, loaded: expectedBytes, total: expectedBytes });
+  }
+  return result;
 }
 
 async function downloadPlannedFile(cache, item, fetchFn, progressCallback) {
-  progressCallback({
-    status: 'download',
-    file: item.displayFile,
-    modelId: item.modelId,
-    rawFile: item.file,
-    progress: 0,
-    loaded: 0,
-    total: item.sizeBytes,
-  });
-
-  const response = await fetchFn(item.remoteUrl);
-  if (!response.ok) {
-    throw new Error(`Could not download model file ${item.remoteUrl}: ${response.status} ${response.statusText}`);
-  }
-
-  try {
-    await putStreamingWithProgress(cache, item.remoteUrl, response, {
+  return dedupeDownload(item.remoteUrl, async () => {
+    progressCallback({
+      status: 'download',
       file: item.displayFile,
-      expectedBytes: item.sizeBytes,
-      progressCallback: (event) => progressCallback({
-        ...event,
-        file: item.displayFile,
-        modelId: item.modelId,
-        rawFile: item.file,
-      }),
+      modelId: item.modelId,
+      rawFile: item.file,
+      progress: 0,
+      loaded: 0,
+      total: item.sizeBytes,
     });
-  } catch (err) {
-    console.warn(`[model-download] unable to cache ${item.displayFile}:`, err);
-    return { cached: false, error: err };
-  }
 
-  return { cached: true };
+    const response = await fetchFn(item.remoteUrl);
+    if (!response.ok) {
+      throw new Error(`Could not download model file ${item.remoteUrl}: ${response.status} ${response.statusText}`);
+    }
+
+    try {
+      await putStreamingWithProgress(cache, item.remoteUrl, response, {
+        file: item.displayFile,
+        expectedBytes: item.sizeBytes,
+        progressCallback: (event) => progressCallback({
+          ...event,
+          file: item.displayFile,
+          modelId: item.modelId,
+          rawFile: item.file,
+        }),
+      });
+    } catch (err) {
+      console.warn(`[model-download] unable to cache ${item.displayFile}:`, err);
+      return { cached: false, error: err };
+    }
+
+    return { cached: true };
+  });
 }
 
 export async function ensureModelSourcesCached(defs, {

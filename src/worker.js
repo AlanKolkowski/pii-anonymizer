@@ -4,8 +4,8 @@ import sentencexWasm from 'sentencex-wasm/sentencex_wasm_bg.wasm?url';
 import { classifyWithCache, sha256Hex } from './pipeline/cache-orchestrator.js';
 import { SOURCES, ENTITY_SOURCES, requiredSources } from './pipeline/configs/entity-sources.js';
 import { ensureModelSourcesCached } from './pipeline/model-download.js';
+import { createSerialQueue } from './serial-queue.js';
 import { createBoundedNerCache } from './worker-cache.js';
-
 // ORT-Web's default caps threads aggressively (~min(hw/2, 4)). On 8c+ machines
 // that leaves ~30% perf on the table for BERT matmul. Cap at 8 because gains
 // flatten past that on memory bandwidth, and on lower-core hardware fall back
@@ -375,6 +375,83 @@ async function predownloadAndLoadNerModels(requestId, { enabledEntities, backend
   });
 }
 
+const enqueue = createSerialQueue();
+
+async function runConfigure(data) {
+  const configRequestId = data.configRequestId;
+  try {
+    const requestedBackend = data.backend ?? 'wasm';
+    const backendInfo = await applyBackendPreference(requestedBackend);
+    self.postMessage({
+      type: 'backend-resolved',
+      webnnAvailable: backendInfo.webnnAvailable,
+      requested: backendInfo.requested,
+      configRequestId,
+    });
+    const enabledEntities = data.enabledEntities ?? [];
+    const requiredAliases = requiredSources(enabledEntities).filter((a) => SOURCES[a]?.kind === 'hf');
+    currentConfig = { enabledEntities, requiredAliases };
+    await disposeUnusedModels(requiredAliases);
+    self.postMessage({ type: 'configured', requiredAliases, configRequestId });
+  } catch (err) {
+    console.error('[worker] configure failed:', err);
+    self.postMessage({ type: 'error', message: err.message, configRequestId });
+  }
+}
+
+async function runClassify(data) {
+  const { id } = data;
+  if (!currentConfig) {
+    self.postMessage({ type: 'error', id, message: 'Worker not configured' });
+    return;
+  }
+  if (currentConfig.enabledEntities.length === 0) {
+    self.postMessage({ type: 'error', id, message: 'No entities enabled' });
+    return;
+  }
+  postTiming('classify:start');
+  try {
+    const sortSources = (hf) => [...hf].sort((a, b) => {
+      const aLoaded = loadedModels.has(a.alias) ? 0 : 1;
+      const bLoaded = loadedModels.has(b.alias) ? 0 : 1;
+      if (aLoaded !== bLoaded) return aLoaded - bLoaded;
+      // Big-first: WASM linear memory grows in place when the largest model
+      // is allocated first, avoiding the heap copy/relocation that happens
+      // when a smaller heap has to grow to fit a larger model on top.
+      return (SOURCES[b.alias]?.sizeMB ?? 0) - (SOURCES[a.alias]?.sizeMB ?? 0);
+    });
+
+    const hash = await sha256Hex(data.text);
+    const prev = nerCache.get(hash) ?? null;
+    const { ctx, cache: newEntry } = await classifyWithCache({
+      text: data.text,
+      enabledEntities: currentConfig.enabledEntities,
+      cache: prev,
+      sources: SOURCES,
+      entitySources: ENTITY_SOURCES,
+      loadModel: loadModelForPipeline,
+      getSentenceBoundaries: get_sentence_boundaries,
+      sortSources,
+      prepareModels: downloadModelFilesForPipeline,
+      onTimingMark: postTiming,
+      onProgress: (event) => self.postMessage(event),
+    });
+    nerCache.set(hash, newEntry);
+
+    self.postMessage({
+      type: 'result',
+      id,
+      data: ctx.entities,
+      anonymized: ctx.anonymized,
+      legend: ctx.legend,
+      debug: ctx.debug,
+    });
+  } catch (err) {
+    console.error('[worker] classify failed:', err);
+    self.postMessage({ type: 'error', id, message: err.message });
+  }
+}
+
 self.onmessage = async (e) => {
   const { type } = e.data;
 
@@ -394,79 +471,12 @@ self.onmessage = async (e) => {
   }
 
   if (type === 'configure') {
-    const configRequestId = e.data.configRequestId;
-    try {
-      const requestedBackend = e.data.backend ?? 'wasm';
-      const backendInfo = await applyBackendPreference(requestedBackend);
-      self.postMessage({
-        type: 'backend-resolved',
-        webnnAvailable: backendInfo.webnnAvailable,
-        requested: backendInfo.requested,
-        configRequestId,
-      });
-      const enabledEntities = e.data.enabledEntities ?? [];
-      const requiredAliases = requiredSources(enabledEntities).filter((a) => SOURCES[a]?.kind === 'hf');
-      currentConfig = { enabledEntities, requiredAliases };
-      await disposeUnusedModels(requiredAliases);
-      self.postMessage({ type: 'configured', requiredAliases, configRequestId });
-    } catch (err) {
-      console.error('[worker] configure failed:', err);
-      self.postMessage({ type: 'error', message: err.message, configRequestId });
-    }
+    enqueue(() => runConfigure(e.data));
     return;
   }
 
   if (type === 'classify') {
-    const { id } = e.data;
-    if (!currentConfig) {
-      self.postMessage({ type: 'error', id, message: 'Worker not configured' });
-      return;
-    }
-    if (currentConfig.enabledEntities.length === 0) {
-      self.postMessage({ type: 'error', id, message: 'No entities enabled' });
-      return;
-    }
-    postTiming('classify:start');
-    try {
-      const sortSources = (hf) => [...hf].sort((a, b) => {
-        const aLoaded = loadedModels.has(a.alias) ? 0 : 1;
-        const bLoaded = loadedModels.has(b.alias) ? 0 : 1;
-        if (aLoaded !== bLoaded) return aLoaded - bLoaded;
-        // Big-first: WASM linear memory grows in place when the largest model
-        // is allocated first, avoiding the heap copy/relocation that happens
-        // when a smaller heap has to grow to fit a larger model on top.
-        return (SOURCES[b.alias]?.sizeMB ?? 0) - (SOURCES[a.alias]?.sizeMB ?? 0);
-      });
-
-      const hash = await sha256Hex(e.data.text);
-      const prev = nerCache.get(hash) ?? null;
-      const { ctx, cache: newEntry } = await classifyWithCache({
-        text: e.data.text,
-        enabledEntities: currentConfig.enabledEntities,
-        cache: prev,
-        sources: SOURCES,
-        entitySources: ENTITY_SOURCES,
-        loadModel: loadModelForPipeline,
-        getSentenceBoundaries: get_sentence_boundaries,
-        sortSources,
-        prepareModels: downloadModelFilesForPipeline,
-        onTimingMark: postTiming,
-        onProgress: (event) => self.postMessage(event),
-      });
-      nerCache.set(hash, newEntry);
-
-      self.postMessage({
-        type: 'result',
-        id,
-        data: ctx.entities,
-        anonymized: ctx.anonymized,
-        legend: ctx.legend,
-        debug: ctx.debug,
-      });
-    } catch (err) {
-      console.error('[worker] classify failed:', err);
-      self.postMessage({ type: 'error', id, message: err.message });
-    }
+    enqueue(() => runClassify(e.data));
     return;
   }
 };

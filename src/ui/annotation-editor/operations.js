@@ -25,21 +25,21 @@ function tokenForEntity(entity, text, legend) {
   return null;
 }
 
-export function tokensFromEntities(entities, text) {
+export function tokensFromEntities(entities, text, globalSeen = null) {
   const { seen, legend } = buildTokenMap(entities, text);
   const result = new Map();
   for (let i = 0; i < entities.length; i++) {
     const e = entities[i];
     const value = text.slice(e.start, e.end);
     const key = `${e.entity_group}::${value}`;
-    const token = seen[key];
+    const token = globalSeen?.[key] ?? seen[key];
     result.set(i, token);
   }
   return result;
 }
 
-export function removeToken(entities, anchor, text) {
-  const tokens = tokensFromEntities(entities, text);
+export function removeToken(entities, anchor, text, globalSeen = null) {
+  const tokens = tokensFromEntities(entities, text, globalSeen);
   const anchorIndex = entities.indexOf(anchor);
   if (anchorIndex < 0) return entities;
   const targetToken = tokens.get(anchorIndex);
@@ -47,8 +47,8 @@ export function removeToken(entities, anchor, text) {
   return entities.filter((_, i) => tokens.get(i) !== targetToken);
 }
 
-export function updateTypeForToken(entities, anchor, newType, text) {
-  const tokens = tokensFromEntities(entities, text);
+export function updateTypeForToken(entities, anchor, newType, text, globalSeen = null) {
+  const tokens = tokensFromEntities(entities, text, globalSeen);
   const anchorIndex = entities.indexOf(anchor);
   if (anchorIndex < 0) return entities;
   const targetToken = tokens.get(anchorIndex);

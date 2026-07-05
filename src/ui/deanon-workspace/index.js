@@ -183,12 +183,27 @@ export function createDeanonWorkspace(rootEl, opts) {
     Object.assign(exportState, next);
   }
 
+  const EXPORT_MESSAGE_TIMEOUT_MS = 6000;
+  let exportMessageTimer = null;
+  let lastRenderSignature = null;
+
+  function renderSignature() {
+    return JSON.stringify({
+      legend: getLegend(),
+      outcomes: getOutcomes().map((o) => [o.id, o.label, o.text]),
+      activeId,
+      busy: exportState.busy,
+      message: exportState.message,
+    });
+  }
+
   async function runExport(format) {
     const outcomes = getOutcomes();
     const legend = getLegend();
     if (exportState.busy || outcomes.length === 0) return;
     if (typeof opts.onExport !== 'function') return;
 
+    clearTimeout(exportMessageTimer);
     setExportState({ busy: true, format, message: exportStartMessage(format, outcomes.length) });
     render();
     try {
@@ -205,6 +220,10 @@ export function createDeanonWorkspace(rootEl, opts) {
       setExportState({ busy: false, format: null, message: err?.message || fallback });
     }
     render();
+    exportMessageTimer = setTimeout(() => {
+      exportState.message = '';
+      render();
+    }, EXPORT_MESSAGE_TIMEOUT_MS);
   }
 
   function currentOutcome(outcomes) {
@@ -467,6 +486,14 @@ export function createDeanonWorkspace(rootEl, opts) {
     const outcomes = getOutcomes();
     const legend = getLegend();
     const active = currentOutcome(outcomes);
+
+    const prevInputBody = rootEl.querySelector('[data-testid="deanon-input-body"]');
+    const prevOutputBody = rootEl.querySelector('[data-testid="deanon-output-body"]');
+    const preservedScroll = {
+      input: prevInputBody ? { top: prevInputBody.scrollTop, left: prevInputBody.scrollLeft } : null,
+      output: prevOutputBody ? { top: prevOutputBody.scrollTop, left: prevOutputBody.scrollLeft } : null,
+    };
+
     rootEl.innerHTML = '';
 
     const body = document.createElement('div');
@@ -476,6 +503,17 @@ export function createDeanonWorkspace(rootEl, opts) {
     renderOutputPane(body, active, legend);
     rootEl.appendChild(body);
     renderRunBar(rootEl, outcomes, legend);
+
+    if (preservedScroll.input) {
+      const node = rootEl.querySelector('[data-testid="deanon-input-body"]');
+      if (node) { node.scrollTop = preservedScroll.input.top; node.scrollLeft = preservedScroll.input.left; }
+    }
+    if (preservedScroll.output) {
+      const node = rootEl.querySelector('[data-testid="deanon-output-body"]');
+      if (node) { node.scrollTop = preservedScroll.output.top; node.scrollLeft = preservedScroll.output.left; }
+    }
+
+    lastRenderSignature = renderSignature();
   }
 
   return {
@@ -485,6 +523,8 @@ export function createDeanonWorkspace(rootEl, opts) {
       render();
     },
     refreshLegend() {
+      const sig = renderSignature();
+      if (sig === lastRenderSignature) return;
       render();
     },
     getActiveId() {

@@ -198,4 +198,80 @@ describe('createDeanonWorkspace', () => {
       'brak legendy tokenów',
     );
   });
+  it('refreshLegend skips no-op re-renders, preserving the existing DOM nodes (#38)', () => {
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }];
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById('root');
+    const workspace = createDeanonWorkspace(root, {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      entityLabels: {},
+      onExport: vi.fn(),
+    });
+    workspace.render();
+
+    const beforeNode = root.querySelector('[data-testid="deanon-output-body"]');
+    workspace.refreshLegend();
+    workspace.refreshLegend();
+    const afterNode = root.querySelector('[data-testid="deanon-output-body"]');
+    expect(afterNode).toBe(beforeNode);
+  });
+
+  it('refreshLegend preserves scroll position across a real re-render (#38)', () => {
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }];
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById('root');
+    const workspace = createDeanonWorkspace(root, {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      entityLabels: {},
+      onExport: vi.fn(),
+    });
+    workspace.render();
+
+    const body = root.querySelector('[data-testid="deanon-output-body"]');
+    body.scrollTop = 120;
+    body.scrollLeft = 30;
+
+    // mutate legend to force a signature change on the next refreshLegend
+    legend['[FINANCIAL_AMOUNT_1]'] = '123 zł';
+
+    workspace.refreshLegend();
+
+    const newBody = root.querySelector('[data-testid="deanon-output-body"]');
+    expect(newBody).not.toBe(body);
+    expect(newBody.scrollTop).toBe(120);
+    expect(newBody.scrollLeft).toBe(30);
+  });
+
+  it('clears the export status message after a timeout, restoring token stats (#33)', async () => {
+    vi.useFakeTimers();
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1] [PERSON_NAME_99]' }];
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById('root');
+    const onExport = vi.fn().mockResolvedValue({ count: 1, archive: false });
+    const workspace = createDeanonWorkspace(root, {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      entityLabels: {},
+      onExport,
+    });
+    workspace.render();
+
+    root.querySelector('[data-testid="deanon-export-pdf"]').click();
+    await flushPromises();
+
+    expect(root.querySelector('[data-testid="deanon-run-bar-stats"]').textContent).toBe('Pobrano plik PDF');
+
+    vi.advanceTimersByTime(6000);
+
+    const stats = root.querySelector('[data-testid="deanon-run-bar-stats"]').textContent;
+    expect(stats).toContain('1 token pozostanie niezmieniony');
+    expect(stats).not.toContain('Pobrano plik PDF');
+
+    vi.useRealTimers();
+  });
 });
