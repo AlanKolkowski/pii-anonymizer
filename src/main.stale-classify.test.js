@@ -154,6 +154,28 @@ function switchToSource(id) {
   tab.click();
 }
 
+function renameActiveSourceTo(label) {
+  const labelEl = document.querySelector('[data-testid="editor-toolbar-label"]');
+  expect(labelEl).not.toBeNull();
+  labelEl.click();
+  const input = document.querySelector('[data-testid^="source-label-input-"]');
+  expect(input).not.toBeNull();
+  input.value = label;
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.dispatchEvent(new Event('blur'));
+}
+
+function renameActiveMcpLabelTo(label) {
+  const labelEl = document.querySelector('[data-testid="editor-toolbar-mcp-label"]');
+  expect(labelEl).not.toBeNull();
+  labelEl.click();
+  const input = document.querySelector('[data-testid^="source-mcp-label-input-"]');
+  expect(input).not.toBeNull();
+  input.value = label;
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.dispatchEvent(new Event('blur'));
+}
+
 function outcomeListingIsUnreadable(entry) {
   return entry == null || entry.readable === false || entry.status === 'unreadable';
 }
@@ -202,6 +224,33 @@ describe('classify result text snapshots', () => {
       { id: 's2', label: 'Źródło 1', char_count: '[PERSON_NAME_1] podpisał umowę.'.length },
     ]);
     expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[PERSON_NAME_1] podpisał umowę.');
+  });
+  it('copy all uses custom MCP labels instead of private source labels', async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+
+    const { worker } = await bootApp();
+    addPasteSourceWithText(TEXT_AT_DISPATCH);
+    renameActiveSourceTo('Jan_Kowalski_vs_Anna_Nowak.pdf');
+    renameActiveMcpLabelTo('Źródło MCP A');
+    addPasteSourceWithText(DOC_B_TEXT);
+    renameActiveSourceTo('PESEL_44051401458.docx');
+    renameActiveMcpLabelTo('Źródło MCP B');
+    clickAnonymize();
+    worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY_FOR_DISPATCH_TEXT] });
+    worker.emit({ type: 'result', id: 's3', data: [PERSON_ENTITY_FOR_DOC_B] });
+
+    document.querySelector('[data-testid="copy-all"]').click();
+
+    await Promise.resolve();
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copied).toBe(
+      '── Źródło MCP A ──\n[PERSON_NAME_1] podpisał umowę.\n\n── Źródło MCP B ──\n[PERSON_NAME_2] czeka na decyzję.',
+    );
+    expect(copied).not.toContain('Jan_Kowalski_vs_Anna_Nowak.pdf');
+    expect(copied).not.toContain('PESEL_44051401458.docx');
+    expect(copied).not.toContain('Jan_Kowalski');
+    expect(copied).not.toContain('44051401458');
   });
 });
 

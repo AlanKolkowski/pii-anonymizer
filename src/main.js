@@ -1240,7 +1240,7 @@ copyAllBtns.forEach(btn => btn.addEventListener('click', async () => {
   const joined = ready
     .map((s) => {
       const text = applyTokens(s.text, s.entities, seen);
-      return ready.length === 1 ? text : `── ${s.label} ──\n${text}`;
+      return ready.length === 1 ? text : `── ${s.mcpLabel} ──\n${text}`;
     })
     .join('\n\n');
   try {
