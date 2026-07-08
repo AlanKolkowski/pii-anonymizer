@@ -14,6 +14,11 @@ const PDFJS_WASM_URL_PREFIX = '/vendor/pdfjs/wasm/';
 // an ONNX protobuf or tar archive and crashes. Send a real 404 instead.
 const NO_FALLBACK_PREFIXES = ['/local-models/', '/ocr-models/'];
 
+export function resolveBasePath(env = process.env) {
+  const value = env.VITE_BASE_PATH;
+  return value && value.trim() ? value : '/';
+}
+
 // PDF.js v5 expects a `wasmUrl` pointing at a directory holding `jbig2.wasm`,
 // `jbig2_nowasm_fallback.js`, `openjpeg.wasm`, etc. Vite's `?url` imports hash
 // filenames and don't co-locate sibling assets, but PDF.js concatenates literal
@@ -76,9 +81,8 @@ function noSpaFallbackForLocalModels() {
 }
 
 export default defineConfig({
-  // Keep asset URLs deployment-agnostic: Cloudflare Pages serves at /,
-  // while the GitHub Pages fallback serves from /pii-anonymizer/.
-  base: './',
+  // Cloudflare/custom-domain builds serve at /; GitHub Pages passes VITE_BASE_PATH=/pii-anonymizer/.
+  base: resolveBasePath(),
   server: {
     host: true,
     port: process.env.PORT ? Number(process.env.PORT) : undefined,
@@ -94,6 +98,9 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         tool: resolve(__dirname, 'tool.html'),
+      },
+      output: {
+        entryFileNames: 'assets/[name]-[hash]-entry.js',
       },
     },
   },

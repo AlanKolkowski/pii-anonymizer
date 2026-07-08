@@ -3,7 +3,7 @@
   Cross-Origin-Embedder-Policy: credentialless
 
 /assets/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=0, must-revalidate
 
 /ocr-models/*
   Cache-Control: public, max-age=31536000, immutable
