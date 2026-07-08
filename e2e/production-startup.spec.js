@@ -73,7 +73,7 @@ test.beforeAll(async () => {
       sendFile(res, path.join(DIST, 'index.html'), 200);
     } catch (err) {
       res.writeHead(500, { 'content-type': 'text/plain' });
-      res.end(err.stack ?? String(err));
+      res.end('Internal Server Error');
     }
   });
 
@@ -100,6 +100,15 @@ test('production build uses a root-absolute non-poisoned tool entry asset', asyn
   expect(toolHtml).not.toContain('tool-BQGIrLjw.js');
   expect(toolHtml).not.toContain('src="./assets/');
   expect(toolHtml).toMatch(/src="\/assets\/tool-[^"]+\.js"/);
+});
+
+test('production fallback server does not expose stack traces in HTTP responses', async ({ request }) => {
+  const response = await request.get(`${origin}/%E0%A4%A`, { failOnStatusCode: false });
+  const body = await response.text();
+
+  expect(response.status()).toBe(500);
+  expect(body).toBe('Internal Server Error');
+  expect(body).not.toMatch(/URIError|at decodeURIComponent|production-startup\.spec\.js/);
 });
 
 test('production tool page hydrates from an extensionless slash route', async ({ page }) => {
