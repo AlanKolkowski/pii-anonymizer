@@ -193,7 +193,11 @@ export async function extractPdf(file, deps = {}) {
         });
       };
       try {
-        await c.page.render({ canvasContext: ctx, viewport }).promise;
+        // intent: 'print' makes pdf.js step the render loop with zero-delay
+        // callbacks instead of requestAnimationFrame, which never fires in a
+        // hidden tab — without it, OCR of a PDF stalls when the user switches
+        // tabs until they come back.
+        await c.page.render({ canvasContext: ctx, viewport, intent: 'print' }).promise;
         bitmap = canvas.transferToImageBitmap();
         if (signal?.aborted) {
           ocr.cancel?.();

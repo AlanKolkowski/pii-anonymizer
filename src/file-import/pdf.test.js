@@ -33,8 +33,8 @@ function fakePdfjs(pages, opts = {}) {
                     ),
                   }),
             getViewport: ({ scale }) => ({ width: 800 * scale, height: 1000 * scale }),
-            render: ({ canvasContext, viewport }) => {
-              renderCalls.push({ page: n, scale: viewport.width / 800 });
+            render: ({ canvasContext, viewport, intent }) => {
+              renderCalls.push({ page: n, scale: viewport.width / 800, intent });
               return { promise: Promise.resolve() };
             },
             getOperatorList: () => {
@@ -161,6 +161,19 @@ describe('extractPdf — mixed / OCR PDFs', () => {
     ]);
     expect(out.meta.ocr).toEqual({ engine: 'paddleocr-v5', backend: 'wasm' });
     expect(ocr.spy).toHaveLength(1);
+  });
+
+  it("rasterizes with intent 'print' so rendering survives hidden tabs (no rAF)", async () => {
+    const helpers = pdfjs([[''], ['']]);
+    await extractPdf(fakeFile(), {
+      ...helpers,
+      ...makeOffscreenCanvasFakes().deps,
+      ...ocrSpy(['a', 'b']).deps,
+    });
+    expect(helpers.pdfjsRef._renderCalls).toHaveLength(2);
+    for (const call of helpers.pdfjsRef._renderCalls) {
+      expect(call.intent).toBe('print');
+    }
   });
 
   it('OCRs every page when none have extractable text', async () => {
