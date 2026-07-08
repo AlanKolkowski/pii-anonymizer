@@ -17,6 +17,7 @@ import {
   getFileImportProgressView,
 } from './ui/file-import-progress-state.js';
 import { extractText } from './file-import/index.js';
+import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
   ENTITY_CATEGORIES,
@@ -421,6 +422,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     sources.splice(idx, 1);
     const removedQueued = removePendingClassify(id);
     if (removedQueued) inFlightSourceIds.delete(id);
+    syncClassifyLock();
     sourcesList.removeSource(id);
     refreshLegend();
     refreshAnonymizeButton();
@@ -570,6 +572,8 @@ async function addSourceFromFile(file, batch = {}) {
     t: performance.now(),
   });
 
+  // Keeps OCR/import alive while the tab is hidden (see background-lock.js).
+  const releaseImportLock = holdBackgroundLock('pii-file-import');
   try {
     const { text, meta } = await extractText(file, { onProgress, onModelLoad, signal: fileImportAbortController?.signal });
     const s = sources.find((x) => x.id === id);
@@ -596,6 +600,7 @@ async function addSourceFromFile(file, batch = {}) {
     updateFileImportProgress({ type: 'error', id, label, message, t: performance.now() });
     if (isLastInBatch) scheduleFileImportProgressHide();
   } finally {
+    releaseImportLock();
     inFlightFileImportIds.delete(id);
     if (isLastInBatch) {
       if (!isAnyFileImportInFlight() && !isAnyClassifyInFlight()) setText(modelStatusEls, '');
@@ -1041,6 +1046,19 @@ function refreshRunBar() {
 // in a batch cheap, so the perceived overhead is small.
 const pendingClassifies = [];
 
+// Held for the whole classify batch so hidden-tab freezing (Edge sleeping
+// tabs, Chrome tab freeze) and intensive timer throttling don't stall it.
+let releaseClassifyLock = null;
+
+function syncClassifyLock() {
+  if (isAnyClassifyInFlight()) {
+    releaseClassifyLock ??= holdBackgroundLock('pii-anonymize');
+  } else if (releaseClassifyLock) {
+    releaseClassifyLock();
+    releaseClassifyLock = null;
+  }
+}
+
 function removePendingClassify(id) {
   const before = pendingClassifies.length;
   for (let i = pendingClassifies.length - 1; i >= 0; i -= 1) {
@@ -1059,6 +1077,7 @@ function dispatchNextClassify() {
     }
     inFlightSourceIds.delete(candidate.id);
   }
+  syncClassifyLock();
   if (!next) return;
   inFlightClassifyTexts.set(next.id, next.text);
   clearProgressHideTimer();
