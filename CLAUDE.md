@@ -59,6 +59,8 @@ The runner (`src/pipeline/runner.js`) threads context through steps and records 
 
 Pipeline steps are environment-agnostic. Model loading is injected via `loadModel` parameter.
 
+Long jobs (file import/OCR, classify batches) hold a shared Web Lock (`src/background-lock.js`) so Chromium doesn't freeze/sleep the tab mid-job, and PDF rasterization renders with `intent: 'print'` so it doesn't stall on `requestAnimationFrame` in hidden tabs. User-facing guidance: `docs/background-tabs.md`.
+
 ### Eval Framework
 
 Ground truth lives in `test-data/synthetic/` as paired `.txt` + `.expected.json` files. Eval runs are stored in `test-data/results/{timestamp}/` with a `latest` symlink. Scoring (`src/eval/score.js`) computes per-document and aggregate precision/recall/F1 using overlap-based entity matching (`src/eval/matching.js`).
