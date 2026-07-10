@@ -96,8 +96,21 @@ if (PACKAGED) {
     process.exit(2);
   }
   const context = browser.contexts()[0];
-  for (let i = 0; i < 40 && context.pages().length === 0; i += 1) await sleep(250);
+  // SECURITY-REVIEW: budget widened from 40*250ms (10s) to 120*250ms (30s) for
+  // SECURITY-FIXES.md B1 — electron/model-integrity.mjs now streams SHA-256
+  // over every model file (~576 MB) before createMainWindow() runs, adding
+  // ~2-3s of measured startup latency on top of normal cold-start. CDP itself
+  // comes up fast (Chromium binds --remote-debugging-port early, independent
+  // of app.whenReady()), so the old budget was already tight; the extra gate
+  // pushed "first page appears" past it. Matches the CDP-connect loop above.
+  for (let i = 0; i < 120 && context.pages().length === 0; i += 1) await sleep(250);
   page = context.pages()[0];
+  if (!page) {
+    console.error('[smoke] CDP connected but no page ever appeared (app exited early? see main process output below)');
+    console.log('[smoke] main process output tail:\n' + mainLines.slice(-40).join('\n'));
+    mainProc.kill();
+    process.exit(2);
+  }
 } else {
   app = await electron.launch({
     args: ['.'],

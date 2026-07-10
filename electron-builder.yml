@@ -10,16 +10,48 @@ directories:
 
 # The renderer is fully bundled by Vite and the main process uses only
 # Electron + Node built-ins, so no node_modules ship in the app.
+#
+# SECURITY-REVIEW (SECURITY-FIXES.md B1, THREAT-MODEL.md §4 S1): the extra
+# `from: models, filter: [manifest.json]` entry copies models/manifest.json
+# into the asar root (as `manifest.json`, alongside dist-desktop/, electron/,
+# package.json). This is the integrity ANCHOR that electron/model-integrity.mjs
+# checks the (unprotected, see extraResources below) model files against at
+# startup. It rides inside app.asar specifically so the
+# EnableEmbeddedAsarIntegrityValidation fuse (§8) covers it — a non-admin
+# attacker who can overwrite a model file cannot also rewrite this copy of the
+# manifest in the same stroke. Do NOT duplicate this into extraResources next
+# to the models; that would defeat the point (one filesystem write could
+# replace both the data and the reference checked against it).
+# desktop:verify-models (wired into desktop:build) already gates that
+# models/manifest.json is current for the files being packaged.
+#
+# `from` MUST be the models directory, not models/manifest.json directly:
+# electron-builder's `files` copier walks `from` with fs.readdir(), and a
+# file-typed `from` makes readdir() throw ENOTDIR, which electron-builder
+# silently treats as "empty directory" (builder-util's orIfFileNotExist
+# swallows ENOTDIR same as ENOENT) — the build succeeds but copies nothing.
+# Confirmed empirically: pointing `from` straight at the file produced no
+# error and no file in the asar. The filter below matches only the top-level
+# `manifest.json` entry, so the walk never descends into ner/ or ocr/ (their
+# names don't match the pattern) — it does not re-read the ~600 MB of models.
 files:
   - dist-desktop/**/*
   - electron/**/*
   - package.json
   - "!node_modules/**"
+  - from: models
+    to: .
+    filter:
+      - manifest.json
 
 asar: true
 
 # Models live OUTSIDE the asar: they are large, read-only, and streamed from
-# disk by the app:// protocol handler (electron/main.mjs MODELS_ROOT).
+# disk by the app:// protocol handler (electron/main.mjs MODELS_ROOT). They
+# are NOT covered by the asar integrity fuse — electron/model-integrity.mjs
+# checks them at startup against the anchor above instead. manifest.json
+# stays excluded here on purpose: it must not sit next to the models it
+# describes (see the `files` comment above).
 extraResources:
   - from: models
     to: models
@@ -59,10 +91,20 @@ win:
   # signtoolOptions:
   #   certificateSubjectName: "..."
 
+# SECURITY-REVIEW (SECURITY-FIXES.md B3, THREAT-MODEL.md §4 S1): perMachine
+# installs to Program Files (requires UAC elevation) instead of the
+# per-user %LOCALAPPDATA%, which any unprivileged process running as the
+# current user could otherwise overwrite — including the model files that
+# electron/model-integrity.mjs checks at startup. This also closes the
+# window for a TOCTOU swap between that check and the app actually reading a
+# model: a non-admin attacker cannot write to the install directory at all,
+# not even between two checks. allowToChangeInstallationDirectory is off so
+# the user can't redirect the install into a writable location and silently
+# lose that protection.
 nsis:
   oneClick: false
-  perMachine: false
-  allowToChangeInstallationDirectory: true
+  perMachine: true
+  allowToChangeInstallationDirectory: false
   license: LICENSE
   artifactName: "LokalnyAnonimizator-Setup-${version}.${ext}"
   shortcutName: "Lokalny anonimizator"

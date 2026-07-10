@@ -13,6 +13,7 @@ import {
 } from './app-protocol.mjs';
 import { getNetworkBlockStats, installNetworkGuard } from './network-guard.mjs';
 import { isAllowedExternalLink } from './main-links.mjs';
+import { verifyModelIntegrity } from './model-integrity.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +28,19 @@ const DIST_ROOT = join(app.getAppPath(), 'dist-desktop');
 const MODELS_ROOT = app.isPackaged
   ? join(process.resourcesPath, 'models')
   : join(app.getAppPath(), 'models');
+
+// SECURITY-REVIEW: integrity anchor for MODELS_ROOT (SECURITY.md §12a,
+// THREAT-MODEL.md §4 S1, SECURITY-FIXES.md B1). The anchor deliberately does
+// NOT live next to the models it checks — that would let one filesystem write
+// replace both the data and the reference it's checked against. In a packaged
+// build it is baked into app.asar's ROOT as `manifest.json` (electron-builder.yml
+// `files`, copied from models/manifest.json at build time), which the
+// EnableEmbeddedAsarIntegrityValidation fuse protects. In repo mode it's the
+// same models/manifest.json that scripts/verify-models.mjs already treats as
+// the source of truth. See electron/model-integrity.mjs for the check itself.
+const MODEL_MANIFEST_PATH = app.isPackaged
+  ? join(app.getAppPath(), 'manifest.json')
+  : join(app.getAppPath(), 'models', 'manifest.json');
 
 // External links (SECURITY.md §5): only user-clicked, allow-listed https URLs
 // are handed to shell.openExternal. Policy lives in ./main-links.mjs so it can
@@ -143,7 +157,7 @@ function createMainWindow() {
   return win;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   const ses = session.defaultSession;
 
   installNetworkGuard(ses, { devServerUrl: DEV_SERVER_URL });
@@ -179,6 +193,32 @@ app.whenReady().then(() => {
     fatalStartupError(
       'Brak wbudowanych modeli',
       `Nie znaleziono katalogu modeli NER w:\n${MODELS_ROOT}\n\nUruchom: npm run desktop:fetch-models`,
+    );
+    return;
+  }
+
+  // SECURITY-REVIEW: model integrity gate (SECURITY.md §12a, THREAT-MODEL.md §4
+  // S1, SECURITY-FIXES.md B1). Models sit outside app.asar (see MODELS_ROOT /
+  // electron-builder.yml `extraResources`), so nothing but this check stands
+  // between a tampered model file and a silent fail-open anonymizer. Every
+  // failure mode — hash mismatch, size mismatch, missing file, missing or
+  // unreadable anchor — is fail-closed: refuse to start, never "skip and
+  // continue". Runs before createMainWindow() / any loadURL, so the renderer
+  // never gets a chance to load a worker against unverified models.
+  //
+  // Residual risk, intentionally not hidden: this is a start-time check, not
+  // continuous monitoring, so it cannot catch a model swapped WHILE the app is
+  // already running (TOCTOU). That window is closed by SECURITY-FIXES.md B3
+  // (perMachine install => resources/ is not writable without UAC elevation),
+  // not by this gate alone — the two ship together.
+  const modelIntegrity = await verifyModelIntegrity({ anchorPath: MODEL_MANIFEST_PATH, modelsRoot: MODELS_ROOT });
+  if (!modelIntegrity.ok) {
+    fatalStartupError(
+      'Naruszona integralność modeli',
+      'Pliki modeli nie zgadzają się z oczekiwanymi sumami kontrolnymi:\n\n'
+      + `${modelIntegrity.problems.join('\n')}\n\n`
+      + 'To może oznaczać uszkodzoną instalację albo nieautoryzowaną modyfikację plików. '
+      + 'Zainstaluj aplikację ponownie z oryginalnego instalatora.',
     );
     return;
   }
