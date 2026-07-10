@@ -10,11 +10,34 @@
 // conservative MEMORY_BUDGET_MB rather than by inflating model sizes here.
 const mb = (bytes) => Math.ceil(bytes / 1_000_000);
 
-export const SOURCES = {
+// Desktop (Electron) builds override the ONNX artifact variant — default q8
+// (INT8, onnx/model_quantized.onnx) — to keep the installer small. sizeBytes
+// is zeroed because it described the web variant; the original sizeMB is kept
+// as a conservative over-estimate for WASM-heap eviction accounting. q8 forces
+// wasm-only backends (see the WebNN note above).
+const DTYPE_OVERRIDE = import.meta.env?.VITE_MODEL_DTYPE || null;
+
+function withDtypeOverride(sources) {
+  if (!DTYPE_OVERRIDE) return sources;
+  const out = {};
+  for (const [alias, def] of Object.entries(sources)) {
+    out[alias] = def.kind === 'hf'
+      ? {
+          ...def,
+          dtype: DTYPE_OVERRIDE,
+          sizeBytes: 0,
+          backends: DTYPE_OVERRIDE.startsWith('q') || DTYPE_OVERRIDE.includes('int8') ? ['wasm'] : def.backends,
+        }
+      : def;
+  }
+  return out;
+}
+
+export const SOURCES = withDtypeOverride({
   'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['webnn-gpu', 'wasm'] },
   'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
-};
+});
 
 export const ENTITY_SOURCES = {
   PERSON_NAME:              ['multilang-fp32'],

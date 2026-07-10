@@ -6,7 +6,12 @@ export const CACHE_KEY = `ocr-${ENGINE}`;
 // the URL explicit so the app can pre-download/cache it with progress before
 // the SDK's worker initializes the model sessions.
 export const TEXT_DETECTION_MODEL_NAME = 'PP-OCRv5_mobile_det';
-export const TEXT_DETECTION_MODEL_URL = 'https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx.tar';
+// Desktop (Electron) builds vendor the detection tar next to the recognition
+// tar and serve it from /ocr-models/ (see electron/app-protocol.mjs and
+// vite.config.electron.js); web builds keep fetching it from the Paddle CDN.
+export const TEXT_DETECTION_MODEL_URL = import.meta.env?.VITE_OCR_DET_LOCAL === '1'
+  ? resolvePublicAssetUrl(`ocr-models/${TEXT_DETECTION_MODEL_NAME}_onnx.tar`)
+  : 'https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx.tar';
 
 // PaddleOCR's default rec model is Chinese+English. We override it with the
 // Latin PP-OCRv5 mobile recognizer (ONNX-converted from

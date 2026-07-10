@@ -11,6 +11,12 @@ const DTYPE_SUFFIX = {
 
 const TRANSFORMERS_CACHE = 'transformers-cache';
 
+// Desktop (Electron) builds serve every model file from the app package (see
+// src/worker.js env config); pre-downloading into CacheStorage would only
+// duplicate local files, so the whole planning/caching flow short-circuits to
+// the same "skipped" shape it already uses when CacheStorage is unavailable.
+const LOCAL_MODELS = import.meta.env?.VITE_LOCAL_MODELS === '1';
+
 function pathJoin(...parts) {
   return parts
     .map((part, index) => {
@@ -120,7 +126,7 @@ async function buildDownloadPlan(defs, {
   cacheStorage = globalThis.caches,
   fetchFn = globalThis.fetch?.bind(globalThis),
 } = {}) {
-  if (!cacheStorage || !fetchFn) {
+  if (LOCAL_MODELS || !cacheStorage || !fetchFn) {
     return {
       skipped: true,
       cache: null,
@@ -235,7 +241,7 @@ export async function ensureModelFileCached(modelId, file, {
   fetchFn = globalThis.fetch?.bind(globalThis),
   progressCallback = () => {},
 } = {}) {
-  if (!cacheStorage || !fetchFn) return { skipped: true };
+  if (LOCAL_MODELS || !cacheStorage || !fetchFn) return { skipped: true };
 
   const cache = await cacheStorage.open(TRANSFORMERS_CACHE);
   const { remoteUrl, localPath } = cacheKeysForModelFile(modelId, file, { revision });

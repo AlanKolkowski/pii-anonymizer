@@ -12,6 +12,25 @@ import { createBoundedNerCache } from './worker-cache.js';
 // to whatever the machine actually has so we don't oversubscribe.
 env.backends.onnx.wasm.numThreads = Math.min(self.navigator.hardwareConcurrency || 4, 8);
 
+// Desktop (Electron) builds ship the models inside the app package and must
+// never touch the network. The flags are compile-time env so web builds keep
+// the stock HuggingFace Hub behavior. /local-models/ is served by the app://
+// protocol handler (electron/app-protocol.mjs) and by the desktop dev server
+// (vite.config.electron.js).
+if (import.meta.env?.VITE_LOCAL_MODELS === '1') {
+  env.allowRemoteModels = false;
+  env.allowLocalModels = true;
+  env.localModelPath = new URL('/local-models/', self.location.href).href;
+  // Models are local files already — caching them into CacheStorage would just
+  // duplicate hundreds of MB on disk.
+  env.useBrowserCache = false;
+}
+// Transformers.js defaults ORT WASM to a jsDelivr CDN URL at import time.
+// Desktop builds vendor those files and point at the app origin instead.
+if (import.meta.env?.VITE_ORT_WASM_PATHS) {
+  env.backends.onnx.wasm.wasmPaths = new URL(import.meta.env.VITE_ORT_WASM_PATHS, self.location.href).href;
+}
+
 // Memory budget for resident HF models in the WASM heap.
 // SOURCES[*].sizeMB tracks real ONNX artifact size; this lower-than-raw-heap
 // budget reserves headroom for ORT scratch/tokenizer buffers and contiguous

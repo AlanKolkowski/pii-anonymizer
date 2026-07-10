@@ -1,0 +1,73 @@
+# Packaging for the desktop build ("Lokalny anonimizator").
+# Build: npm run desktop:build   (renderer -> dist-desktop/, then this config)
+appId: pl.kolkowski.lokalny-anonimizator
+productName: Lokalny anonimizator
+copyright: "Copyright © 2026 Alan Kolkowski. Based on pii.tools (Apache-2.0)."
+
+directories:
+  output: release
+  buildResources: build
+
+# The renderer is fully bundled by Vite and the main process uses only
+# Electron + Node built-ins, so no node_modules ship in the app.
+files:
+  - dist-desktop/**/*
+  - electron/**/*
+  - package.json
+  - "!node_modules/**"
+
+asar: true
+
+# Models live OUTSIDE the asar: they are large, read-only, and streamed from
+# disk by the app:// protocol handler (electron/main.mjs MODELS_ROOT).
+extraResources:
+  - from: models
+    to: models
+    filter:
+      - "**/*"
+      - "!manifest.json"
+  - from: LICENSE
+    to: LICENSE
+  - from: NOTICE
+    to: NOTICE
+  - from: THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+
+# Bakes the security fuses into the executable (see SECURITY.md §8).
+afterPack: scripts/afterpack-fuses.cjs
+
+# Reuse the locally unpacked Electron binary (node_modules/electron/dist)
+# instead of downloading a fresh zip at package time — also avoids the
+# @electron/get ERR_REQUIRE_ESM failure on Node 22.0.x.
+electronDist: node_modules/electron/dist
+
+# No auto-update, no publishing endpoint — the app must never phone home.
+publish: null
+
+npmRebuild: false
+nodeGypRebuild: false
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  # TODO(podpis-kodu): code signing. When a certificate is available, configure
+  # signtoolOptions (certificateSubjectName / certificateSha1 for a machine
+  # store cert, or azureSignOptions for Azure Trusted Signing). Never commit
+  # certificate files or passwords to the repo.
+  # signtoolOptions:
+  #   certificateSubjectName: "..."
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  license: LICENSE
+  artifactName: "LokalnyAnonimizator-Setup-${version}.${ext}"
+  shortcutName: "Lokalny anonimizator"
+
+# macOS target is intentionally not configured yet, but nothing in the app
+# blocks it: main/preload are platform-neutral and afterpack-fuses.cjs already
+# handles darwin. TODO(macos): add mac target + hardened runtime + notarization
+# when a macOS build is needed.

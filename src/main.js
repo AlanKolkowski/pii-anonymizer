@@ -1427,6 +1427,13 @@ refreshAnonymizeButton();
 const WEBMCP_CLAUDE_COMMAND = 'npx -y @jason.today/webmcp@latest --config claude';
 const WEBMCP_CLAUDE_TOKEN_PROMPT = 'Wygeneruj token WebMCP dla pii.tools';
 
+// WebMCP is a self-reconnecting WebSocket client — an exfiltration path if it
+// ever ran in the desktop build. Excluded there at build time (webmcp.js is
+// stripped from tool.html, see vite.config.electron.js), so `WebMCP` is not a
+// defined global in that build; this guard must wrap every reference to it
+// and to the `mcp` instance below, all the way through the tool registrations
+// at the end of this file. See SECURITY-FIXES.md B2.
+if (!window.desktopApp?.isDesktop) {
 const mcp = new WebMCP({ channelName: 'pii' });
 mountWebMcpControl(mcp);
 
@@ -1689,3 +1696,4 @@ mcp.registerTool(
     return jsonContent({ id: newId, success: true });
   },
 );
+}

@@ -211,6 +211,7 @@ export async function extractPdf(file, deps = {}) {
         markPageDone();
       } catch (err) {
         if (err.name === 'OcrCancelledError' || err.name === 'WebNNUnavailableError') throw err;
+        console.warn(`[pdf-import] OCR strony ${c.index} nie powiódł się:`, err);
         c.text = `[OCR strony ${c.index} nie powiódł się]`;
         c.confidence = null;
         markPageDone();
