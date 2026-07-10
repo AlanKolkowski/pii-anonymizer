@@ -12,19 +12,23 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 
 ---
 
-## WERDYKT BRAMKI, stan na 2026-07-10
+## WERDYKT BRAMKI, stan na 2026-07-10 (po naprawie B1 i B3)
 
-> ## ❌ **BUILD NIE MOŻE WYJŚĆ JAKO INSTALATOR DYSTRYBUCYJNY.**
+> ## ❌ **BUILD NIE MOŻE WYJŚĆ JAKO INSTALATOR DYSTRYBUCYJNY POZA MASZYNĘ AUTORA.**
 >
-> Blokery: **B1** (brak weryfikacji integralności modeli w runtime),
-> **B2** (WebMCP w paczce), **B3** (instalacja do katalogu zapisywalnego przez
-> użytkownika), **B4** (brak podpisu kodu).
+> Pozostały bloker: **B4** (brak podpisu kodu) — jedyny wymagający zakupu
+> certyfikatu na zewnątrz.
 >
-> **Dopuszczone warunkowo:** build wewnętrzny na maszynie autora, po naprawie
-> **B2** (koszt: kilkanaście linii). B2 jest jedynym blokerem, który nie
-> wymaga certyfikatu ani przebudowy instalatora, a jednocześnie jest jedynym,
-> który sprawia, że deklaracja „air-gap by construction" jest dziś nieprawdziwa
-> dosłownie, a nie tylko z ostrożności.
+> **B1** (weryfikacja integralności modeli w runtime), **B2** (WebMCP w paczce)
+> i **B3** (instalacja do katalogu zapisywalnego przez użytkownika) są
+> naprawione i zweryfikowane empirycznie — patrz C-INT-4, C-INT-5, C-WIN-1,
+> C-NET-11, C-PKG-10 niżej oraz `SECURITY-FIXES.md`.
+>
+> **Dopuszczone:** build wewnętrzny na maszynie autora, instalowany z pełnym
+> łańcuchem B1+B3 (integralność modeli w runtime + katalog niezapisywalny bez
+> UAC). Dystrybucja poza tę maszynę czeka na B4 — bez podpisu SmartScreen
+> ostrzega i uczy klikać „Uruchom mimo to", co niszczy wartość podpisu na
+> przyszłość (C-WIN-4).
 >
 > Uzasadnienie i scenariusze: `THREAT-MODEL.md` §4 (S1, S2).
 > Poprawki: `SECURITY-FIXES.md`.
@@ -99,9 +103,9 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 |---|---|---|---|
 | C-INT-1 | Fuses ustawione: `RunAsNode:false`, `EnableNodeCliInspectArguments:false`, `EnableNodeOptionsEnvironmentVariable:false`, `OnlyLoadAppFromAsar:true`, `EnableCookieEncryption:true` | **PASS** | `scripts/afterpack-fuses.cjs:24-33` |
 | C-INT-2 | Fuses **faktycznie zapisane w binarce** (nie tylko w konfiguracji) | **`?`** | `npx @electron/fuses read --app "release/win-unpacked/Lokalny anonimizator.exe"` |
-| C-INT-3 | Zmiana jednego bajtu w `app.asar` uniemożliwia start | **`?`** | Skopiować `win-unpacked`, nadpisać bajt w `resources/app.asar`, uruchomić. Aplikacja **musi** odmówić startu. Dopóki to nie jest zmierzone, `EnableEmbeddedAsarIntegrityValidation` jest deklaracją. |
-| C-INT-4 | Modele w `resources/models/` weryfikowane **w runtime** | **FAIL(B)** | `electron/app-protocol.mjs:200` strumieniuje bez sprawdzenia. Modele są poza asarem (`electron-builder.yml:23-28`), więc fuse ich nie obejmuje. Patrz B1. |
-| C-INT-5 | `manifest.json` z sumami SHA-256 dostępny w runtime | **FAIL(B)** | `electron-builder.yml:27-28` → `!manifest.json`. Spakowana aplikacja **nie ma żadnej referencji** do porównania. |
+| C-INT-3 | Zmiana jednego bajtu w `app.asar` uniemożliwia start | **`?`** | Skopiować `win-unpacked`, nadpisać bajt w `resources/app.asar`, uruchomić. Aplikacja **musi** odmówić startu. Dopóki to nie jest zmierzone, `EnableEmbeddedAsarIntegrityValidation` jest deklaracją. Poszlaka z testów B1 (2026-07-10): usunięcie pliku z asara i przepakowanie (`npx asar pack`) wywołało natywny `FATAL` w `asar_util.cc` („Integrity check failed for asar archive") — silny sygnał, że mechanizm działa, ale to zmiana struktury archiwum, nie dokładnie „jeden bajt" w niezmienionym pliku. Zostaje `?` do dedykowanego testu. |
+| C-INT-4 | Modele w `resources/models/` weryfikowane **w runtime** | **PASS** | Naprawione w B1: `electron/model-integrity.mjs` (SHA-256 strumieniowo, `createReadStream`) wpięte w `electron/main.mjs` przed `createMainWindow()`. Zweryfikowane na spakowanej binarce (2026-07-10): podmiana jednego bajtu w `resources/models/.../model_quantized.onnx` (rozmiar bez zmian) → aplikacja odmówiła startu, dialog „Naruszona integralność modeli" z dokładną rozbieżnością SHA-256 w `stderr`; po przywróceniu bajtu suma ponownie zgodna z oryginałem. `npm test` → `electron/model-integrity.test.js` (8 przypadków: dopasowanie, podmiana bajtu, obcięcie rozmiaru, brak pliku, brak/uszkodzona/pusta kotwica, wielokrotne rozbieżności naraz). `desktop:smoke` i `desktop:smoke:packaged` przechodzą z nienaruszonymi modelami. |
+| C-INT-5 | `manifest.json` z sumami SHA-256 dostępny w runtime | **PASS** | Naprawione w B1: `electron-builder.yml` `files` (`from: models, filter: [manifest.json]`) kopiuje `models/manifest.json` do **korzenia app.asar** jako `manifest.json`, chronione fuse'em `EnableEmbeddedAsarIntegrityValidation`. **Nie** leży obok modeli w `resources/models/` (tam nadal wykluczone). Zweryfikowane: `npx asar list` pokazuje `\manifest.json` w korzeniu asara, `npx asar extract` daje treść bajt-w-bajt identyczną z `models/manifest.json`; `resources/models/manifest.json` nie istnieje na dysku spakowanej binarki. Uwaga dla przyszłych zmian tej reguły: `from` **musi** być katalogiem (`models`), nie plikiem (`models/manifest.json`) — electron-builder kopiuje `files:` przez `fs.readdir()` na `from`, więc plik jako `from` daje `ENOTDIR`, po cichu łapane jako „pusty katalog" (build przechodzi, nic się nie kopiuje; zmierzone empirycznie przy pierwszym podejściu). |
 | C-INT-6 | Bramka integralności modeli przy budowaniu | **PASS** | `npm run desktop:verify-models`, wpięta w `desktop:build` (`package.json:18`) |
 | C-INT-7 | Modele pobierane z **niezmiennej** referencji (SHA commita), nie z gałęzi | **FAIL(S)** | `scripts/fetch-models.mjs:56` → `/resolve/main/`. Trust-on-first-use. |
 | C-INT-8 | Oczekiwane sumy SHA-256 modeli zakotwiczone w repo, niezależnie od pobrania | **FAIL(S)** | `models/manifest.json` powstaje **z** pobrania, więc nie jest niezależnym świadkiem |
@@ -143,7 +147,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 
 | ID | Pozycja | Status | Jak sprawdzić |
 |---|---|---|---|
-| C-WIN-1 | Instalacja do katalogu **niezapisywalnego** przez zwykłego użytkownika | **FAIL(B)** | `electron-builder.yml:64-65` → `perMachine: false` + `allowToChangeInstallationDirectory: true`. Instaluje do `%LOCALAPPDATA%\Programs\…`. Zwykły proces użytkownika podmienia exe, DLL i **modele**. Patrz B3. |
+| C-WIN-1 | Instalacja do katalogu **niezapisywalnego** przez zwykłego użytkownika | **PASS (żywa instalacja nie wykonana w tej sesji)** | Naprawione w B3: `electron-builder.yml` `nsis.perMachine: true` + `allowToChangeInstallationDirectory: false`. Zweryfikowane nieinwazyjnie (2026-07-10): log `desktop:build` potwierdza `building target=nsis … oneClick=false perMachine=true`; skompilowany `LokalnyAnonimizator-Setup-0.1.0.exe` zawiera w zasobie manifestu PE ciąg `requireAdministrator` (sprawdzone bezpośrednio w binarce), czyli Windows wymusi UAC przy starcie instalatora. **Nie wykonano** pełnej, żywej instalacji z kliknięciem UAC do `%ProgramFiles%` (wymaga interakcji z monitem UAC) — zalecany ręczny test przed dystrybucją poza maszynę autora. |
 | C-WIN-2 | Binarka i instalator podpisane certyfikatem | **FAIL(B)** | `electron-builder.yml:56-60`, `signtoolOptions` zakomentowane. `Get-AuthenticodeSignature "<exe>"` → `NotSigned`. Patrz B4. |
 | C-WIN-3 | Ochrona przed DLL sideloading / wstrzyknięciem do renderera | **`?`, zależne od C-WIN-1 i C-WIN-2** | Windows Renderer Code Integrity ładuje do renderera wyłącznie podpisane DLL, **ale wymaga podpisanej binarki**: do weryfikacji. Bez tego jedyną obroną jest niezapisywalny katalog instalacji. |
 | C-WIN-4 | SmartScreen nie ostrzega przy instalacji | **FAIL(B)** | konsekwencja C-WIN-2. Ostrzeżenie uczy radcę klikać „Uruchom mimo to", co niszczy wartość podpisu na przyszłość. |
@@ -158,20 +162,25 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 ## Testy, które muszą przejść przed każdym wydaniem
 
 ```bash
-npm test                        # m.in. electron/main-links.test.js
+npm test                        # m.in. electron/main-links.test.js, electron/model-integrity.test.js
 npm run desktop:verify-models   # sumy SHA-256, brak plików .part
 npm run desktop:build:renderer  # wywraca się na zdalnym zasobie (assertNoRemoteUrls)
-npm run desktop:smoke           # tryb repo: pełny przebieg + kanarek strażnika
+npm run desktop:smoke           # tryb repo: pełny przebieg + kanarek strażnika + bramka integralności modeli
 npm run desktop:smoke:packaged  # ten sam zestaw na spakowanej binarce
 npm run desktop:smoke:offline   # spakowana binarka bez DNS (MAP * ~NOTFOUND)
 ```
 
-Po naprawie B1–B4 dopisać do zestawu:
+Po naprawie B1 i B3 (2026-07-10) dopisane do zestawu, zweryfikowane ręcznie
+(nie ma to jeszcze automatycznego testu w CI — do rozważenia w etapie 2):
 
 ```bash
 npx @electron/fuses read --app "release/win-unpacked/Lokalny anonimizator.exe"
-# + test podmiany bajtu w app.asar (C-INT-3)
-# + test podmiany modelu ONNX: aplikacja musi odmówić startu (C-INT-4)
+# + test podmiany bajtu w app.asar (C-INT-3) — wciąż `?`, patrz notatka przy C-INT-3
+# + test podmiany modelu ONNX (C-INT-4) — WYKONANY: podmiana bajtu w
+#   resources/models/.../model_quantized.onnx na spakowanej binarce =>
+#   fatalStartupError + brak startu, komunikat z rozbieżną sumą SHA-256
+# + test brakującej kotwicy (C-INT-5) — WYKONANY, tryb repo: usunięcie
+#   models/manifest.json => "Brak kotwicy integralności modeli", brak startu
 ```
 
 Test ręczny, nieusuwalny: fizyczny tryb samolotowy → instalacja z `release/…exe`

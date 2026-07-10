@@ -12,7 +12,61 @@ dystrybucją poza maszynę autora) → **NICE** (kolejny etap).
 
 ## BLOKERY
 
-### B1 — Weryfikacja integralności modeli w runtime
+### B1 — Weryfikacja integralności modeli w runtime — NAPRAWIONE
+**Status:** naprawione (2026-07-10). Kotwica: `electron-builder.yml` `files`
+(`from: models, filter: [manifest.json]`, `to: .`) kopiuje `models/manifest.json`
+do korzenia `app.asar` jako `manifest.json`, chronione fuse'em
+`EnableEmbeddedAsarIntegrityValidation`. Modele **zostają** poza asarem
+(`extraResources`, jak wcześniej), `manifest.json` nadal wykluczony stamtąd
+(`!manifest.json`). Bramka: nowy plik `electron/model-integrity.mjs`
+(`verifyModelIntegrity`) liczy SHA-256 każdego pliku modelu **strumieniowo**
+(`createReadStream` + `crypto.createHash`, nigdy `readFileSync`) i porównuje
+z kotwicą; brak/uszkodzona/pusta kotwica, brak pliku, zła suma, zły rozmiar —
+wszystko fail-closed. Wpięta w `electron/main.mjs` w `app.whenReady()`, po
+sprawdzeniu istnienia katalogu modeli, **przed** `createMainWindow()`.
+
+**Zweryfikowane empirycznie (2026-07-10):**
+- `electron/model-integrity.test.js` — 8 testów jednostkowych na syntetycznych
+  plikach (dopasowanie, podmiana bajtu przy tym samym rozmiarze, obcięcie
+  rozmiaru, brak pliku, brak kotwicy, uszkodzony JSON, pusta lista wpisów,
+  wielokrotne rozbieżności naraz). Wszystkie przechodzą.
+- **Podmiana bajtu w modelu, spakowana binarka:** jeden bajt nadpisany w
+  `release/win-unpacked/resources/models/ner/wjarka/eu-pii-anonimization-pl/
+  onnx/model_quantized.onnx` (rozmiar bez zmian) → uruchomienie `.exe` kończy
+  się `[main] Naruszona integralność modeli: … zła suma SHA-256
+  ner/wjarka/eu-pii-anonimization-pl/onnx/model_quantized.onnx: d04c42c8… ≠
+  49f6dad1…` w `stderr`, okno nigdy nie powstaje (potwierdzone przez CDP:
+  `context.pages()` pozostaje puste). Bajt przywrócony, suma ponownie zgodna
+  z oryginałem.
+- **Brak kotwicy, tryb repo:** `models/manifest.json` czasowo przeniesiony →
+  `[main] Naruszona integralność modeli: … Brak kotwicy integralności modeli:
+  …\models\manifest.json`, brak startu. Przywrócone.
+- **Brak/uszkodzona kotwica w asarze, spakowana binarka:** usunięcie pliku
+  z `app.asar` i przepakowanie (`npx asar extract` → usuń → `npx asar pack`)
+  wywołało natywny `FATAL` fuse'a `EnableEmbeddedAsarIntegrityValidation`
+  (`asar_util.cc:143 Integrity check failed`) **zanim** kod z tego PR-a
+  w ogóle się wykonał — osobna, wcześniejsza warstwa obrony. Silna poszlaka
+  dla `C-INT-3` (wciąż `?` w checkliście — to nie był test „jednego bajtu"
+  w niezmienionym pliku, tylko zmiana struktury archiwum). `app.asar`
+  przywrócony z kopii zapasowej.
+- `npm run desktop:build:renderer && npm run desktop:smoke` (tryb repo) oraz
+  `npm run desktop:smoke:packaged` (spakowana binarka) przechodzą w całości
+  z nienaruszonymi modelami, łącznie z nową bramką działającą po cichu
+  (brak rozbieżności → brak dialogu, normalny start).
+- Narzut startowy zmierzony bezpośrednio: **~2,3 s** dla pełnego zestawu modeli
+  (~576 MB), zgodne z oczekiwanym „~1-2 s na NVMe". Budżet oczekiwania na
+  pierwsze okno w `e2e/desktop-smoke.mjs` (tryb `--packaged`) poszerzony
+  z 10 s do 30 s, żeby uwzględnić ten legalny narzut — CDP staje się dostępne
+  szybko (Chromium wiąże `--remote-debugging-port` niezależnie od
+  `app.whenReady()`), więc stary budżet był już ciasny przed tą zmianą.
+
+**Ryzyko rezydualne (udokumentowane, nie ukryte):** to bramka **przy starcie**,
+nie ciągły monitoring — nie złapie podmiany modelu **w trakcie** działania
+aplikacji (TOCTOU). To okno domyka B3 (katalog niezapisywalny bez UAC), nie
+B1 z osobna; obie poprawki wchodzą razem.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/app-protocol.mjs:155-202`, `electron-builder.yml:23-28`, nowy plik.
 **Dlaczego:** `THREAT-MODEL.md` §4 S1. Modele leżą poza asarem, fuse ich nie
 chroni, `manifest.json` jest wykluczony z paczki, katalog instalacji jest
@@ -101,7 +155,35 @@ wywraca build, jeśli WebMCP wróci. To pilnuje regresji na zawsze.
 
 ---
 
-### B3 — Instalacja per-machine do katalogu chronionego
+### B3 — Instalacja per-machine do katalogu chronionego — NAPRAWIONE
+**Status:** naprawione (2026-07-10). `electron-builder.yml` `nsis`:
+`perMachine: true`, `allowToChangeInstallationDirectory: false` (`oneClick:
+false` bez zmian). Instalacja idzie do `%ProgramFiles%`, wymaga podniesienia
+uprawnień; użytkownik nie może przekierować jej do zapisywalnego katalogu.
+
+**Zweryfikowane (2026-07-10):**
+- Log `npm run desktop:build` potwierdza konfigurację faktycznie użytą do
+  budowy instalatora: `building target=nsis file=release\
+  LokalnyAnonimizator-Setup-0.1.0.exe archs=x64 oneClick=false perMachine=true`.
+- Skompilowany `release/LokalnyAnonimizator-Setup-0.1.0.exe` zawiera w
+  zasobie manifestu PE ciąg `requireAdministrator` (sprawdzone bezpośrednio
+  w bajtach binarki) — to on każe Windows pokazać monit UAC przy starcie
+  instalatora.
+- **Nie wykonano** w tej sesji pełnej, żywej instalacji z kliknięciem UAC do
+  `%ProgramFiles%` (wymaga interakcji człowieka z monitem UAC, nie da się
+  tego bezpiecznie zautomatyzować z nienadzorowanej sesji). Zalecany ręczny
+  test przed dystrybucją poza maszynę autora: uruchomić
+  `release/LokalnyAnonimizator-Setup-0.1.0.exe`, potwierdzić monit UAC,
+  sprawdzić że `$INSTDIR` to `%ProgramFiles%\Lokalny anonimizator` i że
+  zwykły użytkownik (bez admina) nie ma prawa zapisu do tego katalogu
+  (`icacls "%ProgramFiles%\Lokalny anonimizator"`).
+- Domyka też okno TOCTOU dla B1: skoro katalog instalacji jest niezapisywalny
+  bez UAC, atakujący z Z4 (kod na koncie użytkownika, bez podniesienia
+  uprawnień) nie podmieni modelu **między** bramką integralności a jego
+  odczytem przez pipeline, bo nie podmieni go w ogóle.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron-builder.yml:62-68`.
 **Dlaczego:** `THREAT-MODEL.md` §4 S1. `perMachine: false` instaluje do
 `%LOCALAPPDATA%`, gdzie zwykły proces użytkownika (Z4) nadpisze exe, DLL i modele
