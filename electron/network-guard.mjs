@@ -30,7 +30,7 @@ export function getNetworkBlockStats() {
   };
 }
 
-function describeOrigin(rawUrl) {
+export function describeOrigin(rawUrl) {
   try {
     const url = new URL(rawUrl);
     return url.origin === 'null' ? `${url.protocol}//` : url.origin;
@@ -77,8 +77,13 @@ export function installNetworkGuard(targetSession, { devServerUrl = null } = {})
     stats.blockedByOrigin.set(origin, (stats.blockedByOrigin.get(origin) ?? 0) + 1);
     // Dev log: proof of "zero network egress". First hits are logged verbatim,
     // later ones aggregated so a retry loop can't spam the log.
+    // SECURITY-REVIEW: S-LOG-1 — log the origin, never the full URL. A blocked
+    // request's path/query can carry PII (document text, entity values); only
+    // the origin is needed to prove "the app itself tried to reach X"
+    // (SECURITY-FIXES.md S-LOG-1, checklist C-PERS-7).
     if (stats.blockedByOrigin.get(origin) <= 3) {
-      console.warn(`[network-guard] BLOCKED ${details.method} ${details.url} (total blocked: ${stats.blockedTotal})`);
+      console.warn(`[network-guard] BLOCKED ${details.method} ${describeOrigin(details.url)} `
+        + `(${details.resourceType}, total: ${stats.blockedTotal})`);
     } else if (stats.blockedTotal % 25 === 0) {
       console.warn(`[network-guard] blocked total: ${stats.blockedTotal}`, getNetworkBlockStats().blockedByOrigin);
     }

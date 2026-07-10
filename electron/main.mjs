@@ -11,8 +11,9 @@ import {
   installAppProtocolHandler,
   registerAppScheme,
 } from './app-protocol.mjs';
-import { getNetworkBlockStats, installNetworkGuard } from './network-guard.mjs';
+import { describeOrigin, getNetworkBlockStats, installNetworkGuard } from './network-guard.mjs';
 import { isAllowedExternalLink } from './main-links.mjs';
+import { isSameOriginAsApp } from './nav-policy.mjs';
 import { verifyModelIntegrity } from './model-integrity.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,6 +56,24 @@ app.commandLine.appendSwitch('disable-background-networking');
 app.commandLine.appendSwitch('disable-component-update');
 app.commandLine.appendSwitch('disable-domain-reliability');
 
+// SECURITY-REVIEW: S-NET-1 — persistent airplane mode in the packaged binary
+// (SECURITY-FIXES.md S-NET-1, checklist C-NET-7). A layer independent of the
+// §3 webRequest guard: even a request the guard would otherwise let through
+// has no name left to resolve. app:// never goes through the resolver, so
+// this is inert for the app's own protocol. Gated on isPackaged so `npm run
+// desktop:dev` (Vite dev server on localhost) keeps working — the same
+// switch is already exercised by desktop:smoke:offline (e2e/desktop-smoke.mjs).
+if (app.isPackaged) {
+  app.commandLine.appendSwitch('host-resolver-rules', 'MAP * ~NOTFOUND');
+}
+
+// SECURITY-REVIEW: S-NET-2 — hard proxy shutoff (SECURITY-FIXES.md S-NET-2,
+// checklist C-NET-5). Without this, a system PAC file or configured proxy
+// could still hand the process a route out. This covers the command-line /
+// process-default half; session.defaultSession.setProxy({ mode: 'direct' })
+// in app.whenReady() below covers the session-level half of the same policy.
+app.commandLine.appendSwitch('no-proxy-server');
+
 // One instance only: two processes sharing %APPDATA% would race on the
 // Chromium profile (localStorage prefs, OCR model cache).
 if (!app.requestSingleInstanceLock()) {
@@ -89,15 +108,23 @@ function hardenWebContents(contents) {
   // control; the CSP directive and the preload API removal are depth.
   contents.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
 
-  // Block all navigation except inside the app's own origin (tool <-> landing).
-  contents.on('will-navigate', (event, url) => {
-    const sameOrigin = url.startsWith(`${APP_ORIGIN}/`)
-      || (DEV_SERVER_URL && url.startsWith(DEV_SERVER_URL));
-    if (!sameOrigin) {
-      console.warn(`[main] navigation blocked: ${url}`);
+  // SECURITY-REVIEW: S-NET-5 / C-NET-14 — same origin-comparison policy for
+  // both will-navigate and will-redirect (checklist C-NET-13, C-NET-14).
+  // Compares the parsed origin, never a string prefix: `url.startsWith(...)`
+  // without a trailing slash would admit a look-alike host such as
+  // `http://localhost:5183.evil.com`. Shared logic lives in ./nav-policy.mjs
+  // so it's unit-tested without booting Electron (electron/nav-policy.test.js).
+  const blockCrossOriginNavigation = (kind) => (event, url) => {
+    if (!isSameOriginAsApp(url, { appOrigin: APP_ORIGIN, devServerUrl: DEV_SERVER_URL })) {
+      console.warn(`[main] ${kind} blocked: ${describeOrigin(url)}`);
       event.preventDefault();
     }
-  });
+  };
+  // Block all navigation except inside the app's own origin (tool <-> landing).
+  contents.on('will-navigate', blockCrossOriginNavigation('navigation'));
+  // Same policy for server-side redirects (a page the app loaded that then
+  // 30x's elsewhere must not be allowed to leave the app's origin either).
+  contents.on('will-redirect', blockCrossOriginNavigation('redirect'));
   contents.on('will-attach-webview', (event) => {
     // No <webview> anywhere in this app; refuse if anything tries.
     event.preventDefault();
@@ -108,7 +135,8 @@ function hardenWebContents(contents) {
     if (isAllowedExternalLink(url)) {
       shell.openExternal(url);
     } else {
-      console.warn(`[main] window.open blocked: ${url}`);
+      // SECURITY-REVIEW: S-LOG-1 consistency — origin only, never the full URL.
+      console.warn(`[main] window.open blocked: ${describeOrigin(url)}`);
     }
     return { action: 'deny' };
   });
@@ -159,6 +187,10 @@ function createMainWindow() {
 
 app.whenReady().then(async () => {
   const ses = session.defaultSession;
+
+  // SECURITY-REVIEW: S-NET-2 — session-level half of the proxy shutoff; see
+  // the command-line switch above for the process-default half.
+  await ses.setProxy({ mode: 'direct' });
 
   installNetworkGuard(ses, { devServerUrl: DEV_SERVER_URL });
   installAppProtocolHandler(ses.protocol, { distRoot: DIST_ROOT, modelsRoot: MODELS_ROOT });
@@ -225,13 +257,23 @@ app.whenReady().then(async () => {
 
   // Single read-only diagnostic channel (SECURITY.md §4): renderer can ask for
   // version info + the blocked-request counter. Nothing else crosses IPC.
-  ipcMain.handle('pii:desktop-info', () => ({
-    appVersion: app.getVersion(),
-    electron: process.versions.electron,
-    chrome: process.versions.chrome,
-    packaged: app.isPackaged,
-    networkBlock: getNetworkBlockStats(),
-  }));
+  // SECURITY-REVIEW: S-IPC-1 — validate the sender frame before answering
+  // (SECURITY-FIXES.md S-IPC-1, checklist C-IPC-4). Payload is low-risk today
+  // (versions + a counter), but the pattern must be correct before a second,
+  // higher-value channel is ever added. Fail-closed: anything other than the
+  // app's own origin gets null — this intentionally includes dev-server pages,
+  // per the literal check requested in SECURITY-FIXES.md S-IPC-1.
+  ipcMain.handle('pii:desktop-info', (event) => {
+    const senderUrl = event.senderFrame?.url ?? '';
+    if (!senderUrl.startsWith(`${APP_ORIGIN}/`)) return null;
+    return {
+      appVersion: app.getVersion(),
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      packaged: app.isPackaged,
+      networkBlock: getNetworkBlockStats(),
+    };
+  });
 
   createMainWindow();
 
