@@ -57,16 +57,16 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-NET-2 | Licznik zablokowanych żądań po pełnym przebiegu = **0** | **PASS** | `npm run desktop:smoke` → `e2e/desktop-smoke.mjs:324` |
 | C-NET-3 | Licznik **żyje** (kanarek z procesu głównego zostaje anulowany i podbija licznik) | **PASS** | `e2e/desktop-smoke.mjs:336-351`. CSP wyprzedza strażnika, więc `fetch()` z renderera nie podbija licznika: kanarek musi lecieć z `net.fetch` w main. |
 | C-NET-4 | WebRTC: **zero kandydatów ICE**, także ze świeżego realmu (`about:blank`) | **PASS** | `setWebRTCIPHandlingPolicy('disable_non_proxied_udp')`, `electron/main.mjs:76`; `e2e/desktop-smoke.mjs:292`. Usunięcie API w preloadzie (`electron/preload.cjs:12-19`) to głębokość, nie kontrola. |
-| C-NET-5 | Brak egress kanałami, których `webRequest` nie widzi: mDNS/DIAL, PAC/proxy | **`?` → FAIL(S)** | Brak `--no-proxy-server`, brak `session.setProxy({mode:'direct'})`, brak `--disable-features=MediaRouter`. Sprawdzić Wiresharkiem na świeżym profilu: `udp.port==5353 or udp.port==1900` przez 60 s od startu. |
+| C-NET-5 | Brak egress kanałami, których `webRequest` nie widzi: mDNS/DIAL, PAC/proxy | **FAIL(S), częściowo zamknięte** | PAC/proxy zamknięte (S-NET-2, 2026-07-10): `electron/main.mjs` → `app.commandLine.appendSwitch('no-proxy-server')` + `session.defaultSession.setProxy({ mode: 'direct' })` w `app.whenReady()`. **Pozostaje otwarte:** mDNS/DIAL (Chromium Media Router) — brak `--disable-features=MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider` i brak pomiaru Wiresharkiem, czy Electron w ogóle je emituje; odłożone do `SECURITY-FIXES.md` N-4. |
 | C-NET-6 | Proces główny nie importuje `node:net|http|https|dns|tls|dgram|child_process` | **PASS (bez egzekucji)** | `grep -rn "node:\(net\|http\|https\|dns\|tls\|dgram\|child_process\)" electron/` → brak. **Nie jest to nigdzie egzekwowane testem**, patrz S-NET-4. |
-| C-NET-7 | Trwały tryb samolotowy w binarce: `--host-resolver-rules=MAP * ~NOTFOUND` | **FAIL(S)** | `grep -n "host-resolver-rules" electron/main.mjs` → brak. Dziś tylko test go używa (`e2e/desktop-smoke.mjs:80`). |
+| C-NET-7 | Trwały tryb samolotowy w binarce: `--host-resolver-rules=MAP * ~NOTFOUND` | **PASS** | Naprawione w S-NET-1 (2026-07-10): `electron/main.mjs`, `app.commandLine.appendSwitch('host-resolver-rules', 'MAP * ~NOTFOUND')`, zbramkowane na `app.isPackaged` (tryb dev nietknięty). `npm run desktop:smoke:offline` nadal zewnętrznie symuluje ten sam scenariusz (`e2e/desktop-smoke.mjs:80`) — teraz binarka wymusza go sama, bez potrzeby zewnętrznej flagi. |
 | C-NET-8 | Reguła zapory Windows blokuje ruch wychodzący binarki | **FAIL(S)** | Brak w `electron-builder.yml` / skrypcie NSIS. Po instalacji: `Get-NetFirewallApplicationFilter -Program "<ścieżka>.exe"` |
 | C-NET-9 | Brak auto-update, telemetrii, analityki, crash-reportera, `sendBeacon` | **PASS** | `publish: null` (`electron-builder.yml:45`); `grep -rniE "autoUpdater|electron-updater|crashReporter|sentry|posthog|mixpanel|telemetry|sendBeacon" src/ electron/ scripts/` → brak |
 | C-NET-10 | Build wywraca się, gdy renderer pobierałby cokolwiek zdalnie | **PASS** | `assertNoRemoteUrls`, `vite.config.electron.js:203-298` |
 | C-NET-11 | `dist-desktop/` nie zawiera `new WebSocket(`, `RTCPeerConnection`, `sendBeacon` | **PASS** | `grep -rn "new WebSocket(" dist-desktop/` → zero trafień. Naprawione w B2: `src/main.js:1436-1699` (instancja WebMCP i wszystkie rejestracje narzędzi za `window.desktopApp?.isDesktop`), `vite.config.electron.js:170` (tag `<script src="webmcp.js">` usuwany z `tool.html`, fail-fast jak przy bmc-button), `vite.config.electron.js:196-209` (`desktopStripWebmcpAsset` kasuje skopiowany z `public/` `dist-desktop/webmcp.js` w `closeBundle`, bo samo usunięcie tagu nie usuwa pliku). |
 | C-NET-12 | `shell.openExternal` tylko dla dokładnych URL-i z allowlisty, bez query i poświadczeń | **PASS** | `electron/main-links.mjs:33-48`; `npm test` → `electron/main-links.test.js`; `e2e/desktop-smoke.mjs:313` |
-| C-NET-13 | `will-navigate` blokuje nawigację poza origin aplikacji | **PASS (z zastrzeżeniem)** | `electron/main.mjs:79-86`. W trybie dev `startsWith(DEV_SERVER_URL)` bez końcowego ukośnika przepuści `http://localhost:5183.evil.com`. Patrz S-NET-5. |
-| C-NET-14 | `will-redirect` obsłużone | **FAIL(S)** | `grep -n "will-redirect" electron/main.mjs` → brak |
+| C-NET-13 | `will-navigate` blokuje nawigację poza origin aplikacji | **PASS** | Naprawione w S-NET-5 (2026-07-10): porównanie przeniesione na parsowany origin (`electron/nav-policy.mjs` → `isSameOriginAsApp`), nie prefiks stringa. `http://localhost:5183.evil.com` odrzucony testem jednostkowym (`electron/nav-policy.test.js`). |
+| C-NET-14 | `will-redirect` obsłużone | **PASS** | Naprawione (2026-07-10): `electron/main.mjs` → `hardenWebContents()` — `will-redirect` dzieli dokładnie tę samą politykę originu co `will-navigate` (`electron/nav-policy.mjs`, `isSameOriginAsApp`), egzekwowaną z jednego miejsca. |
 | C-NET-15 | `setWindowOpenHandler` zawsze zwraca `deny` | **PASS** | `electron/main.mjs:93-100` |
 
 ## 3. Wejście niezaufane (dokumenty)
@@ -93,7 +93,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-IPC-1 | Preload nie eksponuje `ipcRenderer` ani niczego z Node | **PASS** | `electron/preload.cjs:21-26`, jeden zamrożony obiekt |
 | C-IPC-2 | Brak dynamicznych nazw kanałów, brak `send`/`on` | **PASS** | jedyny kanał: `'pii:desktop-info'` (`electron/preload.cjs:25`, `electron/main.mjs:188`) |
 | C-IPC-3 | Kanał jest **tylko do odczytu**, nie przyjmuje argumentów | **PASS** | `ipcMain.handle('pii:desktop-info', () => ({...}))`, `electron/main.mjs:188-194` |
-| C-IPC-4 | Handler waliduje nadawcę (`event.senderFrame`) | **FAIL(S)** | `electron/main.mjs:188` ignoruje `event`. Ryzyko niskie (kanał zwraca tylko wersje i licznik), ale wzorzec musi być poprawny, zanim dojdzie drugi kanał. |
+| C-IPC-4 | Handler waliduje nadawcę (`event.senderFrame`) | **PASS** | Naprawione w S-IPC-1 (2026-07-10): `ipcMain.handle('pii:desktop-info', ...)` sprawdza, że `event.senderFrame?.url` zaczyna się od `${APP_ORIGIN}/`, inaczej zwraca `null`. Świadomy efekt uboczny: w `npm run desktop:dev` (strona z originu Vite, nie `app://`) `getInfo()` zwróci `null` — dziś nic w UI tego nie konsumuje, patrz `SECURITY-FIXES.md` S-IPC-1. |
 | C-IPC-5 | Żaden kanał IPC nie przenosi legendy ani treści dokumentu | **PASS** | jedyny kanał zwraca `{appVersion, electron, chrome, packaged, networkBlock}` |
 | C-IPC-6 | `getNetworkBlockStats()` nie wynosi PII do renderera | **PASS** | zwraca originy, nie pełne URL-e (`electron/network-guard.mjs:26-31`) |
 
@@ -121,7 +121,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-PERS-4 | `GPUCache`/`DawnCache` nie zawierają fragmentów dokumentu | **`?`** | Przebieg z PDF-em, potem przegląd `%APPDATA%\<app>\GPUCache` narzędziem `strings` |
 | C-PERS-5 | Brak zrzutów awaryjnych z PII | **`?` → FAIL(S)** | `crashReporter.start()` nigdzie nie wołany (PASS), ale brak `app.setPath('crashDumps', …)`. Wymusić crash renderera, sprawdzić `%APPDATA%\<app>\Crashpad\reports\`. **Windows Error Reporting działa niezależnie od aplikacji** (ryzyko R3). |
 | C-PERS-6 | Czyszczenie cache przy wyjściu | **FAIL(nice)** | brak `session.clearStorageData`/`clearCache` w `electron/` |
-| C-PERS-7 | Żaden runtime'owy `console.*` nie drukuje treści dokumentu, `entity.word`, legendy ani nazwy pliku | **FAIL(S)** | `electron/network-guard.mjs:81` loguje **pełny URL** zablokowanego żądania. Reszta czysta. Narzędzia `src/eval/*`, `bench/*` drukują tekst, ale nie trafiają do paczki. |
+| C-PERS-7 | Żaden runtime'owy `console.*` nie drukuje treści dokumentu, `entity.word`, legendy ani nazwy pliku | **PASS** | Naprawione w S-LOG-1 (2026-07-10): `electron/network-guard.mjs` loguje `describeOrigin(details.url)` + `details.resourceType`, nigdy pełny URL (`electron/network-guard.test.js`). Przy okazji ujednolicone `electron/main.mjs` (logi `will-navigate`/`will-redirect`/`window.open blocked`). Narzędzia `src/eval/*`, `bench/*` drukują tekst, ale nie trafiają do paczki. |
 | C-PERS-8 | Panel debug (legenda → schowek) niedostępny w buildzie desktopowym | **FAIL(S)** | `src/main.js:1391-1393` wrzuca do schowka `JSON.stringify({anonymized, legend, debug})`. Dostępny po nawigacji na `app://app/tool.html?debug=1`, którą `will-navigate` przepuszcza. |
 | C-PERS-9 | Schowek: „Kopiuj wszystko" kopiuje **tekst tokenizowany**, nie oryginał | **PASS** | `src/main.js:1266` → `applyTokens(...)` |
 | C-PERS-10 | Uprawnienia: deny-all poza `clipboard-read` i `clipboard-sanitized-write`, tylko dla originu aplikacji | **PASS** | `electron/network-guard.mjs:94-113`. Świadome odstępstwo, opisane. |
@@ -162,7 +162,8 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 ## Testy, które muszą przejść przed każdym wydaniem
 
 ```bash
-npm test                        # m.in. electron/main-links.test.js, electron/model-integrity.test.js
+npm test                        # m.in. electron/main-links.test.js, electron/model-integrity.test.js,
+                                 # electron/nav-policy.test.js, electron/network-guard.test.js
 npm run desktop:verify-models   # sumy SHA-256, brak plików .part
 npm run desktop:build:renderer  # wywraca się na zdalnym zasobie (assertNoRemoteUrls)
 npm run desktop:smoke           # tryb repo: pełny przebieg + kanarek strażnika + bramka integralności modeli

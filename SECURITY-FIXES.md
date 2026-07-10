@@ -255,7 +255,20 @@ zależy nam na obsłudze po polsku:
 
 ## SHOULD (przed dystrybucją poza maszynę autora)
 
-### S-NET-1 — Trwały tryb samolotowy w binarce
+### S-NET-1 — Trwały tryb samolotowy w binarce — NAPRAWIONE
+**Status:** naprawione (2026-07-10). `electron/main.mjs`, obok istniejących
+`appendSwitch`: `app.commandLine.appendSwitch('host-resolver-rules', 'MAP *
+~NOTFOUND')`, zbramkowane na `app.isPackaged` — tryb dev (`npm run
+desktop:dev`) nietknięty. Checklist: **C-NET-7 → PASS**.
+
+**Zweryfikowane:** `npm run desktop:build:renderer`, `npm run desktop:smoke`
+(tryb repo) i `npm run desktop:smoke:packaged` (świeżo przebudowana binarka)
+przechodzą bez zmian. `npm run desktop:smoke:offline` nadal symuluje ten sam
+scenariusz z zewnątrz (`e2e/desktop-smoke.mjs:80`) — teraz binarka wymusza go
+sama, bez potrzeby przekazywania flagi z zewnątrz.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs:40-42` (obok istniejących `appendSwitch`).
 **Dlaczego:** D4 pkt 1. Dołożenie warstwy niezależnej od `webRequest`.
 ```js
@@ -268,7 +281,26 @@ DNS (`e2e/desktop-smoke.mjs:80`). Bramkować na `app.isPackaged`, żeby nie zabi
 trybu dev. `app://` nie rozwiązuje nazw, więc jest nietknięty; literalne IP
 z przyszłego loopbacku też (nie przechodzi przez resolver).
 
-### S-NET-2 — Twarde wyłączenie proxy
+### S-NET-2 — Twarde wyłączenie proxy — NAPRAWIONE
+**Status:** naprawione (2026-07-10). `electron/main.mjs`:
+`app.commandLine.appendSwitch('no-proxy-server')` obok istniejących
+`appendSwitch`, oraz `await session.defaultSession.setProxy({ mode: 'direct'
+})` w `app.whenReady()`, przed `installNetworkGuard`. Checklist: **C-NET-5
+częściowo zamknięte** (proxy/PAC tak, mDNS/DIAL nadal otwarte — patrz uwaga
+niżej).
+
+**Zweryfikowane:** `npm test`, `npm run desktop:build:renderer`, `npm run
+desktop:smoke` i `npm run desktop:smoke:packaged` przechodzą bez zmian.
+
+**Uwaga o zakresie:** C-NET-5 w checkliście wiąże PAC/proxy (tu zamknięte)
+z mDNS/DIAL przez Chromium Media Router (nadal otwarte — brak
+`--disable-features=MediaRouter,...` i brak pomiaru Wiresharkiem, czy Electron
+w ogóle je emituje). To osobny wektor, odłożony do N-4 w tym samym pliku;
+C-NET-5 nie przechodzi w całości na PASS, dopóki mDNS/DIAL nie zostanie
+zmierzone i domknięte.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs:40-42` oraz w `app.whenReady` obok `installNetworkGuard`.
 **Dlaczego:** D4 pkt 2. Zamyka pobranie PAC i proxy systemowe.
 ```js
@@ -299,7 +331,35 @@ Plus druga asercja: `dist-desktop/**` nie zawiera `new WebSocket(`,
 `RTCPeerConnection`, `navigator.sendBeacon`. Po B2 przechodzi na zielono i
 pilnuje regresji WebMCP.
 
-### S-NET-5 — Porównanie originu w `will-navigate` bez pułapki prefiksu
+### S-NET-5 — Porównanie originu w `will-navigate` i `will-redirect` bez pułapki prefiksu — NAPRAWIONE
+**Status:** naprawione (2026-07-10). Logika wydzielona do nowego pliku
+`electron/nav-policy.mjs` (`isSameOriginAsApp`), na wzór `main-links.mjs` —
+testowalna bez bootowania Electrona. Współdzielona przez `will-navigate`
+**i** `will-redirect` w `electron/main.mjs` → `hardenWebContents()`, więc oba
+egzekwują identycznie z jednego miejsca. Checklist: **C-NET-13 → PASS**,
+**C-NET-14 → PASS** (pozycja `will-redirect` nie miała wcześniej własnego
+szkicu w tym pliku — dołączona tu, bo naprawiona tą samą zmianą).
+
+**Pułapka złapana w trakcie implementacji, warta zapisania:** pierwsza wersja
+porównywała `new URL(url).origin === APP_ORIGIN`. `app:` jest schematem
+**nie-specjalnym** w WHATWG URL, więc `.origin` serializuje go do literalnego
+stringa `"null"` — porównanie milcząco zwracało `false` dla **każdego**
+`app://` URL-a, w tym legalnej nawigacji wewnątrz aplikacji. Złapane od razu
+testem jednostkowym (`electron/nav-policy.test.js`, przypadek „accepts the
+app origin itself"), zanim trafiło do `main.mjs`. Poprawka: porównanie po
+`protocol` + `host`, nie po `.origin` — działa poprawnie dla schematów
+specjalnych (http/https) i nie-specjalnych (`app:`) jednakowo. Ta sama pułapka
+była już znana w `electron/network-guard.mjs` (`isAppOrigin` dla uprawnień),
+ale nie było jej udokumentowanego testu — teraz jest, w nowym module.
+
+**Zweryfikowane:** `electron/nav-policy.test.js` (6 przypadków: origin
+aplikacji, brak dev-servera, dev-server dozwolony, look-alike host odrzucony
+— dokładnie błąd z tej pozycji, różny schemat/port odrzucony, URL
+nieparsowalny). `npm test` w całości, `npm run desktop:build:renderer`, `npm
+run desktop:smoke`, `npm run desktop:smoke:packaged` przechodzą bez zmian.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs:79-86`.
 **Dlaczego:** C-NET-13. `url.startsWith(DEV_SERVER_URL)` bez końcowego ukośnika
 przepuści `http://localhost:5183.evil.com`. Dotyczy tylko trybu dev, ale wzorzec
@@ -311,7 +371,24 @@ const sameOrigin = target.origin === APP_ORIGIN
 ```
 Porównywać `origin`, nie prefiks stringa.
 
-### S-LOG-1 — `network-guard` loguje origin, nie pełny URL
+### S-LOG-1 — `network-guard` loguje origin, nie pełny URL — NAPRAWIONE
+**Status:** naprawione (2026-07-10). `electron/network-guard.mjs`:
+`describeOrigin` wyeksportowany (był prywatny) i log przy pierwszych trzech
+trafieniach zmieniony z pełnego `details.url` na `describeOrigin(details.url)`
++ `details.resourceType`. Checklist: **C-PERS-7 → PASS**.
+
+**Przy okazji (ta sama linia, ten sam powód):** `electron/main.mjs` — logi
+`will-navigate`/`will-redirect` (S-NET-5) i `window.open blocked` też
+przepisane na `describeOrigin(url)`, zgodnie z uwagą „spójność reguły warta
+utrzymania" niżej.
+
+**Zweryfikowane:** nowy `electron/network-guard.test.js` (3 przypadki:
+origin bez ścieżki/query/fragmentu dla schematów specjalnych, `app:` nigdy nie
+ujawnia hosta/ścieżki, fallback dla URL-i nieparsowalnych). `npm test` w
+całości, `npm run desktop:smoke` przechodzi bez zmian.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/network-guard.mjs:81`.
 **Dlaczego:** `THREAT-MODEL.md` §4 S6 pkt 1, C-PERS-7. Pełny URL może nieść PII,
 którą `--enable-logging` zapisze na dysk.
@@ -379,7 +456,30 @@ zasila B1.
 Udokumentować, że instalator powstaje wyłącznie po świeżym `npm ci` z
 zacommitowanego lockfile.
 
-### S-IPC-1 — Walidacja nadawcy w handlerze IPC
+### S-IPC-1 — Walidacja nadawcy w handlerze IPC — NAPRAWIONE
+**Status:** naprawione (2026-07-10). `electron/main.mjs`, handler
+`ipcMain.handle('pii:desktop-info', ...)` zaimplementowany dokładnie wg
+szkicu niżej: `event.senderFrame?.url` musi zaczynać się od `${APP_ORIGIN}/`,
+inaczej zwraca `null`. Checklist: **C-IPC-4 → PASS**.
+
+**Świadomy efekt uboczny, do decyzji Alana:** sprawdzenie jest zawężone do
+`APP_ORIGIN` dokładnie tak, jak proszono — bez wyjątku dla
+`DEV_SERVER_URL`. W `npm run desktop:dev` strona ładuje się z originu Vite,
+więc `window.desktopApp.getInfo()` zwróci tam `null`. Dziś nic w `src/`
+tego nie konsumuje (jedyny konsument to `e2e/desktop-smoke.mjs`, który zawsze
+ładuje z `app://`, w obu trybach repo i packaged), więc to nieszkodliwe. Jeśli
+w przyszłości przyda się diagnostyka w trybie dev, wyjątek dla
+`DEV_SERVER_URL` można dołożyć analogicznie do `will-navigate`
+(`electron/nav-policy.mjs` już to potrafi) — celowo tego nie zrobiono bez
+pytania, żeby nie poszerzać cichaczem zbioru originów akceptowanych przez
+kanał IPC.
+
+**Zweryfikowane:** `npm run desktop:smoke` (tryb repo, `app://`) —
+`window.desktopApp.getInfo()` nadal zwraca poprawny obiekt (`preload bridge
+exposes desktopApp` PASS), `npm run desktop:smoke:packaged` tak samo.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs:188`.
 **Dlaczego:** C-IPC-4. Kanał zwraca dziś tylko wersje i licznik (ryzyko niskie),
 ale wzorzec musi być poprawny, zanim dojdzie drugi kanał.
