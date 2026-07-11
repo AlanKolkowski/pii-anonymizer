@@ -12,23 +12,25 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 
 ---
 
-## WERDYKT BRAMKI, stan na 2026-07-10 (po naprawie B1 i B3)
+## WERDYKT BRAMKI, stan na 2026-07-11 (po naprawie B1, B3 i B4)
 
-> ## ❌ **BUILD NIE MOŻE WYJŚĆ JAKO INSTALATOR DYSTRYBUCYJNY POZA MASZYNĘ AUTORA.**
+> ## ✅ **WSZYSTKIE CZTERY BLOKERY (B1–B4) ZAMKNIĘTE. Przed pierwszą realną dystrybucją poza maszynę autora zostają jeszcze ręczne testy (nie-blokery, patrz niżej).**
 >
-> Pozostały bloker: **B4** (brak podpisu kodu) — jedyny wymagający zakupu
-> certyfikatu na zewnątrz.
+> **B4** (podpis kodu) — **zamknięty (2026-07-11)**: instalator podpisany przez
+> Azure Artifact Signing. `Get-AuthenticodeSignature` → `Valid`, SignerCertificate
+> `CN=Kancelaria Radcy Prawnego K-Law Alan Kolkowski`, znakowanie czasem RFC 3161.
+> Patrz C-WIN-2 niżej oraz `docs/code-signing-azure-session-log.md`.
 >
 > **B1** (weryfikacja integralności modeli w runtime), **B2** (WebMCP w paczce)
 > i **B3** (instalacja do katalogu zapisywalnego przez użytkownika) są
 > naprawione i zweryfikowane empirycznie — patrz C-INT-4, C-INT-5, C-WIN-1,
 > C-NET-11, C-PKG-10 niżej oraz `SECURITY-FIXES.md`.
 >
-> **Dopuszczone:** build wewnętrzny na maszynie autora, instalowany z pełnym
-> łańcuchem B1+B3 (integralność modeli w runtime + katalog niezapisywalny bez
-> UAC). Dystrybucja poza tę maszynę czeka na B4 — bez podpisu SmartScreen
-> ostrzega i uczy klikać „Uruchom mimo to", co niszczy wartość podpisu na
-> przyszłość (C-WIN-4).
+> **Zostają do odhaczenia ręcznie przed dystrybucją** (nie blokują builda
+> wewnętrznego, ale nie zostały wykonane na żywo): żywa instalacja z monitem UAC
+> do `%ProgramFiles%` (C-WIN-1), zachowanie SmartScreen przy świeżym certyfikacie
+> OV (C-WIN-4 – reputacja narasta z czasem), Renderer Code Integrity (C-WIN-3),
+> status BitLockera (C-WIN-9).
 >
 > Uzasadnienie i scenariusze: `THREAT-MODEL.md` §4 (S1, S2).
 > Poprawki: `SECURITY-FIXES.md`.
@@ -41,7 +43,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 |---|---|---|---|
 | C-ISO-1 | `contextIsolation: true`, `nodeIntegration: false`, `nodeIntegrationInWorker: false`, `nodeIntegrationInSubFrames: false` | **PASS** | `electron/main.mjs:115-118` |
 | C-ISO-2 | `sandbox: true` na oknie głównym | **PASS** | `electron/main.mjs:119` |
-| C-ISO-3 | `app.enableSandbox()` wymusza sandbox na **każdym** przyszłym `webContents` | **FAIL(S)** | `grep -rn "enableSandbox" electron/` → brak trafień. `webPreferences` nie da się dopiąć w `web-contents-created`, więc dzisiejszy `hardenWebContents` nie ochroni okna utworzonego przez przyszły kod. |
+| C-ISO-3 | `app.enableSandbox()` wymusza sandbox na **każdym** przyszłym `webContents` | **PASS** | Naprawione (2026-07-11): `electron/main.mjs`, `app.enableSandbox()` przed `app.whenReady()`, obok istniejących `appendSwitch`. `npm run desktop:smoke` i `desktop:smoke:packaged` przechodzą bez zmian — worker NER/OCR (Web Worker wewnątrz renderera, nie osobny `webContents`) nietknięty. |
 | C-ISO-4 | `webSecurity: true`, `allowRunningInsecureContent: false` | **PASS** | `electron/main.mjs:120-121` |
 | C-ISO-5 | DevTools wyłączone w buildzie spakowanym | **PASS** | `electron/main.mjs:125`; `PII_DEBUG=1` włącza jedynie *możliwość*, nic nie otwiera |
 | C-ISO-6 | Brak `<webview>`, brak `webviewTag` | **PASS** | `electron/main.mjs:87-90` (`will-attach-webview` → `preventDefault`) |
@@ -57,10 +59,10 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-NET-2 | Licznik zablokowanych żądań po pełnym przebiegu = **0** | **PASS** | `npm run desktop:smoke` → `e2e/desktop-smoke.mjs:324` |
 | C-NET-3 | Licznik **żyje** (kanarek z procesu głównego zostaje anulowany i podbija licznik) | **PASS** | `e2e/desktop-smoke.mjs:336-351`. CSP wyprzedza strażnika, więc `fetch()` z renderera nie podbija licznika: kanarek musi lecieć z `net.fetch` w main. |
 | C-NET-4 | WebRTC: **zero kandydatów ICE**, także ze świeżego realmu (`about:blank`) | **PASS** | `setWebRTCIPHandlingPolicy('disable_non_proxied_udp')`, `electron/main.mjs:76`; `e2e/desktop-smoke.mjs:292`. Usunięcie API w preloadzie (`electron/preload.cjs:12-19`) to głębokość, nie kontrola. |
-| C-NET-5 | Brak egress kanałami, których `webRequest` nie widzi: mDNS/DIAL, PAC/proxy | **FAIL(S), częściowo zamknięte** | PAC/proxy zamknięte (S-NET-2, 2026-07-10): `electron/main.mjs` → `app.commandLine.appendSwitch('no-proxy-server')` + `session.defaultSession.setProxy({ mode: 'direct' })` w `app.whenReady()`. **Pozostaje otwarte:** mDNS/DIAL (Chromium Media Router) — brak `--disable-features=MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider` i brak pomiaru Wiresharkiem, czy Electron w ogóle je emituje; odłożone do `SECURITY-FIXES.md` N-4. |
+| C-NET-5 | Brak egress kanałami, których `webRequest` nie widzi: mDNS/DIAL, PAC/proxy | **PASS** | PAC/proxy zamknięte (S-NET-2, 2026-07-10). mDNS/DIAL: switch dodany (2026-07-11) — `electron/main.mjs` → `app.commandLine.appendSwitch('disable-features', 'MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider')`. **Zmierzone żywo przez Alana (2026-07-11, Wireshark):** przechwytywanie z filtrem `udp.port == 5353 or udp.port == 1900` przez pełny czas działania `release\win-unpacked\Lokalny anonimizator.exe` złapało 4 pakiety MDNS — wszystkie z `ip.src == 192.168.1.1` (router/brama), żaden z `192.168.1.11` (komputer Alana, na którym działa aplikacja). Dofiltrowanie tego samego przechwycenia do `(udp.port == 5353 or udp.port == 1900) and ip.src == 192.168.1.11` dało **listę pustą** — komputer, na którym działa aplikacja, nie wysłał ani jednego pakietu mDNS/DIAL. Cztery złapane pakiety to szum sieciowy routera, niezwiązany z aplikacją. Patrz `SECURITY-FIXES.md` N-4 dla pełnego zapisu metodologii (w tym pułapki „przechwytywanie na Wi-Fi widzi ruch całej sieci lokalnej, nie tylko własnej maszyny" — filtrowanie po `ip.src` własnej maszyny jest konieczne, żeby uniknąć fałszywego alarmu). |
 | C-NET-6 | Proces główny nie importuje `node:net|http|https|dns|tls|dgram|child_process` | **PASS (bez egzekucji)** | `grep -rn "node:\(net\|http\|https\|dns\|tls\|dgram\|child_process\)" electron/` → brak. **Nie jest to nigdzie egzekwowane testem**, patrz S-NET-4. |
 | C-NET-7 | Trwały tryb samolotowy w binarce: `--host-resolver-rules=MAP * ~NOTFOUND` | **PASS** | Naprawione w S-NET-1 (2026-07-10): `electron/main.mjs`, `app.commandLine.appendSwitch('host-resolver-rules', 'MAP * ~NOTFOUND')`, zbramkowane na `app.isPackaged` (tryb dev nietknięty). `npm run desktop:smoke:offline` nadal zewnętrznie symuluje ten sam scenariusz (`e2e/desktop-smoke.mjs:80`) — teraz binarka wymusza go sama, bez potrzeby zewnętrznej flagi. |
-| C-NET-8 | Reguła zapory Windows blokuje ruch wychodzący binarki | **FAIL(S)** | Brak w `electron-builder.yml` / skrypcie NSIS. Po instalacji: `Get-NetFirewallApplicationFilter -Program "<ścieżka>.exe"` |
+| C-NET-8 | Reguła zapory Windows blokuje ruch wychodzący binarki | **PASS** | Dodano (2026-07-11): `build/installer.nsh` (makra `customInstall`/`customUnInstall`: `netsh advfirewall firewall add/delete rule`) + `electron-builder.yml` → `nsis.include: build/installer.nsh`. Kompilacja NSIS zweryfikowana adwersaryjnie (błąd celowo wstrzyknięty do `customInstall` → `makensis` zgłosił błąd dokładnie w tym makrze na `installSection.nsh:82`) — patrz `SECURITY-FIXES.md` S-NET-3. **Żywa instalacja i deinstalacja wykonane przez Alana (2026-07-11):** po instalacji (`LokalnyAnonimizator-Setup-0.1.0.exe`, UAC zaakceptowany) `Get-NetFirewallApplicationFilter -Program "$env:ProgramFiles\Lokalny anonimizator\Lokalny anonimizator.exe" \| Get-NetFirewallRule` (z **podniesionego** PowerShell — zwykły zwraca „Odmowa dostępu", sam odczyt reguł zapory wymaga elewacji) zwróciło `DisplayName=Lokalny anonimizator (block out)`, `Direction=Outbound`, `Action=Block`, `Enabled=True`. Po deinstalacji to samo polecenie zwróciło `No MSFT_NetApplicationFilter objects found` — reguła usunięta razem z aplikacją. Oba kierunki potwierdzone empirycznie. |
 | C-NET-9 | Brak auto-update, telemetrii, analityki, crash-reportera, `sendBeacon` | **PASS** | `publish: null` (`electron-builder.yml:45`); `grep -rniE "autoUpdater|electron-updater|crashReporter|sentry|posthog|mixpanel|telemetry|sendBeacon" src/ electron/ scripts/` → brak |
 | C-NET-10 | Build wywraca się, gdy renderer pobierałby cokolwiek zdalnie | **PASS** | `assertNoRemoteUrls`, `vite.config.electron.js:203-298` |
 | C-NET-11 | `dist-desktop/` nie zawiera `new WebSocket(`, `RTCPeerConnection`, `sendBeacon` | **PASS** | `grep -rn "new WebSocket(" dist-desktop/` → zero trafień. Naprawione w B2: `src/main.js:1436-1699` (instancja WebMCP i wszystkie rejestracje narzędzi za `window.desktopApp?.isDesktop`), `vite.config.electron.js:170` (tag `<script src="webmcp.js">` usuwany z `tool.html`, fail-fast jak przy bmc-button), `vite.config.electron.js:196-209` (`desktopStripWebmcpAsset` kasuje skopiowany z `public/` `dist-desktop/webmcp.js` w `closeBundle`, bo samo usunięcie tagu nie usuwa pliku). |
@@ -79,7 +81,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-INP-4 | SVG **nie jest** akceptowanym formatem wejściowym i nigdy nie jest inline'owany | **PASS** | `src/file-import/index.js:12-31` (pdf, docx, txt, png, jpg, jpeg, heic, heif) |
 | C-INP-5 | DOCX: brak XXE, brak wyjścia HTML | **PASS** | `mammoth.extractRawText` (`src/file-import/docx.js:22`), nigdy `convertToHtml`; XML przez `@xmldom/xmldom`, brak I/O, brak rozwijania encji zewnętrznych |
 | C-INP-6 | PDF: XFA wyłączone, brak zdalnych `cMapUrl`/`standardFontDataUrl`, worker same-origin, osadzony JS nigdy nie wykonywany | **PASS** | `src/file-import/pdf.js:99` nie ustawia `enableXfa`; `wasmUrl` z `document.baseURI` (`:20-23`); brak wywołań `getJSActions` |
-| C-INP-7 | `isEvalSupported: false` w `getDocument` | **FAIL(S)** | `src/file-import/pdf.js:99` → `getDocument({ data, wasmUrl })`, brak flagi |
+| C-INP-7 | `isEvalSupported: false` w `getDocument` | **PASS** | Naprawione (2026-07-11): `src/file-import/pdf.js` → `getDocument({ data, wasmUrl, isEvalSupported: false })`. `npm test` (`pdf.test.js`, 20/20) i OCR skanu PDF w `desktop:smoke`/`desktop:smoke:packaged` przechodzą bez zmian. |
 | C-INP-8 | CSP strony **bez** `'unsafe-eval'` | **FAIL(S), świadome odstępstwo** | `electron/app-protocol.mjs:61`. Wymuszone przez glue OpenCV w SDK PaddleOCR na wątku głównym. Zamknąć po przeniesieniu OpenCV do workera. Worker zachowuje `'unsafe-eval'` osobno (`:88`). |
 | C-INP-9 | Path traversal w `app://` niemożliwy | **PASS** | `safeJoin`, `electron/app-protocol.mjs:143-148`; handler przyjmuje tylko `GET`/`HEAD` (`:157`) |
 | C-INP-10 | Limit rozmiaru pliku wejściowego (obrona przed bombą dekompresyjną) | **PASS** | 25 MB, `src/file-import/index.js:10` |
@@ -119,10 +121,10 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-PERS-2 | Zamknięcie okna kończy proces (legenda ginie) | **PASS** | `electron/main.mjs:208-212` |
 | C-PERS-3 | Brak plików tymczasowych z rasteryzacji PDF / OCR / HEIC | **PASS** | `OffscreenCanvas` (`src/file-import/pdf.js:31`), `createImageBitmap` (`src/ocr/index.js:4`); zero `os.tmpdir`/`writeFile` w ścieżce runtime |
 | C-PERS-4 | `GPUCache`/`DawnCache` nie zawierają fragmentów dokumentu | **`?`** | Przebieg z PDF-em, potem przegląd `%APPDATA%\<app>\GPUCache` narzędziem `strings` |
-| C-PERS-5 | Brak zrzutów awaryjnych z PII | **`?` → FAIL(S)** | `crashReporter.start()` nigdzie nie wołany (PASS), ale brak `app.setPath('crashDumps', …)`. Wymusić crash renderera, sprawdzić `%APPDATA%\<app>\Crashpad\reports\`. **Windows Error Reporting działa niezależnie od aplikacji** (ryzyko R3). |
+| C-PERS-5 | Brak zrzutów awaryjnych z PII | **PASS (zmierzone)** | Zmierzone empirycznie (2026-07-11, Playwright `_electron` + `forcefullyCrashRenderer()`): renderer naprawdę się zawiesił (`[main] renderer gone: crashed 2` po ~1s), po 15s `Crashpad/` pozostał pusty (brak `reports/`, brak jakiegokolwiek pliku) — bez `crashReporter.start()` Crashpad nie jest uzbrojony, więc nic nie zapisuje niezależnie od ścieżki. Kod niepotrzebny (patrz `SECURITY-FIXES.md` S-LOG-2). **Windows Error Reporting nadal działa niezależnie od aplikacji na poziomie OS — to zostaje ryzykiem R3** (kontrola organizacyjna), niezamknięte i niezamykalne kodem tej aplikacji. |
 | C-PERS-6 | Czyszczenie cache przy wyjściu | **FAIL(nice)** | brak `session.clearStorageData`/`clearCache` w `electron/` |
 | C-PERS-7 | Żaden runtime'owy `console.*` nie drukuje treści dokumentu, `entity.word`, legendy ani nazwy pliku | **PASS** | Naprawione w S-LOG-1 (2026-07-10): `electron/network-guard.mjs` loguje `describeOrigin(details.url)` + `details.resourceType`, nigdy pełny URL (`electron/network-guard.test.js`). Przy okazji ujednolicone `electron/main.mjs` (logi `will-navigate`/`will-redirect`/`window.open blocked`). Narzędzia `src/eval/*`, `bench/*` drukują tekst, ale nie trafiają do paczki. |
-| C-PERS-8 | Panel debug (legenda → schowek) niedostępny w buildzie desktopowym | **FAIL(S)** | `src/main.js:1391-1393` wrzuca do schowka `JSON.stringify({anonymized, legend, debug})`. Dostępny po nawigacji na `app://app/tool.html?debug=1`, którą `will-navigate` przepuszcza. |
+| C-PERS-8 | Panel debug (legenda → schowek) niedostępny w buildzie desktopowym | **PASS** | Naprawione (2026-07-11): `src/main.js:58` → `isDebug = urlParams.get('debug')==='1' && !window.desktopApp?.isDesktop`. `window.desktopApp` istnieje wyłącznie na desktopie (preload), więc web (`?debug=1`) nietknięty — zweryfikowane w przeglądarce (`typeof window.desktopApp === 'undefined'` na buildzie webowym). Na desktopie jedyne miejsce odsłaniające `debugSection` (`:1204`) jest zagnieżdżone pod tym samym `isDebug`, więc przycisk „Kopiuj JSON debug" (`:1391-1393`) jest nieosiągalny nawet po nawigacji na `?debug=1`. |
 | C-PERS-9 | Schowek: „Kopiuj wszystko" kopiuje **tekst tokenizowany**, nie oryginał | **PASS** | `src/main.js:1266` → `applyTokens(...)` |
 | C-PERS-10 | Uprawnienia: deny-all poza `clipboard-read` i `clipboard-sanitized-write`, tylko dla originu aplikacji | **PASS** | `electron/network-guard.mjs:94-113`. Świadome odstępstwo, opisane. |
 | C-PERS-11 | `setDisplayMediaRequestHandler` / `setDevicePermissionHandler` jawnie odmawiają | **FAIL(nice)** | brak w `electron/`. `getDisplayMedia` bez handlera i tak odrzuca, ale jawna odmowa jest tańsza niż poleganie na domyślnej wartości. |
@@ -136,7 +138,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-PKG-2 | `node_modules` nie trafia do paczki | **PASS** | `electron-builder.yml:17` |
 | C-PKG-3 | `package-lock.json` zacommitowany, pełne sumy `integrity` | **PASS** | `git ls-files package-lock.json`; każdy wpis ma `"integrity": "sha512-…"` |
 | C-PKG-4 | Build dystrybucyjny robiony z `npm ci`, nie z `npm install` | **FAIL(S)** | `package.json:18` (`desktop:build`) zakłada zainstalowane drzewo. Brak workflow CI dla desktopu. |
-| C-PKG-5 | Zależności runtime bez skryptów instalacyjnych | **FAIL(S)** | `onnxruntime-node`, `sharp`, `protobufjs` mają `hasInstallScript: true` i siedzą w `dependencies`. `onnxruntime-node` jest używany wyłącznie przez `src/eval/*` → powinien być `devDependency`. |
+| C-PKG-5 | Zależności runtime bez skryptów instalacyjnych | **PASS** | Naprawione (2026-07-11): `onnxruntime-node` przeniesiony do `devDependencies` (potwierdzone grepem: brak importu poza `src/eval/*`, jedyny konsument to `@huggingface/transformers` przy uruchomieniu w Node). `package-lock.json` zaktualizowany (`npm install`, wersja bez zmian, tylko `dev: true`). `sharp` i `protobufjs` **zostają** w `dependencies` — transitive przez `@huggingface/transformers`, potrzebne w rendererze/workerze w runtime; to był zawsze zakres tej poprawki (patrz `SECURITY-FIXES.md` S-SUP-1). |
 | C-PKG-6 | ORT WASM vendorowany lokalnie, nie z jsDelivr | **PASS** | `vite.config.electron.js:44-61` |
 | C-PKG-7 | Modele NER lokalne, `env.allowRemoteModels = false` | **PASS** | `src/worker.js:20-32` |
 | C-PKG-8 | Google Fonts i widget Buy-Me-a-Coffee usunięte z builda desktopowego, z fail-fast przy zmianie upstreamu | **PASS** | `vite.config.electron.js:150-188` |
@@ -148,9 +150,9 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | ID | Pozycja | Status | Jak sprawdzić |
 |---|---|---|---|
 | C-WIN-1 | Instalacja do katalogu **niezapisywalnego** przez zwykłego użytkownika | **PASS (żywa instalacja nie wykonana w tej sesji)** | Naprawione w B3: `electron-builder.yml` `nsis.perMachine: true` + `allowToChangeInstallationDirectory: false`. Zweryfikowane nieinwazyjnie (2026-07-10): log `desktop:build` potwierdza `building target=nsis … oneClick=false perMachine=true`; skompilowany `LokalnyAnonimizator-Setup-0.1.0.exe` zawiera w zasobie manifestu PE ciąg `requireAdministrator` (sprawdzone bezpośrednio w binarce), czyli Windows wymusi UAC przy starcie instalatora. **Nie wykonano** pełnej, żywej instalacji z kliknięciem UAC do `%ProgramFiles%` (wymaga interakcji z monitem UAC) — zalecany ręczny test przed dystrybucją poza maszynę autora. |
-| C-WIN-2 | Binarka i instalator podpisane certyfikatem | **FAIL(B)** | `electron-builder.yml:56-60`, `signtoolOptions` zakomentowane. `Get-AuthenticodeSignature "<exe>"` → `NotSigned`. Patrz B4. |
-| C-WIN-3 | Ochrona przed DLL sideloading / wstrzyknięciem do renderera | **`?`, zależne od C-WIN-1 i C-WIN-2** | Windows Renderer Code Integrity ładuje do renderera wyłącznie podpisane DLL, **ale wymaga podpisanej binarki**: do weryfikacji. Bez tego jedyną obroną jest niezapisywalny katalog instalacji. |
-| C-WIN-4 | SmartScreen nie ostrzega przy instalacji | **FAIL(B)** | konsekwencja C-WIN-2. Ostrzeżenie uczy radcę klikać „Uruchom mimo to", co niszczy wartość podpisu na przyszłość. |
+| C-WIN-2 | Binarka i instalator podpisane certyfikatem | **PASS** | Azure Artifact Signing wpięte w `electron-builder.yml` `win.azureSignOptions` (endpoint Poland Central, konto `kolkowskicodesign`, profil `klawcodesigningprofile`, `publisherName` = CN certyfikatu). Zweryfikowane empirycznie (2026-07-11): `Get-AuthenticodeSignature "release\LokalnyAnonimizator-Setup-0.1.0.exe"` → **Valid** („Signature verified."), SignerCertificate `CN=Kancelaria Radcy Prawnego K-Law Alan Kolkowski` (thumbprint `CADF7EB750A14953885D0069493E2CEEA6C9317B`), wystawca `Microsoft ID Verified CS AOC CA 04`, znakowanie czasem RFC 3161 (Microsoft Public RSA Time Stamping Authority) utrwala ważność mimo krótkotrwałego certyfikatu podpisującego. Bloker B4 zamknięty. Pełny przebieg: `docs/code-signing-azure-session-log.md`. |
+| C-WIN-3 | Ochrona przed DLL sideloading / wstrzyknięciem do renderera | **`?`, przesłanka (podpis) już spełniona** | Windows Renderer Code Integrity ładuje do renderera wyłącznie podpisane DLL, co wymaga podpisanej binarki – a ta jest już podpisana (C-WIN-2 PASS, 2026-07-11). Pozostaje empiryczna weryfikacja, że mechanizm jest aktywny; do tego czasu dodatkową obroną jest niezapisywalny katalog instalacji (C-WIN-1). |
+| C-WIN-4 | SmartScreen nie ostrzega przy instalacji | **PASS (żywa weryfikacja SmartScreen niewykonana)** | Bloker (brak podpisu) usunięty przez C-WIN-2 – podpis Authenticode `Valid` sprawia, że plik nie jest już traktowany jako niepodpisany. Zastrzeżenie: reputacja aplikacji w SmartScreen dla świeżego certyfikatu OV narasta z liczbą pobrań i czasem, więc pierwsze pobrania mogą jeszcze przejściowo pokazać monit „Windows chronił Twój komputer" – to budowanie reputacji, nie wada podpisu. Zalecany ręczny test przy pierwszej realnej dystrybucji. |
 | C-WIN-5 | Brak rejestracji protokołu/deep-linku | **PASS** | `grep -rn "setAsDefaultProtocolClient" electron/` → brak; `app://` jest wewnętrznym schematem Chromium, nie protokołem OS |
 | C-WIN-6 | `second-instance` nie interpretuje `argv` (brak wstrzyknięcia deep-linkiem) | **PASS** | `electron/main.mjs:50-55`, podnosi okno i nic więcej |
 | C-WIN-7 | Upuszczenie pliku na okno nie powoduje nawigacji do `file://` | **PASS (do potwierdzenia ręcznie)** | `will-navigate` (`electron/main.mjs:79-86`) + fuse `GrantFileProtocolExtraPrivileges:false`. Test: przeciągnąć `.html` i `.exe` na okno, nic się nie dzieje. |

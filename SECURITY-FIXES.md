@@ -309,7 +309,80 @@ app.commandLine.appendSwitch('no-proxy-server');
 await session.defaultSession.setProxy({ mode: 'direct' });
 ```
 
-### S-NET-3 — Reguła zapory Windows w instalatorze
+### S-NET-3 — Reguła zapory Windows w instalatorze — NAPRAWIONE, zweryfikowane żywo w obie strony
+**Status:** naprawione i w pełni zweryfikowane (2026-07-11). Kod napisany
+przeze mnie i skompilowany; żywą instalację i deinstalację z UAC wykonał Alan
+(nie ja — instalacja per-machine + zmiana reguł zapory to system-wide
+zmiana, której nie robię bez niego przy klawiaturze). Checklist: **C-NET-8 →
+PASS**.
+
+**Wynik żywego testu (2026-07-11, wykonał Alan):**
+`LokalnyAnonimizator-Setup-0.1.0.exe` uruchomiony jako administrator (monit
+UAC zaakceptowany). Pierwsza próba weryfikacji z **niepodniesionego**
+PowerShell zwróciła `Odmowa dostępu` (Windows System Error 5) —
+`Get-NetFirewallApplicationFilter` wymaga elewacji nawet do samego odczytu,
+nie tylko zmiany; to samo polecenie z **podniesionego** okna zadziałało.
+Pełny łańcuch:
+```powershell
+Get-NetFirewallApplicationFilter -Program "$env:ProgramFiles\Lokalny anonimizator\Lokalny anonimizator.exe" | Get-NetFirewallRule | Select-Object DisplayName, Direction, Action, Enabled
+```
+**Po instalacji** zwrócił dokładne dopasowanie: `DisplayName=Lokalny
+anonimizator (block out)`, `Direction=Outbound`, `Action=Block`,
+`Enabled=True`. Aplikacja odinstalowana, **to samo polecenie po deinstalacji**
+zwróciło `No MSFT_NetApplicationFilter objects found with property 'AppPath'
+equal to '...'` — reguła usunięta razem z aplikacją, `customUnInstall`
+zadziałał. Obie strony (`customInstall` i `customUnInstall`) potwierdzone
+empirycznie na żywej instalacji, nie tylko kompilacją skryptu.
+
+**Co zostało zrobione:** `build/installer.nsh` definiuje `!macro
+customInstall` / `!macro customUnInstall` — udokumentowane punkty rozszerzeń
+electron-buildera, potwierdzone czytaniem źródła (nie zgadywaniem):
+`app-builder-lib/templates/nsis/installSection.nsh:81-83` i
+`uninstaller.nsh:238-240` wstawiają je przez `!ifmacrodef ... !insertmacro`.
+`electron-builder.yml` → `nsis.include: build/installer.nsh` (jawnie, choć to
+i tak domyślna ścieżka gdy `nsis.include` nie jest ustawione —
+`packager.getResource` szuka `installer.nsh` w `buildResourcesDir`).
+`${APP_EXECUTABLE_FILENAME}` to stała electron-buildera (`common.nsh:16`,
+`"${PRODUCT_FILENAME}.exe"`) — ta sama, której używają własne szablony
+frameworka — więc nazwa exe w regule nie może rozjechać się z `productName`.
+Instalacja jest zawsze `perMachine` (B3), więc `$INSTDIR` jest stały i sekcja
+instalacji już działa podniesiona (UAC wymuszony przez
+`RequestExecutionLevel admin` gdy `INSTALL_MODE_PER_ALL_USERS` — patrz
+`common.nsh`) — `netsh` nie potrzebuje osobnej eskalacji. Błąd `netsh` loguje
+ostrzeżenie przez `DetailPrint` i **nie przerywa instalacji** — to warstwa
+dodatkowa (jedyna spoza Chromium), nie ostatnia linia obrony; instalacja nie
+może zależeć od tego, czy usługa Zapory Windows jest akurat włączona.
+
+**Zweryfikowane adwersaryjnie:** żeby wykluczyć „build przechodzi po cichu,
+bo `nsis.include` wskazuje w pustkę" (`!ifmacrodef` nie zgłasza błędu przy
+brakującym pliku — po prostu nic nie wstawia), do `customInstall` wstrzyknięto
+celowo złamany token (`THIS_IS_A_DELIBERATE_SYNTAX_ERROR_FOR_VERIFICATION`) i
+uruchomiono pełny `npx electron-builder --config electron-builder.yml`.
+Kompilator NSIS zgłosił:
+```
+Invalid command: "THIS_IS_A_DELIBERATE_SYNTAX_ERROR_FOR_VERIFICATION"
+Error in macro customInstall on macroline 1
+!include: error in script: "installSection.nsh" on line 82
+```
+— błąd nazywa dokładnie nasze makro (`customInstall`) i dokładnie tę linię w
+`installSection.nsh`, w której szablon je wstawia. Dowód nie do podrobienia:
+plik jest naprawdę czytany i kompilowany, nie pomijany. Token cofnięty,
+`npx electron-builder --config electron-builder.yml` przeszedł ponownie bez
+błędów — `release/LokalnyAnonimizator-Setup-0.1.0.exe` odbudowany w dobrym
+stanie.
+
+**Żywy test wykonany przez Alana (2026-07-11) — wszystkie trzy kroki:**
+1. ~~Uruchomić `release\LokalnyAnonimizator-Setup-0.1.0.exe`, potwierdzić monit UAC.~~ **Zrobione.**
+2. ~~`Get-NetFirewallApplicationFilter -Program "..." | Get-NetFirewallRule` → reguła `Lokalny anonimizator (block out)`.~~ **Zrobione, dopasowanie dokładne (patrz wyżej).**
+3. ~~Odinstalować → to samo polecenie **nie powinno** już nic zwracać.~~ **Zrobione — `No MSFT_NetApplicationFilter objects found`, reguła usunięta.**
+
+**Znane ograniczenia (już w checkliście, nie ukrywać):** lokalny administrator
+może usunąć lub wyłączyć regułę w dowolnym momencie; reguła nie obejmuje
+`shell.openExternal` (SECURITY.md §5) — to osobny proces, przeglądarka
+systemowa.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** skrypt NSIS (`include`/`script` w `electron-builder.yml` nsis).
 **Dlaczego:** D4 pkt 3. Jedyna proponowana warstwa **spoza Chromium**.
 ```nsis
@@ -400,7 +473,40 @@ console.warn(`[network-guard] BLOCKED ${details.method} ${describeOrigin(details
 (logują URL nawigacji/`window.open`) — tam ryzyko mniejsze (to nie treść
 dokumentu), ale spójność reguły warta utrzymania.
 
-### S-LOG-2 — Jawne umiejscowienie i czyszczenie crashDumps
+### S-LOG-2 — Jawne umiejscowienie i czyszczenie crashDumps — ZMIERZONE, kod niepotrzebny
+**Status:** zmierzone empirycznie (2026-07-11); pomiar obalił przesłankę
+szkicu, więc **kod nie został dodany**. Checklist: **C-PERS-5 → PASS**.
+
+**Pomiar:** Playwright `_electron.launch()` uruchomił aplikację w trybie repo;
+`app.evaluate` odczytał bezpośrednio z działającej aplikacji (bez zgadywania
+ścieżki) `app.getPath('userData')` = `%APPDATA%\pii-anonymizer` i
+`app.getPath('crashDumps')` = `%APPDATA%\pii-anonymizer\Crashpad`.
+`webContents.forcefullyCrashRenderer()` wymusił prawdziwy crash renderera —
+proces główny zalogował `[main] renderer gone: crashed 2` (istniejący handler
+`render-process-gone` w `electron/main.mjs`) już po ~1 s, więc crash na pewno
+się wydarzył, to nie było niewykonane wywołanie. Po **15 sekundach**
+oczekiwania: `Crashpad/` istniał (pusty katalog, tworzony przez Chromium przy
+starcie niezależnie od crasha), ale bez podkatalogu `reports/` i bez
+jakiegokolwiek pliku — ani przed, ani po crashu. `%LOCALAPPDATA%\pii-anonymizer`
+w ogóle nie istnieje (wykluczona alternatywna lokalizacja).
+
+**Wniosek:** bez wywołania `crashReporter.start()` Crashpad nie jest uzbrojony
+— nie instaluje handlera wyjątków — więc crash renderera nie produkuje
+zrzutu do wyniesienia, niezależnie od tego, na co wskazywałby
+`app.setPath('crashDumps', …)`. Dodanie przekierowania + czyszczenia katalogu,
+do którego i tak nic nie pisze, byłoby atrapą sugerującą zamknięty temat —
+dlatego kod ze szkicu niżej **nie został wdrożony**. Jeśli `crashReporter.start()`
+zostanie kiedyś świadomie dodany (np. do lokalnej diagnostyki), ten szkic
+wraca do gry i powinien wejść razem z nim, nie wcześniej.
+
+**Ryzyko rezydualne, nieusuwalne z poziomu aplikacji:** Windows Error
+Reporting (WER) działa na poziomie systemu operacyjnego niezależnie od tego,
+czy aplikacja woła `crashReporter.start()`. To pozostaje ryzykiem **R3**
+(kontrola organizacyjna — polityka WER, szyfrowanie dysku), nie jest i nie
+może zostać zamknięte kodem tej aplikacji.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs` przy starcie.
 **Dlaczego:** `THREAT-MODEL.md` §4 S6 pkt 2, C-PERS-5.
 ```js
@@ -411,7 +517,25 @@ Najpierw **zweryfikować** (C-LOG-2), czy mimo braku `crashReporter.start()`
 powstaje `Crashpad/`. Dopisać do dokumentacji, że WER na poziomie OS jest poza
 zasięgiem aplikacji (R3) i wymaga kontroli organizacyjnej.
 
-### S-LOG-3 — Panel debug wyłączony na desktopie
+### S-LOG-3 — Panel debug wyłączony na desktopie — NAPRAWIONE
+**Status:** naprawione (2026-07-11), dokładnie wg szkicu niżej. Checklist:
+**C-PERS-8 → PASS**.
+
+**Zweryfikowane:** w przeglądarce, na buildzie webowym (`npm run dev`,
+`tool.html?debug=1`) — `typeof window.desktopApp === 'undefined'`, więc
+`!window.desktopApp?.isDesktop` daje zawsze `true` na webie, zachowanie
+identyczne jak przed zmianą (potwierdzone bezpośrednio w konsoli, nie tylko
+wyprowadzone z kodu). Na desktopie jedyne miejsce, które odsłania
+`debugSection` (`src/main.js:1204`), jest zagnieżdżone pod tym samym
+`isDebug`, więc przycisk „Kopiuj JSON debug" (`:1391-1393`, wrzuca legendę do
+schowka) staje się nieosiągalny — także po nawigacji na
+`app://app/tool.html?debug=1` (`will-navigate` by ją przepuścił, to nawigacja
+w obrębie originu, ale teraz nie ma to znaczenia, bo panel się nie odsłoni).
+`npm run desktop:smoke` i `npm run desktop:smoke:packaged` przechodzą bez
+zmian.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `src/main.js:58` lub `:1311` (`renderDebugPanel`).
 **Dlaczego:** `THREAT-MODEL.md` §4 S7, C-PERS-8. Przycisk „Kopiuj JSON debug"
 wrzuca całą legendę do schowka; dostępny po nawigacji na `?debug=1`.
@@ -431,7 +555,31 @@ zamiast „document bodies cross only as tokenized text" napisać, że wychodzi
 tekst po tokenizacji **wykrytych** encji, a kompletność zależy od modelu.
 To korekta obietnicy wobec radcy związanego tajemnicą, nie kosmetyka.
 
-### S-SUP-1 — `onnxruntime-node` do devDependencies
+### S-SUP-1 — `onnxruntime-node` do devDependencies — NAPRAWIONE
+**Status:** naprawione (2026-07-11). `package.json`: `onnxruntime-node`
+przeniesiony z `dependencies` do `devDependencies` (wersja bez zmian,
+`^1.24.3`); `npm install` zaktualizował `package-lock.json` (tylko flaga
+`"dev": true` na istniejącym wpisie, `resolved`/`integrity` bez zmian).
+Checklist: **C-PKG-5 → PASS**.
+
+**Zweryfikowane:** grep na `onnxruntime-node` w `src/` i `electron/` przed
+zmianą — zero importów poza plikami dokumentacji/configu (`package.json`,
+`package-lock.json`, `SECURITY-CHECKLIST.md`, `SECURITY-FIXES.md`,
+`THREAT-MODEL.md`, `CLAUDE.md`). Jedyny faktyczny konsument to
+`src/eval/run.js` przez `@huggingface/transformers` (biblioteka wybiera
+backend Node przy uruchomieniu w Node, `onnxruntime-web` w
+przeglądarce/rendererze — `src/eval/*` nigdy nie trafia do paczki
+desktopowej). `npm test` (569/569, te same 12 znanych błędów
+`ERR_REQUIRE_ESM` co przed zmianą — środowiskowe, patrz `CLAUDE.md`),
+`npm run build`, `npm run desktop:build:renderer`, `desktop:smoke`,
+`desktop:smoke:packaged` przechodzą bez zmian. `sharp` i `protobufjs`
+**zostają** w `dependencies` — transitive przez `@huggingface/transformers`,
+potrzebne w rendererze/workerze w runtime, poza zakresem tej poprawki (patrz
+S-SUP-3 dla `npm ci` jako warunek, żeby lockfile rządził przy buildzie
+dystrybucyjnym).
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `package.json:42`.
 **Dlaczego:** `THREAT-MODEL.md` §4 S9 pkt 1, C-PKG-5. Używany wyłącznie przez
 `src/eval/*` (narzędzie ewaluacyjne), ma skrypt instalacyjny pobierający natywne
@@ -491,14 +639,35 @@ ipcMain.handle('pii:desktop-info', (event) => {
 });
 ```
 
-### S-ISO-1 — `app.enableSandbox()`
+### S-ISO-1 — `app.enableSandbox()` — NAPRAWIONE
+**Status:** naprawione (2026-07-11). `electron/main.mjs`: `app.enableSandbox()`
+wywołane przed `app.whenReady()`, obok istniejącego bloku `appendSwitch`.
+Checklist: **C-ISO-3 → PASS**.
+
+**Zweryfikowane:** `npm run desktop:build:renderer`, `npm run desktop:smoke`
+(tryb repo) i `npm run desktop:smoke:packaged` (świeżo przebudowany
+`win-unpacked`, fuses ponownie wbite) przechodzą bez zmian — worker NER/OCR
+(Web Worker wewnątrz renderera, nie osobny `webContents`) nietknięty.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs`, przed `app.whenReady()`.
 **Dlaczego:** C-ISO-3. Dziś `sandbox: true` jest tylko na oknie głównym.
 `web-contents-created` (`:204`) nie ustawi `webPreferences` na już utworzonym
 `webContents`, więc przyszłe okno mogłoby powstać bez sandboxa.
 `app.enableSandbox()` wymusza go globalnie.
 
-### S-INP-1 — `isEvalSupported: false` w pdf.js
+### S-INP-1 — `isEvalSupported: false` w pdf.js — NAPRAWIONE
+**Status:** naprawione (2026-07-11), dokładnie wg szkicu niżej. Checklist:
+**C-INP-7 → PASS**.
+
+**Zweryfikowane:** `npm test` (`src/file-import/pdf.test.js`, 20/20, w tym
+przypadki stron OCR-owanych), `npm run desktop:smoke` i
+`npm run desktop:smoke:packaged` (OCR skanu PDF nadal wyciąga tekst) przechodzą
+bez zmian.
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `src/file-import/pdf.js:99`.
 **Dlaczego:** `THREAT-MODEL.md` §4 S4, C-INP-7.
 ```js
@@ -526,7 +695,47 @@ C-INP-8. Największa pojedyncza poprawa czystości CSP, ale wymaga pracy w SDK.
 `setDisplayMediaRequestHandler((_r, cb) => cb())` (odmowa) i
 `setDevicePermissionHandler(() => false)`.
 
-### N-4 — `--disable-features=MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider`
+### N-4 — `--disable-features=MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider` — NAPRAWIONE, zmierzone żywo
+**Status:** naprawione i zmierzone (2026-07-11). Switch dodany w
+`electron/main.mjs`, obok pozostałych `appendSwitch`, zgodnie ze szkicem
+niżej — dodany **niezależnie od wyniku pomiaru**, bo oryginalna instrukcja
+przewidywała dodanie w obu gałęziach (emituje / nie emituje). Checklist:
+**C-NET-5 → PASS**.
+
+**Pomiar wykonany przez Alana (2026-07-11, Wireshark) — z pułapką po drodze,
+warto ją zapisać:**
+
+1. Przechwytywanie na interfejsie Wi-Fi, filtr `udp.port == 5353 or
+   udp.port == 1900`, przez cały czas działania
+   `release\win-unpacked\Lokalny anonimizator.exe` (uruchomiony, odczekane
+   ~60 s, zamknięty). Wynik pierwszego rzutu oka: **4 pakiety MDNS** —
+   wyglądało to na porażkę.
+2. **Pułapka:** przechwytywanie na Wi-Fi widzi cały ruch multicast w sieci
+   lokalnej, nie tylko to, co wysyła własna maszyna. Wszystkie 4 pakiety
+   miały `ip.src == 192.168.1.1`. Alan sprawdził swój własny adres
+   (`ipconfig`): `192.168.1.11` — **inny** niż nadawca pakietów. `192.168.1.1`
+   to niemal na pewno brama/router, robiąca własne, cykliczne ogłoszenie
+   `_services._dns-sd._udp.local` co ~30 sekund (odstępy pakietów: 17s, 47s,
+   77s, 107s — dłużej niż aplikacja była w ogóle otwarta), zupełnie
+   niezależnie od tego, czy aplikacja działa.
+3. **Rozstrzygnięcie bez potrzeby nowego przechwytywania:** dofiltrowanie tego
+   samego przechwycenia do `(udp.port == 5353 or udp.port == 1900) and
+   ip.src == 192.168.1.11` (czyli: tylko to, co wysłał komputer, na którym
+   faktycznie działała aplikacja) dało **listę pustą**. Zero pakietów mDNS/DIAL
+   z maszyny uruchamiającej aplikację.
+
+**Wniosek:** aplikacja nie emituje mDNS/DIAL — ani z powodu switcha, ani być
+może nigdy tego nie robiła (nie zmierzono osobno stanu „przed", Alan pominął
+ten opcjonalny krok, uznane za wystarczające, bo pomiar „po" jest tym, co
+naprawdę zamyka pozycję checklisty). Cztery pierwsze pakiety to szum sieciowy
+niezwiązany z aplikacją — zapisane jako metodologiczna uwaga na przyszłość:
+**każdy kolejny pomiar tego typu musi filtrować po `ip.src` maszyny
+testowej**, inaczej wynik jest zanieczyszczony ruchem innych urządzeń w sieci
+(routery, drukarki, Chromecasty, telefony — mDNS/SSDP to zwyczajowo gęsty
+ruch na każdej sieci domowej/biurowej).
+
+**Oryginalny opis problemu i szkic (poniżej), zachowany jako zapis decyzji:**
+
 **Gdzie:** `electron/main.mjs:40-42`. D4, C-NET-5. **Najpierw zmierzyć** (C-NET-5),
 czy Electron w ogóle emituje mDNS/DIAL; jeśli tak, ten przełącznik zamyka
 multicast UDP niewidzialny dla `webRequest`.
