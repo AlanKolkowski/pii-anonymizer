@@ -1,16 +1,11 @@
 import { deanonymizeText } from '../../anonymizer.js';
 import { applyPaletteVars } from '../entity-colors.js';
+import { splitTokenParts } from '../../tokens.js';
 
 const CLOSE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
 const COPY_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>';
 const PASTE_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h4l1 2H5l1-2Z"/><path d="M5 3.5H4a1.5 1.5 0 0 0-1.5 1.5v7.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V5A1.5 1.5 0 0 0 12 3.5h-1"/><path d="M5.5 7h5M5.5 10h4"/></svg>';
 const DOWNLOAD_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8"/><path d="M4.5 6.5 8 10l3.5-3.5"/><path d="M3 13.5h10"/></svg>';
-
-const TOKEN_RE = /\[([A-Z_]+_\d+)\]/g;
-
-function entityTypeFromTokenId(tokenId) {
-  return tokenId.replace(/_\d+$/, '');
-}
 
 function deanonOutputName(label) {
   if (!label) return 'wynik-deanon.txt';
@@ -27,19 +22,9 @@ function defaultOutcomeLabel(outcomes) {
 }
 
 function tokenParts(text, legend) {
-  const parts = [];
-  let last = 0;
-  let match;
-  while ((match = TOKEN_RE.exec(text)) !== null) {
-    if (match.index > last) parts.push({ text: text.slice(last, match.index) });
-    const tokenId = match[1];
-    const token = `[${tokenId}]`;
-    const type = entityTypeFromTokenId(tokenId);
-    parts.push({ token, tokenId, type, orig: legend[token] });
-    last = TOKEN_RE.lastIndex;
-  }
-  if (last < text.length) parts.push({ text: text.slice(last) });
-  return parts;
+  return splitTokenParts(text).map((part) =>
+    part.token ? { ...part, orig: legend[part.token] } : part,
+  );
 }
 
 function countRestored(text, legend) {

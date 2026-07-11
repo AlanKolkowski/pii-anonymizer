@@ -52,6 +52,31 @@ describe('createDeanonWorkspace', () => {
     expect(pill.style.getPropertyValue('--ec-bg')).not.toBe('');
   });
 
+  // S1 migration (SHARED-FOUNDATION-DESIGN.md §3.3): two intentional edge-case
+  // changes, celowa zmiana — ujednolicenie do gramatyki kanonicznej — traded
+  // against the old, UI-only TOKEN_RE so that this pane agrees with token
+  // reservation (anonymizer.js) and MCP listings on what counts as a token.
+  it('recognizes a digit-after-first-letter type as an unresolved token pill (celowa zmiana)', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'a.txt', text: 'Tekst [X2_FOO_1] dalej.' }],
+      legend: {},
+    });
+
+    const pill = root.querySelector('[data-testid="deanon-input-token-X2_FOO_1"]');
+    expect(pill).not.toBeNull();
+    expect(pill.textContent).toBe('[X2_FOO_1]');
+  });
+
+  it('no longer recognizes an underscore-led type as a token (celowa zmiana)', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'a.txt', text: 'Tekst [_FOO_1] dalej.' }],
+      legend: {},
+    });
+
+    expect(root.querySelector('[data-testid="deanon-input-token-_FOO_1"]')).toBeNull();
+    expect(root.querySelector('[data-testid="deanon-input-body"]').textContent).toContain('[_FOO_1]');
+  });
+
   it('renders deanonymized output pills using legend lookup and data-orig', () => {
     const { root } = mount({
       outcomes: [{ id: 'o1', label: 'odpowiedz.txt', text: 'Witaj [PERSON_NAME_1].' }],
