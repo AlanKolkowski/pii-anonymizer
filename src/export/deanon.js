@@ -1,4 +1,5 @@
 import { deanonymizeText } from '../anonymizer.js';
+import { effectiveOutcomeLegend } from '../substitution.js';
 import { createZipBlob } from './zip.js';
 
 const FORMAT_EXT = {
@@ -56,10 +57,6 @@ export function uniqueDeanonFileName(label, index, format, used = new Set(), opt
   }
   used.add(candidate);
   return candidate;
-}
-
-function effectiveOutcomeLegend(outcome, liveLegend) {
-  return outcome?.legendSnapshot ?? liveLegend ?? {};
 }
 
 function hasEffectiveLegend(outcomes, liveLegend) {

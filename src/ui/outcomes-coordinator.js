@@ -1,3 +1,5 @@
+import { effectiveOutcomeLegend as effectiveLegend } from '../substitution.js';
+
 const NOOP_OUTCOMES_LIST = {
   addOutcome() {},
   updateOutcome() {},
@@ -7,10 +9,6 @@ const NOOP_OUTCOMES_LIST = {
 
 function legendSnapshot(legend) {
   return legend && Object.keys(legend).length > 0 ? { ...legend } : null;
-}
-
-function effectiveLegend(outcome, liveLegend) {
-  return outcome?.legendSnapshot ?? liveLegend ?? {};
 }
 
 export function createOutcomesCoordinator({

@@ -1,4 +1,5 @@
 import { findTokens } from './tokens.js';
+import { resolveOccurrences, renderResolvedText } from './substitution.js';
 
 const INFLECTION_SUFFIXES = ['a', 'ą', 'ę', 'em', 'owi', 'u', 'ie'];
 const ADJECTIVAL_SURNAME_FAMILIES = [
@@ -422,10 +423,9 @@ export function deduplicateEntities(entities) {
   return result;
 }
 
+// Facade over the S2 substitution engine (SHARED-FOUNDATION-DESIGN.md §4.3):
+// empty decisions and an identity resolver reduce to exactly today's
+// behavior, so all four deanonymization sinks keep working unchanged.
 export function deanonymizeText(text, legend) {
-  let result = text;
-  for (const [token, value] of Object.entries(legend)) {
-    result = result.replaceAll(token, () => value);
-  }
-  return result;
+  return renderResolvedText(resolveOccurrences(text, { legend }), text);
 }

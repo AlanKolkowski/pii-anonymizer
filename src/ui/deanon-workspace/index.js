@@ -1,6 +1,7 @@
 import { deanonymizeText } from '../../anonymizer.js';
 import { applyPaletteVars } from '../entity-colors.js';
 import { splitTokenParts } from '../../tokens.js';
+import { effectiveOutcomeLegend } from '../../substitution.js';
 
 const CLOSE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
 const COPY_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>';
@@ -29,10 +30,6 @@ function tokenParts(text, legend) {
 
 function countRestored(text, legend) {
   return tokenParts(text, legend).filter((part) => part.token && part.orig).length;
-}
-
-function effectiveOutcomeLegend(outcome, liveLegend) {
-  return outcome?.legendSnapshot ?? liveLegend ?? {};
 }
 
 function countTokenStats(outcomes, legend) {
