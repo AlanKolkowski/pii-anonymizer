@@ -1,4 +1,5 @@
 import { applyTokens } from '../anonymizer.js';
+import { containsToken } from '../tokens.js';
 
 // Payload for the `list_sources` MCP tool. Only `mcpLabel` (a synthetic or
 // user-shared name) crosses the boundary — never the private `label`, which may
@@ -25,10 +26,8 @@ function isReadableSource(source) {
   return source?.status === 'ready' && hasDetectedEntities(source);
 }
 
-const TOKEN_PATTERN = /\[[A-Z][A-Z0-9_]*_\d+\]/;
-
 function hasAnonymizationToken(text) {
-  return typeof text === 'string' && TOKEN_PATTERN.test(text);
+  return typeof text === 'string' && containsToken(text);
 }
 
 export function buildSourceListing(sources, seen) {
