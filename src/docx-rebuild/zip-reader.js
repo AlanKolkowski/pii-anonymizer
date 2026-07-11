@@ -177,14 +177,33 @@ export function openZip(bytes, options = {}) {
   const byName = new Map(entries.map((e) => [e.name, e]));
   let totalDecompressed = 0;
 
-  async function extract(name) {
+  function compressedSlice(name) {
     const entry = byName.get(name);
     if (!entry) fail(`Wpis nieobecny w archiwum: ${name}`, 'ENTRY_NOT_FOUND');
-
     const dataStart = localDataStart(u8, view, entry.localHeaderOffset);
     const dataEnd = dataStart + entry.compressedSize;
     if (dataEnd > u8.length) fail(`Dane wpisu „${name}" wykraczają poza plik.`, 'BAD_LOCAL_HEADER');
-    const compressed = u8.subarray(dataStart, dataEnd);
+    return { entry, compressed: u8.subarray(dataStart, dataEnd) };
+  }
+
+  // Raw passthrough for MD2's zip-writer: the untouched-parts invariant
+  // (DOCX-REBUILD-DESIGN.md §3.3) requires copying an entry's compressed
+  // bytes verbatim, never decompressing/recompressing it — so this
+  // deliberately bypasses the decompression limits and CRC check below
+  // (there is nothing to decompress, and the CRC is only meaningful once
+  // recomposed alongside its own central directory).
+  function extractRaw(name) {
+    const { entry, compressed } = compressedSlice(name);
+    return {
+      method: entry.method,
+      compressedBytes: compressed,
+      crc32: entry.crc32,
+      uncompressedSize: entry.uncompressedSize,
+    };
+  }
+
+  async function extract(name) {
+    const { entry, compressed } = compressedSlice(name);
 
     const crc = createCrc32();
     let entryBytes = 0;
@@ -238,5 +257,6 @@ export function openZip(bytes, options = {}) {
     })),
     hasEntry: (name) => byName.has(name),
     extract,
+    extractRaw,
   };
 }

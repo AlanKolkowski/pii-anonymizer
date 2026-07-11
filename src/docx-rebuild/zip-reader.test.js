@@ -175,6 +175,46 @@ describe('openZip — decompression limits are enforced during streaming, not af
   }, 20000);
 });
 
+describe('openZip — extractRaw (verbatim-copy passthrough for MD2)', () => {
+  it('returns the compressed bytes unchanged, without decompressing', async () => {
+    const zipBytes = await buildZip([{ name: 'word/document.xml', data: '<w:document>hello</w:document>', method: 8 }]);
+    const zip = openZip(zipBytes);
+    const raw = zip.extractRaw('word/document.xml');
+    expect(raw.method).toBe(8);
+    expect(raw.uncompressedSize).toBe('<w:document>hello</w:document>'.length);
+    // The raw bytes are still deflate-compressed — decompressing them
+    // ourselves must recover the exact original content.
+    const decompressed = await new Response(
+      new Blob([raw.compressedBytes]).stream().pipeThrough(new DecompressionStream('deflate-raw')),
+    ).arrayBuffer();
+    expect(decoder.decode(decompressed)).toBe('<w:document>hello</w:document>');
+  });
+
+  it('reports the correct declared CRC-32 for the entry', async () => {
+    const zip = openZip(await buildZip([{ name: 'a.xml', data: 'content' }]));
+    const raw = zip.extractRaw('a.xml');
+    expect(typeof raw.crc32).toBe('number');
+    // extract() independently verifies this same CRC internally — if it
+    // doesn't throw, extractRaw's reported crc32 must be the correct one.
+    await expect(zip.extract('a.xml')).resolves.toBeDefined();
+  });
+
+  it('does not apply decompression byte limits (nothing is decompressed)', async () => {
+    const bomb = new Uint8Array(2 * 1024 * 1024).fill(1);
+    const zipBytes = await buildZip([{ name: 'bomb.bin', data: bomb, method: 8 }]);
+    const zip = openZip(zipBytes, { maxEntryBytes: 10, maxTotalBytes: 10 });
+    const raw = zip.extractRaw('bomb.bin'); // must not throw — no decompression happens
+    expect(raw.compressedBytes.length).toBeGreaterThan(0);
+    expect(raw.compressedBytes.length).toBeLessThan(bomb.length);
+  });
+
+  it('rejects extractRaw for an entry not present in the archive', async () => {
+    const zip = openZip(await buildZip([{ name: 'a.xml', data: 'x' }]));
+    const err = expectSyncThrow(() => zip.extractRaw('missing.xml'));
+    expect(err.code).toBe('ENTRY_NOT_FOUND');
+  });
+});
+
 describe('openZip — CRC-32 integrity (consumes S4 createCrc32)', () => {
   it('rejects an entry whose decompressed bytes do not match the declared CRC-32', async () => {
     const zipBytes = await buildZip([{ name: 'a.xml', data: 'real content', crcOverride: 0x12345678 }]);
