@@ -96,7 +96,11 @@ export async function extractPdf(file, deps = {}) {
   let pageCount = 0;
   let loadingTask;
   try {
-    loadingTask = pdfjs.getDocument({ data: buf, wasmUrl: getPdfWasmUrl() });
+    // SECURITY-REVIEW: C-INP-7 / S-INP-1 — refuse pdf.js's Type4 (PostScript)
+    // function interpreter, which otherwise evaluates embedded function code
+    // for color transforms. Narrows the app's reliance on CSP `'unsafe-eval'`
+    // (SECURITY.md §6) to the OpenCV glue only.
+    loadingTask = pdfjs.getDocument({ data: buf, wasmUrl: getPdfWasmUrl(), isEvalSupported: false });
     pdf = await loadingTask.promise;
     pageCount = pdf.numPages;
   } catch (err) {

@@ -55,7 +55,14 @@ let workerBootFailed = false;
 let handshakeTimer = null;
 const CONFIGURE_HANDSHAKE_TIMEOUT_MS = 20000;
 const urlParams = new URLSearchParams(window.location.search);
-const isDebug = urlParams.get('debug') === '1';
+// SECURITY-REVIEW: C-PERS-8 / S-LOG-3 — the debug panel's "Kopiuj JSON debug"
+// button puts the full legend (token → original PII) on the clipboard. This
+// file is shared between the web and desktop builds; window.desktopApp only
+// exists on desktop (exposed by electron/preload.cjs), so the web build's
+// `?debug=1` is untouched while the desktop build can never reach it, even
+// after navigating straight to tool.html?debug=1 (will-navigate allows it —
+// SECURITY.md §5 — because it's same-origin, not because it's safe to expose).
+const isDebug = urlParams.get('debug') === '1' && !window.desktopApp?.isDesktop;
 const LS_KEY = 'pii.selected-entities';
 const GPU_LS_KEY = 'pii.allow-gpu';
 const PRELOAD_OCR_LS_KEY = 'pii.preload-ocr';

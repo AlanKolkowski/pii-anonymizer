@@ -74,6 +74,27 @@ if (app.isPackaged) {
 // in app.whenReady() below covers the session-level half of the same policy.
 app.commandLine.appendSwitch('no-proxy-server');
 
+// SECURITY-REVIEW: N-4 / remainder of C-NET-5 (SECURITY-FIXES.md N-4,
+// checklist C-NET-5). Chromium's Media Router does mDNS service discovery
+// and DIAL (SSDP) device discovery on its own, outside session.webRequest —
+// the §3 guard cannot see or cancel either. Added preventively regardless of
+// measurement outcome, per SECURITY-FIXES.md N-4's own instructions; a
+// Wireshark capture confirming the before/after packet counts on udp/5353
+// and udp/1900 is tracked separately (SECURITY-CHECKLIST.md C-NET-5).
+app.commandLine.appendSwitch(
+  'disable-features',
+  'MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider',
+);
+
+// SECURITY-REVIEW: C-ISO-3 / S-ISO-1 — force OS sandboxing on every
+// webContents Electron will ever create, not just the explicit
+// `sandbox: true` on the main window. `web-contents-created` below cannot
+// retroactively apply webPreferences to a webContents that already exists,
+// so without this call, a future code path that creates a webContents
+// without repeating `sandbox: true` would silently run unsandboxed.
+// Must be called before app is ready; cannot be undone once called.
+app.enableSandbox();
+
 // One instance only: two processes sharing %APPDATA% would race on the
 // Chromium profile (localStorage prefs, OCR model cache).
 if (!app.requestSingleInstanceLock()) {

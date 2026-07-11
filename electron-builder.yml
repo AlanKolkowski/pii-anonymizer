@@ -84,12 +84,18 @@ win:
     - target: nsis
       arch: [x64]
   icon: build/icon.ico
-  # TODO(podpis-kodu): code signing. When a certificate is available, configure
-  # signtoolOptions (certificateSubjectName / certificateSha1 for a machine
-  # store cert, or azureSignOptions for Azure Trusted Signing). Never commit
-  # certificate files or passwords to the repo.
-  # signtoolOptions:
-  #   certificateSubjectName: "..."
+  # Code signing via Azure Artifact Signing (formerly Trusted Signing).
+  # See docs/code-signing-azure.md and docs/code-signing-azure-progress.md.
+  # Credentials (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET) are
+  # read by electron-builder from the environment at build time — never
+  # commit them here or anywhere else in the repo.
+  azureSignOptions:
+    endpoint: "https://plc.codesigning.azure.net" # Poland Central
+    codeSigningAccountName: "kolkowskicodesign"
+    certificateProfileName: "klawcodesigningprofile"
+    # Wymagane od electron-builder 26.x (wcześniej opcjonalne). Musi zgadzać
+    # się dokładnie z CN na certyfikacie — patrz docs/code-signing-azure-progress.md.
+    publisherName: "Kancelaria Radcy Prawnego K-Law Alan Kolkowski"
 
 # SECURITY-REVIEW (SECURITY-FIXES.md B3, THREAT-MODEL.md §4 S1): perMachine
 # installs to Program Files (requires UAC elevation) instead of the
@@ -108,6 +114,11 @@ nsis:
   license: LICENSE
   artifactName: "LokalnyAnonimizator-Setup-${version}.${ext}"
   shortcutName: "Lokalny anonimizator"
+  # SECURITY-REVIEW (SECURITY-FIXES.md S-NET-3, checklist C-NET-8): adds the
+  # Windows Firewall outbound-block rule via customInstall/customUnInstall
+  # macros. This is electron-builder's default path for a custom NSIS include
+  # (build/installer.nsh) — named explicitly here so the wiring isn't implicit.
+  include: build/installer.nsh
 
 # macOS target is intentionally not configured yet, but nothing in the app
 # blocks it: main/preload are platform-neutral and afterpack-fuses.cjs already
