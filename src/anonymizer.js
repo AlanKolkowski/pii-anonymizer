@@ -1,3 +1,5 @@
+import { findTokens } from './tokens.js';
+
 const INFLECTION_SUFFIXES = ['a', 'ą', 'ę', 'em', 'owi', 'u', 'ie'];
 const ADJECTIVAL_SURNAME_FAMILIES = [
   { lemma: 'ski', forms: ['ski', 'skiego', 'skiemu', 'skim', 'skich'] },
@@ -136,13 +138,11 @@ function ingestSource({ text, entities }, state) {
   }
 }
 
-const TOKEN_LITERAL_RE = /\[[A-Z][A-Z0-9_]*_\d+\]/g;
-
 function collectReservedTokens(texts) {
   const reserved = new Set();
   for (const text of texts) {
     if (!text) continue;
-    for (const m of text.matchAll(TOKEN_LITERAL_RE)) reserved.add(m[0]);
+    for (const t of findTokens(text)) reserved.add(t.token);
   }
   return reserved;
 }
