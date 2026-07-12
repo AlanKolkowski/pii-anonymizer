@@ -36,7 +36,7 @@ EVAL-RECALL-AUDIT.md):
   sito ma chronić tajemnicę zawodową, a człowiek zniekształcony numer
   nadal odczyta.
 
-## Dokumenty (38, 273 encji oczekiwanych)
+## Dokumenty (38, 279 encji oczekiwanych)
 
 | Dokument | Encje | Wektor ataku |
 |---|---|---|
@@ -44,7 +44,7 @@ EVAL-RECALL-AUDIT.md):
 | `adw_02_apozycja_rol` | 4 | Imię i nazwisko wyłącznie w apozycji do roli procesowej („pozwanemu Bartłomiejowi Czyżowi”): model zjada granicę rola–nazwisko, a odmieniona forma nie wraca do formy bazowej. |
 | `adw_03_nazwisko_dywiz` | 7 | Nazwiska dwuczłonowe z dywizem w kilku przypadkach: „-” jest w klasie granic słowa snapu, więc dosunięcie do granic nie przejdzie przez dywiz, a model tnie człony na łączniku. |
 | `adw_04_nazwisko_nieodmienne` | 6 | Żeńskie nazwiska nieodmienne (Wilk, Kos): odmienia się tylko imię, więc heurystyka wspólnego rdzenia i normalizacja nazw łatwo rozjeżdżają wystąpienia tej samej osoby. |
-| `adw_05_nazwisko_pospolite` | 10 | Nazwiska będące wyrazami pospolitymi (Kowal, Zamek, Lis, Sad, Baran), także na początku zdania: dezambiguacja rzeczownik/nazwisko to najsłabszy punkt NER poza kontekstem roli. |
+| `adw_05_nazwisko_pospolite` | 11 | Nazwiska będące wyrazami pospolitymi (Kowal, Zamek, Lis, Sad, Baran), także na początku zdania: dezambiguacja rzeczownik/nazwisko to najsłabszy punkt NER poza kontekstem roli. |
 | `adw_06_inicjaly` | 8 | Inicjały i skróty („K. Żurawski”, „adw. J. M.”, parafka „M.K.”): znany przeciek z docs/RESULTS-ensemble-experiment.md, inicjał nie skleja się z nazwiskiem w jedną encję. |
 | `adw_07_wolacz_cudzyslow` | 6 | Wołacz i nazwiska wewnątrz cytowanej wypowiedzi świadka: przypadki rzadkie w danych treningowych NER, cudzysłowy typograficzne przy granicach encji. |
 | `adw_08_lista_swiadkow` | 11 | Wyliczenie świadków w punktach z pełnymi danymi w jednej linii: segmentacja list, adres i PESEL sklejone w pozycji wyliczenia. |
@@ -53,7 +53,7 @@ EVAL-RECALL-AUDIT.md):
 | `adw_11_regon_krs` | 6 | REGON 9- i 14-cyfrowy oraz KRS: żaden nie ma własnego wzorca regex, wykrycie zależy w całości od modelu. |
 | `adw_12_iban_lamany` | 4 | NRB bez prefiksu PL, IBAN z dywizami i IBAN przełamany wierszem: regex rachunku wymaga literału „PL” i dopuszcza wyłącznie spacje między grupami. |
 | `adw_13_telefony` | 5 | Telefon stacjonarny z numerem kierunkowym w nawiasie, siedmiocyfrowy numer lokalny i zapis z zerem wiodącym: oba wzorce regex wymagają 11–12 cyfr bez nawiasów. |
-| `adw_14_dokumenty_tozsamosci` | 5 | Numery dowodu osobistego, paszportu i prawa jazdy: identyfikatory osobiste bez dedykowanego wzorca regex, wykrywalne wyłącznie modelem. |
+| `adw_14_dokumenty_tozsamosci` | 6 | Numery dowodu osobistego, paszportu i prawa jazdy: identyfikatory osobiste bez dedykowanego wzorca regex, wykrywalne wyłącznie modelem. |
 | `adw_15_kwoty_formaty` | 6 | Kwoty z kropką tysięcy, bez groszy, w EUR i z walutą przed liczbą: regex kwot wymaga przecinka, groszy i literału „zł” po liczbie. |
 | `adw_16_kwoty_slownie` | 4 | Kwoty wyrażone wyłącznie słownie oraz w nawiasie po zapisie cyfrowym: warstwa regex ich nie widzi, a model tnie długie frazy liczebnikowe. |
 | `adw_17_wynagrodzenie` | 4 | Kwoty w kontekście płacowym (brutto, netto, stawka godzinowa): taksonomia modelu zna INCOME_COMPENSATION, a ground truth korpusu używa FINANCIAL_AMOUNT — pomyłka typu kosztuje podwójnie (FP+FN). |
@@ -72,9 +72,9 @@ EVAL-RECALL-AUDIT.md):
 | `adw_30_protokol` | 16 | Protokół rozprawy: dane świadków podawane w toku narracji (wiek, zawód, adres w jednym zdaniu), atrybuty osobowe obok nazwisk. |
 | `adw_31_komornik` | 14 | Zawiadomienie komornicze: identyfikator pojazdu (rejestracja i VIN) oraz sygnatura KM — typy rzadkie, bez wzorca regex, w gęstym piśmie egzekucyjnym. |
 | `adw_32_pulapki_prawne` | 1 | Pułapka na fałszywe pozytywy: cytowania przepisów, pozycje Dz.U. i sygnatury publikowanego orzecznictwa NIE są danymi osobowymi klienta i nie wolno ich maskować. |
-| `adw_33_pulapki_nazwy` | 4 | Pułapka na fałszywe pozytywy: rzeka, hotel, nazwa ulicy pochodząca od nazwiska i rzeczowniki pospolite wielką literą na początku zdania nie są osobami. |
+| `adw_33_pulapki_nazwy` | 6 | Pułapka na fałszywe pozytywy: rzeka, numer działki, nazwa ulicy pochodząca od nazwiska i rzeczowniki pospolite wielką literą na początku zdania nie są osobami. |
 | `adw_34_role_generyczne` | 0 | Pułapka na fałszywe pozytywy: tekst wyłącznie z rolami procesowymi bez żadnego nazwiska — każde oznaczenie roli jako osoby to czysty fałszywy alarm. |
 | `adw_35_email_nietypowe` | 4 | Adresy e-mail z plus-tagiem, wielkimi literami, kropką zdaniową tuż za adresem i obfuskacją „(at)”: wzorzec e-mail działa, ale granice i obfuskacja go wyprowadzają. |
-| `adw_36_daty_urodzenia` | 7 | Data urodzenia w formatach cyfrowych (7.03.1985, 1985-03-07) obok zwykłych dat czynności: DATE_OF_BIRTH wymaga rozumienia kontekstu „ur.”, inne daty to pułapka FP. |
+| `adw_36_daty_urodzenia` | 9 | Data urodzenia w formatach cyfrowych (7.03.1985, 1985-03-07) obok zwykłych dat czynności: DATE_OF_BIRTH wymaga rozumienia kontekstu „ur.”, inne daty to pułapka FP. |
 | `adw_37_sygnatury_formaty` | 8 | Sygnatury własnych spraw w różnych repertoriach (C, GC upr, K, Ns, KM): każda ma inny układ, a żadna nie ma wzorca regex — wykrycie zależy od modelu. |
 | `adw_38_kategorie_szczegolne` | 6 | Dane szczególnych kategorii (zdrowie, karalność, związki zawodowe) w jednym piśmie: najcięższe wagowo dla tajemnicy zawodowej, wykrywane wyłącznie modelem. |

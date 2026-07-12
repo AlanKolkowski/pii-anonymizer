@@ -48,6 +48,12 @@
     "text": "Baran"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 389,
+    "end": 397,
+    "text": "Ogrodnik"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 398,
     "end": 409,

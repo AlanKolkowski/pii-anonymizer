@@ -1,5 +1,17 @@
 [
   {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 60,
+    "end": 72,
+    "text": "Hotelu Zamek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 189,
+    "end": 193,
+    "text": "Wilk"
+  },
+  {
     "entity_group": "PERSON_NAME",
     "start": 253,
     "end": 264,
@@ -19,8 +31,8 @@
   },
   {
     "entity_group": "PERSON_NAME",
-    "start": 533,
-    "end": 548,
+    "start": 547,
+    "end": 562,
     "text": "Seweryna Kowala"
   }
 ]

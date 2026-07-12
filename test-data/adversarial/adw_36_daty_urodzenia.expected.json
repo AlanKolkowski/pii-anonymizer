@@ -19,6 +19,18 @@
   },
   {
     "entity_group": "PERSON_NAME",
+    "start": 62,
+    "end": 67,
+    "text": "Marka"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 70,
+    "end": 77,
+    "text": "Grażyny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
     "start": 92,
     "end": 110,
     "text": "Leokadia Szczygieł"

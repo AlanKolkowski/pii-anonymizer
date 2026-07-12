@@ -6,6 +6,12 @@
     "text": "DKR 744829"
   },
   {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 98,
+    "end": 115,
+    "text": "Prezydenta Miasta"
+  },
+  {
     "entity_group": "LOCATION",
     "start": 116,
     "end": 123,

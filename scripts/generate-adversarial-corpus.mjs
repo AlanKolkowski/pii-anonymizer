@@ -116,7 +116,7 @@ const DOCS = [
       ' wskazała, że widziała pozwanego pod zamkiem w ', LOC('Golubiu-Dobrzyniu'),
       ', gdzie odbywał się jarmark. Biegły ', PN('Marceli Baran'),
       ' sporządził opinię z zakresu badania pisma ręcznego. ', PN('Baran'),
-      ' stwierdził, że podpis nakreślono ręką pozwanego. Ogrodnik ', PN('Tadeusz Sad'),
+      ' stwierdził, że podpis nakreślono ręką pozwanego. ', ROLE('Ogrodnik'), ' ', PN('Tadeusz Sad'),
       ' nie stawił się na rozprawę. ', PN('Sad'), ' usprawiedliwił nieobecność zwolnieniem lekarskim.\n',
     ],
   },
@@ -229,7 +229,7 @@ const DOCS = [
     attack: 'Numery dowodu osobistego, paszportu i prawa jazdy: identyfikatory osobiste bez dedykowanego wzorca regex, wykrywalne wyłącznie modelem.',
     parts: [
       'Tożsamość mocodawcy ustalono na podstawie dowodu osobistego seria i nr ',
-      PID('DKR 744829'), ', wydanego przez Prezydenta Miasta ', LOC('Torunia'), '.\n\n',
+      PID('DKR 744829'), ', wydanego przez ', ROLE('Prezydenta Miasta'), ' ', LOC('Torunia'), '.\n\n',
       'W aktach znajduje się kopia paszportu nr ', PID('EJ 1234567'),
       ' oraz prawa jazdy nr ', PID('00123/22/0611'), ' kat. B. Zbiorczy zapis z systemu: dow. os. ',
       PID('DKR744829'), ' (bez spacji).\n',
@@ -533,17 +533,18 @@ const DOCS = [
 
   {
     name: 'adw_33_pulapki_nazwy',
-    attack: 'Pułapka na fałszywe pozytywy: rzeka, hotel, nazwa ulicy pochodząca od nazwiska i rzeczowniki pospolite wielką literą na początku zdania nie są osobami.',
+    attack: 'Pułapka na fałszywe pozytywy: rzeka, numer działki, nazwa ulicy pochodząca od nazwiska i rzeczowniki pospolite wielką literą na początku zdania nie są osobami.',
     parts: [
-      'Nieruchomość położona jest nad Wisłą, w sąsiedztwie dawnego Hotelu Zamek, ',
-      'przy drodze prowadzącej do przeprawy promowej. Sad owocowy na działce nr 112/4 ',
-      'nie wchodzi w skład masy spadkowej. Wilk to w tej sprawie nazwisko pozwanej, ',
+      'Nieruchomość położona jest nad Wisłą, w sąsiedztwie dawnego ', ORG('Hotelu Zamek'),
+      ', przy drodze prowadzącej do przeprawy promowej. Sad owocowy na działce nr 112/4 ',
+      'nie wchodzi w skład masy spadkowej. ', PN('Wilk'), ' to w tej sprawie nazwisko pozwanej, ',
       'a nie zwierzę: pozwana ', PN('Aniela Wilk'), ' zamieszkuje przy ',
       ADR('ul. Kowalskiego 12/8, 87-100 Toruń'),
       ' (ulica nosi nazwisko patrona, co nie czyni jej danymi osobowymi).\n\n',
-      'Zamek w ', LOC('Golubiu-Dobrzyniu'), ' był miejscem zawarcia umowy; ',
-      'Kowal z ulicy Rzemieślniczej podkuwał tam konie podczas jarmarku — chodzi o zawód, ',
-      'nie o pana ', PN('Seweryna Kowala'), '.\n',
+      'Zamek w ', LOC('Golubiu-Dobrzyniu'), ' był miejscem zawarcia umowy. ',
+      'Kowal to rzemieślnik zajmujący się obróbką metalu; wzmianka ma charakter czysto językowy ',
+      'i nie dotyczy pana ', PN('Seweryna Kowala'),
+      '. Prace ziemne prowadzono wzdłuż ulicy Rzemieślniczej.\n',
     ],
   },
 
@@ -577,7 +578,7 @@ const DOCS = [
     attack: 'Data urodzenia w formatach cyfrowych (7.03.1985, 1985-03-07) obok zwykłych dat czynności: DATE_OF_BIRTH wymaga rozumienia kontekstu „ur.”, inne daty to pułapka FP.',
     parts: [
       'Wnioskodawca ', PN('Konrad Żurawski'), ', ur. ', DOB('7.03.1985 r.'),
-      ' w ', LOC('Toruniu'), ', syn Marka i Grażyny.\n',
+      ' w ', LOC('Toruniu'), ', syn ', PN('Marka'), ' i ', PN('Grażyny'), '.\n',
       'Uczestniczka ', PN('Leokadia Szczygieł'), ', urodzona dnia ',
       DOB('29 sierpnia 1959 roku'), ' w ', LOC('Chełmnie'), '.\n',
       'W systemie ewidencji zapisano: data urodzenia: ', DOB('1985-03-07'), '.\n\n',
