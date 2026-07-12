@@ -1,0 +1,6 @@
+Cena sprzedaży wynosi 15.000,00 zł (zapis z kropką tysięcy ze skanu faktury).
+Zadatek: 1500 zł, płatny gotówką.
+Wartość kontraktu eksportowego: 2 500 000,00 EUR.
+W walucie przed liczbą: PLN 4.200 miesięcznie.
+Zapis z twardą spacją: 12 500,00 zł (poprawnie łapany przez wzorzec).
+Kara umowna: 0,5% wartości kontraktu za każdy dzień, nie więcej niż 8 000,00 zł.

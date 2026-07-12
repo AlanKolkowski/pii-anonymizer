@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 13,
+    "end": 19,
+    "text": "r. pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 20,
+    "end": 47,
+    "text": "Zdzisław Odrowąż-Pietraszek"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 79,
+    "end": 124,
+    "text": "Kancelaria Radcy Prawnego „Żuraw i Partnerzy”"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 127,
+    "end": 157,
+    "text": "ul. Szeroka 40/2, 87-100 Toruń"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 164,
+    "end": 174,
+    "text": "8562349172"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 183,
+    "end": 192,
+    "text": "876543216"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 200,
+    "end": 214,
+    "text": "(56) 622-33-44"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 217,
+    "end": 241,
+    "text": "biuro@zuraw-partnerzy.pl"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 254,
+    "end": 288,
+    "text": "PL41 1140 2004 0000 9876 5432 1098"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 40,
+    "end": 80,
+    "text": "k.zurawski+spory@kancelaria-zuraw.com.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 131,
+    "end": 155,
+    "text": "BIURO@ZURAW-PARTNERZY.PL"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 179,
+    "end": 207,
+    "text": "reklamacje@miedziak-metal.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 253,
+    "end": 280,
+    "text": "a.wilk(at)poczta-testowa.pl"
+  }
+]

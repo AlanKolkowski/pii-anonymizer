@@ -1,0 +1,44 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 31,
+    "end": 60,
+    "text": "Michaliny Krzemień-Zawadzkiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 66,
+    "end": 72,
+    "text": "r. pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 100,
+    "text": "Zdzisław Odrowąż-Pietraszek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 119,
+    "end": 146,
+    "text": "Michalina Krzemień-Zawadzka"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 223,
+    "end": 242,
+    "text": "Krzemień-Zawadzkiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 291,
+    "end": 309,
+    "text": "Odrowąż-Pietraszek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 347,
+    "end": 374,
+    "text": "Michalinę Krzemień-Zawadzką"
+  }
+]

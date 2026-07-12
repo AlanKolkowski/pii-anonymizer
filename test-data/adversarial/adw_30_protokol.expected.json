@@ -1,0 +1,98 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 20,
+    "text": "II K 87/23"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 65,
+    "end": 68,
+    "text": "SSR"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 69,
+    "end": 85,
+    "text": "Dorota Jarzębina"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 99,
+    "end": 113,
+    "text": "st. sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 114,
+    "end": 119,
+    "text": "E. W."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 132,
+    "end": 141,
+    "text": "Rafał Cis"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 181,
+    "end": 194,
+    "text": "Seweryn Kowal"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 196,
+    "end": 202,
+    "text": "lat 43"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 204,
+    "end": 211,
+    "text": "ślusarz"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 218,
+    "end": 249,
+    "text": "ul. Krucza 15, 86-300 Grudziądz"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 251,
+    "end": 271,
+    "text": "żonaty, dwoje dzieci"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 293,
+    "end": 309,
+    "text": "Dobrosława Zamek"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 311,
+    "end": 317,
+    "text": "lat 57"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 319,
+    "end": 327,
+    "text": "księgowa"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 334,
+    "end": 341,
+    "text": "Chełmża"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 507,
+    "end": 512,
+    "text": "Kowal"
+  }
+]

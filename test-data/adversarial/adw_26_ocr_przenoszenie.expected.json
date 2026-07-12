@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 36,
+    "end": 49,
+    "text": "Żuraw-\nskiego"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 57,
+    "end": 69,
+    "text": "23 400,00\nzł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 113,
+    "end": 131,
+    "text": "Mroczek-Sowiń-\nska"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 169,
+    "end": 181,
+    "text": "10 000,00 zł"
+  }
+]

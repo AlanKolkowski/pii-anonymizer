@@ -1,0 +1,14 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 34,
+    "text": "Michalina Krzemień-Zawadzka"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 35,
+    "end": 68,
+    "text": "ul. Bydgoska 92 m. 7\n87-100 Toruń"
+  }
+]

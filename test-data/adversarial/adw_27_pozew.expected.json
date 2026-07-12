@@ -1,0 +1,200 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 5,
+    "text": "Toruń"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 29,
+    "end": 69,
+    "text": "Sąd Rejonowy w Toruniu\nI Wydział Cywilny"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 70,
+    "end": 101,
+    "text": "ul. Młodzieżowa 31\n87-100 Toruń"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 110,
+    "end": 125,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 133,
+    "end": 144,
+    "text": "85030712349"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 151,
+    "end": 178,
+    "text": "ul. Polna 3/5, 87-100 Toruń"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 201,
+    "end": 207,
+    "text": "r. pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 208,
+    "end": 237,
+    "text": "Zdzisława Odrowąża-Pietraszka"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 239,
+    "end": 269,
+    "text": "Kancelaria „Żuraw i Partnerzy”"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 271,
+    "end": 301,
+    "text": "ul. Szeroka 40/2, 87-100 Toruń"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 312,
+    "end": 337,
+    "text": "Miedziak-Metal sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 343,
+    "end": 353,
+    "text": "0000876123"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 359,
+    "end": 369,
+    "text": "5249871230"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 384,
+    "end": 394,
+    "text": "Grudziądzu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 396,
+    "end": 432,
+    "text": "ul. Przemysłowa 21, 86-300 Grudziądz"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 460,
+    "end": 472,
+    "text": "23 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 488,
+    "end": 499,
+    "text": "1 170,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 663,
+    "end": 675,
+    "text": "23 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 686,
+    "end": 735,
+    "text": "dwadzieścia trzy tysiące czterysta złotych 00/100"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1028,
+    "end": 1039,
+    "text": "UD/2024/091"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1083,
+    "end": 1091,
+    "text": "Żurawski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1221,
+    "end": 1241,
+    "text": "kierownika produkcji"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1257,
+    "end": 1276,
+    "text": "Eustachego Gwoździa"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 1335,
+    "end": 1350,
+    "text": "FV/2024/09/0144"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1360,
+    "end": 1372,
+    "text": "23 400,00 zł"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1602,
+    "end": 1616,
+    "text": "prezes zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1631,
+    "end": 1644,
+    "text": "Marceli Baran"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1654,
+    "end": 1665,
+    "text": "Żurawskiemu"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1908,
+    "end": 1942,
+    "text": "PL75 1090 2776 0000 0001 9876 5432"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 2000,
+    "end": 2011,
+    "text": "UD/2024/091"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 2031,
+    "end": 2046,
+    "text": "FV/2024/09/0144"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 2163,
+    "end": 2169,
+    "text": "r. pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 2170,
+    "end": 2197,
+    "text": "Zdzisław Odrowąż-Pietraszek"
+  }
+]

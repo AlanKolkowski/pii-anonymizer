@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 62,
+    "end": 73,
+    "text": "8 400,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 116,
+    "end": 125,
+    "text": "600,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 193,
+    "end": 202,
+    "text": "150,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 250,
+    "end": 289,
+    "text": "dwukrotności wynagrodzenia zasadniczego"
+  }
+]

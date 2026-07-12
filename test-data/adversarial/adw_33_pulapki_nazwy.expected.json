@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 60,
+    "end": 72,
+    "text": "Hotelu Zamek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 189,
+    "end": 193,
+    "text": "Wilk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 253,
+    "end": 264,
+    "text": "Aniela Wilk"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 282,
+    "end": 316,
+    "text": "ul. Kowalskiego 12/8, 87-100 Toruń"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 392,
+    "end": 409,
+    "text": "Golubiu-Dobrzyniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 547,
+    "end": 562,
+    "text": "Seweryna Kowala"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 25,
+    "end": 36,
+    "text": "K. Żurawski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 68,
+    "end": 72,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 78,
+    "text": "J. M."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 132,
+    "end": 136,
+    "text": "M.K."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 150,
+    "end": 160,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 161,
+    "end": 166,
+    "text": "E. W."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 231,
+    "end": 243,
+    "text": "L. Szczygieł"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 245,
+    "end": 255,
+    "text": "apl. radc."
+  }
+]

@@ -5,6 +5,7 @@ import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sourc
 import { ENTITY_COLORS, FALLBACK_COLOR, colorFor } from '../ui/entity-colors.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
+import { readEvalText } from './eval-text.js';
 
 export { ENTITY_COLORS, FALLBACK_COLOR };
 
@@ -1034,6 +1035,11 @@ function f1Badge(f1) {
 
 export async function generateReport(runId, scoresData) {
   const runDir = join(RESULTS_DIR, runId);
+  // Ground truth lives in the corpus the run was scored against (stamped in
+  // scores.json); default keeps pre-docsDir runs working.
+  const docsDir = scoresData.docsDir
+    ? join(TEST_DATA_DIR, '..', scoresData.docsDir)
+    : DOCS_DIR;
   const docNames = Object.keys(scoresData.documents).sort();
 
   // Load historical scores
@@ -1086,10 +1092,10 @@ export async function generateReport(runId, scoresData) {
   for (const docName of docNames) {
     const docScores = scoresData.documents[docName];
 
-    // Load source text
+    // Load source text (canonical eval convention: LF line endings)
     let sourceText;
     try {
-      sourceText = await readFile(join(DOCS_DIR, `${docName}.txt`), 'utf-8');
+      sourceText = await readEvalText(join(docsDir, `${docName}.txt`));
     } catch {
       sourceText = `(source text not found for ${docName})`;
     }
@@ -1109,7 +1115,7 @@ export async function generateReport(runId, scoresData) {
     // Load expected entities
     let expected = [];
     try {
-      const raw = await readFile(join(DOCS_DIR, `${docName}.expected.json`), 'utf-8');
+      const raw = await readFile(join(docsDir, `${docName}.expected.json`), 'utf-8');
       expected = JSON.parse(raw);
     } catch {}
 
@@ -1124,7 +1130,7 @@ export async function generateReport(runId, scoresData) {
     let predictedSegs = [];
     try {
       expectedSegs = JSON.parse(
-        await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8'),
+        await readFile(join(docsDir, `${docName}.expected-segments.json`), 'utf-8'),
       );
     } catch {}
     try {

@@ -1,0 +1,68 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 52,
+    "end": 70,
+    "text": "Leokadia Szczygieł"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 77,
+    "end": 106,
+    "text": "ul. Klonowa 8/2, 87-100 Toruń"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 114,
+    "end": 125,
+    "text": "77122498763"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 130,
+    "end": 145,
+    "text": "Eustachy Gwóźdź"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 152,
+    "end": 183,
+    "text": "ul. Krucza 15, 86-300 Grudziądz"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 190,
+    "end": 205,
+    "text": "+48 566 123 456"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 210,
+    "end": 226,
+    "text": "Dobrosława Zamek"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 233,
+    "end": 258,
+    "text": "Rynek 2/4, 87-140 Chełmża"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 268,
+    "end": 293,
+    "text": "d.zamek@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 298,
+    "end": 311,
+    "text": "Marceli Baran"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 313,
+    "end": 340,
+    "text": "biegły z zakresu grafologii"
+  }
+]

@@ -53,6 +53,25 @@ describe('entity-sources config', () => {
     expect(defaultEnabledEntities().sort()).toEqual(expected.sort());
   });
 
+  // Regression guard for audit finding α / decision 20 (A12): art. 9-10 RODO
+  // must be masked out of the box. The union test above passes for ANY default
+  // set, so it can't catch a silent removal of these categories — this one can.
+  it('default config masks art. 9-10 RODO categories out of the box (A12)', () => {
+    expect(DEFAULT_ENABLED_CATEGORIES).toContain('health-biometric');
+    expect(DEFAULT_ENABLED_CATEGORIES).toContain('special-categories');
+    const def = defaultEnabledEntities();
+    for (const type of ['HEALTH_DATA', 'BIOMETRIC_DATA', 'CRIMINAL_OFFENCE_DATA', 'TRADE_UNION_MEMBERSHIP', 'ETHNIC_ORIGIN']) {
+      expect(def, `${type} must be enabled by default`).toContain(type);
+    }
+  });
+
+  // A12 is "free": enabling art. 9-10 adds no model beyond the two already
+  // required by the identity/contact defaults, so it costs nothing at load time.
+  it('enabling art. 9-10 by default adds no new model source (A12 is free)', () => {
+    expect(requiredSources(defaultEnabledEntities()).sort())
+      .toEqual(['multilang-fp32', 'polish-fp16', 'regex']);
+  });
+
   it('requiredSources is empty for empty selection', () => {
     expect(requiredSources([])).toEqual([]);
   });
@@ -64,5 +83,20 @@ describe('entity-sources config', () => {
 
   it('requiredSources ignores unknown entity types', () => {
     expect(requiredSources(['NOT_A_REAL_TYPE'])).toEqual([]);
+  });
+
+  it('VITE_MODEL_DTYPE from process.env overrides dtype in Node (eval↔desktop parity)', async () => {
+    vi.resetModules();
+    process.env.VITE_MODEL_DTYPE = 'q8';
+    try {
+      const mod = await import('./entity-sources.js');
+      expect(mod.SOURCES['multilang-fp32'].dtype).toBe('q8');
+      expect(mod.SOURCES['multilang-fp32'].backends).toEqual(['wasm']);
+      expect(mod.SOURCES['multilang-fp32'].sizeBytes).toBe(0);
+      expect(mod.SOURCES.regex).toEqual({ kind: 'regex' });
+    } finally {
+      delete process.env.VITE_MODEL_DTYPE;
+      vi.resetModules();
+    }
   });
 });

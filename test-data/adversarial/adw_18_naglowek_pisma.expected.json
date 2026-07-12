@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 5,
+    "text": "Toruń"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 36,
+    "end": 51,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 52,
+    "end": 78,
+    "text": "ul. Polna 3/5\n87-100 Toruń"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 86,
+    "end": 97,
+    "text": "85030712349"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 108,
+    "end": 133,
+    "text": "Miedziak-Metal sp. z o.o."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 134,
+    "end": 169,
+    "text": "ul. Przemysłowa 21\n86-300 Grudziądz"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 175,
+    "end": 185,
+    "text": "0000876123"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 187,
+    "end": 227,
+    "text": "Sąd Rejonowy w Toruniu\nI Wydział Cywilny"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 228,
+    "end": 259,
+    "text": "ul. Młodzieżowa 31\n87-100 Toruń"
+  }
+]

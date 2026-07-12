@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 45,
+    "end": 66,
+    "text": "Bartłomiejowi Czyżowi"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 124,
+    "end": 149,
+    "text": "Haliny Mroczek-Sowińskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 181,
+    "end": 207,
+    "text": "Halinie Mroczek-Sowińskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 243,
+    "end": 258,
+    "text": "Bartłomiej Czyż"
+  }
+]

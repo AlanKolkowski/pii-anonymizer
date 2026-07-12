@@ -1,0 +1,6 @@
+Zapłatę należy uiścić na rachunek: 75 1090 2776 0000 0001 9876 5432 (numer krajowy bez prefiksu).
+
+W umowie wskazano rachunek w formacie z łącznikami: PL41-1140-2004-0000-9876-5432-1098.
+W skanie aneksu numer przełamano: rachunek PL26 1600 1462 0000
+8765 4321 0987.
+Rachunek techniczny (zapis ciągły): PL75109027760000000198765432.

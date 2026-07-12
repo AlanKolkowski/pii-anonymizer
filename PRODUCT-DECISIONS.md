@@ -46,6 +46,12 @@ z form poświadczonych w v1 (13), wskazówki przypadka od LLM w v1 (17).
 | 18 | Start poziomu 2 (ponowny NER) | **Przycisk „Sprawdź krzyżowo"** w v1 (koszt inferencji zauważalny; auto jako opcja później). |
 | 19 | Nazwa funkcji w UI | **„Weryfikacja pisma"**. |
 
+## Audyt recall — projekt `EVAL-RECALL-AUDIT.md`
+
+| # | Decyzja | Rozstrzygnięcie |
+|---|---|---|
+| 20 | Kategorie szczególne (art. 9-10 RODO) w domyślnej konfiguracji (A12) | **Włączone domyślnie** (zgodnie z rekomendacją audytu). `DEFAULT_ENABLED_CATEGORIES` obejmuje `health-biometric` i `special-categories`, więc ustawienie domyślne maskuje dane o zdrowiu, biometrii, wyznaniu, poglądach, orientacji, przynależności związkowej, pochodzeniu i karalności. Uzasadnienie: nadmiar maskowania jest odwracalny (użytkownik widzi `[HEALTH_1]` i cofa), przeciek do LLM-a nie; koszt zerowy (oba modele już ładowane dla kategorii tożsamości/kontaktu, `requiredSources` bez zmian). Zamyka ustalenie α audytu (przy pustym `localStorage` `main.js` startuje z `defaultEnabledEntities()`, dotąd bez art. 9-10 → recall 0 na najcięższych danych). |
+
 ---
 
 ## Skutki dla implementacji (dla Sonneta, przy planie z SHARED-FOUNDATION)

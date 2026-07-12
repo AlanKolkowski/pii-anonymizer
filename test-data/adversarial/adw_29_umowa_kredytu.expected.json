@@ -1,0 +1,86 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 29,
+    "end": 45,
+    "text": "KG/2025/02/00871"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 57,
+    "end": 64,
+    "text": "Toruniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 98,
+    "end": 126,
+    "text": "Bank Pomorski Spółka Akcyjna"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 140,
+    "end": 147,
+    "text": "Gdańsku"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 153,
+    "end": 163,
+    "text": "0000123987"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 169,
+    "end": 179,
+    "text": "9481234560"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 205,
+    "end": 232,
+    "text": "Michaliną Krzemień-Zawadzką"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 240,
+    "end": 251,
+    "text": "77122498763"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 258,
+    "end": 292,
+    "text": "ul. Bydgoska 92 m. 7, 87-100 Toruń"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 371,
+    "end": 383,
+    "text": "45 000,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 623,
+    "end": 634,
+    "text": "1 350,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 688,
+    "end": 697,
+    "text": "989,12 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 754,
+    "end": 788,
+    "text": "PL41 1140 2004 0000 9876 5432 1098"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 868,
+    "end": 879,
+    "text": "9 100,00 zł"
+  }
+]

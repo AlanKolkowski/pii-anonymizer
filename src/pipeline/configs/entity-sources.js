@@ -15,7 +15,12 @@ const mb = (bytes) => Math.ceil(bytes / 1_000_000);
 // is zeroed because it described the web variant; the original sizeMB is kept
 // as a conservative over-estimate for WASM-heap eviction accounting. q8 forces
 // wasm-only backends (see the WebNN note above).
-const DTYPE_OVERRIDE = import.meta.env?.VITE_MODEL_DTYPE || null;
+// In Node (eval) import.meta.env does not exist, so the same variable is also
+// honored from process.env — this lets `VITE_MODEL_DTYPE=q8 npm run eval`
+// measure the exact artifact the desktop build ships (EVAL-RECALL-AUDIT §8 A10).
+const DTYPE_OVERRIDE = import.meta.env?.VITE_MODEL_DTYPE
+  || (typeof process !== 'undefined' ? process.env?.VITE_MODEL_DTYPE : null)
+  || null;
 
 function withDtypeOverride(sources) {
   if (!DTYPE_OVERRIDE) return sources;
@@ -127,9 +132,20 @@ export const ENTITY_CATEGORIES = [
   { id: 'special-categories',    label: 'Kategorie szczególne',         entities: ['RELIGION_OR_BELIEF', 'POLITICAL_OPINION', 'SEXUAL_ORIENTATION', 'TRADE_UNION_MEMBERSHIP', 'ETHNIC_ORIGIN', 'CRIMINAL_OFFENCE_DATA'] },
 ];
 
+// Art. 9-10 RODO (zdrowie/biometria + kategorie szczególne: wyznanie, poglądy,
+// orientacja, przynależność związkowa, pochodzenie etniczne, dane karne) są
+// WŁĄCZONE domyślnie — decyzja 20/A12 (PRODUCT-DECISIONS.md), zamyka ustalenie α
+// audytu recall (EVAL-RECALL-AUDIT §7.7). Przy pustym localStorage aplikacja
+// startuje właśnie z tego zbioru (defaultEnabledEntities() w main.js), a w
+// praktyce ZUS-owej/karnej/pracowniczej to najcięższe dane; nadmiar maskowania
+// jest odwracalny, przeciek do LLM-a nie. Koszt zerowy: HEALTH_DATA używa
+// multilang-fp32, reszta polish-fp16 — oba modele są już wymagane przez
+// kategorie tożsamości/kontaktu, więc requiredSources się nie zmienia (przybite
+// testem "adds no new model source").
 export const DEFAULT_ENABLED_CATEGORIES = [
   'personal-identity', 'organizations', 'contact-location',
   'technical-identifiers', 'financial',
+  'health-biometric', 'special-categories',
 ];
 
 export function allEntityTypes() {

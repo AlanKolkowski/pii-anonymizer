@@ -1,6 +1,7 @@
-import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { readdir, writeFile, stat } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { get_sentence_boundaries } from 'sentencex';
+import { readEvalText } from '../src/eval/eval-text.js';
 import { runPipeline } from '../src/pipeline/runner.js';
 import { normalizeWhitespace } from '../src/pipeline/steps/preprocess.js';
 import { createSentencexSegmentStep } from '../src/pipeline/steps/segment-sentencex.js';
@@ -44,7 +45,7 @@ async function main() {
       continue;
     }
 
-    const text = await readFile(join(DOCS_DIR, file), 'utf-8');
+    const text = await readEvalText(join(DOCS_DIR, file));
     const ctx = await runPipeline(text, pipelineConfig);
     const segments = ctx.segments.map(s => ({
       start: s.offset,

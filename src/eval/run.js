@@ -1,11 +1,12 @@
-import { readdir, readFile, mkdir, writeFile, symlink, unlink, readlink } from 'node:fs/promises';
-import { join, basename, extname } from 'node:path';
+import { readdir, mkdir, writeFile, symlink, unlink } from 'node:fs/promises';
+import { join, basename, extname, resolve, relative, sep } from 'node:path';
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
 import { runPipeline } from '../pipeline/runner.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
 import { ENTITY_SOURCES, SOURCES, allEntityTypes, requiredSources } from '../pipeline/configs/entity-sources.js';
 import { rulesFor } from '../pipeline/configs/entity-rules.js';
+import { readEvalText, EVAL_TEXT_CONVENTION } from './eval-text.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -74,7 +75,7 @@ async function loadModelNode(model) {
 }
 
 async function processDocument(filePath, pipelineConfig, runDir) {
-  const text = await readFile(filePath, 'utf-8');
+  const text = await readEvalText(filePath);
   const name = basename(filePath, extname(filePath));
 
   console.log(`\nProcessing: ${name} (${text.length} chars)`);
@@ -124,18 +125,26 @@ async function main() {
   const args = process.argv.slice(2);
   const label = args.find(a => a.startsWith('--label='))?.slice(8);
 
+  // --dir=<path> switches the corpus (default: test-data/synthetic). The
+  // resolved corpus is stamped into summary.json so eval:score reads ground
+  // truth from the same place — the two can never drift apart silently.
+  const REPO_ROOT = join(import.meta.dirname, '../..');
+  const dirArg = args.find(a => a.startsWith('--dir='))?.slice('--dir='.length);
+  const docsDir = dirArg ? resolve(REPO_ROOT, dirArg) : DOCS_DIR;
+  const docsDirRel = relative(REPO_ROOT, docsDir).split(sep).join('/');
+
   let files;
   if (args.length > 0 && !args[0].startsWith('--')) {
     files = args.filter(a => !a.startsWith('--'));
   } else {
-    const entries = await readdir(DOCS_DIR);
+    const entries = await readdir(docsDir);
     files = entries
       .filter(f => f.endsWith('.txt'))
-      .map(f => join(DOCS_DIR, f));
+      .map(f => join(docsDir, f));
   }
 
   if (files.length === 0) {
-    console.log('No .txt files found in test-data/synthetic/');
+    console.log(`No .txt files found in ${docsDirRel}/`);
     process.exit(1);
   }
 
@@ -203,6 +212,8 @@ async function main() {
   const summary = {
     runId,
     timestamp: new Date().toISOString(),
+    textConvention: EVAL_TEXT_CONVENTION,
+    docsDir: docsDirRel,
     ...(label && { label }),
     enabledEntities: [...enabledEntities].sort(),
     config,

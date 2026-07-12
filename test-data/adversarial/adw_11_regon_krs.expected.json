@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 25,
+    "text": "Miedziak-Metal sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 31,
+    "end": 41,
+    "text": "0000876123"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 49,
+    "end": 58,
+    "text": "381245999"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 78,
+    "end": 90,
+    "text": "50 000,00 zł"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 164,
+    "end": 178,
+    "text": "38124599900010"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 247,
+    "end": 298,
+    "text": "Sąd Rejonowy w Toruniu, VII Wydział Gospodarczy KRS"
+  }
+]

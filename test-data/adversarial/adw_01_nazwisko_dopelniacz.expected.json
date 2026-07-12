@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 6,
+    "end": 21,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 59,
+    "end": 71,
+    "text": "12 000,00 zł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 181,
+    "end": 192,
+    "text": "Żurawskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 252,
+    "end": 263,
+    "text": "Żurawskiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 348,
+    "end": 359,
+    "text": "Żurawskiego"
+  }
+]

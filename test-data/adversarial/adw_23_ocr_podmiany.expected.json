@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 39,
+    "end": 50,
+    "text": "850307l2349"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 117,
+    "end": 130,
+    "text": "524-987-12-3O"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 174,
+    "end": 183,
+    "text": "38l245999"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 195,
+    "end": 229,
+    "text": "PL75 lO9O 2776 0000 0001 9876 5432"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 266,
+    "end": 276,
+    "text": "5249871230"
+  }
+]

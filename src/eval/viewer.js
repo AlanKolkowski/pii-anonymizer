@@ -14,9 +14,13 @@ import {
 } from './report.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
+import { readEvalText } from './eval-text.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
+// Doc names are unique across corpora; the viewer resolves each doc by
+// scanning known corpus dirs so runs made with --dir keep working.
+const CORPUS_DIRS = [DOCS_DIR, join(TEST_DATA_DIR, 'adversarial')];
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 const PORT = parseInt(process.env.PORT ?? '4317', 10);
 
@@ -91,9 +95,14 @@ async function loadSource(docName) {
   let text = '';
   let expected = [];
   let expectedSegments = null;
-  try { text = await readFile(join(DOCS_DIR, `${docName}.txt`), 'utf-8'); } catch {}
-  try { expected = JSON.parse(await readFile(join(DOCS_DIR, `${docName}.expected.json`), 'utf-8')); } catch {}
-  try { expectedSegments = JSON.parse(await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8')); } catch {}
+  for (const dir of CORPUS_DIRS) {
+    try {
+      text = await readEvalText(join(dir, `${docName}.txt`));
+    } catch { continue; }
+    try { expected = JSON.parse(await readFile(join(dir, `${docName}.expected.json`), 'utf-8')); } catch {}
+    try { expectedSegments = JSON.parse(await readFile(join(dir, `${docName}.expected-segments.json`), 'utf-8')); } catch {}
+    break;
+  }
   return { text, expected, expectedSegments };
 }
 

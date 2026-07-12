@@ -1,0 +1,6 @@
+Dłużnik: Konrad Żurawski, PESEL:85030712349 (zapis z systemu bez spacji po dwukropku).
+
+W formularzu ręcznym PESEL wpisano z odstępami: 850 307 123 49.
+W skanie wniosku numer przełamano na końcu wiersza: PESEL 850307
+12349.
+PESEL małżonki dłużnika: 92090156781 (zapis ciągły, poprawny).

@@ -1,0 +1,44 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 12,
+    "end": 37,
+    "text": "Miedziak-Metal sp. z o.o."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 51,
+    "end": 59,
+    "text": "Brodnicy"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 65,
+    "end": 78,
+    "text": "524-987-12-30"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 89,
+    "end": 129,
+    "text": "Zakład Ślusarski „Gwint” Eustachy Gwóźdź"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 135,
+    "end": 148,
+    "text": "611-87-65-433"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 212,
+    "end": 225,
+    "text": "PL 9481234560"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 255,
+    "end": 265,
+    "text": "7293847564"
+  }
+]

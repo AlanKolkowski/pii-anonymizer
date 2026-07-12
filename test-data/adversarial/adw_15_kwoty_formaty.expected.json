@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 22,
+    "end": 34,
+    "text": "15.000,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 87,
+    "end": 94,
+    "text": "1500 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 144,
+    "end": 160,
+    "text": "2 500 000,00 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 186,
+    "end": 195,
+    "text": "PLN 4.200"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 232,
+    "end": 244,
+    "text": "12 500,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 292,
+    "end": 358,
+    "text": "0,5% wartości kontraktu za każdy dzień, nie więcej niż 8 000,00 zł"
+  }
+]
