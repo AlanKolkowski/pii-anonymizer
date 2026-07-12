@@ -50,10 +50,10 @@ describe('extractTxt', () => {
     expect(result.text).toBe('hello');
   });
 
-  it('does not normalize line endings (downstream pipeline owns that)', async () => {
-    const file = fileFrom('a\r\nb\nc', 'c.txt');
+  it('normalizes CRLF and lone CR to LF (A11)', async () => {
+    const file = fileFrom('a\r\nb\nc\rd', 'c.txt');
     const result = await extractTxt(file);
-    expect(result.text).toBe('a\r\nb\nc');
+    expect(result.text).toBe('a\nb\nc\nd');
   });
 
   it('wraps File.text() failures in ExtractionFailedError', async () => {
