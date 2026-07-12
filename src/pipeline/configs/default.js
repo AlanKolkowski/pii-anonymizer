@@ -6,7 +6,7 @@ import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
-import { thresholdStep } from '../steps/threshold.js';
+import { createThresholdStep } from '../steps/threshold.js';
 import { refineFinancialAmountStep } from '../steps/refine-financial-amount.js';
 import { snapStep } from '../steps/snap.js';
 import { trimTrailingPunctuationStep } from '../steps/trim-trailing-punctuation.js';
@@ -60,7 +60,7 @@ export function createPostprocessSteps(options) {
   return [
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
-      thresholdStep,
+      createThresholdStep(options.thresholdOverrides),
       refineFinancialAmountStep,
       snapStep,
       trimTrailingPunctuationStep,
