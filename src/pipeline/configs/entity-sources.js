@@ -132,9 +132,20 @@ export const ENTITY_CATEGORIES = [
   { id: 'special-categories',    label: 'Kategorie szczególne',         entities: ['RELIGION_OR_BELIEF', 'POLITICAL_OPINION', 'SEXUAL_ORIENTATION', 'TRADE_UNION_MEMBERSHIP', 'ETHNIC_ORIGIN', 'CRIMINAL_OFFENCE_DATA'] },
 ];
 
+// Art. 9-10 RODO (zdrowie/biometria + kategorie szczególne: wyznanie, poglądy,
+// orientacja, przynależność związkowa, pochodzenie etniczne, dane karne) są
+// WŁĄCZONE domyślnie — decyzja 20/A12 (PRODUCT-DECISIONS.md), zamyka ustalenie α
+// audytu recall (EVAL-RECALL-AUDIT §7.7). Przy pustym localStorage aplikacja
+// startuje właśnie z tego zbioru (defaultEnabledEntities() w main.js), a w
+// praktyce ZUS-owej/karnej/pracowniczej to najcięższe dane; nadmiar maskowania
+// jest odwracalny, przeciek do LLM-a nie. Koszt zerowy: HEALTH_DATA używa
+// multilang-fp32, reszta polish-fp16 — oba modele są już wymagane przez
+// kategorie tożsamości/kontaktu, więc requiredSources się nie zmienia (przybite
+// testem "adds no new model source").
 export const DEFAULT_ENABLED_CATEGORIES = [
   'personal-identity', 'organizations', 'contact-location',
   'technical-identifiers', 'financial',
+  'health-biometric', 'special-categories',
 ];
 
 export function allEntityTypes() {
