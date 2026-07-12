@@ -1,57 +1,39 @@
 // A7 (EVAL-RECALL-AUDIT.md §8): measures precision/recall sensitivity to the
-// per-type confidence threshold, on both corpora, for the weight>=3 types the
-// audit flagged as calibrated for precision instead of professional secrecy
-// (§7.1). NER is the expensive part (model load + inference); it runs once
-// per document and the raw entities are cached, then postprocess — cheap,
-// pure JS — is replayed once per candidate threshold via
+// per-type confidence threshold, on both corpora, for the weight>=3 types
+// the audit flagged as calibrated for precision instead of professional
+// secrecy (§7.1). Reads NER output cached by cache-ner-for-thresholds.mjs
+// (the expensive part — model load + inference — split into its own
+// process per corpus to avoid onnxruntime-node's "bad allocation" from
+// cycling too many sessions in one process lifetime) and replays
+// postprocess — cheap, pure JS — once per candidate threshold via
 // createThresholdStep's override seam (src/pipeline/steps/threshold.js).
 //
-// Usage: node scripts/measure-thresholds.mjs [--types=A,B] [--thresholds=0.3,0.4,...]
-// Writes test-data/results/threshold-sweep.json (gitignored, like eval runs);
-// the reproduction command is the artifact, not the data (EVAL-RECALL-AUDIT
-// §10 convention).
-import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, basename, extname } from 'node:path';
-import { pipeline as hfPipeline } from '@huggingface/transformers';
-import { get_sentence_boundaries } from 'sentencex';
-import { runPipeline } from '../src/pipeline/runner.js';
-import {
-  createPreSegmentSteps,
-  createModelLoadSteps,
-  createNerSteps,
-  createPostprocessSteps,
-} from '../src/pipeline/configs/default.js';
-import { SOURCES, allEntityTypes, requiredSources } from '../src/pipeline/configs/entity-sources.js';
-import { readEvalText } from '../src/eval/eval-text.js';
+// Usage:
+//   node scripts/cache-ner-for-thresholds.mjs --dir=test-data/synthetic --out=synthetic
+//   node scripts/cache-ner-for-thresholds.mjs --dir=test-data/adversarial --out=adversarial
+//   node scripts/measure-thresholds.mjs [--types=A,B] [--thresholds=0.3,0.4,...]
+//
+// Writes test-data/results/threshold-sweep.json (gitignored, like eval
+// runs); the reproduction command is the artifact, not the data
+// (EVAL-RECALL-AUDIT §10 convention).
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createPostprocessSteps } from '../src/pipeline/configs/default.js';
+import { allEntityTypes } from '../src/pipeline/configs/entity-sources.js';
 import { matchEntities } from '../src/eval/matching.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
 const RESULTS_DIR = join(REPO_ROOT, 'test-data/results');
+const CACHE_DIR = join(RESULTS_DIR, 'threshold-ner-cache');
 
 const DEFAULT_TYPES = ['PERSON_IDENTIFIER', 'VEHICLE_IDENTIFIER', 'LOCATION', 'PERSON_ROLE_OR_TITLE', 'DEVICE_IDENTIFIER'];
 const DEFAULT_THRESHOLDS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
-
-const CORPORA = [
-  { label: 'synthetic', dir: join(REPO_ROOT, 'test-data/synthetic') },
-  { label: 'adversarial', dir: join(REPO_ROOT, 'test-data/adversarial') },
-];
+const CORPORA = ['synthetic', 'adversarial'];
 
 function parseListArg(name, fallback, transform = (x) => x) {
   const arg = process.argv.find((a) => a.startsWith(`--${name}=`));
   if (!arg) return fallback;
   return arg.slice(name.length + 3).split(',').map((s) => transform(s.trim()));
-}
-
-async function loadModelNode(model) {
-  const ner = await hfPipeline('token-classification', model.id, { dtype: model.dtype });
-  return {
-    infer: async (text) => await ner(text),
-    countTokens: async (text) => {
-      const enc = await ner.tokenizer([text], { add_special_tokens: true, truncation: false, padding: false });
-      return enc.input_ids.dims.at(-1);
-    },
-    dispose: async () => await ner.dispose(),
-  };
 }
 
 function metricsForType(expected, predicted, type) {
@@ -73,34 +55,16 @@ function withRates(c) {
   return { ...c, precision, recall };
 }
 
-async function buildNerCache(enabledEntities) {
-  const preSegment = createPreSegmentSteps(get_sentence_boundaries);
-  const needed = requiredSources(enabledEntities);
-  const hf = needed
-    .filter((alias) => SOURCES[alias]?.kind === 'hf')
-    .map((alias) => ({ alias, id: SOURCES[alias].id, dtype: SOURCES[alias].dtype }));
-  const regexActive = needed.includes('regex');
-  const modelLoadSteps = createModelLoadSteps(hf, loadModelNode);
-  const nerSteps = createNerSteps(hf, regexActive, loadModelNode);
-  const preNerPipeline = [...preSegment, ...modelLoadSteps, ...nerSteps];
-
+async function loadCache() {
   const cache = {};
   for (const corpus of CORPORA) {
-    const entries = await readdir(corpus.dir);
-    const txtFiles = entries.filter((f) => f.endsWith('.txt')).sort();
-    cache[corpus.label] = [];
-    for (const file of txtFiles) {
-      const name = basename(file, extname(file));
-      let expected;
-      try {
-        expected = JSON.parse(await readFile(join(corpus.dir, `${name}.expected.json`), 'utf-8'));
-      } catch {
-        continue; // no ground truth (e.g. stray .txt) — skip
-      }
-      console.error(`[ner] ${corpus.label}/${name}`);
-      const text = await readEvalText(join(corpus.dir, file));
-      const nerCtx = await runPipeline(text, preNerPipeline);
-      cache[corpus.label].push({ name, expected, nerCtx });
+    const path = join(CACHE_DIR, `${corpus}.json`);
+    try {
+      cache[corpus] = JSON.parse(await readFile(path, 'utf-8'));
+    } catch (err) {
+      console.error(`Missing cache for ${corpus} (${path}). Run:`);
+      console.error(`  node scripts/cache-ner-for-thresholds.mjs --dir=test-data/${corpus === 'adversarial' ? 'adversarial' : 'synthetic'} --out=${corpus}`);
+      throw err;
     }
   }
   return cache;
@@ -119,12 +83,12 @@ async function sweep(cache, enabledEntities, types, thresholds) {
       const row = { threshold };
       for (const corpus of CORPORA) {
         let totals = { tp: 0, fp: 0, fn: 0 };
-        for (const doc of cache[corpus.label]) {
-          let ctx = doc.nerCtx;
+        for (const doc of cache[corpus]) {
+          let ctx = { ...doc.nerCtx, anonymized: '', legend: {}, debug: [] };
           for (const step of postSteps) ctx = await step(ctx);
           totals = addCounts(totals, metricsForType(doc.expected, ctx.entities, type));
         }
-        row[corpus.label] = withRates(totals);
+        row[corpus] = withRates(totals);
       }
       results[type].push(row);
     }
@@ -157,7 +121,7 @@ async function main() {
   const enabledEntities = allEntityTypes();
 
   console.error(`Sweeping ${types.join(', ')} over thresholds ${thresholds.join(', ')}`);
-  const cache = await buildNerCache(enabledEntities);
+  const cache = await loadCache();
   const results = await sweep(cache, enabledEntities, types, thresholds);
 
   printTable(results);
