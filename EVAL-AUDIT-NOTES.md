@@ -24,7 +24,10 @@ przecieków) → §8 (plan) → tu §2 (decyzje do podjęcia).
 | Fixtury DOCX (tabela, przypis, nagłówek, stopka) + pin cichych strat importu | `189065a` | +4, razem 85 / 1014 |
 | Analizator przecieków `eval:analyze` (pokrycie znakowe, macierz, warstwy, wagi) | `154433b` | +10, razem 86 / 1024 |
 | Kuracja GT po pierwszym pomiarze (5 luk anotacji po stronie korpusu, 1 pułapka przeredagowana) | `867f33d` | 86 / 1024 (strażnik re-waliduje offsety) |
-| Raport EVAL-RECALL-AUDIT.md + ta notatka | (commit raportu) | 86 / 1024 |
+| Raport EVAL-RECALL-AUDIT.md + ta notatka | `5c2ab77` | 86 / 1024 |
+| A10: `VITE_MODEL_DTYPE` z process.env w Node (eval mierzy artefakt desktopu) | `4ebb969` | +1, razem 86 / 1025 |
+| Ujednolicenie myślników do „–" w prozie korpusu i generatorze | `5795d7b` | 86 / 1025 |
+| Aneks §11 raportu: pomiar parytetu q8 na obu korpusach + aktualizacja tej notatki | (commit końcowy) | 86 / 1025 |
 
 `npm test` zielone po KAŻDYM commicie z osobna, liczby plików/testów w każdym commit
 message. Przebiegi eval: `2026-07-12T09-15-23` (baseline syntetyczny),
@@ -63,17 +66,22 @@ NIGHT-NOTES.md: nietknięty (ta notatka jest osobnym plikiem w tej samej konwenc
 5. **Taksonomia wynagrodzeń.** GT (za precedensem pismo_05) używa FINANCIAL_AMOUNT,
    model emituje INCOME_COMPENSATION → podwójna kara w scoringu. Do rozstrzygnięcia:
    klasa ekwiwalencji w scoringu albo zmiana polityki anotacji.
-6. **C4 – q8 vs fp16/fp32.** Desktop dystrybuuje q8, eval mierzy fp32/fp16. Po A10
-   (pomiar parytetu) może wrócić decyzja: większy instalator czy jawne ograniczenie.
+6. **C4 – q8 vs fp16/fp32: pomiar wykonany, decyzja otwarta.** A10 zrealizowane
+   jeszcze w tej sesji (raport §11): q8 obniża F1 o 6,6 p.p. na korpusie syntetycznym,
+   HEALTH_DATA zapada się do 13,3% F1, pełne wycieki wagi ≥ 4 na korpusie
+   kontradyktoryjnym rosną z 5 do 13. Do decyzji: instalator z fp16 (większy) albo
+   jawnie komunikowane ograniczenie desktopu; progi (pkt 2) trzeba kalibrować na
+   wariancie, który realnie jedzie w produkcie.
 
 ---
 
 ## §3. Czego nie dało się zweryfikować w tym środowisku i dlaczego
 
-- **Jakość wariantu q8 (desktopowego).** W Node `import.meta.env` nie istnieje, więc
-  override dtype nie działa bez zmiany kodu (moduł A10). Świadomie niewykonane w tej
-  sesji: zmiana `entity-sources.js` to zmiana produktu, a dyscyplina sesji brzmiała
-  „audyt mierzy, nie przestraja".
+- **Jakość wariantu q8: ZMIERZONA jednak w tej sesji** (initial plan odkładał to jako
+  A10, ale zmiana okazała się czysto odczytowa: fallback `process.env` obok
+  `import.meta.env`, zero wpływu na buildy przeglądarkowe – commit `4ebb969`).
+  Wyniki w raporcie §11. Niezmierzony pozostaje dryf RUNTIME'u: Node/onnxruntime-CPU
+  vs ORT WASM w Electronie – parytet dotyczy artefaktu (wag), nie środowiska wykonania.
 - **Zachowanie na realnych skanach.** Korpus OCR symuluje WZORCE błędów (l/1, O/0,
   rozstrzelenia, sklejenia, przenoszenia) w tekście; nie przepuszczałam bitmap przez
   PaddleOCR (brak korpusu skanów, których mogłabym użyć bez danych realnych).

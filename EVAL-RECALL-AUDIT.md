@@ -32,7 +32,11 @@ Każda liczba w tym raporcie pochodzi z przebiegu, który da się powtórzyć po
 5. **Import DOCX po cichu gubi przypisy, nagłówki i stopki stron** (przybite testem).
    Dziś to „tylko" złudzenie kompletności, ale dla planowanej rekonstrukcji DOCX
    (kopiowanie verbatim) to gotowy kanał wycieku, jeżeli MD4 nie obejdzie tych części.
-6. Plan naprawczy w §8: 12 modułów bez zmiany modelu (A1–A12), 3 wymagające
+6. **Desktop dystrybuuje słabszy model, niż mierzono (q8): F1 92,6% → 86,0% na korpusie
+   syntetycznym, HEALTH_DATA zapada się do 13,3% F1, pełne wycieki wagi ≥ 4 na korpusie
+   kontradyktoryjnym rosną z 5 do 13** (§11). Decyzja „rozmiar instalatora vs jakość"
+   jest teraz decyzją na liczbach.
+7. Plan naprawczy w §8: 12 modułów bez zmiany modelu (A1–A12), 3 wymagające
    modelu/ensemble (B1–B3), 5 ograniczeń produktu do komunikowania (C1–C5).
 
 ---
@@ -46,8 +50,9 @@ Każda liczba w tym raporcie pochodzi z przebiegu, który da się powtórzyć po
   encji włączonymi (domyślne zachowanie `npm run eval`).
 - **Dwa świadome rozjazdy między pomiarem a produktem** (oba są ustaleniami audytu,
   §7.9–7.10): (a) desktop dystrybuuje warianty **q8/INT8** (`models/manifest.json`),
-  a eval mierzy fp32/fp16, bo w Node `import.meta.env` nie istnieje i override
-  `VITE_MODEL_DTYPE` nie działa; (b) aplikacja startuje z `defaultEnabledEntities()`
+  a eval mierzył dotąd fp32/fp16, bo w Node `import.meta.env` nie istnieje i override
+  `VITE_MODEL_DTYPE` nie działał – naprawione w tej sesji (moduł A10), pomiar parytetu
+  q8 w §11; (b) aplikacja startuje z `defaultEnabledEntities()`
   (`src/main.js:305`), które NIE obejmuje kategorii „Zdrowie i biometria" ani „Kategorie
   szczególne", więc produkt w ustawieniu domyślnym maskuje mniej, niż mierzy eval.
 - **Scoring ścisły** (`src/eval/score.js`): TP tylko przy dokładnych granicach; trafienie
@@ -487,8 +492,10 @@ nie są maskowane; N-5 weryfikatora flaguje kwoty słowne. Komunikować w dokume
 sito (import ich nie widzi). Komunikat w UI przy imporcie DOCX. Dla DOCX-REBUILD:
 rekomendacja R2 (§9).
 
-**C4 – jakość wariantu q8** nieznana do czasu A10; jeżeli pomiar potwierdzi regresję
-na typach wagi ≥ 4: decyzja instalator większy (fp16) albo jawne ograniczenie.
+**C4 – jakość wariantu q8**: pomiar A10 wykonany w tej sesji (§11) POTWIERDZA istotną
+regresję, także na typach wagi 4–5 (zdrowie, identyfikatory, nazwiska OCR). Otwarta
+decyzja produktowa: większy instalator (fp16) albo jawne ograniczenie desktopu –
+z liczbami z §11 na stole.
 
 **C5 – nadmaskowanie referencji prawnych** (cytowania orzecznictwa, Dz.U., stopy
 procentowe): świadomy koszt strojenia pod recall; częściowo ograniczą go A2/A4/A9.
@@ -528,9 +535,53 @@ wiedzieć (wpływ na jakość odpowiedzi AI, nie na tajemnicę).
 | D2 | dry-testy wykonalności A1/A2 | skrypt w scratchpadzie sesji (regex sygnatur: TP 9/FP 0; PESEL-sep+suma: TP 16/FP 3 – wszystkie FP to telefony) – do powtórzenia jako testy modułów A1/A2 |
 | K7 | regeneracja korpusu | `node scripts/generate-adversarial-corpus.mjs` (deterministyczna, bajt w bajt) |
 | K8 | fixtury DOCX | `node scripts/generate-adversarial-docx.mjs`; pin: `npx vitest run src/file-import/docx-adversarial.test.js` |
+| K9 | parytet q8, syntetyczny | `VITE_MODEL_DTYPE=q8 npm run eval -- --label=q8-parity-syntetyczny` → run `2026-07-12T10-02-43`; scoring i analiza jak K3/K6 |
+| K10 | parytet q8, kontradyktoryjny | `VITE_MODEL_DTYPE=q8 npm run eval -- --dir=test-data/adversarial --label=q8-parity-adversarial` → run `2026-07-12T10-06-31` |
+| K11 | weryfikacja po ujednoliceniu myślników w korpusie (commit `5795d7b`) | `npm run eval -- --dir=test-data/adversarial --label=adversarial-final-endash` → run `2026-07-12T10-10-20`; `scores.json.overall` bajt w bajt identyczne z K4 (potwierdzone porównaniem programowym) |
 
 Katalogi przebiegów (`test-data/results/…`) są poza gitem; liczby w raporcie odtwarza
 każdorazowo K2–K6 (modele są deterministyczne na CPU dla stałego wejścia).
+
+---
+
+## §11. Aneks A10: parytet q8 (artefakt dystrybuowany przez desktop)
+
+Po odblokowaniu `VITE_MODEL_DTYPE` w Node (commit `4ebb969`) zmierzono te same korpusy
+na wariantach **q8/INT8** – dokładnie tych, które trafiają do instalatora desktopowego.
+Zastrzeżenie: pomiar w Node (onnxruntime CPU) mierzy parytet ARTEFAKTU (wagi modelu),
+nie runtime'u (desktop używa ORT WASM) – dryf między środowiskami wykonania pozostaje
+niezmierzony (EVAL-AUDIT-NOTES §3).
+
+| Pomiar | fp32/fp16 (web/eval) | q8 (desktop) | Δ |
+|---|---|---|---|
+| Syntetyczny: P / R / F1 | 93,0 / 92,1 / 92,6 | 87,9 / 84,2 / 86,0 | **–6,6 p.p. F1** |
+| Syntetyczny: przecieki treści | 8 | 32 | ×4 |
+| Kontradyktoryjny: P / R / F1 | 77,9 / 78,1 / 78,0 | 81,0 / 72,0 / 76,3 | –6,1 p.p. recall |
+| Kontradyktoryjny: przecieki treści | 42 | 57 | +15 |
+| Kontradyktoryjny: PEŁNE wycieki typów wagi ≥ 4 | 5 | **13** | ×2,6 |
+
+Najgłębsze zapaście per typ (scoring ścisły):
+
+- **HEALTH_DATA (syntetyczny): F1 100% → 13,3%** (recall 11,1%); pokrycie znakowe:
+  3 z 9 encji zdrowotnych pismo_03 wychodzą w całości (szczegóły dyskopatii, „korzeń
+  nerwowy") – warstwa: detekcja (q8 po prostu ich nie widzi);
+- LOCATION (synt.): R 88,2% → 64,7%; PERSON_ROLE (synt.): R 96,4% → 71,4%;
+- DOCUMENT_REFERENCE (kontr.): F1 44,4% → 24,2%;
+- PERSON_IDENTIFIER (kontr.): R 68,4% → 57,9%; ORGANIZATION_IDENTIFIER: 77,8% → 61,1%;
+- PERSON_NAME (kontr.): R 88,2% → 81,2% – q8 traci m.in. sklejone OCR
+  („KonradŻurawski", adresy „ul.Polnej3/5"), inicjały („E. W.", „J. M.") i odmiany
+  („Mai", „Maj"), które fp32/fp16 łapał.
+
+Warstwy przecieków q8 na korpusie kontradyktoryjnym: detekcja 20 (fp32: 5), granice 18,
+próg 9, filtr źródeł 9, dedup 1. Mechanizm jest podwójny: kwantyzacja ślepnie na części
+encji ORAZ obniża rozkład score'ów, przez co progi kalibrowane na zachowaniu fp32
+(§7.1) tną na desktopie jeszcze głębiej – to zaostrza priorytet A7 i unieważnia
+kalibrację progów robioną wyłącznie na fp32.
+
+**Wniosek:** desktop w obecnym kształcie dystrybuuje wariant modelu o istotnie niższym
+recallu niż ten, na którym dotąd opierano wszystkie pomiary jakości. Decyzja C4
+(instalator większy o warianty fp16 albo jawnie komunikowane ograniczenie) jest teraz
+decyzją na liczbach, nie na przeczuciu. Reprodukcja: §10 K9–K10.
 
 ---
 
