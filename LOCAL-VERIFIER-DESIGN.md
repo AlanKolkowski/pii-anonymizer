@@ -781,6 +781,9 @@ i regułach), równolegle W5; potem W6, W7, W8. W9 wyłącznie po osobnej
 decyzji. Ścieżka ręczna (iv) to drobny element W7 (przycisk + szablon
 promptu), bez osobnego modułu.
 
+Specyfikacja wykonawcza W1/W2/W3 (sesja 2, z badaniem licencji źródeł
+i goldenami z korpusu kontradyktoryjnego): `W1-W3-MORPHOLOGY-DESIGN.md`.
+
 Proponowane umiejscowienie kodu (dla spójności repo, do dyspozycji Sonneta):
 `src/verifier/` (morfologia, detektor przypadka, plan, checkery, rescan),
 `src/ui/verify-panel/`, skrypt kompilacji danych w `scripts/`.
@@ -796,13 +799,13 @@ pozycja dotyka kanału, PII albo air-gap.
 |---|---|---|---|
 | **O-1** | zakres v1: fleksja regułowa + poziomy 1–2, zero kanału, zero nowego runtime'u | przyjąć jako rozstrzygnięcie architektoniczne | przewymiarowanie (LLM tam, gdzie zbędny) albo niedowiezienie „drugiej pary oczu" |
 | **O-2** | formy poświadczone: nowa struktura RAM obok legendy, snapshot per wynik | jak §2.2; zero trwałości, zero serializacji przez kanały | nowa ścieżka wycieku wariantów odmiany (sąsiedztwo A1) |
-| **O-3** | integralność i łańcuch dostaw danych morfologicznych | asar/fuse dla małych, `manifest.json`+runtime dla dużych; pinowanie źródeł, suma w repo, licencje | podmieniony słownik = podmieniona treść pisma (A10); powtórka TOFU z C-INT-7/8 |
+| **O-3** | integralność i łańcuch dostaw danych morfologicznych | asar/fuse dla małych, `manifest.json`+runtime dla dużych; pinowanie źródeł, suma w repo, licencje. **Doprecyzowane wykonawczo (2026-07-12):** źródła SGJP + listy PESEL (PoliMorf rezerwowo), licencje ustalone z treści źródeł, lock + fetch fail-closed, artefakt commitowany, raport przeglądowy – `W1-W3-MORPHOLOGY-DESIGN.md` §1; werdykt przy bramce W1 | podmieniony słownik = podmieniona treść pisma (A10); powtórka TOFU z C-INT-7/8 |
 | **O-4** | przepływ A9 (tekst po deanonimizacji) do workera na potrzeby poziomu 2 | ten sam proces co dziś; izolacja od legendy, cache i tokenizacji | nowa kopia realnych danych w niekontrolowanym miejscu |
 | **O-5** | debug: przebieg weryfikacyjny z wyłączonym debug; nic do panelu C-PERS-8 | jak §4.2/§6.3 | realne PII w debug JSON dostępnym z panelu (eskalacja S7) |
 | **O-6** | poziom 3 WASM: nowy duży artefakt wykonujący się na PII, bez kanału | osobny mini-projekt (W9) przed jakąkolwiek implementacją | wciągnięcie generatywnego modelu bez modelu zagrożeń |
 | **O-7** | LM Studio (§5.2): wykluczenie w A; warunki brzegowe dla B; albo zakaz na stałe | nie w v1; w B najwyżej po osobnym projekcie, C-NET-6c, bramka z jawnym ostrzeżeniem | kanał TCP z jawnym PII w produkcie air-gap; erozja C-NET-6/S5 |
 | **O-8** | ścieżka ręczna (iv): granica odpowiedzialności przy „Kopiuj pakiet weryfikacyjny" | parytet ze schowkiem (C-PERS-9/R5); opis w UI i dokumentacji | użytkownik nieświadomy, że przenosi dane jawne do cudzego procesu |
-| **O-9** | wskazówki przypadka od LLM (`[PERSON_NAME_1\|D]`, §3.6) | nie w v1; jeśli wraca: parser ścisły, dane niezaufane, tylko głos w kaskadzie | rozszczelnienie kontraktu tokenów; sterowanie treścią przez dane |
+| **O-9** | wskazówki przypadka od LLM (`[PERSON_NAME_1\|D]`, §3.6) | nie w v1; jeśli wraca: parser ścisły, dane niezaufane, tylko głos w kaskadzie. **Aktualizacja 2026-07-12:** anotacja weszła w fazie 0 (decyzja 17, `GATE-PHASE0.md` §2 poz. 2.1–2.2; parser ścisły w `src/tokens.js`); semantyka „tylko głos, nigdy polecenie" skonkretyzowana w `W1-W3-MORPHOLOGY-DESIGN.md` §3.2 S-T/§3.3, weryfikacja przy bramce W4 (O-10) | rozszczelnienie kontraktu tokenów; sterowanie treścią przez dane |
 | **O-10** | gwarancje V2 na czterech ujściach (§8.2): nic bez akceptacji, pokazane = wyeksportowane | plan substytucji jako jedyne źródło prawdy + testy hashy | cicha zmiana treści pisma procesowego (złamanie sedna produktu) |
 
 ---
