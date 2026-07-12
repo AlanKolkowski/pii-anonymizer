@@ -70,7 +70,7 @@ export const ENTITY_SOURCES = {
   DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16'],
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
-  VEHICLE_IDENTIFIER:       ['polish-fp16'],
+  VEHICLE_IDENTIFIER:       ['polish-fp16', 'regex'],
   HEALTH_DATA:              ['multilang-fp32'], // The only model that catches all
   GENETIC_DATA:             ['polish-fp16'],
   BIOMETRIC_DATA:           ['polish-fp16'],

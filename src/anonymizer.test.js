@@ -670,6 +670,185 @@ describe('findRegexEntities', () => {
   });
 });
 
+describe('findRegexEntities — A1 checksum-validated identifiers', () => {
+  function findOne(text, type) {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === type);
+    expect(matches, `expected exactly one ${type} in ${JSON.stringify(text)}, got ${matches.length}`).toHaveLength(1);
+    return matches[0];
+  }
+
+  // PESEL — adw_09_pesel_formaty
+  it('detects PESEL glued to a label (continuous)', () => {
+    const text = 'Konrad Żurawski, PESEL:85030712349 (zapis z systemu bez spacji po dwukropku).';
+    const e = findOne(text, 'PERSON_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('85030712349');
+    expect(e.score).toBe(1.0);
+  });
+
+  it('detects PESEL split by spaces (850 307 123 49)', () => {
+    const text = 'W formularzu ręcznym PESEL wpisano z odstępami: 850 307 123 49.';
+    const e = findOne(text, 'PERSON_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('850 307 123 49');
+  });
+
+  it('detects PESEL broken by a single line break (850307\\n12349)', () => {
+    const text = 'W skanie wniosku numer przełamano na końcu wiersza: PESEL 850307\n12349.';
+    const e = findOne(text, 'PERSON_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('850307\n12349');
+  });
+
+  it('rejects an 11-digit run that fails the PESEL checksum', () => {
+    const text = 'numer referencyjny 12345678901 nie jest PESEL-em';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER')).toEqual([]);
+  });
+
+  // NIP — adw_10_nip_formaty
+  it('detects NIP in 3-3-2-2 grouping (existing format)', () => {
+    const text = 'NIP 524-987-12-30 widnieje w rejestrze.';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('524-987-12-30');
+  });
+
+  it('detects NIP in 3-2-2-3 grouping (old-stamp format the fixed regex never knew)', () => {
+    const text = 'Zakład Ślusarski „Gwint” Eustachy Gwóźdź, NIP 611-87-65-433 (grupowanie jak na starych pieczątkach).';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('611-87-65-433');
+  });
+
+  it('detects VAT-EU NIP with PL prefix, including the prefix in the span', () => {
+    const text = 'Numer VAT UE nabywcy: PL 9481234560.';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('PL 9481234560');
+  });
+
+  it('detects NIP written continuously', () => {
+    const text = 'NIP zapisany ciągiem w JPK: 7293847564.';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('7293847564');
+  });
+
+  it('rejects a 10-digit run that fails the NIP checksum and has no KRS context', () => {
+    const text = 'numer zlecenia 1234567890 w systemie';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER')).toEqual([]);
+  });
+
+  // REGON / KRS — adw_11_regon_krs
+  it('detects 9-digit REGON', () => {
+    const text = 'REGON 381245999.';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('381245999');
+  });
+
+  it('detects 14-digit REGON', () => {
+    const text = 'Oddział samobilansujący spółki posługuje się REGON czternastocyfrowym: 38124599900010.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('38124599900010');
+  });
+
+  it('detects KRS via literal label context (no checksum exists for KRS)', () => {
+    const text = 'Miedziak-Metal sp. z o.o., KRS 0000876123, REGON 381245999, kapitał zakładowy 50 000,00 zł.';
+    const entities = findRegexEntities(text).filter((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER');
+    const spans = entities.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('0000876123');
+    expect(spans).toContain('381245999');
+  });
+
+  it('does not treat an arbitrary 10-digit number as KRS without the label', () => {
+    // 1234567890 also fails the NIP checksum, so this is a clean negative for both paths.
+    const text = 'numer zlecenia 1234567890 w systemie';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER')).toEqual([]);
+  });
+
+  // adw_32_pulapki_prawne — statute/case-law citations must NOT be caught
+  it('does not flag statute article numbers as identifiers', () => {
+    const text = 'Zgodnie z art. 385¹ § 1 ustawy z dnia 23 kwietnia 1964 r. – Kodeks cywilny (Dz.U. z 2024 r. poz. 1061 ze zm.) postanowienia umowy...';
+    expect(findRegexEntities(text).filter((e) =>
+      e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'ORGANIZATION_IDENTIFIER',
+    )).toEqual([]);
+  });
+
+  it('does not flag Supreme Court docket numbers as identifiers', () => {
+    const text = 'Analogiczne stanowisko zajęto w uchwale (sygn. akt III CZP 87/22) oraz w wyroku z dnia 14 maja 2021 r. (V CSKP 12/21).';
+    expect(findRegexEntities(text).filter((e) =>
+      e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'ORGANIZATION_IDENTIFIER',
+    )).toEqual([]);
+  });
+
+  // IBAN/NRB — adw_12_iban_lamany
+  it('detects bare NRB without PL prefix (mod-97 checked as if PL were prepended)', () => {
+    const text = 'Zapłatę należy uiścić na rachunek: 75 1090 2776 0000 0001 9876 5432 (numer krajowy bez prefiksu).';
+    const e = findOne(text, 'BANK_ACCOUNT_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('75 1090 2776 0000 0001 9876 5432');
+  });
+
+  it('detects IBAN with hyphens', () => {
+    const text = 'W umowie wskazano rachunek w formacie z łącznikami: PL41-1140-2004-0000-9876-5432-1098.';
+    const e = findOne(text, 'BANK_ACCOUNT_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('PL41-1140-2004-0000-9876-5432-1098');
+  });
+
+  it('detects IBAN broken by a single line break', () => {
+    const text = 'W skanie aneksu numer przełamano: rachunek PL26 1600 1462 0000\n8765 4321 0987.';
+    const e = findOne(text, 'BANK_ACCOUNT_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('PL26 1600 1462 0000\n8765 4321 0987');
+  });
+
+  it('rejects a 26-digit run that fails the mod-97 checksum', () => {
+    const text = 'numer referencyjny 12345678901234567890123456 w systemie';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'BANK_ACCOUNT_IDENTIFIER')).toEqual([]);
+  });
+
+  // OCR glyph substitutions — adw_23_ocr_podmiany
+  it('detects PESEL with an OCR "l" substituted for digit 1', () => {
+    const text = 'PESEL dłużnika (skan niskiej jakości): 850307l2349 – w oryginale cyfra 1, w skanie mała litera „l”.';
+    const e = findOne(text, 'PERSON_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('850307l2349');
+  });
+
+  it('detects NIP with an OCR "O" substituted for digit 0', () => {
+    const text = 'NIP wierzyciela: 524-987-12-3O (na końcu litera „O” zamiast zera).';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('524-987-12-3O');
+  });
+
+  it('detects REGON with an OCR "l" substituted for digit 1', () => {
+    const text = 'REGON: 38l245999.';
+    const e = findOne(text, 'ORGANIZATION_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('38l245999');
+  });
+
+  it('detects IBAN with OCR "lO9O" substituted for digits 1090', () => {
+    const text = 'Rachunek: PL75 lO9O 2776 0000 0001 9876 5432.';
+    const e = findOne(text, 'BANK_ACCOUNT_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('PL75 lO9O 2776 0000 0001 9876 5432');
+  });
+
+  it('does not let two PESELs separated by a single space shadow each other', () => {
+    const text = 'Dłużnicy solidarni: 85030712349 92090156781 (oboje wskazani w tytule).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end)).sort();
+    expect(spans).toEqual(['85030712349', '92090156781']);
+  });
+
+  // VIN — A1 extension (RECALL-90-DESIGN.md R-2), adw_31_komornik
+  it('detects a 17-char VIN by structure alone (no checksum)', () => {
+    const text = 'nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016';
+    const e = findOne(text, 'VEHICLE_IDENTIFIER');
+    expect(text.slice(e.start, e.end)).toBe('VF1BB05CF12345678');
+  });
+
+  it('does not treat a plain 17-letter word as a VIN (requires a digit)', () => {
+    const text = 'ABCDEFGHJKLMNPRST to nie VIN';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER')).toEqual([]);
+  });
+
+  it('does not treat 17 bare digits as a VIN (requires a letter)', () => {
+    const text = 'numer referencyjny 12345678901234567 w systemie';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER')).toEqual([]);
+  });
+});
+
 describe('findRegexEntities — financial amounts', () => {
   it('detects simple amount with zł', () => {
     const text = 'kwota: 200,00 zł';
