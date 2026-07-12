@@ -47,8 +47,9 @@ async function main() {
     .filter((alias) => SOURCES[alias]?.kind === 'hf')
     .map((alias) => ({ alias, id: SOURCES[alias].id, dtype: SOURCES[alias].dtype }));
   const regexActive = needed.includes('regex');
+  const lexiconActive = needed.includes('lexicon');
   const modelLoadSteps = createModelLoadSteps(hf, loadModelNode);
-  const nerSteps = createNerSteps(hf, regexActive, loadModelNode);
+  const nerSteps = createNerSteps(hf, regexActive, lexiconActive, loadModelNode);
   const preNerPipeline = [...preSegment, ...modelLoadSteps, ...nerSteps];
 
   const entries = await readdir(docsDir);

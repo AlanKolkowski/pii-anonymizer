@@ -6,6 +6,7 @@ import { maxLengthStep } from './max-length.js';
 import { dedupStep } from './dedup.js';
 import { mergeStep } from './merge.js';
 import { createRegexStep } from './regex.js';
+import { createLexiconStep } from './lexicon.js';
 import { backfillOccurrencesStep } from './backfill.js';
 import { tokenizeStep } from './tokenize.js';
 import { createNerStep } from './ner.js';
@@ -199,6 +200,46 @@ describe('createRegexStep', () => {
       segments: [],
       entities: [
         { entity_group: 'PERSON_NAME', start: 0, end: 7, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].entity_group).toBe('PERSON_NAME');
+  });
+});
+
+describe('createLexiconStep', () => {
+  it('adds lexicon-detected entities when active', () => {
+    const text = 'Pismo podpisał adwokat Jan Kowalski.';
+    const step = createLexiconStep(true);
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 23, end: 35, score: 0.9, source: 'multilang-q8' },
+      ],
+      anonymized: '',
+      legend: {},
+    };
+    const result = step(ctx);
+    expect(result.entities.length).toBe(2);
+    const role = result.entities.find(e => e.entity_group === 'PERSON_ROLE_OR_TITLE');
+    expect(role).toBeDefined();
+    expect(role.score).toBeGreaterThanOrEqual(0.75); // clears the PERSON_ROLE_OR_TITLE threshold; not 1.0, see lexicon.js
+    expect(role.source).toBe('lexicon');
+    expect(text.slice(role.start, role.end)).toBe('adwokat');
+  });
+
+  it('is a no-op when inactive', () => {
+    const text = 'Pismo podpisał adwokat Jan Kowalski.';
+    const step = createLexiconStep(false);
+    const ctx = {
+      text,
+      segments: [],
+      entities: [
+        { entity_group: 'PERSON_NAME', start: 23, end: 35, score: 0.9, source: 'multilang-q8' },
       ],
       anonymized: '',
       legend: {},

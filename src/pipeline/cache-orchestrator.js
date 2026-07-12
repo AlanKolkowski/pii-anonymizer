@@ -89,6 +89,7 @@ export async function classifyWithCache({
   const missingHf = requiredHf.filter((s) => !bySource.has(s.alias));
   const orderedMissingHf = sortSources ? sortSources(missingHf) : missingHf;
   const regexNeeded = needed.includes('regex');
+  const lexiconNeeded = needed.includes('lexicon');
 
   emit('pipeline:load:start');
   if (prepareModels) {
@@ -127,6 +128,7 @@ export async function classifyWithCache({
 
   // --- Stage 2: load model sessions, then run pure inference NER for missing sources ---
   let regex = hit ? cache.regex : null;
+  let lexicon = hit ? cache.lexicon : null;
   let modelHandles = new Map();
 
   emit('pipeline:model-load:start');
@@ -176,7 +178,7 @@ export async function classifyWithCache({
       for (const source of orderedMissingHf) {
         const ctx = await runPipeline(
           makeSeededCtx({ text: normalizedText, segments, entities: [], modelHandles }),
-          createNerSteps([source], false, loadModel, {
+          createNerSteps([source], false, false, loadModel, {
             onInference: () => {
               completedInferences += 1;
               emitProgress({
@@ -198,9 +200,17 @@ export async function classifyWithCache({
     if (regexNeeded && regex === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([], true, loadModel),
+        createNerSteps([], true, false, loadModel),
       );
       regex = ctx.entities;
+    }
+
+    if (lexiconNeeded && lexicon === null) {
+      const ctx = await runPipeline(
+        makeSeededCtx({ text: normalizedText, segments, entities: [] }),
+        createNerSteps([], false, true, loadModel),
+      );
+      lexicon = ctx.entities;
     }
   } finally {
     await disposeModelHandles(modelHandles);
@@ -208,7 +218,7 @@ export async function classifyWithCache({
   emit('pipeline:ner:end');
 
   // --- Stage 3: postprocess on the merged entity union ---
-  const merged = [...[...bySource.values()].flat(), ...(regex ?? [])];
+  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? [])];
   const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1
@@ -243,6 +253,6 @@ export async function classifyWithCache({
 
   return {
     ctx: finalCtx,
-    cache: { textHash: hash, normalizedText, segments, bySource, regex },
+    cache: { textHash: hash, normalizedText, segments, bySource, regex, lexicon },
   };
 }

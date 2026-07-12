@@ -28,12 +28,14 @@ const TEST_SOURCES = {
   'polish-q8':      { kind: 'hf', id: 'p-q8',   dtype: 'q8' },
   'multilang-fp32': { kind: 'hf', id: 'm-fp32', dtype: 'fp32' },
   'regex':          { kind: 'regex' },
+  'lexicon':        { kind: 'lexicon' },
 };
 
 const TEST_ENTITY_SOURCES = {
-  PERSON_NAME:   ['multilang-q8'],
-  HEALTH_DATA:   ['multilang-fp32'],
-  EMAIL_ADDRESS: ['multilang-q8', 'regex'],
+  PERSON_NAME:          ['multilang-q8'],
+  HEALTH_DATA:          ['multilang-fp32'],
+  EMAIL_ADDRESS:        ['multilang-q8', 'regex'],
+  PERSON_ROLE_OR_TITLE: ['multilang-q8', 'lexicon'],
 };
 
 function makeMockLoader(callLog) {
@@ -267,5 +269,55 @@ describe('classifyWithCache', () => {
     expect(events.filter((event) => event === 'load:m-q8')).toEqual(['load:m-q8']);
     expect(events.indexOf('load:m-q8')).toBeGreaterThan(events.indexOf('pipeline:model-load:start'));
     expect(events.indexOf('load:m-q8')).toBeLessThan(events.indexOf('pipeline:ner:start'));
+  });
+
+  // B4-lite: 'lexicon' mirrors 'regex' in this orchestrator — a non-'hf'
+  // source computed once per distinct text and cached on its own field
+  // (`cache.lexicon`) rather than under `bySource` (which is keyed by HF
+  // model alias only).
+  it('cold start: computes lexicon entities and caches them under cache.lexicon', async () => {
+    const { ctx, cache } = await classifyWithCache({
+      text: 'Pismo podpisał adwokat Jan Kowalski.',
+      enabledEntities: ['PERSON_ROLE_OR_TITLE'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+
+    expect(Array.isArray(cache.lexicon)).toBe(true);
+    const role = ctx.entities.find((e) => e.entity_group === 'PERSON_ROLE_OR_TITLE');
+    expect(role).toBeDefined();
+    expect(role.source).toBe('lexicon');
+  });
+
+  it('cache hit: reuses cache.lexicon without recomputation and without invoking loadModel for it', async () => {
+    const callLog = [];
+    const loader = makeMockLoader(callLog);
+    const { cache: cache1 } = await classifyWithCache({
+      text: 'Pismo podpisał adwokat Jan Kowalski.',
+      enabledEntities: ['PERSON_ROLE_OR_TITLE'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: loader,
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+    callLog.length = 0;
+
+    const { ctx, cache: cache2 } = await classifyWithCache({
+      text: 'Pismo podpisał adwokat Jan Kowalski.',
+      enabledEntities: ['PERSON_ROLE_OR_TITLE'],
+      cache: cache1,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: loader,
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+
+    expect(callLog).toEqual([]);
+    expect(cache2.lexicon).toBe(cache1.lexicon);
+    expect(ctx.entities.some((e) => e.source === 'lexicon')).toBe(true);
   });
 });

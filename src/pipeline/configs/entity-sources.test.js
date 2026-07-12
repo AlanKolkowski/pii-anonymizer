@@ -67,9 +67,11 @@ describe('entity-sources config', () => {
 
   // A12 is "free": enabling art. 9-10 adds no model beyond the two already
   // required by the identity/contact defaults, so it costs nothing at load time.
+  // 'lexicon' (B4-lite) is listed alongside but is not an HF model either — a
+  // bundled JSON lexicon, zero download cost — so it doesn't break "free".
   it('enabling art. 9-10 by default adds no new model source (A12 is free)', () => {
     expect(requiredSources(defaultEnabledEntities()).sort())
-      .toEqual(['multilang-fp32', 'polish-fp16', 'regex']);
+      .toEqual(['lexicon', 'multilang-fp32', 'polish-fp16', 'regex']);
   });
 
   it('requiredSources is empty for empty selection', () => {

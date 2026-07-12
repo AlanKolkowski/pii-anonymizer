@@ -5,6 +5,7 @@ import { tightenSegmentsStep } from '../steps/tighten-segments.js';
 import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
+import { createLexiconStep } from '../steps/lexicon.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
 import { createThresholdStep } from '../steps/threshold.js';
 import { refineFinancialAmountStep } from '../steps/refine-financial-amount.js';
@@ -22,13 +23,15 @@ function resolveActiveSources({ enabledEntities, entitySources, sources }) {
   const needed = requiredSources(enabledEntities);
   const hf = [];
   let regexActive = false;
+  let lexiconActive = false;
   for (const alias of needed) {
     const def = sources[alias];
     if (!def) continue;
     if (def.kind === 'hf') hf.push({ alias, id: def.id, dtype: def.dtype });
     else if (def.kind === 'regex') regexActive = true;
+    else if (def.kind === 'lexicon') lexiconActive = true;
   }
-  return { hf, regexActive };
+  return { hf, regexActive, lexiconActive };
 }
 
 export function createPreSegmentSteps(getSentenceBoundaries) {
@@ -48,9 +51,13 @@ export function createModelLoadSteps(hfSubset, loadModel, options = {}) {
   ];
 }
 
-export function createNerSteps(hfSubset, regexActive, loadModel, options = {}) {
+export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, options = {}) {
   return [
-    { phase: 'ner', steps: [createNerStep(hfSubset, loadModel, options), createRegexStep(regexActive)] },
+    { phase: 'ner', steps: [
+      createNerStep(hfSubset, loadModel, options),
+      createRegexStep(regexActive),
+      createLexiconStep(lexiconActive),
+    ] },
   ];
 }
 
@@ -85,13 +92,13 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
   const entitySources = options.entitySources ?? ENTITY_SOURCES;
   const sources = options.sources ?? SOURCES;
   const enabledEntities = options.enabledEntities;
-  const { hf, regexActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
+  const { hf, regexActive, lexiconActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
   const orderedHf = options.sortSources ? options.sortSources(hf) : hf;
 
   return [
     ...createPreSegmentSteps(getSentenceBoundaries),
     ...createModelLoadSteps(orderedHf, loadModel),
-    ...createNerSteps(orderedHf, regexActive, loadModel),
+    ...createNerSteps(orderedHf, regexActive, lexiconActive, loadModel),
     ...createPostprocessSteps({ enabledEntities, entitySources }),
   ];
 }
