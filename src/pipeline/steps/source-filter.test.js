@@ -84,25 +84,25 @@ describe('createSourceFilterStep', () => {
 
 describe('createSourceFilterStep — A8 safety net for high-weight types', () => {
   // PERSON_NAME is weight 4 (type-weights.js) — a real, non-mocked lookup.
-  it('keeps a weight>=4 candidate from a non-authoritative source at score >= 0.9, flagged', () => {
+  it('keeps a weight>=4 candidate from a non-authoritative source at score >= 0.95, flagged', () => {
     const step = createSourceFilterStep({
       enabledEntities: ['PERSON_NAME'],
       entitySources: { PERSON_NAME: ['polish-q8'] },
     });
     const result = step(ctx([
-      { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.9, source: 'multilang-q8' },
+      { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.95, source: 'multilang-q8' },
     ]));
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].unauthoritativeSource).toBe(true);
   });
 
-  it('still drops a weight>=4 candidate from a non-authoritative source below score 0.9', () => {
+  it('still drops a weight>=4 candidate from a non-authoritative source below score 0.95', () => {
     const step = createSourceFilterStep({
       enabledEntities: ['PERSON_NAME'],
       entitySources: { PERSON_NAME: ['polish-q8'] },
     });
     const result = step(ctx([
-      { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.89, source: 'multilang-q8' },
+      { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.94, source: 'multilang-q8' },
     ]));
     expect(result.entities).toHaveLength(0);
   });
