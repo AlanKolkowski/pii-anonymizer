@@ -564,11 +564,29 @@ function findIbanEntities(text) {
   return entities;
 }
 
+// ── Financial amounts (A4: EVAL-RECALL-AUDIT §8) ───────────────────────
+//
+// Thousands groups accept either a dot or whitespace (incl. NBSP) as
+// separator — "15.000,00 zł" (scanned-invoice dot grouping) alongside the
+// existing "15 000,00 zł" — or no grouping at all ("1500 zł"); the decimal
+// (grosze) part is optional. Currency can follow the number (zł/PLN/EUR) or
+// precede it (PLN/EUR, ISO-code style: "PLN 4.200"). Boundaries use
+// \p{L}/\d lookaround rather than \b: "ł" isn't an ASCII word character, so
+// a trailing \b never fires after "zł" and would silently make the whole
+// suffix pattern inert. Percentages and "p.p." are excluded by
+// construction — neither is a currency token this pattern reaches for.
+const AMOUNT_NUMBER = '(?:\\d{1,3}(?:[.\\s]\\d{3})+|\\d+)(?:,\\d{2})?';
+const AMOUNT_NOT_BEFORE = '(?<![\\p{L}\\d])';
+const AMOUNT_NOT_AFTER = '(?![\\p{L}\\d])';
+const AMOUNT_SUFFIX_RE = new RegExp(`${AMOUNT_NOT_BEFORE}${AMOUNT_NUMBER}\\s?(?:zł|PLN|EUR)${AMOUNT_NOT_AFTER}`, 'gu');
+const AMOUNT_PREFIX_RE = new RegExp(`${AMOUNT_NOT_BEFORE}(?:PLN|EUR)\\s${AMOUNT_NUMBER}${AMOUNT_NOT_AFTER}`, 'gu');
+
 export function findRegexEntities(text) {
   const patterns = [
     { regex: /(?<!\d)\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
     { regex: /(?<!\d)\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
-    { regex: /\b\d{1,3}(?:[\s ]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
+    { regex: AMOUNT_SUFFIX_RE, entity_group: 'FINANCIAL_AMOUNT' },
+    { regex: AMOUNT_PREFIX_RE, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
   const entities = [

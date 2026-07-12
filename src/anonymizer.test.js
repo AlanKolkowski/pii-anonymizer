@@ -972,6 +972,81 @@ describe('findRegexEntities — financial amounts', () => {
   });
 });
 
+describe('findRegexEntities — A4 amount formats', () => {
+  function findOne(text) {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(matches, `expected exactly one amount in ${JSON.stringify(text)}, got ${matches.length}`).toHaveLength(1);
+    return matches[0];
+  }
+
+  // adw_15_kwoty_formaty
+  it('detects an amount with dot as thousands separator', () => {
+    const text = 'Cena sprzedaży wynosi 15.000,00 zł (zapis z kropką tysięcy ze skanu faktury).';
+    const e = findOne(text);
+    expect(text.slice(e.start, e.end)).toBe('15.000,00 zł');
+  });
+
+  it('detects an amount with no grosze', () => {
+    const text = 'Zadatek: 1500 zł, płatny gotówką.';
+    const e = findOne(text);
+    expect(text.slice(e.start, e.end)).toBe('1500 zł');
+  });
+
+  it('detects an EUR amount with space-grouped thousands', () => {
+    const text = 'Wartość kontraktu eksportowego: 2 500 000,00 EUR.';
+    const e = findOne(text);
+    expect(text.slice(e.start, e.end)).toBe('2 500 000,00 EUR');
+  });
+
+  it('detects an amount with the currency before the number (PLN)', () => {
+    const text = 'W walucie przed liczbą: PLN 4.200 miesięcznie.';
+    const e = findOne(text);
+    expect(text.slice(e.start, e.end)).toBe('PLN 4.200');
+  });
+
+  it('detects an amount with a non-breaking space as thousands separator', () => {
+    const text = 'Zapis z twardą spacją: 12 500,00 zł (poprawnie łapany przez wzorzec).';
+    const e = findOne(text);
+    expect(text.slice(e.start, e.end)).toBe('12 500,00 zł');
+  });
+
+  // adw_29_umowa_kredytu
+  it('detects real amounts in a credit-agreement fragment', () => {
+    const cases = [
+      ['Bank udziela Kredytobiorcy kredytu w kwocie 45 000,00 zł na okres 60 miesięcy.', '45 000,00 zł'],
+      ['Prowizja za udzielenie kredytu wynosi 1 350,00 zł. RRSO: 13,87%.', '1 350,00 zł'],
+      ['Rata kapitałowo-odsetkowa wynosi 989,12 zł i jest płatna do 15. dnia każdego miesiąca.', '989,12 zł'],
+      ['średnie miesięczne wynagrodzenie wynosi 9 100,00 zł netto.', '9 100,00 zł'],
+    ];
+    for (const [text, expected] of cases) {
+      const e = findOne(text);
+      expect(text.slice(e.start, e.end)).toBe(expected);
+    }
+  });
+
+  it('does not flag a bare interest-rate percentage (no space before %)', () => {
+    const text = 'i wynosi w dniu zawarcia umowy 11,45% w stosunku rocznym, na co składa się wskaźnik referencyjny.';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT')).toEqual([]);
+  });
+
+  it('does not flag a margin expressed in p.p.', () => {
+    const text = 'wskaźnik referencyjny WIRON 1M oraz marża Banku 4,20 p.p.';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT')).toEqual([]);
+  });
+
+  it('does not flag an RRSO percentage', () => {
+    const text = 'Prowizja za udzielenie kredytu wynosi 1 350,00 zł. RRSO: 13,87%.';
+    const amounts = findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT');
+    expect(amounts).toHaveLength(1);
+    expect(text.slice(amounts[0].start, amounts[0].end)).toBe('1 350,00 zł');
+  });
+
+  it('does not treat "zł" inside an unrelated word as a currency marker', () => {
+    const text = '150 złodziej uciekł z miejsca zdarzenia.';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'FINANCIAL_AMOUNT')).toEqual([]);
+  });
+});
+
 describe('applyTokens', () => {
   it('replaces entities using a pre-built seen map', async () => {
     const { applyTokens, buildTokenMap } = await import('./anonymizer.js');
