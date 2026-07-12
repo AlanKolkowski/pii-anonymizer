@@ -15,7 +15,12 @@ const mb = (bytes) => Math.ceil(bytes / 1_000_000);
 // is zeroed because it described the web variant; the original sizeMB is kept
 // as a conservative over-estimate for WASM-heap eviction accounting. q8 forces
 // wasm-only backends (see the WebNN note above).
-const DTYPE_OVERRIDE = import.meta.env?.VITE_MODEL_DTYPE || null;
+// In Node (eval) import.meta.env does not exist, so the same variable is also
+// honored from process.env — this lets `VITE_MODEL_DTYPE=q8 npm run eval`
+// measure the exact artifact the desktop build ships (EVAL-RECALL-AUDIT §8 A10).
+const DTYPE_OVERRIDE = import.meta.env?.VITE_MODEL_DTYPE
+  || (typeof process !== 'undefined' ? process.env?.VITE_MODEL_DTYPE : null)
+  || null;
 
 function withDtypeOverride(sources) {
   if (!DTYPE_OVERRIDE) return sources;

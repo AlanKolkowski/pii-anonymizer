@@ -65,4 +65,19 @@ describe('entity-sources config', () => {
   it('requiredSources ignores unknown entity types', () => {
     expect(requiredSources(['NOT_A_REAL_TYPE'])).toEqual([]);
   });
+
+  it('VITE_MODEL_DTYPE from process.env overrides dtype in Node (eval↔desktop parity)', async () => {
+    vi.resetModules();
+    process.env.VITE_MODEL_DTYPE = 'q8';
+    try {
+      const mod = await import('./entity-sources.js');
+      expect(mod.SOURCES['multilang-fp32'].dtype).toBe('q8');
+      expect(mod.SOURCES['multilang-fp32'].backends).toEqual(['wasm']);
+      expect(mod.SOURCES['multilang-fp32'].sizeBytes).toBe(0);
+      expect(mod.SOURCES.regex).toEqual({ kind: 'regex' });
+    } finally {
+      delete process.env.VITE_MODEL_DTYPE;
+      vi.resetModules();
+    }
+  });
 });
