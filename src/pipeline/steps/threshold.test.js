@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { thresholdStep } from './threshold.js';
+import { createThresholdStep } from './threshold.js';
+
+const thresholdStep = createThresholdStep();
 
 function ctx(entities) {
   return { text: '', segments: [], entities, anonymized: '', legend: {} };
@@ -62,5 +64,31 @@ describe('thresholdStep', () => {
       { entity_group: 'EMAIL_ADDRESS', start: 0, end: 5, score: 0.01, source: 'regex' },
     ]));
     expect(result.entities).toHaveLength(1);
+  });
+});
+
+describe('createThresholdStep overrides', () => {
+  it('replaces the configured per-type threshold when an override is given', () => {
+    const step = createThresholdStep({ PERSON_NAME: 0.3 });
+    const result = step(ctx([
+      { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.35, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('leaves types without an override on the configured threshold', () => {
+    const step = createThresholdStep({ PERSON_NAME: 0.3 });
+    const result = step(ctx([
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 5, score: 0.59, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  it('still lets a per-source threshold win over the override', () => {
+    const step = createThresholdStep({ PERSON_ROLE_OR_TITLE: 0.1 });
+    const result = step(ctx([
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 5, score: 0.7, source: 'polish-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
   });
 });

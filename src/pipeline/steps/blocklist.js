@@ -4,6 +4,16 @@ import { TRIM_CHARS } from './trim-trailing-punctuation.js';
 const SEPARATOR_CLASS = `[\\s${[...TRIM_CHARS].join('')}]`;
 const LEADING_SEP = new RegExp(`^${SEPARATOR_CLASS}+`);
 const TRAILING_SEP = new RegExp(`${SEPARATOR_CLASS}+$`);
+const WORD_CHAR = /[\p{L}]/u;
+
+// A9 (EVAL-RECALL-AUDIT §8): a span whose end falls immediately before
+// another letter — no word boundary in between — is a truncated prefix of a
+// longer word, not a complete one ("Wniosko" cut out of "Wnioskodawca").
+// A genuine role/title is a complete word or phrase and always ends at a
+// real boundary, so this is a general opt-in check, not a fixed dictionary.
+function endsInsideWord(text, end) {
+  return end < text.length && WORD_CHAR.test(text[end]);
+}
 
 function matchesBlocklist(slice, blocklistLower) {
   return blocklistLower.includes(slice.trim().toLowerCase());
@@ -50,6 +60,8 @@ export function blocklistStep(ctx) {
   const out = [];
   for (const entity of entities) {
     const rules = rulesFor(entity.entity_group);
+    if (rules.rejectTruncatedWord && endsInsideWord(text, entity.end)) continue;
+
     const hasWords = rules.blocklist && rules.blocklist.length > 0;
     const hasPatterns = rules.blocklistPatterns && rules.blocklistPatterns.length > 0;
     if (!hasWords && !hasPatterns) {

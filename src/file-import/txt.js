@@ -40,7 +40,11 @@ export async function extractTxt(file) {
   }
 
   return {
-    text,
+    // A11 (EVAL-RECALL-AUDIT §8): the eval harness always reads ground
+    // truth as LF (readEvalText); a CRLF file read raw here would shift
+    // every downstream offset the pipeline computes relative to what eval
+    // measured, an uncontrolled variable between product and measurement.
+    text: text.replace(/\r\n?/g, '\n'),
     meta: {
       filename: file.name,
       mimeType: file.type,

@@ -9,13 +9,14 @@
 //     ner/<hf-repo-id>/config.json
 //     ner/<hf-repo-id>/tokenizer.json
 //     ner/<hf-repo-id>/tokenizer_config.json
-//     ner/<hf-repo-id>/onnx/model_quantized.onnx   (dtype-dependent suffix)
+//     ner/<hf-repo-id>/onnx/model_fp16.onnx         (dtype-dependent suffix)
 //     ocr/PP-OCRv5_mobile_det_onnx.tar
 //     ocr/latin_PP-OCRv5_mobile_rec.tar
 //
 // Usage:
-//   node scripts/fetch-models.mjs                 # default dtype q8 (INT8)
-//   MODEL_DTYPE=fp16 node scripts/fetch-models.mjs
+//   node scripts/fetch-models.mjs                 # default dtype fp16 (decision 21/C4:
+//                                                  # desktop distributes web quality, not q8)
+//   MODEL_DTYPE=q8 node scripts/fetch-models.mjs   # explicit opt-in to the smaller, lower-recall variant
 import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { mkdir, rename, rm, stat, readFile, writeFile, copyFile } from 'node:fs/promises';
@@ -30,7 +31,16 @@ const MANIFEST_PATH = join(MODELS_DIR, 'manifest.json');
 
 // Must stay in sync with DTYPE_SUFFIX in src/pipeline/model-download.js.
 const DTYPE_SUFFIX = { fp32: '', fp16: '_fp16', int8: '_int8', q8: '_quantized' };
-const DTYPE = process.env.MODEL_DTYPE || 'q8';
+// Decision 21/C4 (PRODUCT-DECISIONS.md): desktop distributes web-measured
+// quality (EVAL-RECALL-AUDIT §11 — q8 crashes HEALTH_DATA F1 100%->13.3%,
+// full leaks of weight>=4 types double). fp16 for BOTH models is the
+// decision's own documented acceptable floor when true per-repo dtype
+// mixing (matching the web default of multilang=fp32/polish=fp16 exactly)
+// isn't worth the added complexity — this script applies one dtype to both
+// repos by construction (see the NER_FILES loop below), and splitting that
+// would mean extending this script AND the manifest schema AND
+// entity-sources.js's override mechanism, none of which is done here.
+const DTYPE = process.env.MODEL_DTYPE || 'fp16';
 if (!(DTYPE in DTYPE_SUFFIX)) {
   console.error(`Unsupported MODEL_DTYPE "${DTYPE}". Supported: ${Object.keys(DTYPE_SUFFIX).join(', ')}`);
   process.exit(1);

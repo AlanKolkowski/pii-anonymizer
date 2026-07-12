@@ -316,17 +316,286 @@ function findEmailEntities(text) {
   }
   return entities;
 }
+
+// ── Checksum-validated identifiers (A1: EVAL-RECALL-AUDIT §8) ─────────
+//
+// PESEL/NIP/REGON/IBAN carry an official check digit. Separators (spaces,
+// NBSP, hyphens, a single mid-token line break from a scan or a wrapped
+// table cell) are stripped before validating so re-typed or scanned
+// variants don't defeat detection — but a candidate that fails its checksum
+// is never emitted: precision comes from the arithmetic, not from
+// surrounding context. Two OCR-confusable glyphs (lowercase "l" for "1",
+// uppercase "O" for "0") are tolerated inside a digit run for the same
+// reason low-DPI scans corrupt these documents in the first place.
+// KRS has no public check digit, so it stays context-gated on a literal
+// "KRS" label instead of arithmetic.
+
+function peselChecksumValid(d) {
+  const weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
+  let sum = 0;
+  for (let i = 0; i < 10; i++) sum += weights[i] * (d.charCodeAt(i) - 48);
+  return ((10 - (sum % 10)) % 10) === (d.charCodeAt(10) - 48);
+}
+
+function nipChecksumValid(d) {
+  const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += weights[i] * (d.charCodeAt(i) - 48);
+  const check = sum % 11;
+  return check !== 10 && check === (d.charCodeAt(9) - 48);
+}
+
+function regon9ChecksumValid(d) {
+  const weights = [8, 9, 2, 3, 4, 5, 6, 7];
+  let sum = 0;
+  for (let i = 0; i < 8; i++) sum += weights[i] * (d.charCodeAt(i) - 48);
+  const check = sum % 11;
+  return (check === 10 ? 0 : check) === (d.charCodeAt(8) - 48);
+}
+
+function regon14ChecksumValid(d) {
+  const weights = [2, 4, 8, 5, 0, 9, 7, 3, 6, 1, 2, 4, 8];
+  let sum = 0;
+  for (let i = 0; i < 13; i++) sum += weights[i] * (d.charCodeAt(i) - 48);
+  const check = sum % 11;
+  return (check === 10 ? 0 : check) === (d.charCodeAt(13) - 48);
+}
+
+// compact: uppercase, country code + digits only (no separators), e.g.
+// "PL61109010140000071219812874".
+function ibanChecksumValid(compact) {
+  if (!/^[A-Z]{2}\d+$/.test(compact)) return false;
+  const rearranged = compact.slice(4) + compact.slice(0, 4);
+  const numeric = rearranged.replace(/[A-Z]/g, (c) => c.charCodeAt(0) - 55);
+  let remainder = 0;
+  for (const ch of numeric) remainder = (remainder * 10 + Number(ch)) % 97;
+  return remainder === 1;
+}
+
+const ID_SEPARATOR = '[ \\u00a0\\n-]';
+const OCR_DIGIT_CHAR_RE = /[0-9lO]/;
+const DIGIT_CLUSTER_RE = new RegExp(`[0-9lO](?:${ID_SEPARATOR}?[0-9lO]){5,59}`, 'g');
+
+function toDigitChar(ch) {
+  if (ch === 'l') return '1';
+  if (ch === 'O') return '0';
+  return ch;
+}
+
+function countNewlines(s) {
+  let n = 0;
+  for (let i = 0; i < s.length; i++) if (s[i] === '\n') n++;
+  return n;
+}
+
+// Offsets (into `raw`) and OCR-corrected values of every digit-or-confusable
+// character in a matched cluster, so callers can slide a window over
+// `digits` and map back to exact character spans in the original text.
+function digitPositions(raw) {
+  const offsets = [];
+  let digits = '';
+  for (let i = 0; i < raw.length; i++) {
+    if (OCR_DIGIT_CHAR_RE.test(raw[i])) {
+      offsets.push(i);
+      digits += toDigitChar(raw[i]);
+    }
+  }
+  return { offsets, digits };
+}
+
+// "KRS 0000876123" / "KRS nr. 0000876123" / "KRS: 0000876123" — narrow,
+// literal-label gate for the one identifier in this family with no check
+// digit at all.
+const KRS_CONTEXT_RE = /\bKRS\b\s*(?:nr\.?|numer)?\s*[:.]?\s*$/iu;
+function hasKrsContext(text, upTo) {
+  return KRS_CONTEXT_RE.test(text.slice(Math.max(0, upTo - 20), upTo));
+}
+
+// VAT-EU registrations prefix the NIP with the country code: "PL 9481234560".
+// Only extends a span that already passed the NIP checksum on its own.
+const NIP_VAT_PREFIX_RE = /PL[  ]?$/;
+function vatPrefixStart(text, upTo) {
+  const windowStart = Math.max(0, upTo - 3);
+  const m = NIP_VAT_PREFIX_RE.exec(text.slice(windowStart, upTo));
+  return m ? windowStart + m.index : upTo;
+}
+
+function isSeparatorChar(ch) {
+  return ch === ' ' || ch === ' ' || ch === '\n' || ch === '-';
+}
+
+// A window may only start/end at the edge of the maximal cluster or right
+// next to an actual separator — never mid-run. Without this, a checksum can
+// coincidentally validate on a slice that straddles two unrelated numbers
+// (the tail of one PESEL + the head of the next, separated by one space) or
+// nests inside a longer valid one (a 14-digit REGON contains its parent
+// organization's 9-digit REGON as a real prefix — both are legitimate on
+// their own, but a window is never "half of one number, half of another").
+function isCleanBoundary(raw, rawStart, rawEnd) {
+  const beforeOk = rawStart === 0 || isSeparatorChar(raw[rawStart - 1]);
+  const afterOk = rawEnd === raw.length || isSeparatorChar(raw[rawEnd]);
+  return beforeOk && afterOk;
+}
+
+// PESEL (11), NIP/KRS (10), REGON (9 or 14) — all share one scan because
+// they're indistinguishable by shape alone at several lengths (a 10-digit
+// run could be a NIP or a KRS) and can sit adjacent to each other in lists.
+// Every valid-length, cleanly-bounded window inside a maximal
+// digit-and-separator cluster is tried independently (not just the whole
+// cluster), so two identifiers separated by a single space don't shadow
+// each other.
+function findNumericIdentifierEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(DIGIT_CLUSTER_RE)) {
+    const raw = m[0];
+    const clusterStart = m.index;
+    const { offsets, digits } = digitPositions(raw);
+
+    for (const len of [9, 10, 11, 14]) {
+      for (let start = 0; start + len <= digits.length; start++) {
+        const rawStart = offsets[start];
+        const rawEnd = offsets[start + len - 1] + 1;
+        if (!isCleanBoundary(raw, rawStart, rawEnd)) continue;
+
+        const window = digits.slice(start, start + len);
+        let type = null;
+        let extendForVat = false;
+        if (len === 11 && peselChecksumValid(window)) {
+          type = 'PERSON_IDENTIFIER';
+        } else if (len === 9 && regon9ChecksumValid(window)) {
+          type = 'ORGANIZATION_IDENTIFIER';
+        } else if (len === 14 && regon14ChecksumValid(window)) {
+          type = 'ORGANIZATION_IDENTIFIER';
+        } else if (len === 10) {
+          if (nipChecksumValid(window)) {
+            type = 'ORGANIZATION_IDENTIFIER';
+            extendForVat = true;
+          } else if (hasKrsContext(text, clusterStart + rawStart)) {
+            type = 'ORGANIZATION_IDENTIFIER';
+          }
+        }
+        if (!type) continue;
+        if (countNewlines(raw.slice(rawStart, rawEnd)) > 1) continue;
+
+        const entityEnd = clusterStart + rawEnd;
+        const entityStart = extendForVat
+          ? vatPrefixStart(text, clusterStart + rawStart)
+          : clusterStart + rawStart;
+
+        entities.push({ entity_group: type, start: entityStart, end: entityEnd, score: 1.0, source: 'regex' });
+      }
+    }
+  }
+  return entities;
+}
+
+// ── Court/bailiff docket numbers (A2: EVAL-RECALL-AUDIT §8) ────────────
+//
+// [roman division]? + repertorium code + number/year (+ "upr") — own-case
+// docket numbers, not published case-law citations. The whitelist
+// deliberately excludes Supreme Court repertoria (CZP, CSKP, CSK, …): those
+// are what published judgments are cited by (adw_32's trap), and stay a
+// documented limitation (B1/C5) rather than something this pattern reaches
+// for with a context heuristic that could misfire either way.
+const COURT_REPERTORIUM = ['ACa', 'GC', 'KM', 'Nc', 'Ns', 'Co', 'C', 'K'];
+const ROMAN_DIVISION = '(?:X{1,2}|IX|IV|V?I{1,3})';
+const DOCKET_RE = new RegExp(
+  `\\b(?:${ROMAN_DIVISION}\\s+)?(?:${COURT_REPERTORIUM.join('|')})\\s+\\d{1,6}/\\d{2,4}(?:\\s+upr\\b)?\\b`,
+  'g',
+);
+
+function findDocketNumberEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(DOCKET_RE)) {
+    entities.push({ entity_group: 'DOCUMENT_REFERENCE', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
+// VIN (vehicle identification number): 17 chars, uppercase letters minus
+// I/O/Q (visually confusable with 1/0) plus digits, mixing at least one of
+// each. Structural precision — no checksum needed, the restricted alphabet
+// and fixed length are themselves a strong signal. Closes the
+// VIN→DOCUMENT_REFERENCE type confusion in the audit's confusion matrix
+// (§5.1) — RECALL-90-DESIGN.md R-2.
+const VIN_RE = /\b(?=[A-HJ-NPR-Z0-9]*\d)(?=[A-HJ-NPR-Z0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\b/g;
+
+function findVehicleIdentifierEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(VIN_RE)) {
+    entities.push({ entity_group: 'VEHICLE_IDENTIFIER', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
+// Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
+// mod-97 validated as if "PL" were prepended, per the audit contract).
+const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
+const NRB_BARE_RE = new RegExp(`(?<![A-Za-z0-9])(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO](?![A-Za-z0-9])`, 'g');
+
+function findIbanEntities(text) {
+  const entities = [];
+  const claimedSpans = [];
+
+  for (const m of text.matchAll(IBAN_PL_RE)) {
+    const raw = m[0];
+    if (countNewlines(raw) > 1) continue;
+    const { digits } = digitPositions(raw);
+    if (digits.length !== 26) continue;
+    if (!ibanChecksumValid(`PL${digits}`)) continue;
+    const start = m.index;
+    const end = m.index + raw.length;
+    entities.push({ entity_group: 'BANK_ACCOUNT_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    claimedSpans.push([start, end]);
+  }
+
+  for (const m of text.matchAll(NRB_BARE_RE)) {
+    const raw = m[0];
+    if (countNewlines(raw) > 1) continue;
+    const start = m.index;
+    const end = m.index + raw.length;
+    if (claimedSpans.some(([s, e]) => start < e && s < end)) continue;
+    const { digits } = digitPositions(raw);
+    if (digits.length !== 26) continue;
+    if (!ibanChecksumValid(`PL${digits}`)) continue;
+    entities.push({ entity_group: 'BANK_ACCOUNT_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+  }
+
+  return entities;
+}
+
+// ── Financial amounts (A4: EVAL-RECALL-AUDIT §8) ───────────────────────
+//
+// Thousands groups accept either a dot or whitespace (incl. NBSP) as
+// separator — "15.000,00 zł" (scanned-invoice dot grouping) alongside the
+// existing "15 000,00 zł" — or no grouping at all ("1500 zł"); the decimal
+// (grosze) part is optional. Currency can follow the number (zł/PLN/EUR) or
+// precede it (PLN/EUR, ISO-code style: "PLN 4.200"). Boundaries use
+// \p{L}/\d lookaround rather than \b: "ł" isn't an ASCII word character, so
+// a trailing \b never fires after "zł" and would silently make the whole
+// suffix pattern inert. Percentages and "p.p." are excluded by
+// construction — neither is a currency token this pattern reaches for.
+const AMOUNT_NUMBER = '(?:\\d{1,3}(?:[.\\s]\\d{3})+|\\d+)(?:,\\d{2})?';
+const AMOUNT_NOT_BEFORE = '(?<![\\p{L}\\d])';
+const AMOUNT_NOT_AFTER = '(?![\\p{L}\\d])';
+const AMOUNT_SUFFIX_RE = new RegExp(`${AMOUNT_NOT_BEFORE}${AMOUNT_NUMBER}\\s?(?:zł|PLN|EUR)${AMOUNT_NOT_AFTER}`, 'gu');
+const AMOUNT_PREFIX_RE = new RegExp(`${AMOUNT_NOT_BEFORE}(?:PLN|EUR)\\s${AMOUNT_NUMBER}${AMOUNT_NOT_AFTER}`, 'gu');
+
 export function findRegexEntities(text) {
   const patterns = [
-    { regex: /\b\d{11}\b/g, entity_group: 'PERSON_IDENTIFIER' },
-    { regex: /\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/g, entity_group: 'ORGANIZATION_IDENTIFIER' },
-    { regex: /\bPL\s?\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/g, entity_group: 'BANK_ACCOUNT_IDENTIFIER' },
     { regex: /(?<!\d)\+?\d{2}[\s-]?\d{2,3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, entity_group: 'PHONE_NUMBER' },
     { regex: /(?<!\d)\+?48[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g, entity_group: 'PHONE_NUMBER' },
-    { regex: /\b\d{1,3}(?:[\s\u00a0]\d{3})*,\d{2}\s?zł/g, entity_group: 'FINANCIAL_AMOUNT' },
+    { regex: AMOUNT_SUFFIX_RE, entity_group: 'FINANCIAL_AMOUNT' },
+    { regex: AMOUNT_PREFIX_RE, entity_group: 'FINANCIAL_AMOUNT' },
   ];
 
-  const entities = findEmailEntities(text);
+  const entities = [
+    ...findEmailEntities(text),
+    ...findNumericIdentifierEntities(text),
+    ...findIbanEntities(text),
+    ...findVehicleIdentifierEntities(text),
+    ...findDocketNumberEntities(text),
+  ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {
       entities.push({
@@ -372,22 +641,89 @@ function isPreciseRegexEntity(entity) {
   return entity.source === 'regex' && entity.score === 1.0;
 }
 
-function removeEntitiesCoveredByPreciseRegex(entities) {
+// The largest contiguous run of `entity`'s span left uncovered by any span
+// in `overlapping`, or null if nothing remains. Character-coverage based
+// (like snap's word-boundary walk) rather than interval subtraction, since
+// several overlapping regex spans can carve out disjoint gaps.
+function largestUncoveredRemainder(entity, overlapping) {
+  const len = entity.end - entity.start;
+  const covered = new Array(len).fill(false);
+  for (const r of overlapping) {
+    const from = Math.max(r.start, entity.start);
+    const to = Math.min(r.end, entity.end);
+    for (let i = from; i < to; i++) covered[i - entity.start] = true;
+  }
+
+  let bestStart = -1;
+  let bestLen = 0;
+  let runStart = -1;
+  for (let i = 0; i <= len; i++) {
+    const uncovered = i < len && !covered[i];
+    if (uncovered && runStart === -1) runStart = i;
+    if (!uncovered && runStart !== -1) {
+      if (i - runStart > bestLen) { bestLen = i - runStart; bestStart = runStart; }
+      runStart = -1;
+    }
+  }
+  if (bestLen === 0) return null;
+  return { start: entity.start + bestStart, end: entity.start + bestStart + bestLen };
+}
+
+// A trimmed remainder is only kept when it's glued directly to the regex
+// match with no word boundary at the cut — e.g. one extra digit the regex's
+// clean-boundary check left out. Without this, trimming would resurrect
+// unrelated leading/trailing context (e.g. "457 dni): " ahead of a precisely
+// regex-matched amount) as a same-type entity of its own, over-masking text
+// that was never part of the identifier. `text` is optional: callers that
+// don't have it (or don't pass it) get the old, safe "drop entirely"
+// behavior instead of guessing.
+function isGluedRemainder(text, entity, remainder) {
+  if (!text) return false;
+  const cutOnLeft = remainder.start > entity.start;
+  const cutOnRight = remainder.end < entity.end;
+  if (cutOnLeft && WORD_BOUNDARY.test(text[remainder.start])) return false;
+  if (cutOnRight && WORD_BOUNDARY.test(text[remainder.end - 1])) return false;
+  return true;
+}
+
+// A model entity fully covered by a same-type precise regex match is
+// redundant — drop it. One only partially covered is trimmed to its largest
+// remaining uncovered run instead of dropped outright: a model span wider
+// than the regex match (e.g. it also caught a trailing character the regex
+// couldn't validate) must not lose the part the regex didn't reach
+// (EVAL-RECALL-AUDIT §8 A6 — REGON in adw_11 leaked this way).
+function trimOrDropCoveredByPreciseRegex(entities, text) {
   const preciseRegexEntities = entities.filter(isPreciseRegexEntity);
   if (preciseRegexEntities.length === 0) return entities;
 
-  return entities.filter((entity) => {
-    if (isPreciseRegexEntity(entity)) return true;
-    return !preciseRegexEntities.some(
+  const result = [];
+  for (const entity of entities) {
+    if (isPreciseRegexEntity(entity)) {
+      result.push(entity);
+      continue;
+    }
+    const overlapping = preciseRegexEntities.filter(
       (regexEntity) => regexEntity.entity_group === entity.entity_group && spansOverlap(regexEntity, entity),
     );
-  });
+    if (overlapping.length === 0) {
+      result.push(entity);
+      continue;
+    }
+    const fullyCovered = overlapping.some((r) => r.start <= entity.start && r.end >= entity.end);
+    if (fullyCovered) continue;
+
+    const remainder = largestUncoveredRemainder(entity, overlapping);
+    if (remainder && isGluedRemainder(text, entity, remainder)) {
+      result.push({ ...entity, start: remainder.start, end: remainder.end });
+    }
+  }
+  return result;
 }
 
-export function deduplicateEntities(entities) {
+export function deduplicateEntities(entities, text) {
   if (entities.length <= 1) return entities;
 
-  const candidates = removeEntitiesCoveredByPreciseRegex(entities);
+  const candidates = trimOrDropCoveredByPreciseRegex(entities, text);
   candidates.sort((a, b) => a.start - b.start || b.score - a.score);
 
   const result = [candidates[0]];

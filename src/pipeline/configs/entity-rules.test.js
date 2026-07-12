@@ -9,7 +9,7 @@ describe('rulesFor', () => {
 
   it('merges entity overrides onto DEFAULT_RULE', () => {
     const rules = rulesFor('PERSON_ROLE_OR_TITLE');
-    expect(rules.threshold).toBe(0.9);
+    expect(rules.threshold).toBe(0.75);
     expect(rules.blocklist).toEqual(['Pan', 'Pani', 'Nadawca']);
     expect(rules.blocklistPatterns.length).toBeGreaterThan(0);
     expect(rules.snap).toBe(true);

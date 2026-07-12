@@ -31,7 +31,10 @@ describe('default pipeline (with mock NER)', () => {
     });
 
     const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, { enabledEntities: ALL_ENTITIES });
-    const text = 'Jan Kowalski, email jan@test.com, PESEL 12345678901';
+    // A1 (EVAL-RECALL-AUDIT §8): the regex PESEL detector now requires a
+    // valid check digit, so this fixture uses a checksum-valid PESEL rather
+    // than an arbitrary 11-digit placeholder.
+    const text = 'Jan Kowalski, email jan@test.com, PESEL 92071314764';
     const result = await runPipeline(text, pipeline);
 
     // Should have anonymized text
@@ -40,7 +43,7 @@ describe('default pipeline (with mock NER)', () => {
     // Regex should catch email and PESEL
     expect(result.anonymized).not.toContain('jan@test.com');
     expect(result.anonymized).toContain('[EMAIL_ADDRESS_');
-    expect(result.anonymized).not.toContain('12345678901');
+    expect(result.anonymized).not.toContain('92071314764');
     expect(result.anonymized).toContain('[PERSON_IDENTIFIER_');
     // Legend should exist
     expect(Object.keys(result.legend).length).toBeGreaterThan(0);
