@@ -1,4 +1,4 @@
-import { readdir, readFile, mkdir, writeFile, symlink, unlink, readlink } from 'node:fs/promises';
+import { readdir, mkdir, writeFile, symlink, unlink } from 'node:fs/promises';
 import { join, basename, extname } from 'node:path';
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
@@ -6,6 +6,7 @@ import { runPipeline } from '../pipeline/runner.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
 import { ENTITY_SOURCES, SOURCES, allEntityTypes, requiredSources } from '../pipeline/configs/entity-sources.js';
 import { rulesFor } from '../pipeline/configs/entity-rules.js';
+import { readEvalText, EVAL_TEXT_CONVENTION } from './eval-text.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -74,7 +75,7 @@ async function loadModelNode(model) {
 }
 
 async function processDocument(filePath, pipelineConfig, runDir) {
-  const text = await readFile(filePath, 'utf-8');
+  const text = await readEvalText(filePath);
   const name = basename(filePath, extname(filePath));
 
   console.log(`\nProcessing: ${name} (${text.length} chars)`);
@@ -203,6 +204,7 @@ async function main() {
   const summary = {
     runId,
     timestamp: new Date().toISOString(),
+    textConvention: EVAL_TEXT_CONVENTION,
     ...(label && { label }),
     enabledEntities: [...enabledEntities].sort(),
     config,

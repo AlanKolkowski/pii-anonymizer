@@ -1,8 +1,15 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename, extname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { matchEntities } from './matching.js';
 import { generateReport } from './report.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
+import {
+  readEvalText,
+  validateExpectedOffsets,
+  formatOffsetMismatches,
+  EVAL_TEXT_CONVENTION,
+} from './eval-text.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const DOCS_DIR = join(TEST_DATA_DIR, 'synthetic');
@@ -234,13 +241,28 @@ async function main() {
   const runDir = join(RESULTS_DIR, runId);
   console.log(`Scoring run: ${runId}`);
 
-  // Load summary for enabledEntities (fall back to "all" for older runs)
+  // Load summary for enabledEntities and the text-convention stamp
   let runEnabledEntities;
+  let runTextConvention;
   try {
     const summaryRaw = await readFile(join(runDir, 'summary.json'), 'utf-8');
     const summary = JSON.parse(summaryRaw);
     runEnabledEntities = summary.enabledEntities;
+    runTextConvention = summary.textConvention;
   } catch {}
+
+  // A run made under a different text convention (or before the convention
+  // was stamped) has entity offsets that are not comparable with ground
+  // truth. Scoring it would produce silently wrong numbers — refuse instead.
+  if (runTextConvention !== EVAL_TEXT_CONVENTION) {
+    console.error(
+      `Run ${runId} lacks textConvention="${EVAL_TEXT_CONVENTION}" ` +
+      `(found: ${runTextConvention ? `"${runTextConvention}"` : 'none'}). ` +
+      `It predates the measurement-path fix; its offsets cannot be scored. ` +
+      `Produce a fresh run: npm run eval`,
+    );
+    process.exit(1);
+  }
 
   let filterSet;
   try {
@@ -284,14 +306,32 @@ async function main() {
       continue;
     }
 
-    // Add text to predicted for nicer output
+    // Source text is required: without it, ground-truth offsets cannot be
+    // validated and the scores could silently lie.
     let sourceText;
     try {
-      sourceText = await readFile(join(DOCS_DIR, `${name}.txt`), 'utf-8');
-      for (const e of predictedRaw) {
-        if (!e.text) e.text = sourceText.slice(e.start, e.end);
-      }
-    } catch {}
+      sourceText = await readEvalText(join(DOCS_DIR, `${name}.txt`));
+    } catch {
+      console.error(`FATAL: ${name}.txt not found — cannot validate ground-truth offsets.`);
+      process.exit(1);
+    }
+
+    // Gate: every expected entity must match the text at its offsets
+    // (convention: LF line endings, UTF-16 code units).
+    const gtMismatches = validateExpectedOffsets(expectedRaw, sourceText);
+    if (gtMismatches.length > 0) {
+      console.error(formatOffsetMismatches(name, gtMismatches));
+      console.error(
+        'Ground truth is out of sync with the document text. Refusing to score. ' +
+        'Fix the .expected.json offsets (LF + UTF-16 convention) before re-running.',
+      );
+      process.exit(1);
+    }
+
+    // Add text to predicted for nicer output
+    for (const e of predictedRaw) {
+      if (!e.text) e.text = sourceText.slice(e.start, e.end);
+    }
 
     // Apply the filter: drop expected entities of types not in the filter set,
     // and (defensively) predicted entities of unscored types in case anyone
@@ -316,6 +356,14 @@ async function main() {
         await readFile(join(DOCS_DIR, `${name}.expected-segments.json`), 'utf-8'),
       );
     } catch {}
+    if (expectedSegments) {
+      const segMismatches = validateExpectedOffsets(expectedSegments, sourceText);
+      if (segMismatches.length > 0) {
+        console.error(formatOffsetMismatches(`${name} (expected-segments)`, segMismatches));
+        console.error('Expected segments are out of sync with the document text. Refusing to score.');
+        process.exit(1);
+      }
+    }
     try {
       predictedSegments = JSON.parse(
         await readFile(join(runDir, name, 'segments.json'), 'utf-8'),
@@ -420,7 +468,11 @@ async function main() {
   console.log(`Report saved: ${reportPath}`);
 }
 
-main().catch((err) => {
-  console.error('Scoring failed:', err);
-  process.exit(1);
-});
+// Run only when executed as a script (mirrors viewer.js) — score.test.js
+// imports this module, and an import must never kick off a scoring pass.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch((err) => {
+    console.error('Scoring failed:', err);
+    process.exit(1);
+  });
+}

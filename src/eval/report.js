@@ -5,6 +5,7 @@ import { SOURCE_MARKERS, SOURCE_LABELS, sourcesToArray } from '../pipeline/sourc
 import { ENTITY_COLORS, FALLBACK_COLOR, colorFor } from '../ui/entity-colors.js';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 import { sameEnabledSets, NEQ_DELTA_HTML } from './enabled-entities.js';
+import { readEvalText } from './eval-text.js';
 
 export { ENTITY_COLORS, FALLBACK_COLOR };
 
@@ -1086,10 +1087,10 @@ export async function generateReport(runId, scoresData) {
   for (const docName of docNames) {
     const docScores = scoresData.documents[docName];
 
-    // Load source text
+    // Load source text (canonical eval convention: LF line endings)
     let sourceText;
     try {
-      sourceText = await readFile(join(DOCS_DIR, `${docName}.txt`), 'utf-8');
+      sourceText = await readEvalText(join(DOCS_DIR, `${docName}.txt`));
     } catch {
       sourceText = `(source text not found for ${docName})`;
     }
