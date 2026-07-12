@@ -15,59 +15,16 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readEvalText, EVAL_TEXT_CONVENTION } from './eval-text.js';
 import { matchEntities, overlapRatio } from './matching.js';
+import { TYPE_WEIGHTS, weightFor } from '../pipeline/configs/type-weights.js';
 
 const TEST_DATA_DIR = join(import.meta.dirname, '../../test-data');
 const RESULTS_DIR = join(TEST_DATA_DIR, 'results');
 
-// Severity of a full leak of one entity of the given type, on a 1–5 scale
-// anchored in professional-secrecy damage, not model taxonomy:
-// 5 = identyfikator osoby / kategorie szczególne art. 9-10 RODO,
-// 4 = bezpośrednie namiary na osobę (nazwisko, adres, kontakt, konto),
-// 3 = pośrednio identyfikujące (sygnatura sprawy, data urodzenia w parze
-//     z innymi danymi, atrybuty, kwoty roszczeń),
-// 2 = dane podmiotów gospodarczych i lokalizacje,
-// 1 = role i tytuły zawodowe.
-export const TYPE_WEIGHTS = {
-  PERSON_IDENTIFIER: 5,
-  AUTH_SECRET: 5,
-  HEALTH_DATA: 5,
-  GENETIC_DATA: 5,
-  BIOMETRIC_DATA: 5,
-  RELIGION_OR_BELIEF: 5,
-  POLITICAL_OPINION: 5,
-  SEXUAL_ORIENTATION: 5,
-  TRADE_UNION_MEMBERSHIP: 5,
-  ETHNIC_ORIGIN: 5,
-  CRIMINAL_OFFENCE_DATA: 5,
-  PERSON_NAME: 4,
-  POSTAL_ADDRESS: 4,
-  EMAIL_ADDRESS: 4,
-  PHONE_NUMBER: 4,
-  CONTACT_HANDLE: 4,
-  PERSON_ALIAS: 4,
-  BANK_ACCOUNT_IDENTIFIER: 4,
-  PAYMENT_CARD: 4,
-  PAYMENT_CARD_SECURITY: 4,
-  DEVICE_IDENTIFIER: 4,
-  VEHICLE_IDENTIFIER: 4,
-  ACCOUNT_IDENTIFIER: 4,
-  DATE_OF_BIRTH: 3,
-  DOCUMENT_REFERENCE: 3,
-  PERSON_ATTRIBUTE: 3,
-  INCOME_COMPENSATION: 3,
-  FINANCIAL_AMOUNT: 3,
-  IP_ADDRESS: 3,
-  GEO_LOCATION: 3,
-  COOKIE_IDENTIFIER: 3,
-  ORGANIZATION_NAME: 2,
-  ORGANIZATION_IDENTIFIER: 2,
-  LOCATION: 2,
-  PERSON_ROLE_OR_TITLE: 1,
-};
-
-export function weightFor(type) {
-  return TYPE_WEIGHTS[type] ?? 3;
-}
+// Leak severity weights now live in ../pipeline/configs/type-weights.js
+// (shared with pipeline enforcement, e.g. maxLengthStep/A5) — re-exported
+// here so existing imports of TYPE_WEIGHTS/weightFor from this module keep
+// working.
+export { TYPE_WEIGHTS, weightFor };
 
 // ── Character coverage ──────────────────────────────────────────────
 

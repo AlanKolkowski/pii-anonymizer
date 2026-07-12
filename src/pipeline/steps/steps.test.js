@@ -76,7 +76,7 @@ describe('snapStep', () => {
 });
 
 describe('maxLengthStep', () => {
-  it('removes oversized entities', () => {
+  it('flags oversized entities of weight>=3 types instead of removing them', () => {
     const ctx = {
       text: '',
       segments: [],
@@ -88,8 +88,11 @@ describe('maxLengthStep', () => {
       legend: {},
     };
     const result = maxLengthStep(ctx);
-    expect(result.entities).toHaveLength(1);
+    expect(result.entities).toHaveLength(2);
     expect(result.entities[0].end).toBe(10);
+    expect(result.entities[0].oversized).toBeUndefined();
+    expect(result.entities[1].end).toBe(100);
+    expect(result.entities[1].oversized).toBe(true);
   });
 });
 
