@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 9,
+    "end": 24,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 32,
+    "end": 43,
+    "text": "85030712349"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 136,
+    "end": 150,
+    "text": "850 307 123 49"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 210,
+    "end": 222,
+    "text": "850307\n12349"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 249,
+    "end": 260,
+    "text": "92090156781"
+  }
+]

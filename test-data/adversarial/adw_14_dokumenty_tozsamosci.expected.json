@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 71,
+    "end": 81,
+    "text": "DKR 744829"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 116,
+    "end": 123,
+    "text": "Torunia"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 167,
+    "end": 177,
+    "text": "EJ 1234567"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 198,
+    "end": 211,
+    "text": "00123/22/0611"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 255,
+    "end": 264,
+    "text": "DKR744829"
+  }
+]

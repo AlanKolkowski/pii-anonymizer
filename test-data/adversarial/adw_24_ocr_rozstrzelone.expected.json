@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 24,
+    "end": 83,
+    "text": "Z A K Ł A D   U B E Z P I E C Z E Ń   S P O Ł E C Z N Y C H"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 99,
+    "end": 128,
+    "text": "K o n r a d   Ż u r a w s k i"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 140,
+    "end": 161,
+    "text": "8 5 0 3 0 7 1 2 3 4 9"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 191,
+    "end": 206,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 214,
+    "end": 225,
+    "text": "85030712349"
+  }
+]

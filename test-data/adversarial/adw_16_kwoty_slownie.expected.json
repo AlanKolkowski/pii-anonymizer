@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 45,
+    "end": 94,
+    "text": "dwadzieścia trzy tysiące czterysta złotych 00/100"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 123,
+    "end": 134,
+    "text": "2 100,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 145,
+    "end": 168,
+    "text": "dwa tysiące sto złotych"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 202,
+    "end": 228,
+    "text": "pięciu tysięcy stu złotych"
+  }
+]

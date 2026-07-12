@@ -1,0 +1,44 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 28,
+    "text": "Konrad Żurawski"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 34,
+    "end": 46,
+    "text": "7.03.1985 r."
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 49,
+    "end": 56,
+    "text": "Toruniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 92,
+    "end": 110,
+    "text": "Leokadia Szczygieł"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 126,
+    "end": 147,
+    "text": "29 sierpnia 1959 roku"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 150,
+    "end": 158,
+    "text": "Chełmnie"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 207,
+    "end": 217,
+    "text": "1985-03-07"
+  }
+]

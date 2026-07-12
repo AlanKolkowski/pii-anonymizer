@@ -1,0 +1,7 @@
+Zestawienie stron postępowania:
+
+| Lp. | Strona | Adres | PESEL |
+|-----|--------|-------|-------|
+| 1 | Konrad Żurawski | ul. Polna 3/5, 87-100 Toruń | 85030712349 |
+| 2 | Aniela Wilk | ul. Wodna 11, 86-200 Chełmno | 61041876540 |
+| 3 | Eustachy Gwóźdź | ul. Krucza 15, 86-300 Grudziądz | 55060323457 |

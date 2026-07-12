@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 35,
+    "text": "Michalina Krzemień-Zawadzka"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 47,
+    "end": 73,
+    "text": "choruje na cukrzycę typu 2"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 124,
+    "end": 131,
+    "text": "Toruniu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 192,
+    "end": 212,
+    "text": "epizodu depresyjnego"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 237,
+    "end": 291,
+    "text": "skazany prawomocnym wyrokiem za przywłaszczenie mienia"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 352,
+    "end": 418,
+    "text": "członkinią Związku Zawodowego Pracowników Przetwórstwa Spożywczego"
+  }
+]

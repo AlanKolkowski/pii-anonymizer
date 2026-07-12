@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 35,
+    "end": 67,
+    "text": "75 1090 2776 0000 0001 9876 5432"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 151,
+    "end": 185,
+    "text": "PL41-1140-2004-0000-9876-5432-1098"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 230,
+    "end": 264,
+    "text": "PL26 1600 1462 0000\n8765 4321 0987"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 302,
+    "end": 330,
+    "text": "PL75109027760000000198765432"
+  }
+]

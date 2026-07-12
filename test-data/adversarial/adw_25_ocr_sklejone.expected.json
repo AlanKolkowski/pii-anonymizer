@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 5,
+    "end": 19,
+    "text": "KonradŻurawski"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 26,
+    "end": 33,
+    "text": "Toruniu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 38,
+    "end": 50,
+    "text": "ul.Polnej3/5"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 91,
+    "end": 101,
+    "text": "AnielaWilk"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 149,
+    "end": 173,
+    "text": "ul.Wodna11,86-200Chełmno"
+  }
+]

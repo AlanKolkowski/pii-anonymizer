@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 58,
+    "end": 69,
+    "text": "I C 1445/25"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 71,
+    "end": 93,
+    "text": "Sąd Rejonowy w Toruniu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 96,
+    "end": 112,
+    "text": "VI GC 212/24 upr"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 114,
+    "end": 139,
+    "text": "Sąd Rejonowy w Bydgoszczy"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 142,
+    "end": 152,
+    "text": "II K 87/23"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 158,
+    "end": 169,
+    "text": "I Ns 310/24"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 210,
+    "end": 220,
+    "text": "KM 1552/25"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 296,
+    "end": 307,
+    "text": "I Co 219/25"
+  }
+]

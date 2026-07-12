@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 21,
+    "text": "Seweryn Kowal"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 60,
+    "end": 65,
+    "text": "Kowal"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 115,
+    "end": 125,
+    "text": "Grudziądzu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 136,
+    "end": 145,
+    "text": "Iwona Lis"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 165,
+    "end": 168,
+    "text": "Lis"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 215,
+    "end": 232,
+    "text": "Golubiu-Dobrzyniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 268,
+    "end": 281,
+    "text": "Marceli Baran"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 334,
+    "end": 339,
+    "text": "Baran"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 398,
+    "end": 409,
+    "text": "Tadeusz Sad"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 438,
+    "end": 441,
+    "text": "Sad"
+  }
+]

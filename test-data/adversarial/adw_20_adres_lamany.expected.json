@@ -1,0 +1,20 @@
+[
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 37,
+    "end": 75,
+    "text": "ul. Gene-\nralska 12 m. 4, 87-100 Toruń"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 115,
+    "end": 144,
+    "text": "ul. Szeroka 40/2\n87-100\nToruń"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 233,
+    "end": 261,
+    "text": "k.zurawski@poczta-testowa.pl"
+  }
+]

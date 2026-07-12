@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 67,
+    "end": 86,
+    "text": "Odrowążu-Pietraszku"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 126,
+    "end": 142,
+    "text": "Dobrosława Zamek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 168,
+    "end": 181,
+    "text": "Marceli Baran"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 202,
+    "end": 221,
+    "text": "Sewerynowi Kowalowi"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 239,
+    "end": 266,
+    "text": "ul. Żeglarskiej 4 w Toruniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 310,
+    "end": 318,
+    "text": "Kowalowi"
+  }
+]

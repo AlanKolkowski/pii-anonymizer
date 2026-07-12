@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 27,
+    "text": "Anielą Wilk"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 43,
+    "end": 51,
+    "text": "Chełmnie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 74,
+    "end": 85,
+    "text": "Aniela Wilk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 177,
+    "end": 188,
+    "text": "Anieli Wilk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 254,
+    "end": 265,
+    "text": "Barbary Kos"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 311,
+    "end": 314,
+    "text": "Kos"
+  }
+]

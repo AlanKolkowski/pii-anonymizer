@@ -1,0 +1,5 @@
+PESEL dłużnika (skan niskiej jakości): 850307l2349 — w oryginale cyfra 1, w skanie mała litera „l”.
+NIP wierzyciela: 524-987-12-3O (na końcu litera „O” zamiast zera).
+REGON: 38l245999.
+Rachunek: PL75 lO9O 2776 0000 0001 9876 5432.
+Dla porównania zapis poprawny NIP: 5249871230.

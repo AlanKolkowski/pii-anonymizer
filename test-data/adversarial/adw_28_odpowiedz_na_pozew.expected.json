@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 21,
+    "text": "I C 1445/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 72,
+    "end": 81,
+    "text": "Ireny Maj"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 212,
+    "end": 222,
+    "text": "Irenie Maj"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 283,
+    "end": 286,
+    "text": "Mai"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 301,
+    "end": 312,
+    "text": "8 000,00 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 322,
+    "end": 334,
+    "text": "18 000,00 zł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 448,
+    "end": 451,
+    "text": "Maj"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 465,
+    "end": 476,
+    "text": "6 500,00 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 508,
+    "end": 542,
+    "text": "PL26 1600 1462 0000 8765 4321 0987"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 581,
+    "end": 593,
+    "text": "Grzegorz Maj"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 629,
+    "end": 633,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 634,
+    "end": 639,
+    "text": "J. M."
+  }
+]
