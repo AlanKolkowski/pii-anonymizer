@@ -248,12 +248,59 @@ Opisane w §2 (moduł A8) – 5 nowych FP na syntetycznym, 0 nowych przecieków.
 
 ---
 
-## §7. Track 3 (C4) – status na moment zatrzymania
+## §7. Track 3 (C4) – zaimplementowane i przetestowane, zatrzymane przed buildem/benchem
 
-**Nie rozpoczęte w tej sesji** – priorytet: Track 1 w całości, potem Track 2, zgodnie z
-kolejnością w briefie. Zostaje do kolejnej sesji: usunięcie override q8 w warstwie desktopowej,
-przepakowanie artefaktów fp32/fp16, regeneracja sum w `models/manifest.json`, testy integralności,
-`desktop:smoke`/`smoke:packaged` – **potem GATE-STOP, bez buildu/benchu**, zgodnie z poleceniem.
+**Zrobione** (commit `df16452`): domyślny dtype w `scripts/fetch-models.mjs` zmieniony z `q8` na
+`fp16`. Nie było osobnego, zahardkodowanego „override'u q8” do usunięcia – `DTYPE_OVERRIDE` w
+`entity-sources.js` już wcześniej był dtype-agnostyczny (po prostu odzwierciedla to, co mówi
+`models/manifest.json`); „override” to był po prostu domyślny dtype skryptu pobierającego.
+
+**Świadome odchylenie od pełnej litery kontraktu:** `fp16 dla OBU modeli`, nie pełny mix
+fp32 (multilang) / fp16 (polish) jak w domyślnym build webowym. To udokumentowana, dopuszczalna
+podłoga z `PRODUCT-DECISIONS.md` (decyzja 21: „jeśli fp32-WASM za ciężki, dopuszczalny floor to
+fp16 obu modeli”) – `fetch-models.mjs` stosuje jeden `MODEL_DTYPE` do obu repozytoriów HF
+konstrukcyjnie, a `manifest.json.dtype` to pojedyncze pole najwyższego poziomu. Pełny mix
+wymagałby rozszerzenia skryptu, schematu manifestu i semantyki override'u w `entity-sources.js`
+(dziś wymusza JEDEN dtype na wszystkie źródła) – większa zmiana, niż sesja z zakazem
+buildu/benchu powinna robić bez cyklu, który by ją zwalidował.
+
+**Zweryfikowane w tej sesji** (`models/manifest.json` jest poza gitem – lokalny artefakt budowy,
+nieskomitowany):
+- `MODEL_DTYPE=fp16 node scripts/fetch-models.mjs` – oba pliki onnx (~555 MB każdy) pobrane,
+  manifest przeregenerowany ze świeżymi sumami sha256; stare pliki q8 usunięte (inaczej
+  zostałyby i tak spakowane przez filtr `**/*` w `extraResources` electron-buildera).
+- `npm run desktop:verify-models` – 10/10 plików, `dtype=fp16`, SHA-256 zgodne.
+- `electron/model-integrity.test.js` (8 przypadków, logika dtype-agnostyczna) – zielone.
+- `npm run desktop:build:renderer && npm run desktop:smoke` – **zielone po poprawce jednej
+  nieaktualnej asercji** w `e2e/desktop-smoke.mjs`: test sprawdzał wprost „q8 dtype in use” jako
+  oczekiwany stan sprzed decyzji 21; teraz asercja to „fp16 w użyciu i NIE q8”. Log workera
+  potwierdza oba modele ładowane jako fp16 (~1111 MB + 556 MB wasm-resident).
+- `electron-builder.yml`: `files`/`extraResources` już wcześniej poprawnie używają `from: models`
+  (katalog, nie plik) – pułapka z briefu nie dotyczyła tego repo, nic do zmiany.
+
+**GATE-STOP zachowany:** NIE uruchomiono w tej sesji `desktop:build` (pełne pakowanie),
+`desktop:smoke:packaged` ani benchu pamięci/latencji fp32-WASM – zostaje do bramki B1 Opusa
+(„weryfikuję łańcuch + Alan/ja robimy bench”), zgodnie z poleceniem.
+
+**Rekomendacja dla bramki/kolejnej sesji:** jeśli pełny mix fp32 (multilang) / fp16 (polish) ma
+znaczenie (dokładne dopasowanie do jakości webowej, nie tylko podłogi), `fetch-models.mjs` i
+schemat `manifest.json` wymagają rozszerzenia na dtype per-repo – nie zrobione tutaj, bo wykracza
+poza to, co ta sesja mogła bezpiecznie zweryfikować bez buildu/benchu.
+
+---
+
+## §7a. Track 4 – świadomie odłożony
+
+Track 4 (harness jakości w przeglądarce, Playwright + realne Chromium na korpusie 45 dokumentów)
+był jawnie opcjonalny w briefie („po Track 1–2, jeśli starczy"). **Nie podjęty w tej sesji** – w
+trakcie pracy nad A7 własny skrypt pomiarowy padał wielokrotnie na „bad allocation" z
+onnxruntime-node (§2, moduł A7), a Alan zgłosił kilkukrotne awarie samego Claude Desktop w trakcie
+tej sesji. Uruchomienie kolejnego ciężkiego procesu (Playwright + Chromium + modele ładowane
+przez WASM w przeglądarce, dla 45 dokumentów) niosłoby realne ryzyko powtórzenia tego samego
+problemu na już niestabilnej maszynie. Track 1–3 stanowią kompletny, w pełni przetestowany i
+udokumentowany rezultat same w sobie – dołożenie Track 4 pod presją niestabilności groziłoby
+zepsuciem tego, co już działa, dla zadania jawnie oznaczonego jako „jeśli starczy czasu". Zostaje
+w całości dla kolejnej sesji, najlepiej na maszynie/w środowisku z większym zapasem pamięci.
 
 ---
 
