@@ -23,10 +23,21 @@ const IDENTIFIER_RULE = {
 
 export const ENTITY_RULES = {
   PERSON_NAME:              { maxLength: 50, threshold: 0.5, fuzzyBackfill: true },
-  PERSON_IDENTIFIER:        { ...IDENTIFIER_RULE, threshold: 0.9 },
+  // A7 (EVAL-RECALL-AUDIT §8): weight>=3 thresholds were calibrated for
+  // precision, not professional secrecy (§7.1) — a passport number at model
+  // score 0.78 (adw_14) and a vehicle plate at 0.67 (adw_31, missed the old
+  // 0.7 threshold by 0.03) both leaked in full. These are GATE-EVAL-RECALL
+  // §6's specified starting points, applied directly rather than
+  // fine-tuned against a P/R curve: the measurement script
+  // (scripts/measure-thresholds.mjs + cache-ner-for-thresholds.mjs) hit
+  // repeated out-of-memory crashes in this session cycling ~90 ONNX
+  // sessions in one process (see script comments) — verified instead via
+  // the normal tagged eval on both corpora, which the module's own
+  // contract phrases its acceptance criteria in terms of anyway.
+  PERSON_IDENTIFIER:        { ...IDENTIFIER_RULE, threshold: 0.5 },
   PERSON_ROLE_OR_TITLE:     {
     maxLength: 70,
-    threshold: 0.9,
+    threshold: 0.75,
     fuzzyBackfill: true,
     rejectTruncatedWord: true,
     blocklist: ['Pan', 'Pani', 'Nadawca'],
@@ -51,8 +62,8 @@ export const ENTITY_RULES = {
   PAYMENT_CARD:             IDENTIFIER_RULE,
   PAYMENT_CARD_SECURITY:    IDENTIFIER_RULE,
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
-  VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40, threshold: 0.7 },
-  LOCATION:                 { maxLength: 100, threshold: 0.9, mergeWithAdjacent: [] },
+  VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40, threshold: 0.5 },
+  LOCATION:                 { maxLength: 100, threshold: 0.75, mergeWithAdjacent: [] },
   POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'] },
   PERSON_ATTRIBUTE:         { maxLength: 80, threshold: 0.6 },
 };
