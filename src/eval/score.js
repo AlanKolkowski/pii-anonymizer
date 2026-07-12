@@ -1,5 +1,5 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, basename, extname } from 'node:path';
+import { join, basename, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { matchEntities } from './matching.js';
 import { generateReport } from './report.js';
@@ -244,12 +244,20 @@ async function main() {
   // Load summary for enabledEntities and the text-convention stamp
   let runEnabledEntities;
   let runTextConvention;
+  let runDocsDir;
   try {
     const summaryRaw = await readFile(join(runDir, 'summary.json'), 'utf-8');
     const summary = JSON.parse(summaryRaw);
     runEnabledEntities = summary.enabledEntities;
     runTextConvention = summary.textConvention;
+    runDocsDir = summary.docsDir;
   } catch {}
+
+  // Ground truth comes from the corpus the run was made against (stamped in
+  // summary.json by run.js), so run and score can never drift apart.
+  const REPO_ROOT = join(import.meta.dirname, '../..');
+  const docsDirRel = runDocsDir ?? 'test-data/synthetic';
+  const docsDir = resolve(REPO_ROOT, docsDirRel);
 
   // A run made under a different text convention (or before the convention
   // was stamped) has entity offsets that are not comparable with ground
@@ -280,11 +288,11 @@ async function main() {
   console.log('');
 
   // Find expected files
-  const entries = await readdir(DOCS_DIR);
+  const entries = await readdir(docsDir);
   const expectedFiles = entries.filter(f => f.endsWith('.expected.json'));
 
   if (expectedFiles.length === 0) {
-    console.log('No .expected.json files found in test-data/synthetic/. Create ground truth first.');
+    console.log(`No .expected.json files found in ${docsDirRel}/. Create ground truth first.`);
     process.exit(1);
   }
 
@@ -295,7 +303,7 @@ async function main() {
 
   for (const expFile of expectedFiles.sort()) {
     const name = basename(expFile, '.expected.json');
-    const expectedRaw = JSON.parse(await readFile(join(DOCS_DIR, expFile), 'utf-8'));
+    const expectedRaw = JSON.parse(await readFile(join(docsDir, expFile), 'utf-8'));
 
     let predictedRaw;
     try {
@@ -310,7 +318,7 @@ async function main() {
     // validated and the scores could silently lie.
     let sourceText;
     try {
-      sourceText = await readEvalText(join(DOCS_DIR, `${name}.txt`));
+      sourceText = await readEvalText(join(docsDir, `${name}.txt`));
     } catch {
       console.error(`FATAL: ${name}.txt not found — cannot validate ground-truth offsets.`);
       process.exit(1);
@@ -353,7 +361,7 @@ async function main() {
     let predictedSegments = null;
     try {
       expectedSegments = JSON.parse(
-        await readFile(join(DOCS_DIR, `${name}.expected-segments.json`), 'utf-8'),
+        await readFile(join(docsDir, `${name}.expected-segments.json`), 'utf-8'),
       );
     } catch {}
     if (expectedSegments) {
@@ -435,6 +443,7 @@ async function main() {
   const scoresData = {
     runId,
     options,
+    docsDir: docsDirRel,
     enabledEntities: enabledList,
     overall: {
       precision: overall.precision,

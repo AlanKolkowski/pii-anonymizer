@@ -1035,6 +1035,11 @@ function f1Badge(f1) {
 
 export async function generateReport(runId, scoresData) {
   const runDir = join(RESULTS_DIR, runId);
+  // Ground truth lives in the corpus the run was scored against (stamped in
+  // scores.json); default keeps pre-docsDir runs working.
+  const docsDir = scoresData.docsDir
+    ? join(TEST_DATA_DIR, '..', scoresData.docsDir)
+    : DOCS_DIR;
   const docNames = Object.keys(scoresData.documents).sort();
 
   // Load historical scores
@@ -1090,7 +1095,7 @@ export async function generateReport(runId, scoresData) {
     // Load source text (canonical eval convention: LF line endings)
     let sourceText;
     try {
-      sourceText = await readEvalText(join(DOCS_DIR, `${docName}.txt`));
+      sourceText = await readEvalText(join(docsDir, `${docName}.txt`));
     } catch {
       sourceText = `(source text not found for ${docName})`;
     }
@@ -1110,7 +1115,7 @@ export async function generateReport(runId, scoresData) {
     // Load expected entities
     let expected = [];
     try {
-      const raw = await readFile(join(DOCS_DIR, `${docName}.expected.json`), 'utf-8');
+      const raw = await readFile(join(docsDir, `${docName}.expected.json`), 'utf-8');
       expected = JSON.parse(raw);
     } catch {}
 
@@ -1125,7 +1130,7 @@ export async function generateReport(runId, scoresData) {
     let predictedSegs = [];
     try {
       expectedSegs = JSON.parse(
-        await readFile(join(DOCS_DIR, `${docName}.expected-segments.json`), 'utf-8'),
+        await readFile(join(docsDir, `${docName}.expected-segments.json`), 'utf-8'),
       );
     } catch {}
     try {
