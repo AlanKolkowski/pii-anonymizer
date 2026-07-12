@@ -3,7 +3,13 @@ import { ENGINE } from '../ocr/models.js';
 
 export const PAGE_TEXT_THRESHOLD = 20;
 export const PAGE_TEXT_DENSE_THRESHOLD = 300;
-export const RENDER_SCALE = 2.0;
+// Track 2 (GATE-EVAL-RECALL §7 "OCR l→ł"): raised from 2.0 per diagnosis —
+// PP-OCRv5 mobile confuses l/ł more at lower render DPI. This is a partial
+// mitigation (the substitution happens inside the recognizer, not from the
+// image alone; the recognizer-server variant is a separate, unmeasured
+// option, noted but out of scope here) — costs more render time/memory per
+// OCR page.
+export const RENDER_SCALE = 3.0;
 
 async function defaultLoadPdfjs() {
   return await import('pdfjs-dist');
