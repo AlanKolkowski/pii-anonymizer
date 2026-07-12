@@ -623,22 +623,89 @@ function isPreciseRegexEntity(entity) {
   return entity.source === 'regex' && entity.score === 1.0;
 }
 
-function removeEntitiesCoveredByPreciseRegex(entities) {
+// The largest contiguous run of `entity`'s span left uncovered by any span
+// in `overlapping`, or null if nothing remains. Character-coverage based
+// (like snap's word-boundary walk) rather than interval subtraction, since
+// several overlapping regex spans can carve out disjoint gaps.
+function largestUncoveredRemainder(entity, overlapping) {
+  const len = entity.end - entity.start;
+  const covered = new Array(len).fill(false);
+  for (const r of overlapping) {
+    const from = Math.max(r.start, entity.start);
+    const to = Math.min(r.end, entity.end);
+    for (let i = from; i < to; i++) covered[i - entity.start] = true;
+  }
+
+  let bestStart = -1;
+  let bestLen = 0;
+  let runStart = -1;
+  for (let i = 0; i <= len; i++) {
+    const uncovered = i < len && !covered[i];
+    if (uncovered && runStart === -1) runStart = i;
+    if (!uncovered && runStart !== -1) {
+      if (i - runStart > bestLen) { bestLen = i - runStart; bestStart = runStart; }
+      runStart = -1;
+    }
+  }
+  if (bestLen === 0) return null;
+  return { start: entity.start + bestStart, end: entity.start + bestStart + bestLen };
+}
+
+// A trimmed remainder is only kept when it's glued directly to the regex
+// match with no word boundary at the cut — e.g. one extra digit the regex's
+// clean-boundary check left out. Without this, trimming would resurrect
+// unrelated leading/trailing context (e.g. "457 dni): " ahead of a precisely
+// regex-matched amount) as a same-type entity of its own, over-masking text
+// that was never part of the identifier. `text` is optional: callers that
+// don't have it (or don't pass it) get the old, safe "drop entirely"
+// behavior instead of guessing.
+function isGluedRemainder(text, entity, remainder) {
+  if (!text) return false;
+  const cutOnLeft = remainder.start > entity.start;
+  const cutOnRight = remainder.end < entity.end;
+  if (cutOnLeft && WORD_BOUNDARY.test(text[remainder.start])) return false;
+  if (cutOnRight && WORD_BOUNDARY.test(text[remainder.end - 1])) return false;
+  return true;
+}
+
+// A model entity fully covered by a same-type precise regex match is
+// redundant — drop it. One only partially covered is trimmed to its largest
+// remaining uncovered run instead of dropped outright: a model span wider
+// than the regex match (e.g. it also caught a trailing character the regex
+// couldn't validate) must not lose the part the regex didn't reach
+// (EVAL-RECALL-AUDIT §8 A6 — REGON in adw_11 leaked this way).
+function trimOrDropCoveredByPreciseRegex(entities, text) {
   const preciseRegexEntities = entities.filter(isPreciseRegexEntity);
   if (preciseRegexEntities.length === 0) return entities;
 
-  return entities.filter((entity) => {
-    if (isPreciseRegexEntity(entity)) return true;
-    return !preciseRegexEntities.some(
+  const result = [];
+  for (const entity of entities) {
+    if (isPreciseRegexEntity(entity)) {
+      result.push(entity);
+      continue;
+    }
+    const overlapping = preciseRegexEntities.filter(
       (regexEntity) => regexEntity.entity_group === entity.entity_group && spansOverlap(regexEntity, entity),
     );
-  });
+    if (overlapping.length === 0) {
+      result.push(entity);
+      continue;
+    }
+    const fullyCovered = overlapping.some((r) => r.start <= entity.start && r.end >= entity.end);
+    if (fullyCovered) continue;
+
+    const remainder = largestUncoveredRemainder(entity, overlapping);
+    if (remainder && isGluedRemainder(text, entity, remainder)) {
+      result.push({ ...entity, start: remainder.start, end: remainder.end });
+    }
+  }
+  return result;
 }
 
-export function deduplicateEntities(entities) {
+export function deduplicateEntities(entities, text) {
   if (entities.length <= 1) return entities;
 
-  const candidates = removeEntitiesCoveredByPreciseRegex(entities);
+  const candidates = trimOrDropCoveredByPreciseRegex(entities, text);
   candidates.sort((a, b) => a.start - b.start || b.score - a.score);
 
   const result = [candidates[0]];

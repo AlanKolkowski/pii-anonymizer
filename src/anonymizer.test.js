@@ -411,6 +411,50 @@ describe('deduplicateEntities', () => {
   });
 });
 
+describe('deduplicateEntities — A6 trim instead of drop on partial regex overlap', () => {
+  it('drops a model entity fully covered by a precise regex match (unchanged behavior)', () => {
+    const entities = [
+      { start: 5, end: 14, score: 0.95, entity_group: 'ORGANIZATION_IDENTIFIER' },
+      { start: 5, end: 14, score: 1.0, source: 'regex', entity_group: 'ORGANIZATION_IDENTIFIER' },
+    ];
+    const result = deduplicateEntities(entities, 'kontekst 381245999');
+    expect(result).toHaveLength(1);
+    expect(result[0].source).toBe('regex');
+  });
+
+  it('trims (does not drop) a model span with one extra char glued directly to a precise regex match', () => {
+    // "381245999" (REGON, [9,18)) checksum-valid; model additionally caught
+    // a trailing "X" glued with no separator ([9,19)).
+    const text = 'kontekst 381245999X koniec';
+    const modelEntity = { start: 9, end: 19, score: 0.95, entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const regexEntity = { start: 9, end: 18, score: 1.0, source: 'regex', entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const result = deduplicateEntities([modelEntity, regexEntity], text);
+    expect(result).toHaveLength(2);
+    const trimmed = result.find((e) => e.source !== 'regex');
+    expect(trimmed).toBeDefined();
+    expect(text.slice(trimmed.start, trimmed.end)).toBe('X');
+  });
+
+  it('drops (does not resurrect) unrelated leading context separated by whitespace from a precise regex match', () => {
+    // Model wrongly widened to include "kontekst " ahead of the real REGON;
+    // the gap is a real word boundary, not a continuation of the identifier.
+    const text = 'kontekst 381245999';
+    const modelEntity = { start: 0, end: 18, score: 0.85, entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const regexEntity = { start: 9, end: 18, score: 1.0, source: 'regex', entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const result = deduplicateEntities([modelEntity, regexEntity], text);
+    expect(result).toHaveLength(1);
+    expect(result[0].source).toBe('regex');
+  });
+
+  it('falls back to dropping the whole entity when no text is passed (safe default)', () => {
+    const modelEntity = { start: 9, end: 19, score: 0.95, entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const regexEntity = { start: 9, end: 18, score: 1.0, source: 'regex', entity_group: 'ORGANIZATION_IDENTIFIER' };
+    const result = deduplicateEntities([modelEntity, regexEntity]);
+    expect(result).toHaveLength(1);
+    expect(result[0].source).toBe('regex');
+  });
+});
+
 describe('couldBeSamePerson', () => {
   it('matches Polish nominative vs genitive (full name)', () => {
     expect(couldBeSamePerson('Marcin Jabłoński', 'Marcina Jabłońskiego')).toBe(true);
