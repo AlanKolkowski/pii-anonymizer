@@ -136,6 +136,97 @@ describe('openZip — hostile containers are rejected, never silently accepted',
     const err = expectSyncThrow(() => openZip(corrupted));
     expect(err.code).toBe('BAD_CENTRAL_DIR_ENTRY');
   });
+
+  it('rejects ZIP64 signaled via a real ZIP64 EOCD locator record preceding the EOCD (not just sentinel values)', async () => {
+    const base = await buildZip([{ name: 'a.xml', data: 'x' }]);
+    // A real ZIP64 EOCD locator (APPNOTE.TXT 4.3.15) is a fixed 20-byte
+    // record that immediately precedes the EOCD: signature(4) + disk
+    // number holding the zip64 EOCD(4) + relative offset of the zip64
+    // EOCD(8) + total number of disks(4). Its own field values don't
+    // matter here -- the reader must reject on the signature alone.
+    const locator = new Uint8Array(20);
+    const lv = new DataView(locator.buffer);
+    lv.setUint32(0, 0x07064b50, true);
+    lv.setUint32(4, 0, true);
+    lv.setBigUint64(8, 0n, true);
+    lv.setUint32(16, 1, true);
+
+    const eocd = base.subarray(base.length - 22);
+    const withoutEocd = base.subarray(0, base.length - 22);
+    const zipBytes = new Uint8Array(withoutEocd.length + locator.length + eocd.length);
+    zipBytes.set(withoutEocd, 0);
+    zipBytes.set(locator, withoutEocd.length);
+    zipBytes.set(eocd, withoutEocd.length + locator.length);
+
+    const err = expectSyncThrow(() => openZip(zipBytes));
+    expect(err.code).toBe('ZIP64_UNSUPPORTED');
+  });
+
+  it('rejects a multi-disk archive (entries-on-this-disk count differs from total entries)', async () => {
+    const zipBytes = await buildZip(
+      [{ name: 'a.xml', data: 'x' }, { name: 'b.xml', data: 'y' }],
+      { entriesOnDiskOverride: 1 }, // non-sentinel mismatch against totalEntries=2
+    );
+    const err = expectSyncThrow(() => openZip(zipBytes));
+    expect(err.code).toBe('MULTI_DISK_UNSUPPORTED');
+  });
+
+  it('rejects extraction when the central directory\'s local-header offset points past the end of the file', async () => {
+    const zipBytes = await buildZip([{ name: 'a.xml', data: 'x', localHeaderOffsetOverride: 999999 }]);
+    const zip = openZip(zipBytes); // central directory alone is well-formed -- this is only caught lazily
+    const err = expectSyncThrow(() => zip.extractRaw('a.xml'));
+    expect(err.code).toBe('BAD_LOCAL_HEADER');
+  });
+
+  it('rejects extraction when the central directory declares a compressed size larger than the file', async () => {
+    const zipBytes = await buildZip([{ name: 'a.xml', data: 'x', compressedSizeOverride: 5_000_000 }]);
+    const zip = openZip(zipBytes);
+    const err = expectSyncThrow(() => zip.extractRaw('a.xml'));
+    expect(err.code).toBe('BAD_LOCAL_HEADER');
+  });
+});
+
+describe('openZip — entry names are opaque map keys, never filesystem paths', () => {
+  it('lists and extracts a "../" entry name like any other -- no zip-slip attack surface to have', async () => {
+    // DOCX-REBUILD-DESIGN.md MD1: nothing in this module ever touches disk,
+    // and entry names are never resolved as paths, so a name shaped like a
+    // traversal attempt is just an ordinary (if unusual) map key.
+    const evilName = '../../../etc/evil.txt';
+    const zipBytes = await buildZip([
+      { name: 'word/document.xml', data: 'normal entry' },
+      { name: evilName, data: 'payload' },
+    ]);
+    const zip = openZip(zipBytes);
+    expect(zip.entries.map((e) => e.name)).toContain(evilName);
+    expect(zip.hasEntry(evilName)).toBe(true);
+    expect(decoder.decode(await zip.extract(evilName))).toBe('payload');
+  });
+});
+
+describe('openZip — local file header fields are never trusted (MD1 trust model)', () => {
+  it('extracts correctly when the local header uses the data-descriptor bit with zeroed size/CRC fields', async () => {
+    // General-purpose bit 3 (APPNOTE.TXT 4.4.4): a real ZIP writer streaming
+    // an entry sets this bit and leaves the local header's crc/sizes at 0,
+    // writing the true values only into the central directory (and,
+    // conventionally, a trailing data-descriptor record this reader never
+    // reads). This fixture reproduces exactly the part the reader is
+    // supposed to rely on: a lying local header alongside a correct central
+    // directory.
+    const content = 'streamed entry, local header intentionally zeroed';
+    const zipBytes = await buildZip([{
+      name: 'word/document.xml',
+      data: content,
+      method: 8,
+      localFieldOverrides: {
+        generalPurposeFlag: 0x0008,
+        crc: 0,
+        compressedSize: 0,
+        uncompressedSize: 0,
+      },
+    }]);
+    const zip = openZip(zipBytes);
+    expect(decoder.decode(await zip.extract('word/document.xml'))).toBe(content);
+  });
 });
 
 describe('openZip — decompression limits are enforced during streaming, not after the fact', () => {

@@ -44,7 +44,14 @@ function wordValue(word) {
 }
 
 // Returns the parsed integer, or null if the phrase contains no recognizable
-// numeral words at all (distinguishing "nothing to parse" from "parses to 0").
+// numeral words at all (distinguishing "nothing to parse" from "parses to 0"),
+// or if it contains a numeral-scale word this lexicon doesn't cover (e.g.
+// "milion", "miliard" -- scope is capped at 999 999, see header comment).
+// An unrecognized word means "can't parse this phrase", never "parse the
+// rest and ignore it": silently dropping "milion" out of "jeden milion
+// dwieście tysięcy złotych" used to leave a smaller, still-numeric total
+// standing in for the real amount, turning genuinely correct seven-figure
+// amounts (routine in CHF/EUR sums) into false high-severity mismatches.
 function parsePolishNumberWords(phrase) {
   const words = phrase
     .toLowerCase()
@@ -59,23 +66,20 @@ function parsePolishNumberWords(phrase) {
 
   let total = 0;
   let group = 0;
-  let recognizedAny = false;
 
   for (const word of words) {
     if (THOUSAND_MARKERS.has(word)) {
       total += (group === 0 ? 1 : group) * 1000;
       group = 0;
-      recognizedAny = true;
       continue;
     }
     const value = wordValue(word);
-    if (value === undefined) continue; // stray word we didn't strip -- ignore, don't fail the whole parse
+    if (value === undefined) return null; // unrecognized numeral word -- can't safely parse, don't guess
     group += value;
-    recognizedAny = true;
   }
   total += group;
 
-  return recognizedAny ? total : null;
+  return total;
 }
 
 // \s already matches U+00A0 (non-breaking space, sometimes used as a Polish

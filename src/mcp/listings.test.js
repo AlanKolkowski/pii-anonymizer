@@ -97,6 +97,27 @@ describe('buildOutcomeListing', () => {
     ]);
     expect(JSON.stringify(listing)).not.toContain('prywatna');
   });
+
+  it('includes an outcome whose only token is case-annotated (decyzja 17: containsToken recognizes [TYP_IDX|PRZYPADEK])', () => {
+    // Text below carries no plain [TYP_IDX] token anywhere -- the ONLY
+    // token-shaped span is the annotated form. Before decyzja 17,
+    // containsToken had no notion of the |PRZYPADEK suffix, so this outcome
+    // would have been (wrongly) treated as tokenless freeform text and
+    // dropped from the listing.
+    const outcomes = [
+      { id: 'o1', label: 'notatka', mcpLabel: 'Wynik 1', text: 'Pismo doręczono dla [PERSON_NAME_1|D].' },
+    ];
+    const listing = buildOutcomeListing(outcomes);
+    expect(listing.map((x) => x.id)).toEqual(['o1']);
+  });
+});
+
+describe('buildReadOutcomeContent', () => {
+  it('does not reject an outcome whose only token is case-annotated as "brak tokenów" (decyzja 17)', () => {
+    const outcome = { id: 'o1', label: 'notatka', mcpLabel: 'Wynik 1', text: 'Pismo doręczono dla [PERSON_NAME_1|D].' };
+    const response = listings.buildReadOutcomeContent([outcome], outcome.id);
+    expect(response).toEqual({ content: [{ type: 'text', text: outcome.text }] });
+  });
 });
 
 describe('createLabelSequence', () => {

@@ -46,7 +46,13 @@ export async function deflateRaw(bytes) {
 
 // entries: [{ name, data: string|Uint8Array, method?: 0|8, generalPurposeFlag?,
 //             crcOverride?, compressedSizeOverride?, uncompressedSizeOverride?,
-//             localHeaderOffsetOverride? }]
+//             localHeaderOffsetOverride?, localFieldOverrides? }]
+// localFieldOverrides: { generalPurposeFlag?, crc?, compressedSize?, uncompressedSize? }
+//   -- lets a fixture make the LOCAL header lie (e.g. simulate the real
+//   general-purpose "data descriptor" bit 3 with zeroed local size/CRC
+//   fields) while the CENTRAL directory -- the reader's only trusted source
+//   -- keeps the real values. Without this, both headers always agree,
+//   which can't exercise "local header is untrusted" at all.
 // options: { totalEntriesOverride?, entriesOnDiskOverride?,
 //            centralDirSizeOverride?, centralDirOffsetOverride? }
 export async function buildZip(entries, options = {}) {
@@ -64,18 +70,23 @@ export async function buildZip(entries, options = {}) {
     const compressedSize = entry.compressedSizeOverride ?? compressed.length;
     const uncompressedSize = entry.uncompressedSizeOverride ?? data.length;
     const localHeaderOffset = entry.localHeaderOffsetOverride ?? offset;
+    const localOverrides = entry.localFieldOverrides ?? {};
+    const localFlag = localOverrides.generalPurposeFlag ?? flag;
+    const localCrc = localOverrides.crc ?? crc;
+    const localCompressedSize = localOverrides.compressedSize ?? compressedSize;
+    const localUncompressedSize = localOverrides.uncompressedSize ?? uncompressedSize;
 
     const local = new Uint8Array(30 + nameBytes.length);
     const lv = new DataView(local.buffer);
     u32(lv, 0, 0x04034b50);
     u16(lv, 4, 20);
-    u16(lv, 6, flag);
+    u16(lv, 6, localFlag);
     u16(lv, 8, method);
     u16(lv, 10, 0);
     u16(lv, 12, 0);
-    u32(lv, 14, crc);
-    u32(lv, 18, compressedSize);
-    u32(lv, 22, uncompressedSize);
+    u32(lv, 14, localCrc);
+    u32(lv, 18, localCompressedSize);
+    u32(lv, 22, localUncompressedSize);
     u16(lv, 26, nameBytes.length);
     u16(lv, 28, 0);
     local.set(nameBytes, 30);
