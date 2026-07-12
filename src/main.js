@@ -590,6 +590,7 @@ async function addSourceFromFile(file, batch = {}) {
       s.status = 'idle';
       s.error = null;
       sourcesList.setSourceText(id, text);
+      sourcesList.setSourceMeta(id, meta);
       sourcesList.setSourceStatus(id, 'idle');
     }
     if (isLastInBatch) {

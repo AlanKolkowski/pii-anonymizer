@@ -249,6 +249,55 @@ describe('createSourcesList', () => {
       expect(count().textContent).toContain('1');
     });
 
+    it('shows the OCR review badge for an image source read via OCR', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', {
+        text: 'Jan Kowalski',
+        meta: { mimeType: 'image/png', ocr: { engine: 'paddleocr', backend: 'wasm' } },
+      });
+      const badge = toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]');
+      expect(badge).not.toBeNull();
+      expect(badge.textContent).toBe('czytane OCR — zweryfikuj nazwiska i liczby');
+    });
+
+    it('shows the OCR badge with a page range for a partially-OCRed PDF', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', {
+        text: 'Jan Kowalski',
+        meta: {
+          mimeType: 'application/pdf',
+          ocr: { engine: 'paddleocr', backend: 'wasm' },
+          pageCount: 3,
+          pages: [{ index: 1, source: 'text' }, { index: 2, source: 'ocr' }, { index: 3, source: 'text' }],
+        },
+      });
+      const badge = toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]');
+      expect(badge).not.toBeNull();
+      expect(badge.textContent).toBe('czytane OCR — zweryfikuj nazwiska i liczby (strona 2)');
+    });
+
+    it('does not show an OCR badge for a source with no OCR meta', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', { text: 'Jan Kowalski', meta: { mimeType: 'text/plain' } });
+      expect(toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]')).toBeNull();
+    });
+
+    it('does not show an OCR badge for a pasted source (no meta)', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', { text: 'Jan Kowalski' });
+      expect(toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]')).toBeNull();
+    });
+
+    it('shows the OCR badge once setSourceMeta reports OCR after async import', () => {
+      const list = createSourcesList(root, defaultOpts());
+      list.addSource('s1', 'a', { text: '', status: 'pending' });
+      expect(toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]')).toBeNull();
+      list.setSourceMeta('s1', { mimeType: 'image/png', ocr: { engine: 'paddleocr', backend: 'wasm' } });
+      const badge = toolbarHost.querySelector('[data-testid="editor-toolbar-ocr-badge-s1"]');
+      expect(badge).not.toBeNull();
+      expect(badge.textContent).toBe('czytane OCR — zweryfikuj nazwiska i liczby');
+    });
+
     it('switches toolbar content when active tab changes', () => {
       const list = createSourcesList(root, defaultOpts());
       list.addSource('s1', 'first', { text: '', entities: [] });

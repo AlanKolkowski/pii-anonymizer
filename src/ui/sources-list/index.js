@@ -1,4 +1,23 @@
 import { createAnnotationEditor } from '../annotation-editor/index.js';
+import { formatOcrRanges } from '../../ocr/range-format.js';
+
+// Track 2 (background-tabs / OCR review): surfaces the OCR confidence
+// already captured in import meta (pdf.js/image.js) as a visible warning —
+// OCR misreads names and numbers more often than it misreads prose, and
+// those are exactly the characters a radca prawny needs to trust.
+const OCR_REVIEW_TEXT = 'czytane OCR — zweryfikuj nazwiska i liczby';
+
+function computeOcrBadge(meta) {
+  if (!meta?.ocr) return null;
+  if (meta.mimeType?.startsWith('image/')) return OCR_REVIEW_TEXT;
+  if (Array.isArray(meta.pages)) {
+    const ocrPages = meta.pages.filter((p) => p.source === 'ocr').map((p) => p.index);
+    if (ocrPages.length === 0) return null;
+    const range = formatOcrRanges(ocrPages, meta.pageCount);
+    return range ? `${OCR_REVIEW_TEXT} (${range})` : OCR_REVIEW_TEXT;
+  }
+  return OCR_REVIEW_TEXT;
+}
 
 const CLOSE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
 const PASTE_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h4l1 2H5l1-2Z"/><path d="M5 3.5H4a1.5 1.5 0 0 0-1.5 1.5v7.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V5A1.5 1.5 0 0 0 12 3.5h-1"/><path d="M5.5 7h5M5.5 10h4"/></svg>';
@@ -386,6 +405,16 @@ export function createSourcesList(rootEl, opts) {
       left.appendChild(countEl);
     }
 
+    const ocrBadge = computeOcrBadge(card.meta);
+    if (ocrBadge) {
+      left.appendChild(sep());
+      const ocrEl = document.createElement('span');
+      ocrEl.className = 'meta srclist-ocr-badge';
+      ocrEl.dataset.testid = `editor-toolbar-ocr-badge-${activeId}`;
+      ocrEl.textContent = ocrBadge;
+      left.appendChild(ocrEl);
+    }
+
     const right = document.createElement('div');
     right.className = 'right';
 
@@ -604,7 +633,7 @@ export function createSourcesList(rootEl, opts) {
       tabsHost.appendChild(tabRefs.tab);
       ensureAddButton();
       const card = makeCard(id, init);
-      cards.set(id, { ...card, tabRefs, label, mcpLabel: init.mcpLabel ?? label, status, type });
+      cards.set(id, { ...card, tabRefs, label, mcpLabel: init.mcpLabel ?? label, status, type, meta: init.meta ?? null });
       order.push(id);
       if (activeId === null) {
         setActive(id);
@@ -658,6 +687,12 @@ export function createSourcesList(rootEl, opts) {
         if (labelEl) labelEl.textContent = label;
       }
       refreshDocLists();
+    },
+    setSourceMeta(id, meta) {
+      const card = cards.get(id);
+      if (!card) return;
+      card.meta = meta ?? null;
+      if (id === activeId) refreshToolbar();
     },
     setSourceStatus(id, status, error) {
       const card = cards.get(id);

@@ -995,6 +995,10 @@ body.has-tool .site-header .wrap {
   color: var(--warn) !important;
   white-space: nowrap;
 }
+.srclist-ocr-badge {
+  color: var(--warn) !important;
+  font-weight: 500;
+}
 
 /* ---------- Annotations — highlight style ----------
    Inline background highlight + bottom-border tint, colored per entity type
