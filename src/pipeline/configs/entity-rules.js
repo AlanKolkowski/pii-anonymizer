@@ -9,6 +9,7 @@ export const DEFAULT_RULE = {
   backfill: true,
   fuzzyBackfill: false,
   caseInsensitiveBackfill: false,
+  rejectTruncatedWord: false,
   blocklist: [],
   blocklistPatterns: [],
   mergeWithAdjacent: [],
@@ -27,9 +28,14 @@ export const ENTITY_RULES = {
     maxLength: 70,
     threshold: 0.9,
     fuzzyBackfill: true,
+    rejectTruncatedWord: true,
     blocklist: ['Pan', 'Pani', 'Nadawca'],
     blocklistPatterns: [
-      /(?:awca|biorca)$/iu,
+      // -awca/-biorca ("wykonawca", "kredytobiorca", …) across the full
+      // declension paradigm, not just nominative singular — A9
+      // (EVAL-RECALL-AUDIT §8): "Kredytobiorcą" (instrumental) previously
+      // slipped through because the blocklist only knew "-biorca".
+      /(?:aw|bior)c(?:a|y|ę|ą|o|ów|om|ami|ach)$/iu,
       /(?:ujący|ująca|ującej|ującego|ującemu|ującą|ujące|ujących|ującym|ującymi)$/iu,
     ],
   },

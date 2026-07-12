@@ -10,7 +10,8 @@ vi.mock('../configs/entity-rules.js', () => ({
     const map = {
       PERSON_ROLE_OR_TITLE: {
         blocklist: ['Pan', 'Pani', 'Nadawca'],
-        blocklistPatterns: [/(?:awca|biorca)$/iu],
+        blocklistPatterns: [/(?:aw|bior)c(?:a|y|ę|ą|o|ów|om|ami|ach)$/iu],
+        rejectTruncatedWord: true,
       },
       ORGANIZATION_NAME: {
         blocklistPatterns: [/^(?:sp\. z o\.o\.|s\.a\.)$/iu],
@@ -143,6 +144,59 @@ describe('blocklistStep', () => {
     const text = 'Kierownik';
     const result = blocklistStep(ctx(text, [
       { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 9, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+
+  // A9 — oblique-case forms of -awca/-biorca, not just nominative singular
+  it.each([
+    ['Kredytobiorcy', 'genitive/dative/locative'],
+    ['Kredytobiorcę', 'accusative'],
+    ['Kredytobiorcą', 'instrumental'],
+    ['Kredytobiorców', 'genitive/accusative plural'],
+    ['Kredytobiorcom', 'dative plural'],
+    ['Wykonawcy', 'genitive/dative/locative'],
+    ['Wykonawcą', 'instrumental'],
+  ])('drops declined role form %s (%s)', (word) => {
+    const result = blocklistStep(ctx(word, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: word.length, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  // A9 — truncated mid-word prefix of a longer word ("Wniosko" cut out of
+  // "Wnioskodawca")
+  it('drops a span truncated mid-word (no boundary before the next letter)', () => {
+    const text = 'Wnioskodawca zwraca się z prośbą';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 7, score: 0.9, source: 'multilang-q8' }, // "Wniosko"
+    ]));
+    expect(result.entities).toHaveLength(0);
+  });
+
+  it('does not reject a span ending exactly at the true end of the word', () => {
+    const text = 'Wnioskodawczyni złożyła pismo';
+    const result = blocklistStep(ctx(text, [
+      // "Wnioskodawczyni" in full — ends right before a space, so the
+      // truncation gate must not fire (whether or not something else later
+      // in the pipeline would still flag this specific word).
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 15, score: 0.9, source: 'multilang-q8' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('does not reject a short role ending at a real word boundary', () => {
+    const text = 'Kierownik działu wyjechał';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 9, score: 0.9, source: 'multilang-q8' }, // "Kierownik"
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('does not apply the truncation check to types that do not opt in', () => {
+    const text = 'Kowalskimiszcze';
+    const result = blocklistStep(ctx(text, [
+      { entity_group: 'PERSON_NAME', start: 0, end: 9, score: 0.9, source: 'polish-q8' }, // "Kowalski" + "m..." glued
     ]));
     expect(result.entities).toHaveLength(1);
   });
