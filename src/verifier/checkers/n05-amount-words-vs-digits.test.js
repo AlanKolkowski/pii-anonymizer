@@ -38,9 +38,33 @@ describe('checkAmountWordsVsDigits (N-5)', () => {
     expect(checkAmountWordsVsDigits('100 zł (słownie: nieczytelne odręcznie 00/100)')).toEqual([]);
   });
 
-  it('tolerates a stray unrecognized word alongside otherwise-parseable numerals', () => {
-    // "sto" (100) parses fine; the nonsense word is simply skipped rather
-    // than aborting the whole comparison.
-    expect(checkAmountWordsVsDigits('100 zł (słownie: sto hakuna-matata 00/100)')).toEqual([]);
+  it('fails safe (no finding) when a stray unrecognized word appears, even if that means missing a real mismatch', () => {
+    // "sto" (100) would parse fine alone, but an unrecognized word now
+    // aborts the whole comparison instead of being silently skipped -- a
+    // digit amount of 150 would mismatch a skip-and-continue parse of "sto"
+    // (100), so a passing result here proves the parse actually aborted
+    // rather than coincidentally agreeing.
+    expect(checkAmountWordsVsDigits('150 zł (słownie: sto hakuna-matata 00/100)')).toEqual([]);
+  });
+
+  it('does not flag amounts over a million: "milion" is outside the lexicon, so parsing aborts instead of silently dropping the word', () => {
+    // Regression for a real false positive: silently skipping "milion" used
+    // to parse this phrase down to 250 000, flagging a high-severity
+    // mismatch against a correct 1 250 000 zł amount. CHF/EUR sums in
+    // frankowe cases routinely exceed one million.
+    const text = '1 250 000,00 zł (słownie: jeden milion dwieście pięćdziesiąt tysięcy złotych 00/100)';
+    expect(checkAmountWordsVsDigits(text)).toEqual([]);
+  });
+
+  it('does not flag amounts using "miliony" or "miliard" either', () => {
+    expect(checkAmountWordsVsDigits('2 000 000,00 zł (słownie: dwa miliony złotych 00/100)')).toEqual([]);
+    expect(checkAmountWordsVsDigits('1 000 000 000,00 zł (słownie: jeden miliard złotych 00/100)')).toEqual([]);
+  });
+
+  it('still detects a real mismatch well within the supported 0-999 999 range', () => {
+    const findings = checkAmountWordsVsDigits('900 000 zł (słownie: osiemset tysięcy złotych)');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain('900000 zł');
+    expect(findings[0].message).toContain('800000 zł');
   });
 });
