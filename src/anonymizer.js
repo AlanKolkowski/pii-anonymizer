@@ -489,6 +489,29 @@ function findNumericIdentifierEntities(text) {
   return entities;
 }
 
+// ── Court/bailiff docket numbers (A2: EVAL-RECALL-AUDIT §8) ────────────
+//
+// [roman division]? + repertorium code + number/year (+ "upr") — own-case
+// docket numbers, not published case-law citations. The whitelist
+// deliberately excludes Supreme Court repertoria (CZP, CSKP, CSK, …): those
+// are what published judgments are cited by (adw_32's trap), and stay a
+// documented limitation (B1/C5) rather than something this pattern reaches
+// for with a context heuristic that could misfire either way.
+const COURT_REPERTORIUM = ['ACa', 'GC', 'KM', 'Nc', 'Ns', 'Co', 'C', 'K'];
+const ROMAN_DIVISION = '(?:X{1,2}|IX|IV|V?I{1,3})';
+const DOCKET_RE = new RegExp(
+  `\\b(?:${ROMAN_DIVISION}\\s+)?(?:${COURT_REPERTORIUM.join('|')})\\s+\\d{1,6}/\\d{2,4}(?:\\s+upr\\b)?\\b`,
+  'g',
+);
+
+function findDocketNumberEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(DOCKET_RE)) {
+    entities.push({ entity_group: 'DOCUMENT_REFERENCE', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
 // VIN (vehicle identification number): 17 chars, uppercase letters minus
 // I/O/Q (visually confusable with 1/0) plus digits, mixing at least one of
 // each. Structural precision — no checksum needed, the restricted alphabet
@@ -553,6 +576,7 @@ export function findRegexEntities(text) {
     ...findNumericIdentifierEntities(text),
     ...findIbanEntities(text),
     ...findVehicleIdentifierEntities(text),
+    ...findDocketNumberEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

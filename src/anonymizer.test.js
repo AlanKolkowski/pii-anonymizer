@@ -849,6 +849,47 @@ describe('findRegexEntities — A1 checksum-validated identifiers', () => {
   });
 });
 
+describe('findRegexEntities — A2 court/bailiff docket numbers', () => {
+  function findOne(text, type) {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === type);
+    expect(matches, `expected exactly one ${type} in ${JSON.stringify(text)}, got ${matches.length}`).toHaveLength(1);
+    return matches[0];
+  }
+
+  // adw_37_sygnatury_formaty — own-case docket numbers across repertoria
+  it.each([
+    ['I C 1445/25'],
+    ['VI GC 212/24 upr'],
+    ['II K 87/23'],
+    ['I Ns 310/24'],
+    ['KM 1552/25'],
+    ['I Co 219/25'],
+  ])('detects own-case docket number %s', (docket) => {
+    const text = `Sprawa prowadzona jest pod sygnaturą ${docket} w tutejszym sądzie.`;
+    const e = findOne(text, 'DOCUMENT_REFERENCE');
+    expect(text.slice(e.start, e.end)).toBe(docket);
+    expect(e.score).toBe(1.0);
+  });
+
+  // adw_32_pulapki_prawne — published case-law citations are NOT own-case
+  // docket numbers and must not be flagged (SN repertoria excluded from the
+  // whitelist entirely, not context-gated).
+  it('does not flag a Supreme Court civil-chamber citation (CZP)', () => {
+    const text = 'Analogiczne stanowisko zajęto w uchwale (sygn. akt III CZP 87/22).';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'DOCUMENT_REFERENCE')).toEqual([]);
+  });
+
+  it('does not flag a Supreme Court CSKP citation even with "sygn. akt" context', () => {
+    const text = 'w wyroku z dnia 14 maja 2021 r. (sygn. akt V CSKP 12/21).';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'DOCUMENT_REFERENCE')).toEqual([]);
+  });
+
+  it('does not flag a bare statute article as a docket number', () => {
+    const text = 'Zgodnie z art. 410 § 2 k.c. świadczenie nienależne podlega zwrotowi.';
+    expect(findRegexEntities(text).filter((e) => e.entity_group === 'DOCUMENT_REFERENCE')).toEqual([]);
+  });
+});
+
 describe('findRegexEntities — financial amounts', () => {
   it('detects simple amount with zł', () => {
     const text = 'kwota: 200,00 zł';

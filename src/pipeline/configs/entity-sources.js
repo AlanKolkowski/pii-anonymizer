@@ -67,7 +67,7 @@ export const ENTITY_SOURCES = {
   BANK_ACCOUNT_IDENTIFIER:  ['polish-fp16', 'regex'],
   PAYMENT_CARD:             ['polish-fp16'],
   PAYMENT_CARD_SECURITY:    ['polish-fp16'],
-  DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16'],
+  DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16', 'regex'],
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
   VEHICLE_IDENTIFIER:       ['polish-fp16', 'regex'],
