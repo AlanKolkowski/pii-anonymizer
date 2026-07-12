@@ -200,7 +200,11 @@ try {
 
   const loadedFromLocal = consoleLines.filter((l) => l.includes('[worker] loaded')).join(' | ');
   check('NER models loaded (worker log)', /\[worker\] loaded/.test(loadedFromLocal), loadedFromLocal);
-  check('q8 dtype in use', /q8/.test(loadedFromLocal), loadedFromLocal);
+  // Decision 21/C4 (PRODUCT-DECISIONS.md): desktop now distributes web-measured
+  // quality (fp16 for both models — EVAL-RECALL-AUDIT §11 measured q8 crashing
+  // HEALTH_DATA F1 100%->13.3%), not the smaller q8/INT8 variant this guard used
+  // to require. Assert the new floor, not the old one.
+  check('fp16 dtype in use (not q8 — decision 21/C4)', /fp16/.test(loadedFromLocal) && !/q8/.test(loadedFromLocal), loadedFromLocal);
 
   // ---- 3. OCR (scanned PDF, offline) --------------------------------------
   await page.locator('[data-testid="sources-add-file-input"]').setInputFiles(SCANNED_PDF);
