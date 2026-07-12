@@ -1,4 +1,4 @@
-// Deterministic generator for test-data/adversarial — the adversarial corpus
+// Deterministic generator for test-data/adversarial – the adversarial corpus
 // of EVAL-RECALL-AUDIT.md part B. Every document is 100% FICTIONAL: names,
 // identifiers and case signatures are synthetic (PESEL/NIP/REGON/IBAN carry
 // valid checksums so they are structurally real, but belong to no one).
@@ -12,7 +12,7 @@
 //   sensitivity is weighed later, in the leak register, not here);
 // - own-case signatures, decision/invoice numbers → DOCUMENT_REFERENCE;
 //   citations of published case law and statutes (art., Dz.U.) are NOT
-//   annotated — they are public references, a false-positive trap;
+//   annotated – they are public references, a false-positive trap;
 // - salaries → FINANCIAL_AMOUNT (synthetic corpus precedent, pismo_05);
 // - a whole address block (street + code + city, possibly multi-line) is a
 //   single POSTAL_ADDRESS; a standalone city mention is LOCATION; locations
@@ -264,7 +264,7 @@ const DOCS = [
 
   {
     name: 'adw_17_wynagrodzenie',
-    attack: 'Kwoty w kontekście płacowym (brutto, netto, stawka godzinowa): taksonomia modelu zna INCOME_COMPENSATION, a ground truth korpusu używa FINANCIAL_AMOUNT — pomyłka typu kosztuje podwójnie (FP+FN).',
+    attack: 'Kwoty w kontekście płacowym (brutto, netto, stawka godzinowa): taksonomia modelu zna INCOME_COMPENSATION, a ground truth korpusu używa FINANCIAL_AMOUNT – pomyłka typu kosztuje podwójnie (FP+FN).',
     parts: [
       'Pracownikowi przysługuje wynagrodzenie zasadnicze w wysokości ',
       AMT('8 400,00 zł'), ' brutto miesięcznie oraz dodatek funkcyjny ',
@@ -318,7 +318,7 @@ const DOCS = [
 
   {
     name: 'adw_21_stopka_gesta',
-    attack: 'Stopka kancelaryjna: wiele typów PII w jednej linii rozdzielonych kreskami pionowymi, bez zdań — kumulacja granic słów nieznanych snapowi.',
+    attack: 'Stopka kancelaryjna: wiele typów PII w jednej linii rozdzielonych kreskami pionowymi, bez zdań – kumulacja granic słów nieznanych snapowi.',
     parts: [
       'Z poważaniem\n', ROLE('r. pr.'), ' ', PN('Zdzisław Odrowąż-Pietraszek'), '\n\n',
       '─────────────────────────────\n',
@@ -345,7 +345,7 @@ const DOCS = [
     attack: 'Podmiany glifów OCR (l↔1, O↔0) wewnątrz PESEL, NIP i rachunku: regexy cyfrowe wypadają całkowicie, a model widzi „słowa” zamiast liczb.',
     parts: [
       'PESEL dłużnika (skan niskiej jakości): ', PID('850307l2349'),
-      ' — w oryginale cyfra 1, w skanie mała litera „l”.\n',
+      ' – w oryginale cyfra 1, w skanie mała litera „l”.\n',
       'NIP wierzyciela: ', OID('524-987-12-3O'), ' (na końcu litera „O” zamiast zera).\n',
       'REGON: ', OID('38l245999'), '.\n',
       'Rachunek: ', IBAN('PL75 lO9O 2776 0000 0001 9876 5432'), '.\n',
@@ -388,7 +388,7 @@ const DOCS = [
 
   {
     name: 'adw_27_pozew',
-    attack: 'Kompletny pozew o zapłatę: kumulacja wszystkich mechanizmów naraz w długim dokumencie — chunking segmentów, powtórzenia encji, odmiana w uzasadnieniu i gęste dane w komparycji.',
+    attack: 'Kompletny pozew o zapłatę: kumulacja wszystkich mechanizmów naraz w długim dokumencie – chunking segmentów, powtórzenia encji, odmiana w uzasadnieniu i gęste dane w komparycji.',
     parts: [
       LOC('Toruń'), ', dnia 3 marca 2025 r.\n\n',
       ORG('Sąd Rejonowy w Toruniu\nI Wydział Cywilny'), '\n',
@@ -453,7 +453,7 @@ const DOCS = [
 
   {
     name: 'adw_29_umowa_kredytu',
-    attack: 'Fragment umowy kredytu: wysoka gęstość liczb, z których tylko część to PII — oprocentowanie i marża kuszą model do fałszywych kwot, a dane kredytobiorcy giną w szumie liczbowym.',
+    attack: 'Fragment umowy kredytu: wysoka gęstość liczb, z których tylko część to PII – oprocentowanie i marża kuszą model do fałszywych kwot, a dane kredytobiorcy giną w szumie liczbowym.',
     parts: [
       'UMOWA KREDYTU GOTÓWKOWEGO NR ', REF('KG/2025/02/00871'), '\n\n',
       'zawarta w ', LOC('Toruniu'), ' dnia 20 lutego 2025 r. pomiędzy:\n',
@@ -497,7 +497,7 @@ const DOCS = [
 
   {
     name: 'adw_31_komornik',
-    attack: 'Zawiadomienie komornicze: identyfikator pojazdu (rejestracja i VIN) oraz sygnatura KM — typy rzadkie, bez wzorca regex, w gęstym piśmie egzekucyjnym.',
+    attack: 'Zawiadomienie komornicze: identyfikator pojazdu (rejestracja i VIN) oraz sygnatura KM – typy rzadkie, bez wzorca regex, w gęstym piśmie egzekucyjnym.',
     parts: [
       'Komornik Sądowy przy ', ORG('Sądzie Rejonowym w Toruniu'), ' ',
       PN('Waldemar Sosna'), '\nSygn. akt ', REF('KM 1552/25'), '\n\n',
@@ -518,7 +518,7 @@ const DOCS = [
     name: 'adw_32_pulapki_prawne',
     attack: 'Pułapka na fałszywe pozytywy: cytowania przepisów, pozycje Dz.U. i sygnatury publikowanego orzecznictwa NIE są danymi osobowymi klienta i nie wolno ich maskować.',
     parts: [
-      'Zgodnie z art. 385¹ § 1 ustawy z dnia 23 kwietnia 1964 r. — Kodeks cywilny ',
+      'Zgodnie z art. 385¹ § 1 ustawy z dnia 23 kwietnia 1964 r. – Kodeks cywilny ',
       '(Dz.U. z 2024 r. poz. 1061 ze zm.) postanowienia umowy zawieranej z konsumentem ',
       'nieuzgodnione indywidualnie nie wiążą go, jeżeli kształtują jego prawa i obowiązki ',
       'w sposób sprzeczny z dobrymi obyczajami.\n\n',
@@ -550,7 +550,7 @@ const DOCS = [
 
   {
     name: 'adw_34_role_generyczne',
-    attack: 'Pułapka na fałszywe pozytywy: tekst wyłącznie z rolami procesowymi bez żadnego nazwiska — każde oznaczenie roli jako osoby to czysty fałszywy alarm.',
+    attack: 'Pułapka na fałszywe pozytywy: tekst wyłącznie z rolami procesowymi bez żadnego nazwiska – każde oznaczenie roli jako osoby to czysty fałszywy alarm.',
     parts: [
       'Powód wniósł o zabezpieczenie roszczenia. Pozwana zażądała oddalenia wniosku. ',
       'Biegły nie stawił się na termin, wobec czego przewodniczący zarządził przerwę. ',
@@ -569,7 +569,7 @@ const DOCS = [
       '.\n\nW stopce klient wpisał adres wielkimi literami: ', MAIL('BIURO@ZURAW-PARTNERZY.PL'),
       '.\nZgłoszenie wysłano na ', MAIL('reklamacje@miedziak-metal.pl'),
       '.\nW treści SMS podano adres w formie ukrytej: ', MAIL('a.wilk(at)poczta-testowa.pl'),
-      ' — zapis ma utrudnić spam, nie anonimizację.\n',
+      ' – zapis ma utrudnić spam, nie anonimizację.\n',
     ],
   },
 
@@ -589,7 +589,7 @@ const DOCS = [
 
   {
     name: 'adw_37_sygnatury_formaty',
-    attack: 'Sygnatury własnych spraw w różnych repertoriach (C, GC upr, K, Ns, KM): każda ma inny układ, a żadna nie ma wzorca regex — wykrycie zależy od modelu.',
+    attack: 'Sygnatury własnych spraw w różnych repertoriach (C, GC upr, K, Ns, KM): każda ma inny układ, a żadna nie ma wzorca regex – wykrycie zależy od modelu.',
     parts: [
       'Sprawy z udziałem dłużnika prowadzone są pod sygnaturami: ',
       REF('I C 1445/25'), ' (', ORG('Sąd Rejonowy w Toruniu'), '), ',
@@ -651,7 +651,7 @@ function selfCheck(name, text, expected) {
       throw new Error(`${name}: overlapping expected entities at ${sorted[i].start}`);
     }
   }
-  if (/\r/.test(text)) throw new Error(`${name}: CR found — corpus must be LF-only`);
+  if (/\r/.test(text)) throw new Error(`${name}: CR found – corpus must be LF-only`);
 }
 
 async function main() {
@@ -682,7 +682,7 @@ poprawne sumy kontrolne, ale nie należą do nikogo.
 
 Cel: korpus ATAKUJE sito detekcji, zamiast je potwierdzać. Każdy dokument
 łamie jeden konkretny mechanizm (kolumna „wektor ataku”). Offsety w
-\`*.expected.json\` to jednostki UTF-16 względem tekstu z końcami linii LF —
+\`*.expected.json\` to jednostki UTF-16 względem tekstu z końcami linii LF –
 tak samo jak w \`test-data/synthetic\` (strażnik: \`src/eval/ground-truth.test.js\`).
 
 Uruchomienie ewaluacji na tym korpusie:
@@ -701,7 +701,7 @@ EVAL-RECALL-AUDIT.md):
   vs dane klienta” jest nadawana dopiero w rejestrze przecieków, nie w GT);
 - sygnatury WŁASNYCH spraw i numery dokumentów → \`DOCUMENT_REFERENCE\`;
   cytowania publikowanego orzecznictwa i przepisów (art., Dz.U., sygnatury
-  uchwał) NIE są anotowane — to pułapki na fałszywe pozytywy;
+  uchwał) NIE są anotowane – to pułapki na fałszywe pozytywy;
 - wynagrodzenia → \`FINANCIAL_AMOUNT\` (precedens: pismo_05);
 - pełny blok adresowy = jeden \`POSTAL_ADDRESS\`; samodzielna miejscowość =
   \`LOCATION\`; encje zagnieżdżone w większym spanie nie są anotowane osobno;
