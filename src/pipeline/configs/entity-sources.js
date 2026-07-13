@@ -84,16 +84,16 @@ export const ENTITY_SOURCES = {
   // (type-weights.js), well above the A8 safety-net floor, but a source not
   // listed here is still dropped outright by sourceFilterStep regardless of
   // score, so omitting 'lexicon' would silently discard every candidate the
-  // new step emits. Added incrementally, one category per commit, as
-  // special-category-lexicon.json grows.
+  // new step emits. Landed incrementally, one category per commit
+  // (feature/recall-b3), as special-category-lexicon.json grew.
   HEALTH_DATA:              ['multilang-fp32', 'lexicon'], // The only model that catches all
   GENETIC_DATA:             ['polish-fp16'],
   BIOMETRIC_DATA:           ['polish-fp16'],
-  RELIGION_OR_BELIEF:       ['polish-fp16'],
-  POLITICAL_OPINION:        ['polish-fp16'],
-  SEXUAL_ORIENTATION:       ['polish-fp16'],
+  RELIGION_OR_BELIEF:       ['polish-fp16', 'lexicon'],
+  POLITICAL_OPINION:        ['polish-fp16', 'lexicon'],
+  SEXUAL_ORIENTATION:       ['polish-fp16', 'lexicon'],
   TRADE_UNION_MEMBERSHIP:   ['polish-fp16', 'lexicon'],
-  ETHNIC_ORIGIN:            ['polish-fp16'],
+  ETHNIC_ORIGIN:            ['polish-fp16', 'lexicon'],
   CRIMINAL_OFFENCE_DATA:    ['polish-fp16', 'lexicon'],
 };
 

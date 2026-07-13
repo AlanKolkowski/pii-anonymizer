@@ -155,6 +155,32 @@ describe('findSpecialCategoryEntities — boundary safety (real corpus near-miss
   });
 });
 
+describe('findSpecialCategoryEntities — boundary safety (remaining art. 9 categories: religion/political/orientation/ethnic)', () => {
+  // RECALL-90-DESIGN.md §2.3 pkt 5: "krótka zamknięta lista fraz... świadomie
+  // minimalna". Each of these four anchors sits on a word with a dominant,
+  // unrelated legal-writing sense — proven here, not just asserted.
+  it('excludes "wyznanie winy" (confession of guilt) from RELIGION_OR_BELIEF', () => {
+    expect(findSpecialCategoryEntities('Oskarżony odmówił złożenia wyznania winy przed sądem.')).toEqual([]);
+  });
+
+  it('requires "politycz-": bare "pogląd" (the court/doctrine\'s legal view) does not match POLITICAL_OPINION', () => {
+    // The single most common sense of "pogląd/poglądy" in Polish legal
+    // writing is "pogląd sądu/doktryny" (a legal position), not a political
+    // opinion — RECALL-90-DESIGN.md §2.3 does not actually give a literal
+    // pattern for this category (only the category name); this guard is
+    // the reason a literal "poglądy <dopełnienie>" reading was rejected.
+    expect(findSpecialCategoryEntities('Sąd Najwyższy wyraził pogląd, że przepis należy interpretować rozszerzająco.')).toEqual([]);
+  });
+
+  it('requires "seksualn-": "orientację rynkową" (market orientation) does not match SEXUAL_ORIENTATION', () => {
+    expect(findSpecialCategoryEntities('Spółka zmienia orientację rynkową w związku z nową strategią sprzedaży.')).toEqual([]);
+  });
+
+  it('requires "etniczn-": a certificate of goods origin does not match ETHNIC_ORIGIN', () => {
+    expect(findSpecialCategoryEntities('Towar posiada świadectwo pochodzenia potwierdzone przez izbę handlową.')).toEqual([]);
+  });
+});
+
 describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden regression', () => {
   // EVAL-RECALL-AUDIT.md leaks #2, #11, #30 all come from this document.
   // Read straight from test-data/adversarial so this can never drift from

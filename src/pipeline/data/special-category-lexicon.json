@@ -124,6 +124,46 @@
       "exampleNegative": "Nieruchomość należy do pozwanego na podstawie umowy darowizny z 2018 roku.",
       "mustCover": "Solidarność",
       "note": "Ta sama ochrona co union-czlonek: 'należeć do' bez wskaźnika związkowego to zwykłe 'być własnością/przynależeć', najpospolitsza konstrukcja prawnicza opisująca własność."
+    },
+    {
+      "id": "religion-wyznanie",
+      "category": "RELIGION_OR_BELIEF",
+      "pattern": "wyznani(?:e|a)(?!\\s+winy)",
+      "description": "wyznanie/wyznania <religia> (krótka lista minimalna, patrz RECALL-90-DESIGN.md §2.3 pkt 5)",
+      "examplePositive": "Świadek oświadczył, że jest wyznania ewangelicko-augsburskiego.",
+      "exampleNegative": "Oskarżony odmówił złożenia wyznania winy przed sądem.",
+      "mustCover": "ewangelicko-augsburskiego",
+      "note": "Wyklucza 'wyznanie winy' (przyznanie się do winy) — jedyna znana kolizja znaczeniowa tego słowa w języku prawniczym."
+    },
+    {
+      "id": "political-poglady",
+      "category": "POLITICAL_OPINION",
+      "pattern": "(?:poglądów|poglądy|przekonań|przekonania)\\s+polityczn(?:ych|e)",
+      "description": "poglądy/przekonania polityczne <opis> (krótka lista minimalna)",
+      "examplePositive": "Świadek zeznał, że został zwolniony z pracy z uwagi na poglądy polityczne sprzeciwiające się rządzącej koalicji.",
+      "exampleNegative": "Sąd Najwyższy wyraził pogląd, że przepis art. 385¹ k.c. należy interpretować rozszerzająco.",
+      "mustCover": "sprzeciwiające się rządzącej koalicji",
+      "note": "RECALL-90-DESIGN.md §2.3 nie podaje literalnego wzorca dla tej kategorii (tylko nazwę 'poglądy') — bare 'pogląd/poglądy' to w piśmiennictwie prawniczym w ogromnej większości 'pogląd sądu/doktryny' (stanowisko prawne), nie opinia polityczna; wzorzec świadomie wymaga kwalifikatora 'politycz-', inaczej byłby to jeden z największych generatorów FP w całym leksykonie."
+    },
+    {
+      "id": "orientation-seksualna",
+      "category": "SEXUAL_ORIENTATION",
+      "pattern": "orientacj(?:i|a|ę|ą)\\s+seksualn(?:ej|a|ą)",
+      "description": "orientacja/orientacji seksualna/-ej <opis> (krótka lista minimalna)",
+      "examplePositive": "Powód wskazał, że ujawnił pracodawcy orientację seksualną jako osoba biseksualna, co doprowadziło do jego zwolnienia.",
+      "exampleNegative": "Spółka zmienia orientację rynkową w związku z nową strategią sprzedaży.",
+      "mustCover": "biseksualna",
+      "note": "Wymaga kwalifikatora 'seksualn-' — bare 'orientacja/orientacji' ma wiele znaczeń niezwiązanych (rynkowa, w terenie, zawodowa)."
+    },
+    {
+      "id": "ethnic-narodowosc-pochodzenie",
+      "category": "ETHNIC_ORIGIN",
+      "pattern": "(?:narodowości|pochodzenia\\s+etniczn(?:ego|ym))",
+      "description": "narodowość / pochodzenie etniczne <opis> (krótka lista minimalna)",
+      "examplePositive": "Świadek zeznał, że był szykanowany z powodu swojej narodowości romskiej.",
+      "exampleNegative": "Towar posiada świadectwo pochodzenia potwierdzone przez izbę handlową.",
+      "mustCover": "romskiej",
+      "note": "Bare 'pochodzenia' wymaga kwalifikatora 'etniczn-' — bez niego to najczęściej pochodzenie towaru/środków (dokumenty handlowe, AML), nie dana o osobie."
     }
   ]
 }
