@@ -45,6 +45,37 @@ function isDocumentHeaderSpan(spanText) {
   return m ? HEADER_LEMMAS.has(m[0].toUpperCase()) : false;
 }
 
+function overlapsAny(candidate, existingEntities) {
+  return existingEntities.some((e) => e.start < candidate.end && candidate.start < e.end);
+}
+
+// Gap-filling guard, added after measurement (RECALL-B2-NOTES.md): a
+// case-folded candidate is dropped if the main pass already produced ANY
+// entity overlapping its span, of ANY type, regardless of score. Without
+// this, case-folded's redundant re-detection of a span the main pass
+// *already* covers can still win deduplicateEntities' type-agnostic,
+// order-sensitive arbitration (src/anonymizer.js — same-start candidates
+// sorted by score, "close scores -> prefer wider span") and evict a
+// correct candidate in favor of a worse one case-folded itself produced
+// (measured case: a folded segment's model output disagreed with itself,
+// LOCATION vs POSTAL_ADDRESS, on the exact same address span; LOCATION's
+// higher score let it win the sort-order tie-break against the main pass's
+// already-correct POSTAL_ADDRESS, and the arriving POSTAL_ADDRESS
+// candidate from case-folded itself then lost the *equal*-width tie
+// against that wrong LOCATION winner — "close scores -> wider span" only
+// overrides on strictly-greater width). This is not a special case to
+// patch around: it is the faithful reading of the module's own diagnosis
+// (RECALL-90-DESIGN.md §2.2 — both models "lose the signal" on qualifying
+// segments) — case-folded exists to fill gaps the main pass has *no*
+// opinion on, not to relitigate spans it already covered, however
+// imperfectly. Any genuine boundary truncation the main pass leaves behind
+// (e.g. a POSTAL_ADDRESS missing its trailing city) is left to the
+// existing backfill/rescan mechanism, which does not carry this risk since
+// it only ever repeats an *already-accepted* value.
+function fillsGap(candidate, mainPassEntities) {
+  return !overlapsAny(candidate, mainPassEntities);
+}
+
 /**
  * B2 (RECALL-90-DESIGN.md §2.2): second NER pass over uppercase segments
  * folded to Title Case, so both models see naturally-capitalised text where
@@ -101,6 +132,7 @@ export function createCaseFoldedNerStep(sources, loadModel, options = {}) {
     const candidates = rawEntities
       .filter((e) => ALLOWED_TYPES.has(e.entity_group))
       .filter((e) => e.entity_group !== 'ORGANIZATION_NAME' || !isDocumentHeaderSpan(ctx.text.slice(e.start, e.end)))
+      .filter((e) => fillsGap(e, ctx.entities))
       .map((e) => ({ ...e, source: CASE_FOLDED_SOURCE }));
 
     return { ...ctx, entities: [...ctx.entities, ...candidates] };

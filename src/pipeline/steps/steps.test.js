@@ -616,6 +616,59 @@ describe('createCaseFoldedNerStep', () => {
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].source).toBe('case-folded');
   });
+
+  it('drops a candidate whose span overlaps an entity the main pass already produced, of ANY type (gap-filling guard)', async () => {
+    // Reproduces the measured regression (RECALL-B2-NOTES.md): the main
+    // pass already has an (imperfect but real) POSTAL_ADDRESS here; a
+    // case-folded LOCATION candidate for the same span must not be allowed
+    // to compete for it in dedup, or it can win and evict the correct type.
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Zus Oddział');
+        if (idx < 0) return [];
+        return [{ entity_group: 'LOCATION', start: idx, end: idx + 'Zus Oddział'.length, score: 0.98 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'Za pośrednictwem: ZUS Oddział w Łodzi';
+    const zusStart = text.indexOf('ZUS');
+    const ctx = {
+      text,
+      segments: [{ text, offset: 0 }],
+      // Main pass already found something overlapping "ZUS" — exact
+      // type/value don't matter, only that a span is already claimed.
+      entities: [{ entity_group: 'ORGANIZATION_NAME', start: zusStart, end: zusStart + 3, score: 0.9, source: 'polish-fp16' }],
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    const newOnes = result.entities.filter((e) => e.source === 'case-folded');
+    expect(newOnes).toEqual([]);
+  });
+
+  it('still contributes a candidate that does not overlap anything the main pass already found', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Zakładu Ubezpieczeń Społecznych');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Zakładu Ubezpieczeń Społecznych'.length, score: 0.9 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH';
+    const ctx = {
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [], // main pass found nothing at all here — the target scenario
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].source).toBe('case-folded');
+  });
 });
 
 describe('nerStep token budget', () => {
