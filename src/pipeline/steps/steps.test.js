@@ -700,6 +700,40 @@ describe('createCaseFoldedNerStep', () => {
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].source).toBe('case-folded');
   });
+
+  it('drops a bare identifier-label acronym (measured: "PESEL" repeated as a field label scored ORGANIZATION_NAME, adw_09_pesel_formaty)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Pesel');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Pesel'.length, score: 0.91 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'PESEL: 92071314764 ORAZ NIP FIRMY';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('does not drop a candidate that merely contains an identifier-label word as part of a longer, real span', async () => {
+    // Guard is whole-span, not substring — "Firma Pesel Group" (contrived,
+    // but proves the check isn't accidentally substring-based).
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Firma Pesel Group');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Firma Pesel Group'.length, score: 0.9 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'FIRMA PESEL GROUP SPÓŁKA AKCYJNA';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+  });
 });
 
 describe('nerStep token budget', () => {

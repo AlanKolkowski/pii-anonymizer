@@ -31,42 +31,70 @@ const SECTION_MARKERS = new Set([
 ]);
 const LEADING_TOKEN_WITH_DOT_RE = /^(\p{L}+)\./u;
 
+// Bare identifier-LABEL acronyms — the word this system itself uses to
+// label a DIFFERENT entity type's value (PERSON_IDENTIFIER: "PESEL";
+// ORGANIZATION_IDENTIFIER: "NIP"/"REGON"/"KRS"; BANK_ACCOUNT_IDENTIFIER:
+// "IBAN"/"NRB"/"SWIFT"/"BIC") is never itself that entity. Measured:
+// adw_09_pesel_formaty repeats "PESEL:" as a field label ahead of four
+// separate PESEL values; the folded pass scored the bare label itself
+// ORGANIZATION_NAME (0.91), and PERSON_IDENTIFIER's caseInsensitiveBackfill
+// then propagated that one mistake to the other three literal "PESEL"
+// occurrences via the 'rescan' source (src/pipeline/steps/backfill.js) —
+// traced with a diff against a fresh baseline run of the same document,
+// not assumed: TP and FN were bit-for-bit identical to baseline, all four
+// extra FPs were this one cascade. Closed list, not a general acronym
+// blocklist — deliberately limited to labels THIS SYSTEM already has a
+// dedicated entity type for (a principled boundary, not "acronyms observed
+// to cause problems"); a same-shaped mistake on an acronym with no such
+// home (e.g. "MRI" scored PERSON_NAME once on the synthetic corpus) is
+// left as documented residual noise in RECALL-B2-NOTES.md rather than
+// grown into an ad hoc list chasing individual observations.
+const IDENTIFIER_LABEL_ACRONYMS = new Set(['PESEL', 'NIP', 'REGON', 'KRS', 'IBAN', 'NRB', 'SWIFT', 'BIC']);
+
+function isBareIdentifierLabel(spanText) {
+  return IDENTIFIER_LABEL_ACRONYMS.has(spanText.trim().toUpperCase());
+}
+
 // Structural-marker FP guard (RECALL-90-DESIGN.md §2.2 pkt 5, extended
 // after measurement — RECALL-B2-NOTES.md): a candidate from the case-folded
-// source whose span *opens* with either (a) a document-type lemma ("UMOWA
-// ...", "POZEW ...", "PEŁNOMOCNICTWO ...") or (b) a numbered-section marker
-// ("I. ...", "IV. ...") is a piece of document scaffolding, not PII —
-// reject the whole candidate, however confidently the folded pass scored
-// it. Two related but distinct failure modes converge on the same shape
-// (leading token + what follows):
-//   - Lemma case: "UMOWA KREDYTU GOTÓWKOWEGO" scored ORGANIZATION_NAME
-//     (RECALL-90-DESIGN.md §5.2, the original motivating example) and
-//     "PEŁNOMOCNICTWO PROCESOWE" scored PERSON_ROLE_OR_TITLE (measured on
-//     pismo_03 — "pełnomocnictwo" the document vs "pełnomocnik" the role is
-//     a one-letter-away confusion for a model reading Title Case text).
-//   - Section-marker case: "IV. ŻĄDANIE" / "I. PRZYCZYNA" scored
-//     PERSON_NAME — structurally identical to the "J. Kowalski"
-//     initial-plus-surname pattern once folded ("Iv. Żądanie"), which is
-//     exactly the shape PERSON_NAME candidates are expected to have.
-// Applied across all ALLOWED_TYPES (not just the type it was first observed
-// on) because the mechanism — folded document scaffolding resembling SOME
-// entity shape — isn't specific to one type; only the *lemma list itself*
-// stays domain-specific (chosen so none of its entries are plausible
-// surnames/place names/org names, so widening its type scope costs nothing
-// measured on either corpus).
+// source whose span is document scaffolding, not PII, is rejected however
+// confidently the folded pass scored it. Three related but distinct
+// failure modes, checked in isStructuralMarkerSpan:
+//   - Lemma case (span *opens* with a document-type lemma): "UMOWA KREDYTU
+//     GOTÓWKOWEGO" scored ORGANIZATION_NAME (RECALL-90-DESIGN.md §5.2, the
+//     original motivating example) and "PEŁNOMOCNICTWO PROCESOWE" scored
+//     PERSON_ROLE_OR_TITLE (measured on pismo_03 — "pełnomocnictwo" the
+//     document vs "pełnomocnik" the role is a one-letter-away confusion for
+//     a model reading Title Case text).
+//   - Section-marker case (span *opens* with a numbered-section marker):
+//     "IV. ŻĄDANIE" / "I. PRZYCZYNA" scored PERSON_NAME — structurally
+//     identical to the "J. Kowalski" initial-plus-surname pattern once
+//     folded ("Iv. Żądanie"), which is exactly the shape PERSON_NAME
+//     candidates are expected to have.
+//   - Identifier-label case (span *is, in full,* a bare label acronym): see
+//     isBareIdentifierLabel above.
+// Applied across all ALLOWED_TYPES (not just the type each was first
+// observed on) because the mechanism — folded document scaffolding
+// resembling SOME entity shape — isn't specific to one type; only the
+// *lemma list itself* stays domain-specific (chosen so none of its entries
+// are plausible surnames/place names/org names, so widening its type scope
+// costs nothing measured on either corpus).
 //
-// Scoped to the candidate's *first word only* (not "does this span contain
-// a marker anywhere") so a real entity immediately adjacent to a generic
-// lead-in on the same all-caps line survives, as long as the model's own
-// span boundary doesn't start on the marker — see pismo_03's "ODWOŁANIE OD
-// DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH", where this guard must NOT
-// reject "Zakładu Ubezpieczeń Społecznych". "ODWOŁANIE" is deliberately
-// absent from document-header-lemmas.json for exactly this reason: that
-// header has no punctuation between the lead-in and the real org name, so
-// if the model ever merged the two into one span, adding "ODWOŁANIE" to
-// the list would make this guard reject the whole thing — trading a true
-// positive away to suppress a false one that, unlike the UMOWA KREDYTU
-// case, has no evidence of actually occurring.
+// The lemma and section-marker checks are scoped to the candidate's *first
+// word only* (not "does this span contain a marker anywhere") so a real
+// entity immediately adjacent to a generic lead-in on the same all-caps
+// line survives, as long as the model's own span boundary doesn't start on
+// the marker — see pismo_03's "ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ
+// SPOŁECZNYCH", where this guard must NOT reject "Zakładu Ubezpieczeń
+// Społecznych". "ODWOŁANIE" is deliberately absent from document-header-
+// lemmas.json for exactly this reason: that header has no punctuation
+// between the lead-in and the real org name, so if the model ever merged
+// the two into one span, adding "ODWOŁANIE" to the list would make this
+// guard reject the whole thing — trading a true positive away to suppress
+// a false one that, unlike the UMOWA KREDYTU case, has no evidence of
+// actually occurring. The identifier-label check is whole-span instead
+// (see isBareIdentifierLabel) since the failure mode there is the model
+// tagging the bare label on its own, not a label-prefixed longer phrase.
 //
 // Known residual risk, accepted and documented rather than silently
 // present: a genuine single-initial Polish name ("I. Iwańska") inside a
@@ -75,6 +103,7 @@ const LEADING_TOKEN_WITH_DOT_RE = /^(\p{L}+)\./u;
 // zero such GT entities exist in either — so this costs nothing *measured*;
 // flagged here for whoever extends the corpus with that shape later.
 function isStructuralMarkerSpan(spanText) {
+  if (isBareIdentifierLabel(spanText)) return true;
   const word = spanText.match(FIRST_WORD_RE);
   if (word && HEADER_LEMMAS.has(word[0].toUpperCase())) return true;
   const dotted = spanText.match(LEADING_TOKEN_WITH_DOT_RE);
