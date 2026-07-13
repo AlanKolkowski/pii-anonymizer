@@ -1,0 +1,52 @@
+{
+  "_comment": "B3 (RECALL-90-DESIGN.md §2.3): context-anchored regex patterns for art. 9-10 RODO special-category facts (health, criminal record, trade union — the three categories with proven full leaks, EVAL-RECALL-AUDIT.md #2/#11/#30 — plus a deliberately minimal closed list for the remaining art. 9 categories: religion, political opinion, sexual orientation, ethnic origin). Unlike role-lexicon.json (flat lemma -> fixed span), each `pattern` here matches only the ANCHOR (the contextual trigger); the matcher (special-category-lexicon.js) extends the span forward from the anchor to the nearest phrase-ending punctuation or coordinating conjunction, capped at 60 chars past the anchor — the span must cover the special FACT (disease name / offence / union name), not the whole sentence. `mustCover` is the substring of `examplePositive` that the gate cares about most: the actual sensitive fact, which the final span must contain and which must NOT survive in the residue (special-category-lexicon.test.js asserts this straight from this file, per entry). No disease/religion/orientation taxonomy is enumerated anywhere in this file, by design (RECALL-90-DESIGN.md §2.3 pkt 4): every pattern below is precise from its CONTEXT (the anchor phrase itself), never from a list of the sensitive values it might catch.",
+  "entries": [
+    {
+      "id": "criminal-skazany-za",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "skazan(?:y|a|ego|ej|emu|ym|ą)(?:\\s+prawomocnym\\s+wyrokiem)?\\s+za",
+      "description": "skazany/-a (prawomocnym wyrokiem)? za <czyn>",
+      "examplePositive": "Pozwany był uprzednio skazany prawomocnym wyrokiem za przywłaszczenie mienia, co ma znaczenie dla oceny jego wiarygodności.",
+      "exampleNegative": "W umowie najmu wskazano czynsz płatny do 10. dnia każdego miesiąca.",
+      "mustCover": "przywłaszczenie mienia"
+    },
+    {
+      "id": "criminal-ukarany-za",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "ukaran(?:y|a|ego|ej|emu|ym|ą)\\s+za",
+      "description": "ukarany/-a za <czyn/wykroczenie>",
+      "examplePositive": "Kierowca został ukarany za przekroczenie dozwolonej prędkości.",
+      "exampleNegative": "Strony uzgodniły karencję w spłacie pierwszej raty pożyczki.",
+      "mustCover": "przekroczenie dozwolonej prędkości"
+    },
+    {
+      "id": "criminal-odbywa-kare",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "odbywa(?:ł|ła)?\\s+karę",
+      "description": "odbywa(ł/ła) karę <opis kary>",
+      "examplePositive": "Pozwany odbywa karę pozbawienia wolności w Zakładzie Karnym nr 2.",
+      "exampleNegative": "Zarząd spółki odbywa posiedzenia raz w miesiącu zgodnie ze statutem.",
+      "mustCover": "pozbawienia wolności w Zakładzie Karnym nr 2"
+    },
+    {
+      "id": "criminal-nie-karany",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "(?:nie)?karan(?:y|a|ego|ej|emu|ym|ą)",
+      "description": "(nie)karany/-a — oświadczenie o (nie)karalności jest też daną art. 10 (informacja o istnieniu/braku wyroków)",
+      "examplePositive": "Oskarżony Seweryn Kowal, lat 43, ślusarz, żonaty, dwoje dzieci, niekarany.",
+      "exampleNegative": "Wykonawca był wielokrotnie nagradzany za terminowość realizacji inwestycji.",
+      "mustCover": "niekarany",
+      "note": "Bare 'karany/niekarany' celowo w zakresie (spec explicite: oświadczenie o niekaralności to dana art. 10) mimo braku dopełnienia w typowym przypadku — span wtedy to samo słowo, stąd mustCover == kotwica."
+    },
+    {
+      "id": "criminal-wyrok-w-sprawie-karnej",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "wyrok(?:iem)?\\s+w\\s+sprawie\\s+karnej",
+      "description": "wyrok(iem)? w sprawie karnej <sygnatura?>",
+      "examplePositive": "Powódka powołała się na wyrok w sprawie karnej dotyczący oszustwa na szkodę pozwanego.",
+      "exampleNegative": "Sąd powołał się na wyrok z dnia 14 maja 2021 r. (V CSKP 12/21) dotyczący wykładni art. 385¹ k.c.",
+      "mustCover": "oszustwa",
+      "note": "Wymaga literalnie 'w sprawie karnej' — bare 'wyrok' to w tym korpusie w większości cytowania orzecznictwa cywilnego (adw_32), nie dana osobowa. Uwaga: dopełnienie zawierające skrót ze średnikiem/kropką w środku (np. 'sygn. akt') może przedwcześnie uciąć span na kropce skrótu — znane, udokumentowane ograniczenie algorytmu granicy (brak świadomości skrótów, w przeciwieństwie do trimTrailingPunctuationStep)."
+    }
+  ]
+}

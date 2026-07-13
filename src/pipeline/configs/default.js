@@ -6,6 +6,7 @@ import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createLexiconStep } from '../steps/lexicon.js';
+import { createSpecialCategoryLexiconStep } from '../steps/special-category-lexicon.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
 import { createThresholdStep } from '../steps/threshold.js';
 import { refineFinancialAmountStep } from '../steps/refine-financial-amount.js';
@@ -57,6 +58,7 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
       createNerStep(hfSubset, loadModel, options),
       createRegexStep(regexActive),
       createLexiconStep(lexiconActive),
+      createSpecialCategoryLexiconStep(lexiconActive),
     ] },
   ];
 }
