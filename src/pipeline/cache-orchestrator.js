@@ -5,6 +5,7 @@ import {
   createNerSteps,
   createPostprocessSteps,
 } from './configs/default.js';
+import { createCaseFoldedNerStep } from './steps/case-folded-ner.js';
 
 export async function sha256Hex(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -90,6 +91,12 @@ export async function classifyWithCache({
   const orderedMissingHf = sortSources ? sortSources(missingHf) : missingHf;
   const regexNeeded = needed.includes('regex');
   const lexiconNeeded = needed.includes('lexicon');
+  // B2 (RECALL-90-DESIGN.md §2.2): like regex/lexicon, computed once per
+  // text and cached on its own field rather than under bySource — unlike
+  // regex/lexicon it DOES need HF models (both of them, together; see the
+  // dedicated block below and createCaseFoldedNerStep's own doc comment for
+  // why it can't be driven from the per-source loop the way the main pass is).
+  const caseFoldedNeeded = needed.includes('case-folded');
 
   emit('pipeline:load:start');
   if (prepareModels) {
@@ -129,6 +136,7 @@ export async function classifyWithCache({
   // --- Stage 2: load model sessions, then run pure inference NER for missing sources ---
   let regex = hit ? cache.regex : null;
   let lexicon = hit ? cache.lexicon : null;
+  let caseFolded = hit ? cache.caseFolded : null;
   let modelHandles = new Map();
 
   emit('pipeline:model-load:start');
@@ -179,6 +187,7 @@ export async function classifyWithCache({
         const ctx = await runPipeline(
           makeSeededCtx({ text: normalizedText, segments, entities: [], modelHandles }),
           createNerSteps([source], false, false, loadModel, {
+            caseFoldedActive: false, // one model at a time here — see caseFoldedNeeded block below
             onInference: () => {
               completedInferences += 1;
               emitProgress({
@@ -200,7 +209,7 @@ export async function classifyWithCache({
     if (regexNeeded && regex === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([], true, false, loadModel),
+        createNerSteps([], true, false, loadModel, { caseFoldedActive: false }),
       );
       regex = ctx.entities;
     }
@@ -208,9 +217,24 @@ export async function classifyWithCache({
     if (lexiconNeeded && lexicon === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([], false, true, loadModel),
+        createNerSteps([], false, true, loadModel, { caseFoldedActive: false }),
       );
       lexicon = ctx.entities;
+    }
+
+    // B2: run once with every currently-required HF source together (not
+    // via createNerSteps — that would also re-run the main NER pass on
+    // requiredHf, duplicating bySource's own work). requiredHf, not
+    // orderedMissingHf: the folded pass is independent of which sources
+    // were already cached this round, and in the browser re-requesting an
+    // already-warm model is free (worker.js keeps sessions loaded across
+    // calls) — see createCaseFoldedNerStep's doc comment.
+    if (caseFoldedNeeded && caseFolded === null) {
+      const ctx = await runPipeline(
+        makeSeededCtx({ text: normalizedText, segments, entities: [] }),
+        [{ phase: 'ner', steps: [createCaseFoldedNerStep(requiredHf, loadModel)] }],
+      );
+      caseFolded = ctx.entities;
     }
   } finally {
     await disposeModelHandles(modelHandles);
@@ -218,7 +242,7 @@ export async function classifyWithCache({
   emit('pipeline:ner:end');
 
   // --- Stage 3: postprocess on the merged entity union ---
-  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? [])];
+  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? []), ...(caseFolded ?? [])];
   const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1
@@ -253,6 +277,6 @@ export async function classifyWithCache({
 
   return {
     ctx: finalCtx,
-    cache: { textHash: hash, normalizedText, segments, bySource, regex, lexicon },
+    cache: { textHash: hash, normalizedText, segments, bySource, regex, lexicon, caseFolded },
   };
 }
