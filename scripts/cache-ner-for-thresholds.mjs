@@ -71,6 +71,16 @@ async function main() {
       expected,
       nerCtx: { text: nerCtx.text, segments: nerCtx.segments, entities: nerCtx.entities },
     });
+    // Each iteration starts from a fresh ctx (no handle reuse across docs),
+    // so the sessions loaded for THIS doc are never touched again — but
+    // nothing was calling .dispose() on them (root cause of the "bad
+    // allocation" this script's whole existence works around, see header).
+    // Dispose here so native ORT memory is actually released each cycle.
+    if (nerCtx.modelHandles instanceof Map) {
+      for (const model of nerCtx.modelHandles.values()) {
+        await model.dispose?.();
+      }
+    }
   }
 
   await mkdir(CACHE_DIR, { recursive: true });
