@@ -67,11 +67,12 @@ describe('entity-sources config', () => {
 
   // A12 is "free": enabling art. 9-10 adds no model beyond the two already
   // required by the identity/contact defaults, so it costs nothing at load time.
-  // 'lexicon' (B4-lite) is listed alongside but is not an HF model either — a
-  // bundled JSON lexicon, zero download cost — so it doesn't break "free".
+  // 'lexicon' (B4-lite) and 'case-folded' (B2) are listed alongside but are not
+  // HF models either — a bundled JSON lexicon and a relabeling of the two
+  // existing models' own output, zero download cost — so neither breaks "free".
   it('enabling art. 9-10 by default adds no new model source (A12 is free)', () => {
     expect(requiredSources(defaultEnabledEntities()).sort())
-      .toEqual(['lexicon', 'multilang-fp32', 'polish-fp16', 'regex']);
+      .toEqual(['case-folded', 'lexicon', 'multilang-fp32', 'polish-fp16', 'regex']);
   });
 
   it('requiredSources is empty for empty selection', () => {
@@ -80,7 +81,7 @@ describe('entity-sources config', () => {
 
   it('requiredSources returns union of aliases for selected entities', () => {
     const got = requiredSources(['PERSON_NAME', 'EMAIL_ADDRESS']).sort();
-    expect(got).toEqual(['multilang-fp32', 'polish-fp16', 'regex'].sort());
+    expect(got).toEqual(['case-folded', 'multilang-fp32', 'polish-fp16', 'regex'].sort());
   });
 
   it('requiredSources ignores unknown entity types', () => {

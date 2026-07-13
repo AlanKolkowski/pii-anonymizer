@@ -43,10 +43,24 @@ export const SOURCES = withDtypeOverride({
   'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
   'lexicon':        { kind: 'lexicon' },
+  // B2 (RECALL-90-DESIGN.md §2.2): not a model of its own — createCaseFoldedNerStep
+  // reuses multilang-fp32/polish-fp16 directly (see configs/default.js) and
+  // relabels their output. Registered here only so requiredSources()/
+  // snapshotConfig() (src/eval/run.js) can resolve and document it like any
+  // other source; resolveActiveSources()'s kind switch has no branch for it
+  // on purpose — the step self-gates on segment content, not an active flag
+  // computed from this registry (see createCaseFoldedNerStep's own doc comment).
+  'case-folded':    { kind: 'case-folded' },
 });
 
 export const ENTITY_SOURCES = {
-  PERSON_NAME:              ['multilang-fp32'],
+  // B2 (RECALL-90-DESIGN.md §2.2): 'case-folded' added to its five contract
+  // types below (PERSON_NAME, ORGANIZATION_NAME, POSTAL_ADDRESS, LOCATION,
+  // PERSON_ROLE_OR_TITLE) for the same reason B3/B4-lite's 'lexicon' entries
+  // are — sourceFilterStep drops any candidate whose source isn't listed
+  // here for its type, regardless of score, so omitting it would silently
+  // discard every candidate createCaseFoldedNerStep emits.
+  PERSON_NAME:              ['multilang-fp32', 'case-folded'],
   DATE_OF_BIRTH:            ['polish-fp16'],
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
@@ -56,14 +70,14 @@ export const ENTITY_SOURCES = {
   // threshold (weight >=4) — so a source NOT listed here is dropped outright by
   // sourceFilterStep regardless of score. Omitting 'lexicon' here would silently
   // discard every candidate the new step emits.
-  PERSON_ROLE_OR_TITLE:     ['multilang-fp32', 'lexicon'],
-  ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32'],
+  PERSON_ROLE_OR_TITLE:     ['multilang-fp32', 'lexicon', 'case-folded'],
+  ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32', 'case-folded'],
   ORGANIZATION_IDENTIFIER:  ['multilang-fp32', 'regex'],
   EMAIL_ADDRESS:            ['polish-fp16', 'regex'],
   PHONE_NUMBER:             ['polish-fp16', 'regex'],
   CONTACT_HANDLE:           ['polish-fp16'],
-  POSTAL_ADDRESS:           ['polish-fp16'],
-  LOCATION:                 ['polish-fp16'],
+  POSTAL_ADDRESS:           ['polish-fp16', 'case-folded'],
+  LOCATION:                 ['polish-fp16', 'case-folded'],
   GEO_LOCATION:             ['polish-fp16'],
   IP_ADDRESS:               ['polish-fp16'],
   DEVICE_IDENTIFIER:        ['multilang-fp32'],
