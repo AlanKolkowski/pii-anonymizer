@@ -73,5 +73,9 @@
     "target": 0.12
   },
 
-  "targetTotalEntities": { "min": 950, "max": 1150 }
+  "targetTotalEntities": {
+    "_comment": "RECALL-90-DESIGN.md §3.3 estimates ~1000-1100 entities across ~120-140 documents. In practice, clearing every byType/identifierSubtype/ocrClass minimum with a safety margin, using realistic multi-entity documents (not artificially dense single-purpose ones), overshoots that estimate — the per-type minimums are the actual hard contract (self-check refuses to write under any of them); the aggregate total is not independently capped. 'min' is a floor worth alerting on (sum of byType minimums, ~985); 'max' is descriptive headroom, not a refuse-if-over gate. See CORPUS-2.0-NOTES.md for the number actually generated.",
+    "min": 950,
+    "max": 2000
+  }
 }
