@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 20,
+    "text": "Co 9437/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 48,
+    "end": 65,
+    "text": "Czesława Jaskółka"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 73,
+    "end": 84,
+    "text": "75112324766"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 112,
+    "end": 122,
+    "text": "TPA 934132"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 136,
+    "end": 146,
+    "text": "KD 0138025"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 163,
+    "end": 176,
+    "text": "52434/89/9525"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 191,
+    "end": 235,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 241,
+    "end": 251,
+    "text": "0684448847"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 259,
+    "end": 268,
+    "text": "468114712"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 274,
+    "end": 284,
+    "text": "5990180014"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 318,
+    "end": 344,
+    "text": "21630394165561397483431047"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 386,
+    "end": 403,
+    "text": "8VMLWZWYL6TE7BGNA"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 422,
+    "end": 429,
+    "text": "PK S6RD"
+  }
+]

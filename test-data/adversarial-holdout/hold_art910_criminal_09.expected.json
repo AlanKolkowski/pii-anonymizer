@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 18,
+    "text": "Roman Struś"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 32,
+    "end": 39,
+    "text": "Koninie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 54,
+    "end": 109,
+    "text": "toczy się przeciwko niemu postępowanie karne o oszustwo"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 121,
+    "end": 175,
+    "text": "toczyło się przeciwko niej dochodzenie o zniesławienie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 187,
+    "end": 238,
+    "text": "skazany prawomocnie za jazdę w stanie nietrzeźwości"
+  }
+]

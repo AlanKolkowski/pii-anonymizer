@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 29,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 36,
+    "end": 79,
+    "text": "ul. Cicha 60/28, 63-765 Ostrów Wielkopolski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 155,
+    "end": 166,
+    "text": "Kąminśkiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 232,
+    "end": 243,
+    "text": "Kamińskiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 316,
+    "end": 325,
+    "text": "Kamińskim"
+  }
+]

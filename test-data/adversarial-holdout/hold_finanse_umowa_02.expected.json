@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "FV/2025/11/0285"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 50,
+    "text": "Turku"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 60,
+    "end": 92,
+    "text": "Bank Wielkopolski Spółka Akcyjna"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 98,
+    "end": 108,
+    "text": "7037088590"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 112,
+    "end": 129,
+    "text": "Czesława Jaskółka"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 136,
+    "end": 170,
+    "text": "ul. Parkowa 72/36, 60-161 Września"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 218,
+    "end": 228,
+    "text": "PLN 37.711"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 258,
+    "end": 270,
+    "text": "58.464,55 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 308,
+    "end": 314,
+    "text": "257 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 342,
+    "end": 370,
+    "text": "PL66249581306471727788394556"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 409,
+    "end": 421,
+    "text": "24 279,16 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 432,
+    "end": 502,
+    "text": "trzydzieści cztery tysięcy czterysta czterdzieści osiem złotych 00/100"
+  }
+]

@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Okręgowy w Koninie"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 43,
+    "text": "Ns 9159/24"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 80,
+    "end": 84,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 85,
+    "end": 89,
+    "text": "W.O."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 103,
+    "end": 116,
+    "text": "biegły sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 117,
+    "end": 121,
+    "text": "T.N."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 130,
+    "end": 143,
+    "text": "W. Piotrowski"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 145,
+    "end": 151,
+    "text": "lat 66"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 172,
+    "end": 176,
+    "text": "S.R."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 178,
+    "end": 190,
+    "text": "rozwiedziony"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 197,
+    "end": 227,
+    "text": "ul. Parkowa 50/33, 62-962 Piła"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 282,
+    "end": 300,
+    "text": "aplikant adwokacki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 301,
+    "end": 313,
+    "text": "B. Zieliński"
+  }
+]

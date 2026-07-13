@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 49,
+    "text": "P A Ń S T W O W A   I N S P E K C J A   P R A C Y"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 82,
+    "text": "P a w ł o w s k i"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 98,
+    "end": 109,
+    "text": "931O242594l"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 123,
+    "end": 138,
+    "text": "MarianPawłowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 220,
+    "end": 234,
+    "text": "Pawło-\nwskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 264,
+    "end": 278,
+    "text": "955253641758O4"
+  }
+]

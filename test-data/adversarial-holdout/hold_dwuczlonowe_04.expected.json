@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 23,
+    "text": "Sąd Rejonowy w Gnieźnie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 68,
+    "end": 89,
+    "text": "Gustaw Łada-Podgórski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 96,
+    "end": 129,
+    "text": "ul. Fabryczna 70, 60-090 Wolsztyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 161,
+    "end": 178,
+    "text": "Łada-Podgórskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 210,
+    "end": 228,
+    "text": "referendarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 262,
+    "end": 279,
+    "text": "Łada-Podgórskiemu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 285,
+    "end": 329,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 345,
+    "end": 362,
+    "text": "Łada-Podgórskiego"
+  }
+]

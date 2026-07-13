@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 20,
+    "text": "X K 789/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 48,
+    "end": 67,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 75,
+    "end": 86,
+    "text": "75052759066"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 114,
+    "end": 124,
+    "text": "SNF 495499"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 138,
+    "end": 148,
+    "text": "WT 8177688"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 165,
+    "end": 178,
+    "text": "96692/19/2643"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 193,
+    "end": 234,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 240,
+    "end": 250,
+    "text": "7275702306"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 258,
+    "end": 272,
+    "text": "55193345268032"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 278,
+    "end": 288,
+    "text": "8707285625"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 322,
+    "end": 350,
+    "text": "PL63703389046783717121590688"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 392,
+    "end": 409,
+    "text": "C48HE1Y4GWS58BTT6"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 428,
+    "end": 436,
+    "text": "PN 406WA"
+  }
+]

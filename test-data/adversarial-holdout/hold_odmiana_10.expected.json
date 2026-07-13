@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 36,
+    "text": "Urszula Górska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 43,
+    "end": 73,
+    "text": "ul. Cicha 36/22, 64-415 Leszno"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 93,
+    "end": 101,
+    "text": "Górskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 156,
+    "end": 167,
+    "text": "protokolant"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 178,
+    "end": 186,
+    "text": "Górskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 244,
+    "end": 256,
+    "text": "29 056,35 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 306,
+    "end": 320,
+    "text": "II ACa 3001/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 331,
+    "end": 339,
+    "text": "Górskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 418,
+    "end": 424,
+    "text": "Górską"
+  }
+]

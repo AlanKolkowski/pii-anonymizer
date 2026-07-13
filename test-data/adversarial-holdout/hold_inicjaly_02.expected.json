@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 43,
+    "text": "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 54,
+    "end": 69,
+    "text": "I K 3023/23 upr"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 106,
+    "end": 113,
+    "text": "adwokat"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 114,
+    "end": 118,
+    "text": "A.K."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 132,
+    "end": 136,
+    "text": "not."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 137,
+    "end": 141,
+    "text": "G.P."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 150,
+    "end": 154,
+    "text": "L.B."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 156,
+    "end": 162,
+    "text": "lat 59"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 183,
+    "end": 197,
+    "text": "Z. Lewandowski"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 199,
+    "end": 212,
+    "text": "stanu wolnego"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 219,
+    "end": 251,
+    "text": "ul. Brzozowa 50, 62-431 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 306,
+    "end": 316,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 317,
+    "end": 321,
+    "text": "C.W."
+  }
+]

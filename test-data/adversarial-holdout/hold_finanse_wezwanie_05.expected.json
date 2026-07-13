@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 37,
+    "text": "GC 4962/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 46,
+    "end": 62,
+    "text": "Marian Pawłowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 69,
+    "end": 102,
+    "text": "ul. Zielona 34/27, 63-000 Śmigiel"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 121,
+    "end": 133,
+    "text": "59.144,99 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 186,
+    "end": 199,
+    "text": "56 985,64 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 225,
+    "end": 237,
+    "text": "69.626,84 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 248,
+    "end": 312,
+    "text": "jedenaście tysięcy czterysta dwadzieścia dziewięć złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 335,
+    "end": 363,
+    "text": "PL25407327932473425569333733"
+  }
+]

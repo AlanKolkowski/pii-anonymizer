@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 67,
+    "end": 94,
+    "text": "Zygmunt Nałęcz-Korzeniewski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 101,
+    "end": 133,
+    "text": "ul. Kwiatowa 79, 60-317 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 165,
+    "end": 187,
+    "text": "Nałęcz-Korzeniewskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 219,
+    "end": 225,
+    "text": "syndyk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 259,
+    "end": 281,
+    "text": "Nałęcz-Korzeniewskiemu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 287,
+    "end": 331,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 347,
+    "end": 369,
+    "text": "Nałęcz-Korzeniewskiego"
+  }
+]

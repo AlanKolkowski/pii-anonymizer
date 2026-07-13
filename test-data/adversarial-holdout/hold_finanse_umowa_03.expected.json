@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "UD/2024/08/0666"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 56,
+    "text": "Krotoszynie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 66,
+    "end": 98,
+    "text": "Bank Wielkopolski Spółka Akcyjna"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 104,
+    "end": 114,
+    "text": "1258296088"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 118,
+    "end": 130,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 137,
+    "end": 184,
+    "text": "ul. Brzozowa 50/1, 62-197 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 232,
+    "end": 245,
+    "text": "70 149,46 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 275,
+    "end": 288,
+    "text": "32 454,95 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 326,
+    "end": 336,
+    "text": "PLN 11.249"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 364,
+    "end": 392,
+    "text": "PL75155017883736090097284517"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 431,
+    "end": 443,
+    "text": "54.470,72 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 454,
+    "end": 521,
+    "text": "dwadzieścia dwa tysięcy sześćset pięćdziesiąt siedem złotych 00/100"
+  }
+]

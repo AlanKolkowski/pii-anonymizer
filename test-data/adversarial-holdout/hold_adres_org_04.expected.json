@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 4,
+    "text": "Śrem"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 39,
+    "end": 54,
+    "text": "ACa 5735/25 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 64,
+    "end": 92,
+    "text": "Genowefa Bończa-Korzeniewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 93,
+    "end": 123,
+    "text": "ul. Ogrodowa 7/19, 62-731 Śrem"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 137,
+    "end": 178,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 179,
+    "end": 208,
+    "text": "ul. Słoneczna 7, 61-192 Konin"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 214,
+    "end": 224,
+    "text": "3534180385"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 226,
+    "end": 249,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 251,
+    "end": 280,
+    "text": "WIELKOPOLSKI URZĄD WOJEWÓDZKI"
+  }
+]

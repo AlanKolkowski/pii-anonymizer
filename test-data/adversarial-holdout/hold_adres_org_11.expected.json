@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 5,
+    "text": "Turek"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 42,
+    "end": 52,
+    "text": "KM 7671/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 62,
+    "end": 83,
+    "text": "Gustaw Łada-Podgórski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 84,
+    "end": 114,
+    "text": "ul. Słoneczna 74, 60-741 Turek"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 128,
+    "end": 164,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 165,
+    "end": 195,
+    "text": "ul. Zielona 14, 63-327 Kościan"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 201,
+    "end": 211,
+    "text": "9870508425"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 213,
+    "end": 236,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 238,
+    "end": 263,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 20,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 63,
+    "end": 69,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 71,
+    "end": 76,
+    "text": "Kania"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 116,
+    "end": 126,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 127,
+    "end": 140,
+    "text": "Emil Dzięcioł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 178,
+    "end": 186,
+    "text": "Dzięcioł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 236,
+    "end": 247,
+    "text": "Norbert Kot"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 256,
+    "end": 278,
+    "text": "Środzie Wielkopolskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 305,
+    "end": 314,
+    "text": "sędzia SO"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 316,
+    "end": 319,
+    "text": "Kot"
+  }
+]

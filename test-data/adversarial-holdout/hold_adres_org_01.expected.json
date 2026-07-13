@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Kościan"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 48,
+    "end": 61,
+    "text": "IX Nc 8240/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 71,
+    "end": 94,
+    "text": "Anastazja Pomian-Wolska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 95,
+    "end": 126,
+    "text": "ul. Wrzosowa 16, 61-169 Kościan"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 140,
+    "end": 176,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 177,
+    "end": 223,
+    "text": "ul. Fabryczna 11, 60-180 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 229,
+    "end": 239,
+    "text": "9665620244"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 241,
+    "end": 263,
+    "text": "Sąd Rejonowy w Lesznie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 265,
+    "end": 295,
+    "text": "ZAKŁAD UBEZPIECZEŃ SPOŁECZNYCH"
+  }
+]

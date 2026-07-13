@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Kaliszu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 42,
+    "text": "K 3821/25"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 79,
+    "end": 89,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 90,
+    "end": 103,
+    "text": "W. Piotrowski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 117,
+    "end": 135,
+    "text": "dyrektor generalny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 136,
+    "end": 140,
+    "text": "L.B."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 149,
+    "end": 161,
+    "text": "M. Szymański"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 163,
+    "end": 169,
+    "text": "lat 39"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 190,
+    "end": 194,
+    "text": "N.J."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 196,
+    "end": 217,
+    "text": "zamężna, dwoje dzieci"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 224,
+    "end": 256,
+    "text": "ul. Cicha 14/37, 60-485 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 311,
+    "end": 321,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 322,
+    "end": 333,
+    "text": "R. Kamiński"
+  }
+]

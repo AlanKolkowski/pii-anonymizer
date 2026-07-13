@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Klemens Karp"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 33,
+    "end": 39,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 54,
+    "end": 108,
+    "text": "toczyło się przeciwko niej dochodzenie o zniesławienie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 120,
+    "end": 153,
+    "text": "odbywał karę pozbawienia wolności"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 165,
+    "end": 201,
+    "text": "figuruje w Krajowym Rejestrze Karnym"
+  }
+]

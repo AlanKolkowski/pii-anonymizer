@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 20,
+    "text": "Ignacy Wróbel"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 34,
+    "end": 56,
+    "text": "Ostrowie Wielkopolskim"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 71,
+    "end": 111,
+    "text": "korzysta z rehabilitacji po udarze mózgu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 123,
+    "end": 164,
+    "text": "pozostaje pod stałą opieką kardiologiczną"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 176,
+    "end": 214,
+    "text": "zdiagnozowano nowotwór złośliwy piersi"
+  }
+]

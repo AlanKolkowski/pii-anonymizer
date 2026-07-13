@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 30,
+    "text": "Salomea Papuga"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 36,
+    "end": 48,
+    "text": "4.08.1951 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 50,
+    "end": 56,
+    "text": "lat 40"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 58,
+    "end": 65,
+    "text": "zamężna"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 86,
+    "end": 101,
+    "text": "+48 631 220 637"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 123,
+    "end": 137,
+    "text": "(67) 766-98-58"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 146,
+    "end": 178,
+    "text": "salomea.papuga@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 229,
+    "end": 252,
+    "text": "kontakt@przedsiębior.pl"
+  }
+]

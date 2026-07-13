@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 49,
+    "text": "P A Ń S T W O W A   I N S P E K C J A   P R A C Y"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 84,
+    "text": "W r ó b l e w s k a"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 100,
+    "end": 111,
+    "text": "7011O25ll99"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 125,
+    "end": 141,
+    "text": "BożenaWróblewska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 224,
+    "end": 236,
+    "text": "Wrób-\nlewską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 266,
+    "end": 275,
+    "text": "6966676l8"
+  }
+]

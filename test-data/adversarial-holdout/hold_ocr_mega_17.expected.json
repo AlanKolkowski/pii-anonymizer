@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 61,
+    "text": "P O W I A T O W Y   U R Z Ą D   P R A C Y   W   K A L I S Z U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 98,
+    "text": "K w a ś n i e w s k a"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 114,
+    "end": 125,
+    "text": "46l105l37l3"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 139,
+    "end": 155,
+    "text": "WandaKwaśniewska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 238,
+    "end": 251,
+    "text": "Kw-\naśniewską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 281,
+    "end": 290,
+    "text": "432988379"
+  }
+]

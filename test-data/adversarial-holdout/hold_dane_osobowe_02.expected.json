@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 41,
+    "text": "Longin Grzymała-Siedlecki"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 47,
+    "end": 59,
+    "text": "1.04.1952 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 61,
+    "end": 67,
+    "text": "lat 52"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 69,
+    "end": 75,
+    "text": "żonaty"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 96,
+    "end": 111,
+    "text": "+48 743 877 536"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 133,
+    "end": 147,
+    "text": "(65) 324-76-98"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 156,
+    "end": 199,
+    "text": "longin.grzymała-siedlecki@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 250,
+    "end": 273,
+    "text": "kontakt@wielkopolski.pl"
+  }
+]

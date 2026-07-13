@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 38,
+    "text": "I KM 227/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 47,
+    "end": 61,
+    "text": "Urszula Górska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 68,
+    "end": 99,
+    "text": "ul. Kolejowa 36, 61-640 Jarocin"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 118,
+    "end": 128,
+    "text": "PLN 89.451"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 181,
+    "end": 187,
+    "text": "850 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 213,
+    "end": 223,
+    "text": "PLN 70.500"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 234,
+    "end": 302,
+    "text": "dwadzieścia dwa tysięcy czterysta czterdzieści cztery złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 325,
+    "end": 351,
+    "text": "71570607233719717528731180"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Klara Czapla"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 34,
+    "end": 38,
+    "text": "Pile"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 53,
+    "end": 95,
+    "text": "zdiagnozowano u niej stwardnienie rozsiane"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 107,
+    "end": 147,
+    "text": "korzysta z rehabilitacji po udarze mózgu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 159,
+    "end": 189,
+    "text": "zdiagnozowano u niego padaczkę"
+  }
+]

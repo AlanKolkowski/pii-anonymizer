@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 43,
+    "text": "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 88,
+    "end": 113,
+    "text": "Stefania Korwin-Siedlecka"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 120,
+    "end": 163,
+    "text": "ul. Kwiatowa 67, 62-964 Ostrów Wielkopolski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 195,
+    "end": 213,
+    "text": "Korwin-Siedleckiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 245,
+    "end": 267,
+    "text": "rzeczoznawca majątkowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 301,
+    "end": 319,
+    "text": "Korwin-Siedleckiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 325,
+    "end": 366,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 382,
+    "end": 398,
+    "text": "Korwin-Siedlecką"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 32,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 38,
+    "end": 51,
+    "text": "24.09.2002 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 53,
+    "end": 59,
+    "text": "lat 75"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 61,
+    "end": 68,
+    "text": "kawaler"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 89,
+    "end": 104,
+    "text": "+48 712 624 418"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 126,
+    "end": 140,
+    "text": "(63) 288-24-23"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 149,
+    "end": 183,
+    "text": "ryszard.kamiński@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 234,
+    "end": 257,
+    "text": "kontakt@piekarniapod.pl"
+  }
+]

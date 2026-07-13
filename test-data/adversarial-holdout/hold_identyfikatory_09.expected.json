@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 21,
+    "text": "ACa 6987/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 49,
+    "end": 65,
+    "text": "Zofia Sobolewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 73,
+    "end": 84,
+    "text": "52032851637"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 112,
+    "end": 122,
+    "text": "SPL 526870"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 136,
+    "end": 146,
+    "text": "HH 2346911"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 163,
+    "end": 176,
+    "text": "33809/27/0103"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 191,
+    "end": 221,
+    "text": "Zakład Stolarski Ignacy Wróbel"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 227,
+    "end": 237,
+    "text": "0759948615"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 245,
+    "end": 254,
+    "text": "351607629"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 260,
+    "end": 270,
+    "text": "3746550907"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 304,
+    "end": 332,
+    "text": "PL33100227177722749449569775"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 374,
+    "end": 391,
+    "text": "XN0BZYE26KDR1X5MP"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 410,
+    "end": 417,
+    "text": "PN L0WT"
+  }
+]

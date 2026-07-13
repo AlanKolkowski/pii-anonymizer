@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Kościan"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 44,
+    "end": 56,
+    "text": "II K 4746/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 66,
+    "end": 82,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 83,
+    "end": 111,
+    "text": "ul. Cicha 25, 64-935 Kościan"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 125,
+    "end": 171,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 172,
+    "end": 205,
+    "text": "ul. Kwiatowa 28, 61-485 Krotoszyn"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 211,
+    "end": 221,
+    "text": "4995035055"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 223,
+    "end": 245,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 247,
+    "end": 272,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

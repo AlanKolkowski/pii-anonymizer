@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 44,
+    "text": "Sąd Okręgowy w Poznaniu, XIV Wydział Cywilny"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 55,
+    "end": 69,
+    "text": "III Ns 9638/25"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 106,
+    "end": 124,
+    "text": "tłumacz przysięgły"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 125,
+    "end": 136,
+    "text": "R. Kamiński"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 150,
+    "end": 168,
+    "text": "dyrektor finansowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 169,
+    "end": 173,
+    "text": "F.M."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 182,
+    "end": 186,
+    "text": "W.O."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 188,
+    "end": 194,
+    "text": "lat 45"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 215,
+    "end": 219,
+    "text": "H.Z."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 221,
+    "end": 233,
+    "text": "rozwiedziony"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 240,
+    "end": 270,
+    "text": "ul. Zielona 22, 62-313 Jarocin"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 325,
+    "end": 339,
+    "text": "prezes zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 340,
+    "end": 352,
+    "text": "K. Jankowski"
+  }
+]

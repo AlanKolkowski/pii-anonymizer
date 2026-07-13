@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Lesznie"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 45,
+    "text": "X Nc 1995/24"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 82,
+    "end": 91,
+    "text": "notariusz"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 92,
+    "end": 96,
+    "text": "N.J."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 110,
+    "end": 125,
+    "text": "główny księgowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 126,
+    "end": 138,
+    "text": "B. Zieliński"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 147,
+    "end": 151,
+    "text": "W.O."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 153,
+    "end": 159,
+    "text": "lat 26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 180,
+    "end": 184,
+    "text": "G.P."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 186,
+    "end": 199,
+    "text": "stanu wolnego"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 206,
+    "end": 236,
+    "text": "ul. Kwiatowa 39, 64-128 Poznań"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 291,
+    "end": 309,
+    "text": "aplikant adwokacki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 310,
+    "end": 321,
+    "text": "D. Zalewska"
+  }
+]

@@ -46,6 +46,28 @@ describe('ODMIANA_PEOPLE / DWUCZLONOWE_PEOPLE: well-formed declension records', 
   });
 });
 
+describe('gender field (needed for gender-agreeing honorifics in templates)', () => {
+  it('every odmiana/dwuczlonowe/pospolite record has gender M or F', () => {
+    for (const group of [ODMIANA_PEOPLE, DWUCZLONOWE_PEOPLE, POSPOLITE_PEOPLE]) {
+      for (const p of group) expect(['M', 'F']).toContain(p.gender);
+    }
+  });
+
+  it('odmiana gender matches the well-known feminine -ska/masculine -ski ending', () => {
+    const zielinski = ODMIANA_PEOPLE.find((p) => p.surname === 'Zieliński');
+    const wroblewska = ODMIANA_PEOPLE.find((p) => p.surname === 'Wróblewska');
+    expect(zielinski.gender).toBe('M');
+    expect(wroblewska.gender).toBe('F');
+  });
+
+  it('pospolite gender matches the documented male-then-female split (10 then 8)', () => {
+    expect(POSPOLITE_PEOPLE.filter((p) => p.gender === 'M').length).toBe(10);
+    expect(POSPOLITE_PEOPLE.filter((p) => p.gender === 'F').length).toBe(8);
+    expect(POSPOLITE_PEOPLE.find((p) => p.given === 'Helena').gender).toBe('F');
+    expect(POSPOLITE_PEOPLE.find((p) => p.given === 'Ignacy').gender).toBe('M');
+  });
+});
+
 describe('pool sizing (RECALL-90-DESIGN.md §3.3 PERSON_NAME subclass targets)', () => {
   it('has the expected record counts per subclass', () => {
     expect(ODMIANA_PEOPLE.length).toBe(16);

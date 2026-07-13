@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 41,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 48,
+    "end": 79,
+    "text": "ul. Klasztorna 47, 62-897 Konin"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 99,
+    "end": 111,
+    "text": "Jankowskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 166,
+    "end": 177,
+    "text": "protokolant"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 188,
+    "end": 200,
+    "text": "Jankowskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 258,
+    "end": 271,
+    "text": "69 883,54 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 321,
+    "end": 330,
+    "text": "K 7683/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 341,
+    "end": 353,
+    "text": "Jankowskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 432,
+    "end": 442,
+    "text": "Jankowskim"
+  }
+]

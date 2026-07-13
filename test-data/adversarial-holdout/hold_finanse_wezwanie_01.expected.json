@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 36,
+    "text": "K 3910/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 45,
+    "end": 62,
+    "text": "Zenon Lewandowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 69,
+    "end": 97,
+    "text": "ul. Widokowa 35, 62-481 Śrem"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 116,
+    "end": 128,
+    "text": "10.199,88 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 181,
+    "end": 193,
+    "text": "31.300,28 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 219,
+    "end": 232,
+    "text": "85 689,28 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 243,
+    "end": 298,
+    "text": "jedenaście tysięcy sto czterdzieści pięć złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 321,
+    "end": 349,
+    "text": "PL53356506471760772337016180"
+  }
+]

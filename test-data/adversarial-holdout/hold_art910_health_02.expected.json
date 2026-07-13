@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Wacław Kogut"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 33,
+    "end": 42,
+    "text": "Kościanie"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 57,
+    "end": 87,
+    "text": "zdiagnozowano u niego padaczkę"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 99,
+    "end": 136,
+    "text": "przeszedł operację kardiochirurgiczną"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 148,
+    "end": 188,
+    "text": "korzysta z rehabilitacji po udarze mózgu"
+  }
+]

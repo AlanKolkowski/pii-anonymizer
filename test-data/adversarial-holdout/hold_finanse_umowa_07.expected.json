@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "FV/2024/04/0305"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 68,
+    "text": "Grodzisku Wielkopolskim"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 78,
+    "end": 122,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 128,
+    "end": 138,
+    "text": "5600229239"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 142,
+    "end": 154,
+    "text": "Klara Czapla"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 161,
+    "end": 208,
+    "text": "ul. Zielona 33/25, 62-612 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 256,
+    "end": 262,
+    "text": "776 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 292,
+    "end": 298,
+    "text": "136 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 336,
+    "end": 348,
+    "text": "12 322,23 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 376,
+    "end": 404,
+    "text": "PL52568797286482411304458943"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 443,
+    "end": 455,
+    "text": "38 844,98 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 466,
+    "end": 533,
+    "text": "trzydzieści cztery tysięcy dwieście trzydzieści trzy złotych 00/100"
+  }
+]

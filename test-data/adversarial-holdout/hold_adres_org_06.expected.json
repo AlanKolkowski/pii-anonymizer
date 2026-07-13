@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 5,
+    "text": "Turek"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 42,
+    "end": 55,
+    "text": "VI KM 4133/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 86,
+    "text": "Gustaw Łada-Podgórski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 87,
+    "end": 118,
+    "text": "ul. Parkowa 34/36, 64-260 Turek"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 132,
+    "end": 176,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 177,
+    "end": 208,
+    "text": "ul. Kwiatowa 3, 60-164 Września"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 214,
+    "end": 224,
+    "text": "1484779600"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 226,
+    "end": 249,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 251,
+    "end": 276,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Regina Wojnowska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 79,
+    "text": "ul. Kolejowa 15/3, 60-913 Wolsztyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 99,
+    "end": 110,
+    "text": "Wojnowskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 165,
+    "end": 174,
+    "text": "sędzia SR"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 185,
+    "end": 196,
+    "text": "Wojnowskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 254,
+    "end": 267,
+    "text": "85 759,74 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 317,
+    "end": 331,
+    "text": "KM 8119/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 342,
+    "end": 353,
+    "text": "Wojnowskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 432,
+    "end": 441,
+    "text": "Wojnowską"
+  }
+]

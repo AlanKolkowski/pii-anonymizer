@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 23,
+    "text": "Zofia Sobolewska"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 38,
+    "end": 47,
+    "text": "Jarocinie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 62,
+    "end": 102,
+    "text": "skazany wyrokiem za kradzież z włamaniem"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 114,
+    "end": 162,
+    "text": "był uprzednio karany za znęcanie się nad rodziną"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 174,
+    "end": 223,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  }
+]

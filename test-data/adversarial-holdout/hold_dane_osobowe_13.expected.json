@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 41,
+    "text": "Stefania Korwin-Siedlecka"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 47,
+    "end": 59,
+    "text": "5.04.1965 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 61,
+    "end": 67,
+    "text": "lat 47"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 69,
+    "end": 76,
+    "text": "wdowiec"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 97,
+    "end": 112,
+    "text": "+48 723 680 905"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 134,
+    "end": 148,
+    "text": "(62) 809-83-30"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 157,
+    "end": 200,
+    "text": "stefania.korwin-siedlecka@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 251,
+    "end": 274,
+    "text": "kontakt@hurtowniaspo.pl"
+  }
+]

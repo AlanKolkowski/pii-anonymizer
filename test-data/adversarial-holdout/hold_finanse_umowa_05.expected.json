@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "WZ/2026/06/0208"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 51,
+    "text": "Śmiglu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 61,
+    "end": 107,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 113,
+    "end": 123,
+    "text": "3215669833"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 127,
+    "end": 139,
+    "text": "Wacław Kogut"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 146,
+    "end": 178,
+    "text": "ul. Graniczna 11, 63-548 Jarocin"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 226,
+    "end": 239,
+    "text": "67 413,76 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 269,
+    "end": 282,
+    "text": "57 053,24 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 320,
+    "end": 326,
+    "text": "317 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 354,
+    "end": 382,
+    "text": "PL92902877929371714544952331"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 421,
+    "end": 434,
+    "text": "56 169,89 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 445,
+    "end": 507,
+    "text": "siedemnaście tysięcy czterysta trzydzieści pięć złotych 00/100"
+  }
+]

@@ -24,8 +24,12 @@
 //   still read the garbled value.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { assembleHoldoutDocs, buildHoldoutDoc } from './corpus/holdout-templates.mjs';
+import { collectIdentifyingValues, findDisjointnessViolations } from './corpus/holdout-disjointness.mjs';
+import holdoutManifest from './corpus/holdout-manifest.json' with { type: 'json' };
 
 const OUT_DIR = join(import.meta.dirname, '..', 'test-data', 'adversarial');
+const HOLDOUT_OUT_DIR = join(import.meta.dirname, '..', 'test-data', 'adversarial-holdout');
 
 const E = (entity_group, text) => ({ entity_group, text });
 const PN = (t) => E('PERSON_NAME', t);
@@ -49,7 +53,7 @@ const UNION = (t) => E('TRADE_UNION_MEMBERSHIP', t);
 
 // ── Corpus ──────────────────────────────────────────────────────────
 
-const DOCS = [
+export const DOCS = [
 
   {
     name: 'adw_01_nazwisko_dopelniacz',
@@ -620,7 +624,7 @@ const DOCS = [
 
 // ── Builder ─────────────────────────────────────────────────────────
 
-function build(parts) {
+export function build(parts) {
   let text = '';
   const expected = [];
   for (const p of parts) {
@@ -639,7 +643,7 @@ function build(parts) {
   return { text, expected };
 }
 
-function selfCheck(name, text, expected) {
+export function selfCheck(name, text, expected) {
   for (const e of expected) {
     if (text.slice(e.start, e.end) !== e.text) {
       throw new Error(`${name}: offset mismatch at [${e.start}:${e.end}]`);
@@ -654,26 +658,37 @@ function selfCheck(name, text, expected) {
   if (/\r/.test(text)) throw new Error(`${name}: CR found – corpus must be LF-only`);
 }
 
-async function main() {
-  await mkdir(OUT_DIR, { recursive: true });
+// Shared writer for both pools: builds + self-checks + writes .txt/.expected.json
+// for every doc, then writes README.md from the caller's template. Identical
+// for dev/holdout except *what* docs/build function/output dir/README it's
+// given — dev's own byte-identical-on-rerun behavior is preserved exactly
+// because this is the same code path it always ran through.
+async function writeCorpus(docs, buildFn, outDir, buildReadme) {
+  await mkdir(outDir, { recursive: true });
 
   const readmeRows = [];
   let totalEntities = 0;
 
-  for (const doc of DOCS) {
-    const { text, expected } = build(doc.parts);
+  for (const doc of docs) {
+    const { text, expected } = buildFn(doc.parts);
     selfCheck(doc.name, text, expected);
     totalEntities += expected.length;
-    await writeFile(join(OUT_DIR, `${doc.name}.txt`), text, 'utf-8');
+    await writeFile(join(outDir, `${doc.name}.txt`), text, 'utf-8');
     await writeFile(
-      join(OUT_DIR, `${doc.name}.expected.json`),
+      join(outDir, `${doc.name}.expected.json`),
       JSON.stringify(expected, null, 2) + '\n',
       'utf-8',
     );
     readmeRows.push(`| \`${doc.name}\` | ${expected.length} | ${doc.attack} |`);
   }
 
-  const readme = `# Korpus kontradyktoryjny (test-data/adversarial)
+  await writeFile(join(outDir, 'README.md'), buildReadme(docs, readmeRows, totalEntities), 'utf-8');
+  console.log(`Wrote ${docs.length} documents (${totalEntities} expected entities) to ${outDir}`);
+  return totalEntities;
+}
+
+function buildDevReadme(docs, readmeRows, totalEntities) {
+  return `# Korpus kontradyktoryjny (test-data/adversarial)
 
 Wygenerowany deterministycznie przez \`scripts/generate-adversarial-corpus.mjs\`
 (uruchomienie odtwarza pliki co do bajtu). **Wszystkie dane są w 100% fikcyjne**:
@@ -711,15 +726,181 @@ EVAL-RECALL-AUDIT.md):
   sito ma chronić tajemnicę zawodową, a człowiek zniekształcony numer
   nadal odczyta.
 
-## Dokumenty (${DOCS.length}, ${totalEntities} encji oczekiwanych)
+## Dokumenty (${docs.length}, ${totalEntities} encji oczekiwanych)
 
 | Dokument | Encje | Wektor ataku |
 |---|---|---|
 ${readmeRows.join('\n')}
 `;
+}
 
-  await writeFile(join(OUT_DIR, 'README.md'), readme, 'utf-8');
-  console.log(`Wrote ${DOCS.length} documents (${totalEntities} expected entities) to ${OUT_DIR}`);
+// ── Holdout: quota self-check (RECALL-90-DESIGN.md §3.4 point 2 —
+// "kwota jest kontraktem, nie nadzieją") + disjointness gate (point 1). Both
+// run BEFORE any file is written; either failure aborts with no output. ──
+
+function checkHoldoutQuota(built) {
+  const byType = {};
+  const byTag = {};
+  for (const { expected, tagCounts } of built) {
+    for (const e of expected) byType[e.entity_group] = (byType[e.entity_group] || 0) + 1;
+    for (const [tag, n] of Object.entries(tagCounts)) byTag[tag] = (byTag[tag] || 0) + n;
+  }
+
+  const shortfalls = [];
+  for (const [type, min] of Object.entries(holdoutManifest.byType)) {
+    const actual = byType[type] || 0;
+    if (actual < min) shortfalls.push(`byType.${type}: need >=${min}, got ${actual}`);
+  }
+  for (const [subtype, min] of Object.entries(holdoutManifest.identifierSubtypes)) {
+    if (subtype === '_comment') continue;
+    const actual = byTag[`identifier:${subtype}`] || 0;
+    if (actual < min) shortfalls.push(`identifierSubtypes.${subtype}: need >=${min}, got ${actual}`);
+  }
+  for (const [cls, min] of Object.entries(holdoutManifest.ocrClasses)) {
+    if (cls === '_comment') continue;
+    const actual = byTag[`ocr:${cls}`] || 0;
+    if (actual < min) shortfalls.push(`ocrClasses.${cls}: need >=${min}, got ${actual}`);
+  }
+  const total = Object.values(byType).reduce((a, b) => a + b, 0);
+  if (total < holdoutManifest.targetTotalEntities.min) {
+    shortfalls.push(`targetTotalEntities: need >=${holdoutManifest.targetTotalEntities.min}, got ${total}`);
+  }
+
+  if (shortfalls.length > 0) {
+    console.error('Holdout quota self-check FAILED — refusing to write output (holdout-manifest.json is a contract, not an estimate):');
+    for (const s of shortfalls) console.error(`  ${s}`);
+    throw new Error(`Holdout corpus under quota: ${shortfalls.length} shortfall(s).`);
+  }
+  console.log(
+    `Quota self-check PASSED: all ${Object.keys(holdoutManifest.byType).length} byType, `
+    + `${Object.keys(holdoutManifest.identifierSubtypes).length - 1} identifier subtypes, `
+    + `${Object.keys(holdoutManifest.ocrClasses).length - 1} OCR classes meet their minimums (total ${total} entities).`,
+  );
+}
+
+function buildHoldoutReadme(docs, readmeRows, totalEntities) {
+  return `# Korpus sprawdzianowy (test-data/adversarial-holdout)
+
+Wygenerowany deterministycznie przez \`scripts/generate-adversarial-corpus.mjs --pool=holdout\`
+(\`scripts/corpus/holdout-templates.mjs\` + \`holdout-people.mjs\` + \`holdout-pools.mjs\`,
+uruchomienie odtwarza pliki co do bajtu). **Wszystkie dane są w 100% fikcyjne**
+(RECALL-90-DESIGN.md §3.4 pkt 4): osoby, adresy, spółki i sygnatury nie
+istnieją; PESEL/NIP/REGON/IBAN mają poprawne sumy kontrolne, ale nie należą
+do nikogo.
+
+## Czym różni się od test-data/adversarial (dev)
+
+\`test-data/adversarial/\` jest korpusem **strojeniowym** — na nim kalibrowane
+były progi (A7), leksykony (B3/B4) i wzorce planu A. Wynik zmierzony na
+korpusie, którym stroniono, jest optymistycznie obciążony w sposób
+niemierzalny (RECALL-90-DESIGN.md §3.1). Ten katalog jest **sprawdzianem**:
+rozłączne przestrzenie wartości (nazwiska, PESEL-e, numery IBAN — żadna
+wartość identyfikująca z dev nie występuje tutaj, strażnik:
+\`scripts/corpus/holdout-disjointness.test.js\`) ORAZ rozłączne szablony
+dokumentów (nowe kształty zdań/dokumentów w \`holdout-templates.mjs\`, nie
+tylko nowe nazwiska wstawione w stare zdania dev) — inaczej sprawdzian
+mierzyłby pamięć szablonów, nie generalizację.
+
+## Polityka zamrożenia (RECALL-90-DESIGN.md §3.2 — WIĄŻĄCE)
+
+1. **Ten katalog jest zamrożony natychmiast po wygenerowaniu.** Żadna zmiana
+   ręczna w \`*.txt\`/\`*.expected.json\` — jedyny legalny sposób modyfikacji to
+   ponowne uruchomienie generatora (co przy tym samym kodzie i manifeście
+   daje bajtowo identyczny wynik) albo świadoma regeneracja wg pkt 3 poniżej.
+2. **Dziennik pomiarów jest obowiązkowy.** Każdy przebieg \`npm run eval\` na
+   tym katalogu (\`--dir=test-data/adversarial-holdout\`) ma być odnotowany
+   (data, run ID, cel pomiaru, wynik) w raporcie bramki GATE-RECALL-90 albo w
+   notatce sesji, która go wykonała — warunek G8 bramki (RECALL-90-DESIGN.md
+   §4.2). Pomiar bramkowy ma być 1.–2. pomiarem tego katalogu w historii.
+3. **Skażenie = obowiązkowa regeneracja z NOWYM seedem.** Jeżeli ktokolwiek
+   zacznie naprawiać moduły detekcji „pod holdout" (dopisując wzorzec, próg
+   albo leksykon w reakcji na konkretny przypadek z TEGO katalogu), korpus
+   przestaje być sprawdzianem. Wtedy: (a) odnotować incydent w notatce sesji,
+   (b) zmienić namespace seedów w \`holdout-templates.mjs\` (np.
+   \`holdout/odmiana/\` → \`holdout/odmiana-v2/\`) tak, aby wszystkie wartości i
+   kombinacje szablonów wypadły inaczej, (c) ponownie uruchomić generator,
+   (d) zacząć dziennik pomiarów od nowa. Ten akapit istnieje, żeby przyszłe
+   sesje nie odtwarzały tej polityki z pamięci ani jej nie pomijały.
+4. **Podzbiór holdout-human jest osobnym, ręcznym zadaniem** (5–10 dokumentów
+   pisanych ręcznie, wzorowanych na realnej praktyce, anotowanych przez inną
+   osobę/sesję niż autor dokumentu) — RECALL-90-DESIGN.md §3.2. Generator NIE
+   go tworzy; to świadomie odłożone follow-up dla Alana (CORPUS-2.0-NOTES.md).
+
+## Delty polityki anotacji względem test-data/adversarial (§3.5)
+
+Dziedziczy politykę dev w całości (patrz \`test-data/adversarial/README.md\`),
+z trzema doprecyzowaniami rozstrzygniętymi PRZED generacją tego katalogu:
+
+1. **Taksonomia wynagrodzeń (decyzja Alana R0a, PRODUCT-DECISIONS.md):**
+   klasa ekwiwalencji \`{FINANCIAL_AMOUNT, INCOME_COMPENSATION}\` w scoringu —
+   scoring ma raportować OBIE liczby (ścisłą i po ekwiwalencji), bramka liczy
+   po ekwiwalencji. Ten korpus anotuje wynagrodzenia jako \`FINANCIAL_AMOUNT\`
+   (ten sam precedens co dev), więc deklaracja klasy ekwiwalencji jest
+   obowiązkiem konfiguracji scoringu, nie generatora.
+2. **Frazy opisowe art. 9–10:** anotowany span to minimalna fraza niosąca
+   fakt szczególny (kotwica + dopełnienie), NIE całe zdanie, i napisana z
+   definicji faktu — NIGDY „pod wzorce B3". Rozbieżność GT↔B3 jest sygnałem
+   do poprawy B3, nigdy do przepisania GT.
+3. **Diakrytyki:** wystąpienie zdegradowane (klasa \`ocr:diacritics\`,
+   \`scripts/corpus/diacritics.mjs\`) anotowane prawdziwym typem i pełnym
+   spanem — spójnie z istniejącą polityką OCR.
+
+## Manifest kwot
+
+\`scripts/corpus/holdout-manifest.json\` (RECALL-90-DESIGN.md §3.3). Generator
+odmawia zapisu, jeżeli którakolwiek kwota (byType/identifierSubtypes/
+ocrClasses/targetTotalEntities) nie jest osiągnięta — kwota jest kontraktem
+egzekwowanym w kodzie (\`checkHoldoutQuota\` w tym pliku), nie deklaracją.
+
+Uruchomienie ewaluacji na tym korpusie:
+
+\`\`\`bash
+npm run eval -- --dir=test-data/adversarial-holdout --label=<slug>
+npm run eval:score
+\`\`\`
+
+## Dokumenty (${docs.length}, ${totalEntities} encji oczekiwanych)
+
+| Dokument | Encje | Wektor ataku |
+|---|---|---|
+${readmeRows.join('\n')}
+`;
+}
+
+async function generateHoldout() {
+  const holdoutDocs = assembleHoldoutDocs();
+  const built = holdoutDocs.map((doc) => ({ doc, ...buildHoldoutDoc(doc.parts) }));
+
+  for (const { doc, text, expected } of built) selfCheck(doc.name, text, expected);
+
+  checkHoldoutQuota(built);
+
+  const devValues = collectIdentifyingValues(DOCS.map((doc) => build(doc.parts)));
+  const violations = findDisjointnessViolations(devValues, built);
+  if (violations.length > 0) {
+    console.error(`Disjointness violation: ${violations.length} holdout identifying value(s) collide with dev (test-data/adversarial):`);
+    for (const v of violations.slice(0, 20)) console.error(`  "${v}"`);
+    throw new Error('Holdout corpus is not disjoint from dev — refusing to write output. See RECALL-90-DESIGN.md §3.4 point 1.');
+  }
+  console.log(`Disjointness check PASSED: 0 of ${devValues.size} dev identifying values collide with holdout.`);
+
+  await writeCorpus(holdoutDocs, buildHoldoutDoc, HOLDOUT_OUT_DIR, buildHoldoutReadme);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const pool = args.find((a) => a.startsWith('--pool='))?.slice('--pool='.length) || 'dev';
+  if (pool !== 'dev' && pool !== 'holdout') {
+    console.error(`Unknown --pool value "${pool}" (expected "dev" or "holdout")`);
+    process.exit(1);
+  }
+
+  if (pool === 'dev') {
+    await writeCorpus(DOCS, build, OUT_DIR, buildDevReadme);
+    return;
+  }
+
+  await generateHoldout();
 }
 
 main().catch((err) => {

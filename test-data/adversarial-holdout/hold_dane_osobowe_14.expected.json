@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 30,
+    "text": "Salomea Papuga"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 36,
+    "end": 49,
+    "text": "18.10.1951 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 51,
+    "end": 57,
+    "text": "lat 37"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 59,
+    "end": 71,
+    "text": "rozwiedziona"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 92,
+    "end": 107,
+    "text": "+48 793 564 421"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 129,
+    "end": 143,
+    "text": "(65) 444-44-71"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 152,
+    "end": 184,
+    "text": "salomea.papuga@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 235,
+    "end": 258,
+    "text": "kontakt@zakładusługk.pl"
+  }
+]

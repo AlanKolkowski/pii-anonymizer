@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 17,
+    "text": "Hubert Żuk"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 31,
+    "end": 35,
+    "text": "Pile"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 50,
+    "end": 78,
+    "text": "cierpi na chorobę Parkinsona"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 90,
+    "end": 130,
+    "text": "korzysta z rehabilitacji po udarze mózgu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 142,
+    "end": 172,
+    "text": "zdiagnozowano u niego padaczkę"
+  }
+]

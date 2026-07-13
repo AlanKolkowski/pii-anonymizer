@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 44,
+    "text": "VII K 2225/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 53,
+    "end": 65,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 72,
+    "end": 103,
+    "text": "ul. Wrzosowa 62/11, 60-292 Śrem"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 122,
+    "end": 128,
+    "text": "674 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 181,
+    "end": 193,
+    "text": "63.744,41 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 219,
+    "end": 231,
+    "text": "10.420,10 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 242,
+    "end": 303,
+    "text": "jedenaście tysięcy dwieście czterdzieści osiem złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 326,
+    "end": 354,
+    "text": "PL43005093078212053580119341"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 18,
+    "text": "Środa Wielkopolska"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 57,
+    "end": 68,
+    "text": "ACa 4509/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 78,
+    "end": 95,
+    "text": "Wanda Kwaśniewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 96,
+    "end": 138,
+    "text": "ul. Brzozowa 91, 60-681 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 152,
+    "end": 196,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 197,
+    "end": 227,
+    "text": "ul. Zielona 10/27, 60-225 Śrem"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 233,
+    "end": 243,
+    "text": "2944674815"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 245,
+    "end": 267,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 269,
+    "end": 294,
+    "text": "PAŃSTWOWA INSPEKCJA PRACY"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Marian Pawłowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 77,
+    "text": "ul. Fabryczna 4/19, 64-817 Turek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 97,
+    "end": 109,
+    "text": "Pawłowskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 164,
+    "end": 179,
+    "text": "główna księgowa"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 190,
+    "end": 202,
+    "text": "Pawłowskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 260,
+    "end": 273,
+    "text": "10 025,36 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 323,
+    "end": 342,
+    "text": "VIII Nc 9354/26 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 353,
+    "end": 365,
+    "text": "Pawłowskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 444,
+    "end": 454,
+    "text": "Pawłowskim"
+  }
+]

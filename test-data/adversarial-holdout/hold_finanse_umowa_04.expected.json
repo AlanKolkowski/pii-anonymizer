@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "FV/2026/09/0185"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 56,
+    "text": "Krotoszynie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 66,
+    "end": 107,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 113,
+    "end": 123,
+    "text": "6733430863"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 127,
+    "end": 137,
+    "text": "Hubert Żuk"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 144,
+    "end": 175,
+    "text": "ul. Zielona 11, 62-633 Wolsztyn"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 223,
+    "end": 235,
+    "text": "37 689,57 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 265,
+    "end": 276,
+    "text": "8 180,49 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 314,
+    "end": 327,
+    "text": "50 329,19 EUR"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 355,
+    "end": 381,
+    "text": "15611483404848562744985319"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 420,
+    "end": 430,
+    "text": "PLN 66.574"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 441,
+    "end": 504,
+    "text": "siedemnaście tysięcy dwieście dwadzieścia siedem złotych 00/100"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 42,
+    "text": "ACa 2232/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 51,
+    "end": 70,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 77,
+    "end": 107,
+    "text": "ul. Kolejowa 1, 61-260 Gniezno"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 126,
+    "end": 138,
+    "text": "41 621,26 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 191,
+    "end": 201,
+    "text": "PLN 74.403"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 227,
+    "end": 233,
+    "text": "220 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 244,
+    "end": 313,
+    "text": "trzydzieści cztery tysięcy sześćset czterdzieści sześć złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 336,
+    "end": 364,
+    "text": "PL33693598473161293702758739"
+  }
+]

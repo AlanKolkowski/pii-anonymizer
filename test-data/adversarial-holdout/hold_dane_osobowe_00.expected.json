@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 41,
+    "text": "Stefania Korwin-Siedlecka"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 47,
+    "end": 60,
+    "text": "27.10.1997 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 62,
+    "end": 68,
+    "text": "lat 79"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 70,
+    "end": 77,
+    "text": "wdowiec"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 98,
+    "end": 113,
+    "text": "+48 756 216 365"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 135,
+    "end": 149,
+    "text": "(65) 642-91-81"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 158,
+    "end": 201,
+    "text": "stefania.korwin-siedlecka@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 252,
+    "end": 275,
+    "text": "kontakt@bankwielkopo.pl"
+  }
+]

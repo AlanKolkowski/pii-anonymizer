@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Kaliszu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 67,
+    "end": 90,
+    "text": "Anastazja Pomian-Wolska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 97,
+    "end": 126,
+    "text": "ul. Leśna 5, 62-148 Wągrowiec"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 158,
+    "end": 173,
+    "text": "Pomian-Wolskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 205,
+    "end": 210,
+    "text": "prok."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 244,
+    "end": 259,
+    "text": "Pomian-Wolskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 265,
+    "end": 301,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 317,
+    "end": 330,
+    "text": "Pomian-Wolską"
+  }
+]

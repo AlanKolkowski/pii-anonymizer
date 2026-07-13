@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 43,
+    "text": "Marianna Junosza-Zdrojewska"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 49,
+    "end": 62,
+    "text": "14.05.1963 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 64,
+    "end": 70,
+    "text": "lat 36"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 72,
+    "end": 84,
+    "text": "rozwiedziona"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 105,
+    "end": 120,
+    "text": "+48 611 821 401"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 142,
+    "end": 156,
+    "text": "(63) 794-16-77"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 165,
+    "end": 210,
+    "text": "marianna.junosza-zdrojewska@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 261,
+    "end": 284,
+    "text": "kontakt@bankwielkopo.pl"
+  }
+]

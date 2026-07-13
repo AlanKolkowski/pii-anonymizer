@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 39,
+    "text": "Andrzej Michalski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 46,
+    "end": 80,
+    "text": "ul. Parkowa 9/18, 62-794 Krotoszyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 100,
+    "end": 112,
+    "text": "Michalskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 167,
+    "end": 194,
+    "text": "specjalista ds. kadr i płac"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 205,
+    "end": 217,
+    "text": "Michalskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 275,
+    "end": 287,
+    "text": "15 842,97 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 337,
+    "end": 355,
+    "text": "VIII C 6098/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 366,
+    "end": 378,
+    "text": "Michalskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 457,
+    "end": 467,
+    "text": "Michalskim"
+  }
+]

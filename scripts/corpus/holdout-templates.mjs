@@ -13,7 +13,7 @@ import {
   ODMIANA_PEOPLE, DWUCZLONOWE_PEOPLE, INICJALY_PEOPLE, POSPOLITE_PEOPLE,
 } from './holdout-people.mjs';
 import {
-  ROLES, COURTS, COMPANIES, UPPERCASE_INSTITUTIONS, CITIES,
+  ROLES, COURTS, COMPANIES, UPPERCASE_INSTITUTIONS, CITIES, CITIES_LOCATIVE,
   generateAddress, generateAmountWords, generateAmountDigits,
   generateDocketNumber, generateInvoiceNumber, generateIdentifier,
   HEALTH_PHRASES, CRIMINAL_PHRASES, UNION_PHRASES, RELIGION_PHRASES,
@@ -58,6 +58,44 @@ const randomDate = (rng) => `${int(rng, 1, 28)} ${pick(rng, MONTHS)} 2026 r.`;
 const pad2 = (n) => String(n).padStart(2, '0');
 const randomDob = (rng) => `${int(rng, 1, 28)}.${pad2(int(rng, 1, 12))}.${int(rng, 1950, 2002)} r.`;
 
+// ── Gender-agreement helpers ─────────────────────────────────────────────
+// The value pools mix male and female records (ODMIANA_PEOPLE etc. carry a
+// `gender` field, RECALL-90-DESIGN.md corpus quality is expected to survive
+// review) — a template that always writes "pan"/"Pozwany"/masculine past
+// tense regardless of which record landed in that slot reads as a clear
+// grammar error whenever a female record is picked. Polish 3rd-person-
+// singular past tense is regular enough for a mechanical fix: the masculine
+// form always ends in "ł"; the feminine form replaces that "ł" with "ła".
+function pastTense(masculineForm, gender) {
+  if (gender !== 'F') return masculineForm;
+  if (!masculineForm.endsWith('ł')) return masculineForm;
+  return `${masculineForm.slice(0, -1)}ła`;
+}
+// City name after "w" (locative case, e.g. "w Poznaniu" not "w Poznań") —
+// CITIES_LOCATIVE covers every city CITIES can produce; the || fallback is
+// defensive only; every real caller path always has a mapped entry.
+const inCity = (city) => CITIES_LOCATIVE[city] || city;
+// "przez pana X" / "przez panią X" (accusative honorific) vs "pan X
+// potwierdził" (nominative, apposition to a subject) — these need different
+// pronoun forms AND, when a declined surname follows, different case forms
+// of the surname itself. surnameAcc exploits that Polish accusative
+// coincides with genitive for animate masculine nouns, and with
+// instrumental for adjectival feminine nouns (Wróblewska: acc=Wróblewską=
+// inst; Kowalski: acc=Kowalskiego=gen) — so no separate accusative field is
+// needed on the person records, just the right existing field per gender.
+// ROLES mixes declinable common nouns ("sędzia", "notariusz") with
+// case-invariant abbreviations ("adw.", "r.pr.") — a slot that requires a
+// non-nominative case (e.g. "reprezentowany przez X", accusative) can only
+// safely draw from the invariant subset without either declining ROLES
+// properly (a materially larger undertaking, out of scope here) or reading
+// wrong ("przez sędzia" instead of "przez sędziego").
+const INVARIANT_ROLES = ROLES.filter((r) => r.endsWith('.'));
+const honorificNom = (gender) => (gender === 'F' ? 'pani' : 'pan');
+const honorificAcc = (gender) => (gender === 'F' ? 'panią' : 'pana');
+const surnameAcc = (person) => (person.gender === 'F' ? person.surnameInst : person.surnameGen);
+const defendantLabel = (gender) => (gender === 'F' ? 'Pozwana' : 'Pozwany');
+const plaintiffLabel = (gender) => (gender === 'F' ? 'Powódka' : 'Powód');
+
 /** Builds document text + expected.json entries (dev-compatible shape) from
  * a `parts` array, exactly like the dev generator's own build(), plus a
  * parallel `tagCounts` map for this generator's own quota self-check. */
@@ -93,8 +131,8 @@ function odmianaPismo(rng, person, idx) {
       ' odpis pisma wraz z załącznikami. Kwota roszczenia wynosi ', AMT(amount),
       ' i została wskazana w piśmie oznaczonym sygnaturą ', REF(docket), '.\n\n',
       'Zdaniem ', PN(person.surnameGen, 'personName:odmiana'),
-      ' żądanie pozwu jest bezzasadne, o czym pełnomocnik reprezentujący ',
-      PN(person.surnameInst, 'personName:odmiana'), ' został poinformowany pisemnie.\n',
+      ' żądanie pozwu jest bezzasadne, o czym pełnomocnik skontaktował się pisemnie z ',
+      PN(person.surnameInst, 'personName:odmiana'), '.\n',
     ],
   };
 }
@@ -114,7 +152,7 @@ function dwuczlonowePostanowienie(rng, person, idx) {
       'Sąd, po rozpoznaniu wniosku ', PN(person.nom, 'personName:dwuczlonowe'), ', zam. ', ADR(addr), ', postanawia:\n\n',
       '1. ustanowić dla ', PN(person.surnameGen, 'personName:dwuczlonowe'), ' pełnomocnika z urzędu w osobie ', ROLE(role), ';\n',
       '2. doręczyć odpis postanowienia ', PN(person.surnameDat, 'personName:dwuczlonowe'), ' oraz ', ORG(org), ';\n',
-      '3. zobowiązać ', PN(person.surnameInst, 'personName:dwuczlonowe'),
+      '3. zobowiązać ', PN(surnameAcc(person), 'personName:dwuczlonowe'),
       ' do złożenia dokumentów potwierdzających sytuację majątkową w terminie 7 dni.\n',
     ],
   };
@@ -156,14 +194,15 @@ function pospoliteZeznania(rng, idx) {
     name: `hold_pospolite_${pad2(idx)}`,
     attack: 'Nazwiska będące wyrazami pospolitymi jako pułapka dezambiguacji — mirrors adw_05/33 on new common-noun surnames.',
     parts: [
-      'Świadek ', PN(people[0].nom, 'personName:pospolite'), ' zeznał, że w dniu zdarzenia przebywał w ', LOC(loc1), '. ',
-      PN(people[0].surnameNom, 'personName:pospolite'), ' potwierdził swoje zeznania podpisem.\n\n',
+      'Świadek ', PN(people[0].nom, 'personName:pospolite'),
+      ` ${pastTense('zeznał', people[0].gender)}, że w dniu zdarzenia ${pastTense('przebywał', people[0].gender)} w `, LOC(inCity(loc1)), '. ',
+      PN(people[0].surnameNom, 'personName:pospolite'), ` ${pastTense('potwierdził', people[0].gender)} swoje zeznania podpisem.\n\n`,
       ROLE(roles[0]), ' ', PN(people[1].nom, 'personName:pospolite'),
-      ' złożył opinię z zakresu księgowości. ', PN(people[1].surnameNom, 'personName:pospolite'),
-      ' wskazał na rozbieżności w dokumentacji.\n\n',
-      'Pozwany ', PN(people[2].nom, 'personName:pospolite'), ', zam. w ', LOC(loc2),
-      ', ustanowił pełnomocnikiem ', ROLE(roles[1]), '. ',
-      PN(people[2].surnameNom, 'personName:pospolite'), ' nie stawił się osobiście na rozprawę.\n',
+      ` ${pastTense('złożył', people[1].gender)} opinię z zakresu księgowości. `, PN(people[1].surnameNom, 'personName:pospolite'),
+      ` ${pastTense('wskazał', people[1].gender)} na rozbieżności w dokumentacji.\n\n`,
+      `${defendantLabel(people[2].gender)} `, PN(people[2].nom, 'personName:pospolite'), ', zam. w ', LOC(inCity(loc2)),
+      `, ${pastTense('ustanowił', people[2].gender)} pełnomocnikiem `, ROLE(roles[1]), '. ',
+      PN(people[2].surnameNom, 'personName:pospolite'), ` nie ${pastTense('stawił', people[2].gender)} się osobiście na rozprawę.\n`,
     ],
   };
 }
@@ -215,7 +254,7 @@ function ocrMegaDokument(rng, idx) {
   const spacedName = spacedOut(person.surnameNom);
   const spacedInstitution = spacedOut(institution);
   const joinedName = joinWords(`${person.given} ${person.surnameNom}`);
-  const wrappedName = hyphenatedLineBreak(rng, person.surnameGen);
+  const wrappedName = hyphenatedLineBreak(rng, surnameAcc(person));
   const corruptedA = { ...idA, value: substituteGlyphs(rng, idA.value, { fraction: 0.5 }) };
   const corruptedB = { ...idB, value: substituteGlyphs(rng, idB.value, { fraction: 0.5 }) };
   return {
@@ -223,10 +262,10 @@ function ocrMegaDokument(rng, idx) {
     attack: 'Skan niskiej jakości: wersaliki rozstrzelone, sklejenia, przenoszenie wyrazów i podmiany glifów w jednym dokumencie — mirrors adw_23-26 combined on new values.',
     parts: [
       ORG(spacedInstitution, 'ocr:spacedOut'), '\n\n',
-      'Ubezpieczony: ', PN(spacedName, 'ocr:spacedOut'), '\n',
+      `${person.gender === 'F' ? 'Ubezpieczona' : 'Ubezpieczony'}: `, PN(spacedName, 'ocr:spacedOut'), '\n',
       'Identyfikator: ', EG(corruptedA, 'ocr:glyphSubstitution'), '\n\n',
-      'Wnioskodawca', PN(joinedName, 'ocr:joined'), ' zamieszkały pod adresem wskazanym w aktach.\n\n',
-      'Zobowiązanie zaciągnięte przez pana ', PN(wrappedName, 'ocr:lineWrap'),
+      'Wnioskodawca', PN(joinedName, 'ocr:joined'), ` ${person.gender === 'F' ? 'zamieszkała' : 'zamieszkały'} pod adresem wskazanym w aktach.\n\n`,
+      `Zobowiązanie zaciągnięte przez ${honorificAcc(person.gender)} `, PN(wrappedName, 'ocr:lineWrap'),
       ' wymaga potwierdzenia numeru: ', EG(corruptedB, 'ocr:glyphSubstitution'), '.\n',
     ],
   };
@@ -248,12 +287,12 @@ function diacriticsMixture(rng, idx) {
     name: `hold_diakrytyki_${pad2(idx)}`,
     attack: `Mieszanka form z diakrytykami i bez w obrębie jednego dokumentu ("${person.surname}") — testuje lukę koreferencji z RECALL-90-DESIGN.md §2.5 (B5).`,
     parts: [
-      'Ubezpieczony ', PN(`${person.given} ${rendered[0]}`, tagFor(0)), ', zam. ', ADR(addr),
-      ', złożył wniosek o ponowne rozpatrzenie sprawy.\n\n',
+      `${person.gender === 'F' ? 'Ubezpieczona' : 'Ubezpieczony'} `, PN(`${person.given} ${rendered[0]}`, tagFor(0)), ', zam. ', ADR(addr),
+      `, ${pastTense('złożył', person.gender)} wniosek o ponowne rozpatrzenie sprawy.\n\n`,
       'W aktach ubezpieczeniowych ', PN(rendered[1], tagFor(1)),
       ' figuruje pod numerem sprawy wskazanym poniżej. Decyzję doręczono ',
       PN(rendered[2], tagFor(2)), ' w formie papierowej.\n\n',
-      'Odwołanie wniesione przez ', PN(rendered[3], tagFor(3)), ' zostało zarejestrowane pod wskazaną sygnaturą.\n',
+      'Dalsza korespondencja w sprawie prowadzona jest z ', PN(rendered[3], tagFor(3)), '.\n',
     ],
   };
 }
@@ -272,7 +311,7 @@ function financialPismo(rng, idx, flavor) {
   const parts = flavor === 'umowa'
     ? [
         'UMOWA POŻYCZKI NR ', REF(generateInvoiceNumber(rng)), '\n\n',
-        'zawarta w ', pick(rng, CITIES), ' pomiędzy ', ORG(org), ', NIP ', EG(nip, 'identifier:nip'),
+        'zawarta w ', LOC(inCity(pick(rng, CITIES))), ' pomiędzy ', ORG(org), ', NIP ', EG(nip, 'identifier:nip'),
         ', a ', PN(person.nom), ', zam. ', ADR(addr), '.\n\n',
         '§ 1. Pożyczkodawca udziela pożyczki w kwocie ', AMT(amounts[0]), '.\n',
         '§ 2. Odsetki umowne wynoszą ', AMT(amounts[1]), ' rocznie.\n',
@@ -337,7 +376,7 @@ function art910Pismo(rng, idx, flavor) {
       ETHNIC(pick(rng, ETHNIC_ORIGIN_PHRASES), 'art910:ethnicOrigin'),
     ];
   }
-  const parts = ['Strona ', PN(person.nom), ' zamieszkała w ', LOC(loc), ' oświadcza, że '];
+  const parts = ['Strona ', PN(person.nom), ` ${pastTense('zamieszkał', person.gender)} w `, LOC(inCity(loc)), ' oświadcza, że '];
   phraseParts.forEach((pp, i) => {
     parts.push(pp);
     parts.push(i < phraseParts.length - 1 ? ', a ponadto ' : '.\n');
@@ -373,7 +412,9 @@ function daneOsoboweRejestr(rng, idx) {
 function dlugiZlozonyDokument(rng, idx) {
   const person = pick(rng, ODMIANA_PEOPLE);
   const person2 = pick(rng, DWUCZLONOWE_PEOPLE);
-  const role1 = pick(rng, ROLES);
+  // role1 is used after "reprezentowany przez" (accusative) below — restricted
+  // to the invariant subset so it doesn't need declining (see INVARIANT_ROLES).
+  const role1 = pick(rng, INVARIANT_ROLES);
   const role2 = pick(rng, ROLES.filter((r) => r !== role1));
   const role3 = pick(rng, ROLES.filter((r) => r !== role1 && r !== role2));
   const court = pick(rng, COURTS);
@@ -395,16 +436,16 @@ function dlugiZlozonyDokument(rng, idx) {
     parts: [
       LOC(city), ', dnia 3 marca 2026 r.\n\n',
       ORG(court), '\n', ADR(addr1), '\n\n',
-      'Powód: ', PN(person.nom), ', PESEL ', EG(pesel, 'identifier:pesel'), ', ur. ', DOB(randomDob(rng)),
+      `${plaintiffLabel(person.gender)}: `, PN(person.nom), ', PESEL ', EG(pesel, 'identifier:pesel'), ', ur. ', DOB(randomDob(rng)),
       ', zam. ', ADR(addr1), ',\nreprezentowany przez ', ROLE(role1), ' ', PN(person.surnameGen, 'personName:odmiana'),
       ', ', ORG(extraCompany), '\n\n',
-      'Pozwana: ', ORG(org), ', NIP ', EG(nip, 'identifier:nip'), ', z siedzibą w ', LOC(city2), ', ', ADR(addr2), '\n\n',
+      'Pozwana: ', ORG(org), ', NIP ', EG(nip, 'identifier:nip'), ', z siedzibą w ', LOC(inCity(city2)), ', ', ADR(addr2), '\n\n',
       'Wartość przedmiotu sporu: ', AMT(amounts[0]), '\n\n',
       'POZEW O ZAPŁATĘ\n\nUZASADNIENIE\n\n',
-      'Strony łączyła umowa nr ', REF(generateInvoiceNumber(rng)), ' z dnia 2 stycznia 2026 r. Powód ',
-      PN(person.surnameNom, 'personName:odmiana'), ' wykonał zlecenie w całości, co potwierdził ', ROLE(role2),
-      ' pozwanej, pan ', PN(person2.nom), '.\n\n',
-      'Powód od kilku lat ', HEALTH(healthPhrase, 'art910:health'),
+      'Strony łączyła umowa nr ', REF(generateInvoiceNumber(rng)), ' z dnia 2 stycznia 2026 r. ', plaintiffLabel(person.gender), ' ',
+      PN(person.surnameNom, 'personName:odmiana'), ` ${pastTense('wykonał', person.gender)} zlecenie w całości, co potwierdził `, ROLE(role2),
+      ` pozwanej, ${honorificNom(person2.gender)} `, PN(person2.nom), '.\n\n',
+      plaintiffLabel(person.gender), ' od kilku lat ', HEALTH(healthPhrase, 'art910:health'),
       ', co utrudniło mu dochodzenie roszczenia we wcześniejszym terminie.\n\n',
       'Wezwanie do zapłaty na kwotę ', AMT(amounts[1]), ' pozostało bezskuteczne. Odsetki za opóźnienie wynoszą ',
       AMT(amounts[2]), '. Łączne roszczenie wynosi ', AMT(amounts[3]), ' (słownie: ', AMT(wordsAmount), ').\n\n',
@@ -444,7 +485,7 @@ function trapNazwyPospolite(rng, idx) {
     attack: 'Pułapka na nazwy pospolite (rzeka, działka, stopa procentowa) obok nazwiska-pułapki — mirrors adw_33.',
     parts: [
       'Nieruchomość położona jest ', places[0], ', w pobliżu ', places[1],
-      '. Oprocentowanie kredytu wynosi ', rate, ' w stosunku rocznym. Pan ',
+      '. Oprocentowanie kredytu wynosi ', rate, ` w stosunku rocznym. ${person.gender === 'F' ? 'Pani' : 'Pan'} `,
       PN(person.nom, 'personName:pospolite'), ' potwierdza powyższe ustalenia w swoim oświadczeniu.\n',
     ],
   };

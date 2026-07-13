@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 39,
+    "text": "Aldona Rawicz-Podgórska"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 45,
+    "end": 57,
+    "text": "1.03.1960 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 59,
+    "end": 65,
+    "text": "lat 49"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 67,
+    "end": 72,
+    "text": "wdowa"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 93,
+    "end": 108,
+    "text": "+48 750 576 365"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 130,
+    "end": 144,
+    "text": "(61) 433-83-78"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 153,
+    "end": 194,
+    "text": "aldona.rawicz-podgórska@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 245,
+    "end": 268,
+    "text": "kontakt@zakładusługk.pl"
+  }
+]

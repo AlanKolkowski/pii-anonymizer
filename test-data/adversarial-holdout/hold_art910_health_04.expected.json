@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 21,
+    "text": "Urszula Górska"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 36,
+    "end": 58,
+    "text": "Środzie Wielkopolskiej"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 73,
+    "end": 115,
+    "text": "leczy się z powodu nadciśnienia tętniczego"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 127,
+    "end": 166,
+    "text": "cierpi na przewlekłą niewydolność nerek"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 178,
+    "end": 217,
+    "text": "leczy się psychiatrycznie od pięciu lat"
+  }
+]

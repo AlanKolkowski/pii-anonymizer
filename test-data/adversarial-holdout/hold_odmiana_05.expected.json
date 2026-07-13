@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 40,
+    "text": "Wiesław Piotrowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 47,
+    "end": 78,
+    "text": "ul. Wrzosowa 70, 62-138 Jarocin"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 98,
+    "end": 111,
+    "text": "Piotrowskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 166,
+    "end": 180,
+    "text": "prezes zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 191,
+    "end": 204,
+    "text": "Piotrowskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 262,
+    "end": 275,
+    "text": "71 113,67 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 325,
+    "end": 335,
+    "text": "Co 9915/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 346,
+    "end": 359,
+    "text": "Piotrowskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 438,
+    "end": 449,
+    "text": "Piotrowskim"
+  }
+]

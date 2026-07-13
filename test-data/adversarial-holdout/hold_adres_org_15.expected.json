@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 4,
+    "text": "Śrem"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 46,
+    "end": 60,
+    "text": "Ns 7380/23 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 70,
+    "end": 89,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 90,
+    "end": 121,
+    "text": "ul. Spokojna 39/31, 63-255 Śrem"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 135,
+    "end": 176,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 177,
+    "end": 212,
+    "text": "ul. Spokojna 82/22, 63-110 Wolsztyn"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 218,
+    "end": 228,
+    "text": "3175747968"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 230,
+    "end": 252,
+    "text": "Sąd Rejonowy w Lesznie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 254,
+    "end": 279,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

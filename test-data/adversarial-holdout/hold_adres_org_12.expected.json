@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Jarocin"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 41,
+    "end": 54,
+    "text": "II Nc 8436/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 64,
+    "end": 89,
+    "text": "Longin Grzymała-Siedlecki"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 90,
+    "end": 125,
+    "text": "ul. Wierzbowa 93/18, 60-355 Jarocin"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 139,
+    "end": 175,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 176,
+    "end": 212,
+    "text": "ul. Spokojna 93/14, 60-635 Wągrowiec"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 218,
+    "end": 228,
+    "text": "5456977224"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 230,
+    "end": 253,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 255,
+    "end": 280,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

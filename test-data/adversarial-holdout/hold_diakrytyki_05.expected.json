@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 29,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 36,
+    "end": 70,
+    "text": "ul. Sosnowa 50/36, 64-603 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 146,
+    "end": 157,
+    "text": "Kamińskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 223,
+    "end": 234,
+    "text": "Kąmińśkiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 307,
+    "end": 316,
+    "text": "Kąmińśkim"
+  }
+]

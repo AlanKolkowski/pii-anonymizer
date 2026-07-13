@@ -65,6 +65,7 @@ export const ODMIANA_PEOPLE = ODMIANA_RAW.map(([given, surname]) => {
     subclass: 'odmiana',
     given,
     surname,
+    gender: surname.endsWith('a') ? 'F' : 'M',
     nom: `${given} ${surname}`,
     surnameNom: d.nom,
     surnameGen: d.gen,
@@ -94,6 +95,7 @@ export const DWUCZLONOWE_PEOPLE = DWUCZLONOWE_RAW.map(([given, fixedPart, declin
     subclass: 'dwuczlonowe',
     given,
     surname: join(d.nom),
+    gender: declinablePart.endsWith('a') ? 'F' : 'M',
     nom: `${given} ${join(d.nom)}`,
     surnameNom: join(d.nom),
     surnameGen: join(d.gen),
@@ -129,10 +131,14 @@ const POSPOLITE_RAW = [
   ['Czesława', 'Jaskółka'], ['Ludmiła', 'Kukułka'], ['Bogumiła', 'Wrona'], ['Salomea', 'Papuga'],
 ];
 
-export const POSPOLITE_PEOPLE = POSPOLITE_RAW.map(([given, surname]) => ({
+// First 10 entries are male given names, last 8 are female (see POSPOLITE_RAW
+// above) — common-noun surnames have no reliable orthographic gender marker
+// the way -ski/-ska does, so gender is tagged by position instead of inferred.
+export const POSPOLITE_PEOPLE = POSPOLITE_RAW.map(([given, surname], i) => ({
   subclass: 'pospolite',
   given,
   surname,
+  gender: i < 10 ? 'M' : 'F',
   nom: `${given} ${surname}`,
   surnameNom: surname,
 }));

@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 20,
+    "text": "Ignacy Wróbel"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 34,
+    "end": 56,
+    "text": "Środzie Wielkopolskiej"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 71,
+    "end": 119,
+    "text": "korzysta z ochrony związkowej jako działacz OPZZ"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 131,
+    "end": 202,
+    "text": "jest członkiem Niezależnego Samorządnego Związku Zawodowego «Metalowcy»"
+  }
+]

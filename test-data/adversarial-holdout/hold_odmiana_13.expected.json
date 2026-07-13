@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 39,
+    "text": "Wanda Kwaśniewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 46,
+    "end": 77,
+    "text": "ul. Słoneczna 16, 61-488 Kalisz"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 97,
+    "end": 110,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 165,
+    "end": 179,
+    "text": "prezes zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 190,
+    "end": 203,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 261,
+    "end": 267,
+    "text": "156 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 317,
+    "end": 329,
+    "text": "X Ns 7763/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 340,
+    "end": 353,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 432,
+    "end": 443,
+    "text": "Kwaśniewską"
+  }
+]

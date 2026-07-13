@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 21,
+    "text": "Bogumiła Wrona"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 36,
+    "end": 42,
+    "text": "Śmiglu"
+  },
+  {
+    "entity_group": "RELIGION_OR_BELIEF",
+    "start": 57,
+    "end": 87,
+    "text": "praktykuje jako świadek Jehowy"
+  },
+  {
+    "entity_group": "POLITICAL_OPINION",
+    "start": 99,
+    "end": 152,
+    "text": "jest członkiem partii politycznej o profilu lewicowym"
+  },
+  {
+    "entity_group": "SEXUAL_ORIENTATION",
+    "start": 164,
+    "end": 198,
+    "text": "określa się jako osoba biseksualna"
+  },
+  {
+    "entity_group": "ETHNIC_ORIGIN",
+    "start": 210,
+    "end": 260,
+    "text": "deklaruje przynależność do mniejszości niemieckiej"
+  }
+]

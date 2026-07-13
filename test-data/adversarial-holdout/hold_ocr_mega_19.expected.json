@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 61,
+    "text": "P O W I A T O W Y   U R Z Ą D   P R A C Y   W   K A L I S Z U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 88,
+    "text": "G ó r s k a"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 104,
+    "end": 114,
+    "text": "63366O203l"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 128,
+    "end": 141,
+    "text": "UrszulaGórska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 224,
+    "end": 232,
+    "text": "Gó-\nrską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 262,
+    "end": 271,
+    "text": "53591277O"
+  }
+]

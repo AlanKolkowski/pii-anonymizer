@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 28,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 34,
+    "end": 46,
+    "text": "5.12.1965 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 48,
+    "end": 54,
+    "text": "lat 35"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 56,
+    "end": 63,
+    "text": "zamężna"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 84,
+    "end": 99,
+    "text": "+48 623 873 868"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 121,
+    "end": 135,
+    "text": "(61) 532-80-44"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 144,
+    "end": 174,
+    "text": "helena.kania@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 225,
+    "end": 248,
+    "text": "kontakt@hurtowniaspo.pl"
+  }
+]

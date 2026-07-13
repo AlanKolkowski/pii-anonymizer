@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "UD/2025/10/0026"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 55,
+    "text": "Wolsztynie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 65,
+    "end": 106,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 112,
+    "end": 122,
+    "text": "6328499185"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 126,
+    "end": 135,
+    "text": "Leon Kruk"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 142,
+    "end": 172,
+    "text": "ul. Fabryczna 28, 63-869 Turek"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 220,
+    "end": 226,
+    "text": "216 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 256,
+    "end": 268,
+    "text": "58.933,37 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 306,
+    "end": 318,
+    "text": "58 611,50 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 346,
+    "end": 372,
+    "text": "56191374304278257013425514"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 411,
+    "end": 423,
+    "text": "25.691,35 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 434,
+    "end": 500,
+    "text": "siedemnaście tysięcy czterysta trzydzieści dziewięć złotych 00/100"
+  }
+]

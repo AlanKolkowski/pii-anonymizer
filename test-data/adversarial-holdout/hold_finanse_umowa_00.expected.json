@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "UD/2024/05/0422"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 67,
+    "text": "Ostrowie Wielkopolskim"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 77,
+    "end": 113,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 119,
+    "end": 129,
+    "text": "4128336187"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 133,
+    "end": 145,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 152,
+    "end": 182,
+    "text": "ul. Brzozowa 8, 64-172 Gniezno"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 230,
+    "end": 243,
+    "text": "59 569,72 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 273,
+    "end": 279,
+    "text": "426 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 317,
+    "end": 329,
+    "text": "39.387,41 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 357,
+    "end": 383,
+    "text": "71237187121109809000899432"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 422,
+    "end": 428,
+    "text": "999 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 439,
+    "end": 502,
+    "text": "jedenaście tysięcy osiemset trzydzieści dziewięć złotych 00/100"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 39,
+    "text": "Bożena Wróblewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 46,
+    "end": 81,
+    "text": "ul. Kolejowa 78/40, 60-077 Oborniki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 101,
+    "end": 113,
+    "text": "Wróblewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 168,
+    "end": 183,
+    "text": "członek zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 194,
+    "end": 206,
+    "text": "Wróblewskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 264,
+    "end": 276,
+    "text": "53.163,27 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 326,
+    "end": 336,
+    "text": "Co 6890/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 347,
+    "end": 359,
+    "text": "Wróblewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 438,
+    "end": 448,
+    "text": "Wróblewską"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 28,
+    "text": "Danuta Zalewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 35,
+    "end": 69,
+    "text": "ul. Fabryczna 61/26, 61-094 Poznań"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 146,
+    "end": 156,
+    "text": "Załęwśkiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 222,
+    "end": 232,
+    "text": "Ząlęwśkiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 305,
+    "end": 313,
+    "text": "Żąlewska"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 23,
+    "text": "Zofia Sobolewska"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 38,
+    "end": 44,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 59,
+    "end": 100,
+    "text": "pozostaje pod stałą opieką kardiologiczną"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 112,
+    "end": 152,
+    "text": "korzysta z rehabilitacji po udarze mózgu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 164,
+    "end": 192,
+    "text": "cierpi na chorobę Parkinsona"
+  }
+]

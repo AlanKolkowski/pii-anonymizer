@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 22,
+    "text": "Bogumiła Wrona"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 65,
+    "end": 73,
+    "text": "Gnieźnie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 75,
+    "end": 80,
+    "text": "Wrona"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 120,
+    "end": 135,
+    "text": "główna księgowa"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 136,
+    "end": 146,
+    "text": "Edmund Bąk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 184,
+    "end": 187,
+    "text": "Bąk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 237,
+    "end": 249,
+    "text": "Klara Czapla"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 258,
+    "end": 266,
+    "text": "Wągrowcu"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 294,
+    "end": 311,
+    "text": "asesor notarialny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 313,
+    "end": 319,
+    "text": "Czapla"
+  }
+]

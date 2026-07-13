@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 9,
+    "text": "Krotoszyn"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 33,
+    "end": 55,
+    "text": "Sąd Okręgowy w Koninie"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 56,
+    "end": 92,
+    "text": "ul. Wierzbowa 29/1, 61-573 Krotoszyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 101,
+    "end": 118,
+    "text": "Zenon Lewandowski"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 126,
+    "end": 137,
+    "text": "97032333707"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 143,
+    "end": 156,
+    "text": "22.02.1994 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 163,
+    "end": 199,
+    "text": "ul. Wierzbowa 29/1, 61-573 Krotoszyn"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 222,
+    "end": 232,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 233,
+    "end": 247,
+    "text": "Lewandowskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 249,
+    "end": 290,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 301,
+    "end": 337,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 343,
+    "end": 353,
+    "text": "6778882079"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 368,
+    "end": 390,
+    "text": "Środzie Wielkopolskiej"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 392,
+    "end": 436,
+    "text": "ul. Klasztorna 56, 64-449 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 464,
+    "end": 476,
+    "text": "30.426,29 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 533,
+    "end": 548,
+    "text": "WZ/2025/03/0335"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 581,
+    "end": 592,
+    "text": "Lewandowski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 636,
+    "end": 663,
+    "text": "specjalista ds. kadr i płac"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 678,
+    "end": 703,
+    "text": "Longin Grzymała-Siedlecki"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 725,
+    "end": 755,
+    "text": "zdiagnozowano u niego padaczkę"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 853,
+    "end": 859,
+    "text": "137 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 914,
+    "end": 927,
+    "text": "13 193,09 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 954,
+    "end": 964,
+    "text": "PLN 59.996"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 975,
+    "end": 1037,
+    "text": "jedenaście tysięcy osiemset pięćdziesiąt siedem złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1077,
+    "end": 1103,
+    "text": "69733531317658495817603552"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1131,
+    "end": 1136,
+    "text": "prok."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1154,
+    "end": 1168,
+    "text": "Lewandowskiemu"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1220,
+    "end": 1230,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1231,
+    "end": 1242,
+    "text": "Lewandowski"
+  }
+]

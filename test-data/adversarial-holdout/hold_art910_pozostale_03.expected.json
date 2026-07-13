@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Wacław Kogut"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 33,
+    "end": 38,
+    "text": "Turku"
+  },
+  {
+    "entity_group": "RELIGION_OR_BELIEF",
+    "start": 53,
+    "end": 84,
+    "text": "jest wyznania grekokatolickiego"
+  },
+  {
+    "entity_group": "POLITICAL_OPINION",
+    "start": 96,
+    "end": 134,
+    "text": "działa w lokalnej strukturze partyjnej"
+  },
+  {
+    "entity_group": "SEXUAL_ORIENTATION",
+    "start": 146,
+    "end": 208,
+    "text": "żyje w nieformalnym związku partnerskim z osobą tej samej płci"
+  },
+  {
+    "entity_group": "ETHNIC_ORIGIN",
+    "start": 220,
+    "end": 246,
+    "text": "jest pochodzenia romskiego"
+  }
+]

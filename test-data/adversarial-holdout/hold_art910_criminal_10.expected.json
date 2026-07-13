@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 23,
+    "text": "Bogdan Zieliński"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 37,
+    "end": 48,
+    "text": "Krotoszynie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 63,
+    "end": 117,
+    "text": "toczyło się przeciwko niej dochodzenie o zniesławienie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 129,
+    "end": 178,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 190,
+    "end": 238,
+    "text": "był uprzednio karany za znęcanie się nad rodziną"
+  }
+]

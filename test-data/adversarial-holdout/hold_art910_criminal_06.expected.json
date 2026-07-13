@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Feliks Osioł"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 33,
+    "end": 55,
+    "text": "Ostrowie Wielkopolskim"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 70,
+    "end": 124,
+    "text": "toczyło się przeciwko niej dochodzenie o zniesławienie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 136,
+    "end": 191,
+    "text": "toczy się przeciwko niemu postępowanie karne o oszustwo"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 203,
+    "end": 252,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  }
+]

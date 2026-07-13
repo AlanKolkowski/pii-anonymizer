@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 23,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 34,
+    "end": 48,
+    "text": "VII Ns 3874/23"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 85,
+    "end": 100,
+    "text": "członek zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 101,
+    "end": 105,
+    "text": "C.W."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 119,
+    "end": 141,
+    "text": "rzeczoznawca majątkowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 142,
+    "end": 146,
+    "text": "G.P."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 155,
+    "end": 168,
+    "text": "B. Wróblewska"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 170,
+    "end": 176,
+    "text": "lat 21"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 197,
+    "end": 201,
+    "text": "S.R."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 203,
+    "end": 215,
+    "text": "rozwiedziony"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 222,
+    "end": 255,
+    "text": "ul. Wierzbowa 51, 60-444 Wolsztyn"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 310,
+    "end": 325,
+    "text": "komornik sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 326,
+    "end": 340,
+    "text": "Z. Lewandowski"
+  }
+]

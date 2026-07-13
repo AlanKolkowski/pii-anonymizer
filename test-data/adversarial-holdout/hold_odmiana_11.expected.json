@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Teresa Witkowska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 81,
+    "text": "ul. Słoneczna 77/11, 63-076 Wolsztyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 101,
+    "end": 112,
+    "text": "Witkowskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 167,
+    "end": 189,
+    "text": "rzeczoznawca majątkowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 200,
+    "end": 211,
+    "text": "Witkowskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 269,
+    "end": 282,
+    "text": "49 303,43 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 332,
+    "end": 348,
+    "text": "X GC 4857/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 359,
+    "end": 370,
+    "text": "Witkowskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 449,
+    "end": 458,
+    "text": "Witkowską"
+  }
+]

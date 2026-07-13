@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 21,
+    "text": "ACa 2910/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 49,
+    "end": 66,
+    "text": "Bożena Wróblewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 74,
+    "end": 85,
+    "text": "57020976679"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 113,
+    "end": 123,
+    "text": "BMA 733701"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 137,
+    "end": 147,
+    "text": "AG 1391751"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 164,
+    "end": 177,
+    "text": "92712/00/2780"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 192,
+    "end": 228,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 234,
+    "end": 244,
+    "text": "1771383985"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 252,
+    "end": 261,
+    "text": "475691370"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 267,
+    "end": 277,
+    "text": "1292382212"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 311,
+    "end": 337,
+    "text": "12060744915292413801540543"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 379,
+    "end": 396,
+    "text": "RNCLBJ9M6Y4NT4FSB"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 415,
+    "end": 423,
+    "text": "PG M6V19"
+  }
+]

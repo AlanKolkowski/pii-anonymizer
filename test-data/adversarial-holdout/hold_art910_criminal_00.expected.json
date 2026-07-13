@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 23,
+    "text": "Jadwiga Głowacka"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 38,
+    "end": 61,
+    "text": "Grodzisku Wielkopolskim"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 76,
+    "end": 131,
+    "text": "toczy się przeciwko niemu postępowanie karne o oszustwo"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 143,
+    "end": 186,
+    "text": "postawiono mu zarzut fałszowania dokumentów"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 198,
+    "end": 247,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  }
+]

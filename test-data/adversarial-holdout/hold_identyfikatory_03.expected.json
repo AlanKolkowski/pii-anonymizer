@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 20,
+    "text": "KM 7097/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 48,
+    "end": 60,
+    "text": "Klemens Karp"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 68,
+    "end": 79,
+    "text": "80102875166"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 107,
+    "end": 117,
+    "text": "KFG 789962"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 131,
+    "end": 141,
+    "text": "LE 1180808"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 158,
+    "end": 171,
+    "text": "27721/41/0779"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 186,
+    "end": 216,
+    "text": "Zakład Stolarski Ignacy Wróbel"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 222,
+    "end": 232,
+    "text": "6056509827"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 240,
+    "end": 249,
+    "text": "062884670"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 255,
+    "end": 265,
+    "text": "5257530764"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 299,
+    "end": 325,
+    "text": "32071054644165419122929288"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 367,
+    "end": 384,
+    "text": "G5NV12LRY3RAFJ519"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 403,
+    "end": 411,
+    "text": "PZ WR63C"
+  }
+]

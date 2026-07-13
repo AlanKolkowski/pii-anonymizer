@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 25,
+    "text": "Wiesław Piotrowski"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 39,
+    "end": 45,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 60,
+    "end": 108,
+    "text": "jest członkinią Związku Nauczycielstwa Polskiego"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 120,
+    "end": 191,
+    "text": "jest członkiem Niezależnego Samorządnego Związku Zawodowego «Metalowcy»"
+  }
+]

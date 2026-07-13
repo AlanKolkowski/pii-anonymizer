@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 29,
+    "text": "Bogdan Zieliński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 36,
+    "end": 65,
+    "text": "ul. Lipowa 66, 62-996 Kościan"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 141,
+    "end": 153,
+    "text": "Zielińskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 219,
+    "end": 231,
+    "text": "Zielińskiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 304,
+    "end": 314,
+    "text": "Zięłinskim"
+  }
+]

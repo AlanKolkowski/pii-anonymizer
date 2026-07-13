@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 18,
+    "text": "Norbert Kot"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 32,
+    "end": 42,
+    "text": "Wolsztynie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 57,
+    "end": 108,
+    "text": "skazany prawomocnie za jazdę w stanie nietrzeźwości"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 120,
+    "end": 153,
+    "text": "odbywał karę pozbawienia wolności"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 165,
+    "end": 210,
+    "text": "był tymczasowo aresztowany w sprawie o rozbój"
+  }
+]

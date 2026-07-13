@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 26,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 40,
+    "end": 45,
+    "text": "Turku"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 60,
+    "end": 107,
+    "text": "reprezentuje pracowników jako delegat związkowy"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 119,
+    "end": 184,
+    "text": "przystąpiła do związku zawodowego «Solidarność» w zakładzie pracy"
+  }
+]

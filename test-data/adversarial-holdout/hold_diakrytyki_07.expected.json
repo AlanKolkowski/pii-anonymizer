@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 30,
+    "text": "Andrzej Michalski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 37,
+    "end": 67,
+    "text": "ul. Ogrodowa 29, 62-631 Leszno"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 143,
+    "end": 155,
+    "text": "Michalskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 221,
+    "end": 233,
+    "text": "Mićhąłskiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 306,
+    "end": 316,
+    "text": "Michalskim"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 59,
+    "text": "Z A K Ł A D   U B E Z P I E C Z E Ń   S P O Ł E C Z N Y C H"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 75,
+    "end": 90,
+    "text": "K a m i ń s k i"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 106,
+    "end": 117,
+    "text": "68l020l6772"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 131,
+    "end": 146,
+    "text": "RyszardKamiński"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 228,
+    "end": 241,
+    "text": "Ka-\nmińskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 271,
+    "end": 280,
+    "text": "2O6985232"
+  }
+]

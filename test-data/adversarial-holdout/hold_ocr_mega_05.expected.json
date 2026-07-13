@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 57,
+    "text": "W I E L K O P O L S K I   U R Z Ą D   W O J E W Ó D Z K I"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 92,
+    "text": "W r ó b l e w s k a"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 108,
+    "end": 119,
+    "text": "7403209ll92"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 133,
+    "end": 149,
+    "text": "BożenaWróblewska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 232,
+    "end": 244,
+    "text": "Wró-\nblewską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 274,
+    "end": 283,
+    "text": "292232O66"
+  }
+]

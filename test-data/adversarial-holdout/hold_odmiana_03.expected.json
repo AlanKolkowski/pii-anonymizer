@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 39,
+    "text": "Zenon Lewandowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 46,
+    "end": 92,
+    "text": "ul. Dworcowa 39/26, 63-742 Ostrów Wielkopolski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 112,
+    "end": 126,
+    "text": "Lewandowskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 181,
+    "end": 191,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 202,
+    "end": 216,
+    "text": "Lewandowskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 274,
+    "end": 286,
+    "text": "57.167,33 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 336,
+    "end": 346,
+    "text": "ACa 268/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 357,
+    "end": 371,
+    "text": "Lewandowskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 450,
+    "end": 462,
+    "text": "Lewandowskim"
+  }
+]
