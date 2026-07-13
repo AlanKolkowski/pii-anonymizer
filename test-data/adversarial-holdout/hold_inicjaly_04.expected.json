@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Okręgowy w Koninie"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 43,
+    "text": "Co 2974/23"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 80,
+    "end": 89,
+    "text": "notariusz"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 90,
+    "end": 102,
+    "text": "K. Jankowski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 116,
+    "end": 132,
+    "text": "sekretarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 133,
+    "end": 144,
+    "text": "D. Zalewska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 153,
+    "end": 157,
+    "text": "F.M."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 159,
+    "end": 165,
+    "text": "lat 38"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 186,
+    "end": 190,
+    "text": "A.K."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 192,
+    "end": 213,
+    "text": "zamężna, dwoje dzieci"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 220,
+    "end": 253,
+    "text": "ul. Graniczna 51, 62-863 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 308,
+    "end": 323,
+    "text": "komornik sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 324,
+    "end": 338,
+    "text": "Z. Lewandowski"
+  }
+]

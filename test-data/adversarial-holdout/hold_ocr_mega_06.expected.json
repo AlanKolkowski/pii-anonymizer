@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 61,
+    "text": "P O W I A T O W Y   U R Z Ą D   P R A C Y   W   K A L I S Z U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 92,
+    "text": "K a m i ń s k i"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 108,
+    "end": 118,
+    "text": "04768l9342"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 132,
+    "end": 147,
+    "text": "RyszardKamiński"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 229,
+    "end": 242,
+    "text": "Kamiński-\nego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 272,
+    "end": 286,
+    "text": "7O66441O787864"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 49,
+    "text": "P A Ń S T W O W A   I N S P E K C J A   P R A C Y"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 86,
+    "text": "L e w a n d o w s k i"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 102,
+    "end": 112,
+    "text": "5405509l4O"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 126,
+    "end": 142,
+    "text": "ZenonLewandowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 224,
+    "end": 240,
+    "text": "Lewandow-\nskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 270,
+    "end": 284,
+    "text": "96O5205787l613"
+  }
+]

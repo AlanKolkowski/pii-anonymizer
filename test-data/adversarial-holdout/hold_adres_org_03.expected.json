@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 5,
+    "text": "Konin"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 42,
+    "end": 52,
+    "text": "Co 6077/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 62,
+    "end": 77,
+    "text": "Danuta Zalewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 78,
+    "end": 107,
+    "text": "ul. Brzozowa 63, 64-702 Konin"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 121,
+    "end": 164,
+    "text": "Przedsiębiorstwo Transportowe Emil Dzięcioł"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 165,
+    "end": 211,
+    "text": "ul. Fabryczna 26/36, 61-035 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 217,
+    "end": 227,
+    "text": "0670009003"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 229,
+    "end": 252,
+    "text": "Sąd Rejonowy w Gnieźnie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 254,
+    "end": 279,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

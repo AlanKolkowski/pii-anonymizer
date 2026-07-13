@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 20,
+    "text": "Malwina Sroka"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 35,
+    "end": 45,
+    "text": "Obornikach"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 60,
+    "end": 108,
+    "text": "korzysta z ochrony związkowej jako działacz OPZZ"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 120,
+    "end": 184,
+    "text": "pełni funkcję przewodniczącego zakładowej organizacji związkowej"
+  }
+]

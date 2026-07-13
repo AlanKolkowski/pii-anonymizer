@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 40,
+    "text": "IV Nc 4117/23"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 49,
+    "end": 62,
+    "text": "Ignacy Wróbel"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 69,
+    "end": 102,
+    "text": "ul. Fabryczna 96/3, 60-784 Poznań"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 121,
+    "end": 127,
+    "text": "706 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 180,
+    "end": 186,
+    "text": "462 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 212,
+    "end": 216,
+    "text": "5 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 227,
+    "end": 285,
+    "text": "siedemnaście tysięcy sto trzydzieści siedem złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 308,
+    "end": 334,
+    "text": "30205528062092401762516243"
+  }
+]

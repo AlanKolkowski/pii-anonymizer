@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 21,
+    "text": "Salomea Papuga"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 36,
+    "end": 58,
+    "text": "Ostrowie Wielkopolskim"
+  },
+  {
+    "entity_group": "RELIGION_OR_BELIEF",
+    "start": 73,
+    "end": 103,
+    "text": "praktykuje jako świadek Jehowy"
+  },
+  {
+    "entity_group": "POLITICAL_OPINION",
+    "start": 115,
+    "end": 168,
+    "text": "jest członkiem partii politycznej o profilu lewicowym"
+  },
+  {
+    "entity_group": "SEXUAL_ORIENTATION",
+    "start": 180,
+    "end": 233,
+    "text": "ujawniła swoją orientację homoseksualną w toku zeznań"
+  },
+  {
+    "entity_group": "ETHNIC_ORIGIN",
+    "start": 245,
+    "end": 295,
+    "text": "deklaruje przynależność do mniejszości niemieckiej"
+  }
+]

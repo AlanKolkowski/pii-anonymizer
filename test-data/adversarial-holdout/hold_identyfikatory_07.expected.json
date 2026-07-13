@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 23,
+    "text": "IV Co 3235/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 51,
+    "end": 66,
+    "text": "Ludmiła Kukułka"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 74,
+    "end": 85,
+    "text": "76010530857"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 113,
+    "end": 123,
+    "text": "ZEE 935116"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 137,
+    "end": 147,
+    "text": "ZN 0254324"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 164,
+    "end": 177,
+    "text": "72559/70/4975"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 192,
+    "end": 238,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 244,
+    "end": 254,
+    "text": "2690781475"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 262,
+    "end": 271,
+    "text": "755495178"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 277,
+    "end": 287,
+    "text": "1464307676"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 321,
+    "end": 349,
+    "text": "PL16505514301048040948586498"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 391,
+    "end": 408,
+    "text": "G8CY792J70N3PS0NF"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 427,
+    "end": 434,
+    "text": "PJ N20V"
+  }
+]

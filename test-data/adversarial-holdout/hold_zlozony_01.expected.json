@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 18,
+    "text": "Środa Wielkopolska"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 42,
+    "end": 64,
+    "text": "Sąd Rejonowy w Lesznie"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 65,
+    "end": 107,
+    "text": "ul. Wrzosowa 13, 60-742 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 118,
+    "end": 135,
+    "text": "Wanda Kwaśniewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 143,
+    "end": 154,
+    "text": "58100246174"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 160,
+    "end": 172,
+    "text": "7.09.2001 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 179,
+    "end": 221,
+    "text": "ul. Wrzosowa 13, 60-742 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 244,
+    "end": 249,
+    "text": "r.pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 250,
+    "end": 263,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 265,
+    "end": 297,
+    "text": "Bank Wielkopolski Spółka Akcyjna"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 308,
+    "end": 352,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 358,
+    "end": 368,
+    "text": "1889460516"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 383,
+    "end": 392,
+    "text": "Kościanie"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 394,
+    "end": 429,
+    "text": "ul. Fabryczna 89/24, 64-828 Kościan"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 457,
+    "end": 469,
+    "text": "2 455,48 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 526,
+    "end": 541,
+    "text": "ZK/2024/08/0907"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 576,
+    "end": 587,
+    "text": "Kwaśniewska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 632,
+    "end": 645,
+    "text": "biegły sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 660,
+    "end": 686,
+    "text": "Ambroży Jastrzębiec-Wolski"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 710,
+    "end": 738,
+    "text": "jest uzależniony od alkoholu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 836,
+    "end": 846,
+    "text": "PLN 30.880"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 901,
+    "end": 914,
+    "text": "75 040,09 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 941,
+    "end": 953,
+    "text": "69.435,99 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 964,
+    "end": 1025,
+    "text": "jedenaście tysięcy czterysta pięćdziesiąt trzy złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1065,
+    "end": 1093,
+    "text": "PL40135726080879851422102360"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1121,
+    "end": 1128,
+    "text": "mecenas"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1146,
+    "end": 1159,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1211,
+    "end": 1216,
+    "text": "r.pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1217,
+    "end": 1228,
+    "text": "Kwaśniewska"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 61,
+    "text": "P O W I A T O W Y   U R Z Ą D   P R A C Y   W   K A L I S Z U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 94,
+    "text": "W o j n o w s k a"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 110,
+    "end": 121,
+    "text": "551O2799O82"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 135,
+    "end": 150,
+    "text": "ReginaWojnowska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 233,
+    "end": 244,
+    "text": "Wojnow-\nską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 274,
+    "end": 283,
+    "text": "14O993449"
+  }
+]

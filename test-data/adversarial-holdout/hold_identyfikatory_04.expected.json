@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 23,
+    "text": "III Nc 993/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 51,
+    "end": 69,
+    "text": "Mirosław Szymański"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 77,
+    "end": 88,
+    "text": "65051028748"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 116,
+    "end": 126,
+    "text": "SDA 569602"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 140,
+    "end": 150,
+    "text": "TL 7162387"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 167,
+    "end": 180,
+    "text": "78677/59/6626"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 195,
+    "end": 236,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 242,
+    "end": 252,
+    "text": "0996204635"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 260,
+    "end": 269,
+    "text": "438875268"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 275,
+    "end": 285,
+    "text": "2701683783"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 319,
+    "end": 345,
+    "text": "88392887242141681028923442"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 387,
+    "end": 404,
+    "text": "JBN51K4TVYENC756L"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 423,
+    "end": 431,
+    "text": "PC LBH57"
+  }
+]

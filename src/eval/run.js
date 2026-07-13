@@ -237,7 +237,20 @@ async function main() {
   console.log(`\nResults: ${runDir}/`);
 }
 
-main().catch((err) => {
-  console.error('Eval failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    // Every model's InferenceSession is already disposed per-document
+    // (src/pipeline/steps/ner.js / load-models.js tear each one down right
+    // after use) — but onnxruntime-node's native session threads have been
+    // observed to outlive every JS-visible dispose() call and keep the
+    // process alive indefinitely with no further work to do (RECALL-B2-NOTES.md
+    // §5: summary.json written and correct, node.exe still running hours
+    // later, unkillable via TaskStop). All output is flushed by this point
+    // (summary.json + the `latest` symlink), so force a clean exit rather
+    // than waiting on a natural event-loop drain that may never happen.
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('Eval failed:', err);
+    process.exit(1);
+  });

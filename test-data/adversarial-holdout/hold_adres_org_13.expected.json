@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 6,
+    "text": "Leszno"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 44,
+    "end": 58,
+    "text": "VII GC 2520/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 68,
+    "end": 87,
+    "text": "Kazimierz Jankowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 88,
+    "end": 117,
+    "text": "ul. Zielona 56, 61-387 Leszno"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 131,
+    "end": 174,
+    "text": "Przedsiębiorstwo Transportowe Emil Dzięcioł"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 175,
+    "end": 209,
+    "text": "ul. Widokowa 9/27, 61-809 Oborniki"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 215,
+    "end": 225,
+    "text": "5728121509"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 227,
+    "end": 249,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 251,
+    "end": 276,
+    "text": "URZĄD SKARBOWY W POZNANIU"
+  }
+]

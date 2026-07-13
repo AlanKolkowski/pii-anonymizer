@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Gniezno"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 44,
+    "end": 54,
+    "text": "KM 4738/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 64,
+    "end": 89,
+    "text": "Stefania Korwin-Siedlecka"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 90,
+    "end": 120,
+    "text": "ul. Parkowa 37, 60-404 Gniezno"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 134,
+    "end": 170,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 171,
+    "end": 204,
+    "text": "ul. Parkowa 17/23, 60-723 Jarocin"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 210,
+    "end": 220,
+    "text": "1688972043"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 222,
+    "end": 245,
+    "text": "Sąd Rejonowy w Gnieźnie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 247,
+    "end": 276,
+    "text": "WIELKOPOLSKI URZĄD WOJEWÓDZKI"
+  }
+]

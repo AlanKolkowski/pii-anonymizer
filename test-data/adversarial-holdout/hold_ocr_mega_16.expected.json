@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 61,
+    "text": "P O W I A T O W Y   U R Z Ą D   P R A C Y   W   K A L I S Z U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 96,
+    "text": "P i o t r o w s k i"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 112,
+    "end": 123,
+    "text": "7OO30848l01"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 137,
+    "end": 154,
+    "text": "WiesławPiotrowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 236,
+    "end": 251,
+    "text": "Piotrows-\nkiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 281,
+    "end": 290,
+    "text": "595317l67"
+  }
+]

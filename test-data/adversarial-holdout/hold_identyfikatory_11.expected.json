@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 28,
+    "text": "III KM 3127/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 56,
+    "end": 69,
+    "text": "Malwina Sroka"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 77,
+    "end": 88,
+    "text": "61011673441"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 116,
+    "end": 126,
+    "text": "SHE 638125"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 140,
+    "end": 150,
+    "text": "SZ 2862688"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 167,
+    "end": 180,
+    "text": "00550/15/9188"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 195,
+    "end": 239,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 245,
+    "end": 255,
+    "text": "0238836279"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 263,
+    "end": 272,
+    "text": "539019410"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 278,
+    "end": 288,
+    "text": "6158927731"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 322,
+    "end": 348,
+    "text": "66894062629763807256925510"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 390,
+    "end": 407,
+    "text": "7FZVPPZHGX54602ZM"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 426,
+    "end": 433,
+    "text": "PG KXM5"
+  }
+]

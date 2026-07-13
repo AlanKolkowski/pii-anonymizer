@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 49,
+    "text": "U R Z Ą D   S K A R B O W Y   W   P O Z N A N I U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 82,
+    "text": "W i t k o w s k a"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 98,
+    "end": 108,
+    "text": "475165672O"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 122,
+    "end": 137,
+    "text": "TeresaWitkowska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 220,
+    "end": 231,
+    "text": "Witk-\nowską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 261,
+    "end": 275,
+    "text": "855309l036488O"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 20,
+    "text": "Wacław Kogut"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 61,
+    "end": 71,
+    "text": "Wolsztynie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 78,
+    "text": "Kogut"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 117,
+    "end": 126,
+    "text": "notariusz"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 127,
+    "end": 139,
+    "text": "Klara Czapla"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 178,
+    "end": 184,
+    "text": "Czapla"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 235,
+    "end": 248,
+    "text": "Emil Dzięcioł"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 257,
+    "end": 263,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 290,
+    "end": 305,
+    "text": "członek zarządu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 307,
+    "end": 315,
+    "text": "Dzięcioł"
+  }
+]

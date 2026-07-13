@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 28,
+    "text": "Danuta Zalęwśką"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 35,
+    "end": 65,
+    "text": "ul. Spokojna 85, 64-309 Poznań"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 142,
+    "end": 152,
+    "text": "Zalewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 218,
+    "end": 228,
+    "text": "Żałewskięj"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 301,
+    "end": 309,
+    "text": "Zalewską"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 40,
+    "text": "Mirosław Szymański"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 47,
+    "end": 82,
+    "text": "ul. Klasztorna 12/37, 62-521 Poznań"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 102,
+    "end": 114,
+    "text": "Szymańskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 169,
+    "end": 173,
+    "text": "not."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 184,
+    "end": 196,
+    "text": "Szymańskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 254,
+    "end": 266,
+    "text": "2 147,22 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 316,
+    "end": 327,
+    "text": "I C 6751/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 338,
+    "end": 350,
+    "text": "Szymańskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 429,
+    "end": 439,
+    "text": "Szymańskim"
+  }
+]

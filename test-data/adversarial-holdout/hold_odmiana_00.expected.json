@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Bogdan Zieliński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 77,
+    "text": "ul. Lipowa 25/9, 61-394 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 97,
+    "end": 109,
+    "text": "Zielińskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 164,
+    "end": 179,
+    "text": "komornik sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 190,
+    "end": 202,
+    "text": "Zielińskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 260,
+    "end": 270,
+    "text": "PLN 16.985"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 320,
+    "end": 330,
+    "text": "Ns 6461/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 341,
+    "end": 353,
+    "text": "Zielińskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 432,
+    "end": 442,
+    "text": "Zielińskim"
+  }
+]

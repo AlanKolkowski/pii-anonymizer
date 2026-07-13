@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 21,
+    "text": "ACa 1041/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 49,
+    "end": 61,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 69,
+    "end": 80,
+    "text": "59050782954"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 108,
+    "end": 118,
+    "text": "SBE 770245"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 132,
+    "end": 142,
+    "text": "EL 8237364"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 159,
+    "end": 172,
+    "text": "75669/45/6158"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 187,
+    "end": 231,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 237,
+    "end": 247,
+    "text": "8700679446"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 255,
+    "end": 264,
+    "text": "543481973"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 270,
+    "end": 280,
+    "text": "6567609402"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 314,
+    "end": 342,
+    "text": "PL52089366910322534037738933"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 384,
+    "end": 401,
+    "text": "TV69MADH5HKDHMSEU"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 420,
+    "end": 428,
+    "text": "PO 41WX6"
+  }
+]

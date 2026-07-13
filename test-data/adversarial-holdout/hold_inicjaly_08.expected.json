@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 23,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 34,
+    "end": 44,
+    "text": "Nc 5436/25"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 81,
+    "end": 91,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 92,
+    "end": 103,
+    "text": "R. Kamiński"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 117,
+    "end": 124,
+    "text": "adwokat"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 125,
+    "end": 136,
+    "text": "D. Zalewska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 145,
+    "end": 157,
+    "text": "B. Zieliński"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 159,
+    "end": 165,
+    "text": "lat 49"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 186,
+    "end": 198,
+    "text": "M. Pawłowski"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 200,
+    "end": 205,
+    "text": "wdowa"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 212,
+    "end": 243,
+    "text": "ul. Zielona 59, 60-362 Oborniki"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 298,
+    "end": 316,
+    "text": "dyrektor finansowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 317,
+    "end": 329,
+    "text": "M. Szymański"
+  }
+]

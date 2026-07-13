@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 38,
+    "text": "ACa 7869/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 47,
+    "end": 65,
+    "text": "Wiesław Piotrowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 72,
+    "end": 105,
+    "text": "ul. Jarzębinowa 95, 61-953 Leszno"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 124,
+    "end": 130,
+    "text": "994 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 183,
+    "end": 195,
+    "text": "82 566,86 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 221,
+    "end": 234,
+    "text": "11 038,92 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 245,
+    "end": 306,
+    "text": "jedenaście tysięcy osiemset dwadzieścia cztery złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 329,
+    "end": 357,
+    "text": "PL94185011095177567692055413"
+  }
+]

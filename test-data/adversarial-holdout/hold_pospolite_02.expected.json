@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 18,
+    "text": "Edmund Bąk"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 59,
+    "end": 69,
+    "text": "Czarnkowie"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 71,
+    "end": 74,
+    "text": "Bąk"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 113,
+    "end": 129,
+    "text": "sekretarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 130,
+    "end": 142,
+    "text": "Helena Kania"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 181,
+    "end": 186,
+    "text": "Kania"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 237,
+    "end": 252,
+    "text": "Otylia Pszczoła"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 261,
+    "end": 269,
+    "text": "Poznaniu"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 297,
+    "end": 307,
+    "text": "prokurator"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 309,
+    "end": 317,
+    "text": "Pszczoła"
+  }
+]

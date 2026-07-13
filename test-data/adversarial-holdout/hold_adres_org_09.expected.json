@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 21,
+    "text": "Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 56,
+    "end": 67,
+    "text": "I K 3048/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 77,
+    "end": 94,
+    "text": "Wanda Kwaśniewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 95,
+    "end": 137,
+    "text": "ul. Leśna 55, 62-871 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 151,
+    "end": 181,
+    "text": "Zakład Stolarski Ignacy Wróbel"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 182,
+    "end": 217,
+    "text": "ul. Słoneczna 48/25, 61-766 Kościan"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 223,
+    "end": 233,
+    "text": "5587547398"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 235,
+    "end": 257,
+    "text": "Sąd Okręgowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 259,
+    "end": 284,
+    "text": "PAŃSTWOWA INSPEKCJA PRACY"
+  }
+]

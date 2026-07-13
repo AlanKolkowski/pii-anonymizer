@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 22,
+    "text": "X GC 4672/24"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 50,
+    "end": 61,
+    "text": "Norbert Kot"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 69,
+    "end": 80,
+    "text": "59080846970"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 108,
+    "end": 118,
+    "text": "PNE 966113"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 132,
+    "end": 142,
+    "text": "GN 6180540"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 159,
+    "end": 172,
+    "text": "58796/13/8729"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 187,
+    "end": 228,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 234,
+    "end": 244,
+    "text": "0138555138"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 252,
+    "end": 261,
+    "text": "235795003"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 267,
+    "end": 277,
+    "text": "3694204691"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 311,
+    "end": 339,
+    "text": "PL75089258357505694634486712"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 381,
+    "end": 398,
+    "text": "8RVZSKUEED4XSC7K0"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 417,
+    "end": 425,
+    "text": "PG HEJ2G"
+  }
+]

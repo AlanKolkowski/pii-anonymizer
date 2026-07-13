@@ -19,9 +19,11 @@ import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_DATA_DIR = join(__dirname, '../../test-data');
 
-// Every corpus directory holding ground truth. `adversarial` joins the guard
-// automatically once it exists.
-const CORPUS_DIRS = ['synthetic', 'adversarial']
+// Every corpus directory holding ground truth. `adversarial` and
+// `adversarial-holdout` (RECALL-90-DESIGN.md §3.2 — the frozen sprawdzian
+// corpus, scripts/generate-adversarial-corpus.mjs --pool=holdout) join the
+// guard automatically once they exist.
+const CORPUS_DIRS = ['synthetic', 'adversarial', 'adversarial-holdout']
   .map((d) => join(TEST_DATA_DIR, d))
   .filter((d) => existsSync(d));
 

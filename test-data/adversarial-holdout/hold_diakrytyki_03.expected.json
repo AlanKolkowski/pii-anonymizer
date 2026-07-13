@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 29,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 36,
+    "end": 68,
+    "text": "ul. Brzozowa 40, 64-905 Oborniki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 144,
+    "end": 155,
+    "text": "Kamińśkięgó"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 221,
+    "end": 232,
+    "text": "Kaminskięmu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 305,
+    "end": 314,
+    "text": "Kąmińśkim"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 31,
+    "text": "Ludmiła Kukułka"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 37,
+    "end": 50,
+    "text": "15.02.1993 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 52,
+    "end": 58,
+    "text": "lat 60"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 60,
+    "end": 72,
+    "text": "rozwiedziony"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 93,
+    "end": 108,
+    "text": "+48 523 769 292"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 130,
+    "end": 144,
+    "text": "(62) 249-51-74"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 153,
+    "end": 186,
+    "text": "ludmiła.kukułka@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 237,
+    "end": 260,
+    "text": "kontakt@hurtowniaspo.pl"
+  }
+]

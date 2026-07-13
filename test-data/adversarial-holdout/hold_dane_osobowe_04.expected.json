@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 28,
+    "text": "Wacław Kogut"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 34,
+    "end": 47,
+    "text": "14.10.1980 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 49,
+    "end": 55,
+    "text": "lat 37"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 57,
+    "end": 69,
+    "text": "rozwiedziony"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 90,
+    "end": 105,
+    "text": "+48 750 193 280"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 127,
+    "end": 141,
+    "text": "(65) 578-38-82"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 150,
+    "end": 180,
+    "text": "wacław.kogut@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 231,
+    "end": 254,
+    "text": "kontakt@bankwielkopo.pl"
+  }
+]

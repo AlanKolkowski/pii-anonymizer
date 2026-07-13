@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Kaliszu"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 43,
+    "text": "Co 9906/26"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 80,
+    "end": 89,
+    "text": "sędzia SR"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 90,
+    "end": 104,
+    "text": "Z. Lewandowski"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 118,
+    "end": 136,
+    "text": "dyrektor finansowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 137,
+    "end": 141,
+    "text": "T.N."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 150,
+    "end": 162,
+    "text": "M. Pawłowski"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 164,
+    "end": 170,
+    "text": "lat 22"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 191,
+    "end": 203,
+    "text": "A. Michalski"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 205,
+    "end": 226,
+    "text": "zamężna, dwoje dzieci"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 233,
+    "end": 265,
+    "text": "ul. Dworcowa 22, 63-639 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 320,
+    "end": 330,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 331,
+    "end": 342,
+    "text": "D. Zalewska"
+  }
+]

@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 23,
+    "text": "IV Co 9233/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 51,
+    "end": 67,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 75,
+    "end": 86,
+    "text": "77101606408"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 114,
+    "end": 124,
+    "text": "FPH 280330"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 138,
+    "end": 148,
+    "text": "NA 3722116"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 165,
+    "end": 178,
+    "text": "41534/05/1772"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 193,
+    "end": 234,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 240,
+    "end": 250,
+    "text": "5704906222"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 258,
+    "end": 272,
+    "text": "83169058215757"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 278,
+    "end": 288,
+    "text": "0816657607"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 322,
+    "end": 348,
+    "text": "65790829463534535413157834"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 390,
+    "end": 407,
+    "text": "J51MK65A1TD8NZ2H8"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 426,
+    "end": 433,
+    "text": "PK Z8LG"
+  }
+]

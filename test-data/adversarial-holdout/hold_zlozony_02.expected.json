@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 6,
+    "text": "Poznań"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 30,
+    "end": 52,
+    "text": "Sąd Rejonowy w Kaliszu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 53,
+    "end": 84,
+    "text": "ul. Sosnowa 9/38, 62-998 Poznań"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 95,
+    "end": 111,
+    "text": "Jadwiga Głowacka"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 119,
+    "end": 130,
+    "text": "56122697884"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 136,
+    "end": 149,
+    "text": "10.12.2000 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 156,
+    "end": 187,
+    "text": "ul. Sosnowa 9/38, 62-998 Poznań"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 210,
+    "end": 220,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 221,
+    "end": 231,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 233,
+    "end": 269,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 280,
+    "end": 316,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 322,
+    "end": 332,
+    "text": "3751908026"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 347,
+    "end": 354,
+    "text": "Wrześni"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 356,
+    "end": 388,
+    "text": "ul. Widokowa 29, 64-627 Września"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 416,
+    "end": 428,
+    "text": "61 354,25 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 485,
+    "end": 500,
+    "text": "UD/2026/09/0767"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 535,
+    "end": 543,
+    "text": "Głowacka"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 588,
+    "end": 595,
+    "text": "mecenas"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 610,
+    "end": 637,
+    "text": "Zygmunt Nałęcz-Korzeniewski"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 661,
+    "end": 703,
+    "text": "leczy się z powodu nadciśnienia tętniczego"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 801,
+    "end": 814,
+    "text": "49 868,85 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 869,
+    "end": 875,
+    "text": "514 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 902,
+    "end": 908,
+    "text": "998 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 919,
+    "end": 978,
+    "text": "jedenaście tysięcy sześćset dwadzieścia trzy złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1018,
+    "end": 1044,
+    "text": "80338503572661461475125497"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1072,
+    "end": 1085,
+    "text": "biegły sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1103,
+    "end": 1113,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1165,
+    "end": 1175,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1176,
+    "end": 1184,
+    "text": "Głowacka"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 25,
+    "text": "Leon Kruk"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 31,
+    "end": 44,
+    "text": "10.11.1960 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 46,
+    "end": 52,
+    "text": "lat 69"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 54,
+    "end": 61,
+    "text": "zamężna"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 82,
+    "end": 97,
+    "text": "+48 600 160 896"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 119,
+    "end": 133,
+    "text": "(67) 550-98-80"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 142,
+    "end": 169,
+    "text": "leon.kruk@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 220,
+    "end": 243,
+    "text": "kontakt@zakładusługk.pl"
+  }
+]

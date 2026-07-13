@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 75,
+    "text": "ul. Zielona 57/17, 61-046 Śrem"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 95,
+    "end": 106,
+    "text": "Kamińskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 161,
+    "end": 165,
+    "text": "not."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 176,
+    "end": 187,
+    "text": "Kamińskiemu"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 245,
+    "end": 257,
+    "text": "77 821,20 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 307,
+    "end": 321,
+    "text": "VIII C 3904/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 332,
+    "end": 343,
+    "text": "Kamińskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 422,
+    "end": 431,
+    "text": "Kamińskim"
+  }
+]

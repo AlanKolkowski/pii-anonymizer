@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 44,
+    "text": "Sąd Okręgowy w Poznaniu, XIV Wydział Cywilny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 89,
+    "end": 116,
+    "text": "Marianna Junosza-Zdrojewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 123,
+    "end": 163,
+    "text": "ul. Cicha 36, 64-784 Ostrów Wielkopolski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 195,
+    "end": 215,
+    "text": "Junosza-Zdrojewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 247,
+    "end": 265,
+    "text": "aplikant radcowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 299,
+    "end": 319,
+    "text": "Junosza-Zdrojewskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 325,
+    "end": 368,
+    "text": "Przedsiębiorstwo Transportowe Emil Dzięcioł"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 384,
+    "end": 402,
+    "text": "Junosza-Zdrojewską"
+  }
+]

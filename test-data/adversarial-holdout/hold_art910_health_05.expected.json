@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 24,
+    "text": "Andrzej Michalski"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 38,
+    "end": 44,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 59,
+    "end": 109,
+    "text": "orzeczenie o niepełnosprawności w stopniu znacznym"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 121,
+    "end": 149,
+    "text": "jest uzależniony od alkoholu"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 161,
+    "end": 203,
+    "text": "leczy się z powodu nadciśnienia tętniczego"
+  }
+]

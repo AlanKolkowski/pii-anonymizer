@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 30,
+    "text": "Wanda Kwąsniewską"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 37,
+    "end": 82,
+    "text": "ul. Kwiatowa 62, 61-975 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 159,
+    "end": 172,
+    "text": "Kwaśniewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 238,
+    "end": 251,
+    "text": "Kwasnięwskięj"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 324,
+    "end": 335,
+    "text": "Kwaśnięwśka"
+  }
+]

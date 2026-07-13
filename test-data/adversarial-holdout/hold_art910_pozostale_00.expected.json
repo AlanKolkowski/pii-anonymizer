@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 21,
+    "text": "Bogumiła Wrona"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 36,
+    "end": 59,
+    "text": "Grodzisku Wielkopolskim"
+  },
+  {
+    "entity_group": "RELIGION_OR_BELIEF",
+    "start": 74,
+    "end": 135,
+    "text": "deklaruje przynależność do Kościoła Ewangelicko-Augsburskiego"
+  },
+  {
+    "entity_group": "POLITICAL_OPINION",
+    "start": 147,
+    "end": 209,
+    "text": "uczestniczył w wiecach organizacji o poglądach konserwatywnych"
+  },
+  {
+    "entity_group": "SEXUAL_ORIENTATION",
+    "start": 221,
+    "end": 274,
+    "text": "ujawniła swoją orientację homoseksualną w toku zeznań"
+  },
+  {
+    "entity_group": "ETHNIC_ORIGIN",
+    "start": 286,
+    "end": 312,
+    "text": "jest pochodzenia romskiego"
+  }
+]

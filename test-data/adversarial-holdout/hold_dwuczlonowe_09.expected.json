@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 44,
+    "text": "Sąd Okręgowy w Poznaniu, XIV Wydział Cywilny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 89,
+    "end": 112,
+    "text": "Aldona Rawicz-Podgórska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 119,
+    "end": 146,
+    "text": "ul. Leśna 25, 62-194 Leszno"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 178,
+    "end": 196,
+    "text": "Rawicz-Podgórskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 228,
+    "end": 243,
+    "text": "główny księgowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 277,
+    "end": 295,
+    "text": "Rawicz-Podgórskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 301,
+    "end": 345,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 361,
+    "end": 377,
+    "text": "Rawicz-Podgórską"
+  }
+]

@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 9,
+    "text": "Krotoszyn"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 33,
+    "end": 76,
+    "text": "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 77,
+    "end": 111,
+    "text": "ul. Klasztorna 7, 60-195 Krotoszyn"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 122,
+    "end": 137,
+    "text": "Danuta Zalewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 145,
+    "end": 156,
+    "text": "61021479888"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 162,
+    "end": 175,
+    "text": "13.10.1979 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 182,
+    "end": 216,
+    "text": "ul. Klasztorna 7, 60-195 Krotoszyn"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 239,
+    "end": 243,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 244,
+    "end": 254,
+    "text": "Zalewskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 256,
+    "end": 300,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 311,
+    "end": 355,
+    "text": "Hurtownia Spożywcza „Wągrowianka\" sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 361,
+    "end": 371,
+    "text": "6822976405"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 386,
+    "end": 393,
+    "text": "Wrześni"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 395,
+    "end": 427,
+    "text": "ul. Cicha 59/37, 63-521 Września"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 455,
+    "end": 467,
+    "text": "32.636,52 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 524,
+    "end": 539,
+    "text": "WZ/2024/01/0547"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 574,
+    "end": 582,
+    "text": "Zalewska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 627,
+    "end": 651,
+    "text": "starszy sekretarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 666,
+    "end": 693,
+    "text": "Zygmunt Nałęcz-Korzeniewski"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 717,
+    "end": 759,
+    "text": "zdiagnozowano u niej stwardnienie rozsiane"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 857,
+    "end": 869,
+    "text": "24 029,76 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 924,
+    "end": 933,
+    "text": "PLN 5.731"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 960,
+    "end": 972,
+    "text": "34.221,85 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 983,
+    "end": 1049,
+    "text": "dwadzieścia dwa tysięcy osiemset dwadzieścia siedem złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1089,
+    "end": 1115,
+    "text": "58553401486531763433358527"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1143,
+    "end": 1160,
+    "text": "asesor notarialny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1178,
+    "end": 1188,
+    "text": "Zalewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1240,
+    "end": 1244,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1245,
+    "end": 1253,
+    "text": "Zalewska"
+  }
+]

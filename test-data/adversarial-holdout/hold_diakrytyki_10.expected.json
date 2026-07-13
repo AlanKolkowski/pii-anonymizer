@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 30,
+    "text": "Andrzej Michalski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 37,
+    "end": 70,
+    "text": "ul. Fabryczna 93/12, 60-652 Turek"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 146,
+    "end": 158,
+    "text": "Michąlśkięgo"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 224,
+    "end": 236,
+    "text": "Michalskiemu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 309,
+    "end": 319,
+    "text": "Michalskim"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Jadwiga Głowacka"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 80,
+    "text": "ul. Wierzbowa 87/17, 63-936 Kościan"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 100,
+    "end": 110,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 165,
+    "end": 183,
+    "text": "aplikant radcowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 194,
+    "end": 204,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 262,
+    "end": 272,
+    "text": "PLN 43.041"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 322,
+    "end": 334,
+    "text": "I GC 1681/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 345,
+    "end": 355,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 434,
+    "end": 442,
+    "text": "Głowacką"
+  }
+]

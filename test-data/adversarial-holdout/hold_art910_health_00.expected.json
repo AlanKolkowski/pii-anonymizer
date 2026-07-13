@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 18,
+    "text": "Roman Struś"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 32,
+    "end": 43,
+    "text": "Krotoszynie"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 58,
+    "end": 108,
+    "text": "orzeczenie o niepełnosprawności w stopniu znacznym"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 120,
+    "end": 150,
+    "text": "zdiagnozowano u niego padaczkę"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 162,
+    "end": 204,
+    "text": "zdiagnozowano u niej stwardnienie rozsiane"
+  }
+]

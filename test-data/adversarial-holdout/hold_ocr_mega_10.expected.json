@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 49,
+    "text": "U R Z Ą D   S K A R B O W Y   W   P O Z N A N I U"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 84,
+    "text": "P i o t r o w s k i"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 100,
+    "end": 110,
+    "text": "769961865O"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 124,
+    "end": 141,
+    "text": "WiesławPiotrowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 223,
+    "end": 238,
+    "text": "Piotrowski-\nego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 268,
+    "end": 282,
+    "text": "49825O99873298"
+  }
+]

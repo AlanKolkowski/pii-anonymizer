@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 23,
+    "text": "Marian Pawłowski"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 37,
+    "end": 59,
+    "text": "Ostrowie Wielkopolskim"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 74,
+    "end": 107,
+    "text": "odbywał karę pozbawienia wolności"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 119,
+    "end": 168,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 180,
+    "end": 228,
+    "text": "był uprzednio karany za znęcanie się nad rodziną"
+  }
+]

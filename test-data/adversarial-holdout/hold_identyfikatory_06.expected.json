@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 20,
+    "text": "KM 5874/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 48,
+    "end": 62,
+    "text": "Bogumiła Wrona"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 70,
+    "end": 81,
+    "text": "69021069777"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 109,
+    "end": 119,
+    "text": "KNP 654192"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 133,
+    "end": 143,
+    "text": "FD 2575669"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 160,
+    "end": 173,
+    "text": "85781/79/7158"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 188,
+    "end": 224,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 230,
+    "end": 240,
+    "text": "9017342483"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 248,
+    "end": 257,
+    "text": "866308150"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 263,
+    "end": 273,
+    "text": "9370663807"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 307,
+    "end": 333,
+    "text": "91342320637186639251300525"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 375,
+    "end": 392,
+    "text": "14ZN64E933HSC5L8B"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 411,
+    "end": 419,
+    "text": "PT AMGT3"
+  }
+]

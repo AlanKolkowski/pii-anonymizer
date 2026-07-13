@@ -1,0 +1,74 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 18,
+    "end": 33,
+    "text": "ZK/2025/08/0953"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 45,
+    "end": 51,
+    "text": "Śmiglu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 61,
+    "end": 102,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 108,
+    "end": 118,
+    "text": "4108575322"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 122,
+    "end": 137,
+    "text": "Otylia Pszczoła"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 144,
+    "end": 179,
+    "text": "ul. Ogrodowa 86/17, 61-298 Oborniki"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 227,
+    "end": 233,
+    "text": "700 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 263,
+    "end": 269,
+    "text": "974 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 307,
+    "end": 313,
+    "text": "970 zł"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 341,
+    "end": 369,
+    "text": "PL72683929310068121205908071"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 408,
+    "end": 414,
+    "text": "638 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 425,
+    "end": 488,
+    "text": "siedemnaście tysięcy sześćset czterdzieści sześć złotych 00/100"
+  }
+]

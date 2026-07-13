@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 43,
+    "text": "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 88,
+    "end": 114,
+    "text": "Ambroży Jastrzębiec-Wolski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 121,
+    "end": 156,
+    "text": "ul. Słoneczna 70/5, 61-649 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 188,
+    "end": 209,
+    "text": "Jastrzębiec-Wolskiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 241,
+    "end": 246,
+    "text": "prok."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 280,
+    "end": 301,
+    "text": "Jastrzębiec-Wolskiemu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 307,
+    "end": 343,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 359,
+    "end": 380,
+    "text": "Jastrzębiec-Wolskiego"
+  }
+]

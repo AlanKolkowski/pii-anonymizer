@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 29,
+    "text": "Ignacy Wróbel"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 35,
+    "end": 48,
+    "text": "14.11.1970 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 50,
+    "end": 56,
+    "text": "lat 48"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 58,
+    "end": 65,
+    "text": "wdowiec"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 86,
+    "end": 101,
+    "text": "+48 627 354 344"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 123,
+    "end": 137,
+    "text": "(63) 222-91-25"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 146,
+    "end": 177,
+    "text": "ignacy.wróbel@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 228,
+    "end": 251,
+    "text": "kontakt@wielkopolski.pl"
+  }
+]

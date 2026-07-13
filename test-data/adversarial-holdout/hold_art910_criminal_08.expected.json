@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 22,
+    "text": "Ludmiła Kukułka"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 37,
+    "end": 47,
+    "text": "Obornikach"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 62,
+    "end": 116,
+    "text": "toczyło się przeciwko niej dochodzenie o zniesławienie"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 128,
+    "end": 176,
+    "text": "był uprzednio karany za znęcanie się nad rodziną"
+  },
+  {
+    "entity_group": "CRIMINAL_OFFENCE_DATA",
+    "start": 188,
+    "end": 237,
+    "text": "wyrokiem nakazowym ukarany za wykroczenie drogowe"
+  }
+]

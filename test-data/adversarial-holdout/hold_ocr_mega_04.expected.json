@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 57,
+    "text": "W I E L K O P O L S K I   U R Z Ą D   W O J E W Ó D Z K I"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 90,
+    "text": "M i c h a l s k i"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 106,
+    "end": 116,
+    "text": "3936735543"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 130,
+    "end": 146,
+    "text": "AndrzejMichalski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 228,
+    "end": 242,
+    "text": "Mich-\nalskiego"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 272,
+    "end": 281,
+    "text": "27l987252"
+  }
+]

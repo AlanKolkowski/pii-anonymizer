@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 4,
+    "text": "Piła"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 42,
+    "end": 52,
+    "text": "Ns 1001/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 62,
+    "end": 85,
+    "text": "Anastazja Pomian-Wolska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 86,
+    "end": 114,
+    "text": "ul. Lipowa 94/3, 61-565 Piła"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 128,
+    "end": 164,
+    "text": "Spółdzielnia Mleczarska „Kaliszanka\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 165,
+    "end": 201,
+    "text": "ul. Wierzbowa 60/39, 64-960 Oborniki"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 207,
+    "end": 217,
+    "text": "5022176105"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 219,
+    "end": 241,
+    "text": "Sąd Rejonowy w Kaliszu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 243,
+    "end": 272,
+    "text": "WIELKOPOLSKI URZĄD WOJEWÓDZKI"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 44,
+    "text": "Sąd Okręgowy w Poznaniu, XIV Wydział Cywilny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 89,
+    "end": 114,
+    "text": "Longin Grzymała-Siedlecki"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 121,
+    "end": 151,
+    "text": "ul. Cicha 27/12, 63-805 Poznań"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 183,
+    "end": 204,
+    "text": "Grzymała-Siedleckiego"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 236,
+    "end": 243,
+    "text": "adwokat"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 277,
+    "end": 298,
+    "text": "Grzymała-Siedleckiemu"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 304,
+    "end": 348,
+    "text": "Zakład Usług Komunalnych w Śremie sp. z o.o."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 364,
+    "end": 385,
+    "text": "Grzymała-Siedleckiego"
+  }
+]

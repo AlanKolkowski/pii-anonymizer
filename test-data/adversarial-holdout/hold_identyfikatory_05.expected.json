@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 10,
+    "end": 28,
+    "text": "VII Ns 8170/26 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 56,
+    "end": 73,
+    "text": "Wanda Kwaśniewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 81,
+    "end": 92,
+    "text": "75061032578"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 120,
+    "end": 130,
+    "text": "MFG 061971"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 144,
+    "end": 154,
+    "text": "EG 7873441"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 171,
+    "end": 184,
+    "text": "78665/29/2119"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 199,
+    "end": 240,
+    "text": "Przedsiębiorstwo Budowlane „Jarocin\" S.A."
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 246,
+    "end": 256,
+    "text": "7022360212"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 264,
+    "end": 278,
+    "text": "35161356439059"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 284,
+    "end": 294,
+    "text": "2959758421"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 328,
+    "end": 354,
+    "text": "89623531033228541543832731"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 396,
+    "end": 413,
+    "text": "87VHGYJH03MHAN4A4"
+  },
+  {
+    "entity_group": "VEHICLE_IDENTIFIER",
+    "start": 432,
+    "end": 439,
+    "text": "PG WWPG"
+  }
+]

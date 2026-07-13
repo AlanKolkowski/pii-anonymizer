@@ -1,0 +1,80 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 22,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 33,
+    "end": 45,
+    "text": "II K 2521/23"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 82,
+    "end": 106,
+    "text": "starszy sekretarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 107,
+    "end": 111,
+    "text": "T.N."
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 125,
+    "end": 152,
+    "text": "specjalista ds. kadr i płac"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 153,
+    "end": 165,
+    "text": "M. Pawłowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 174,
+    "end": 185,
+    "text": "D. Zalewska"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 187,
+    "end": 193,
+    "text": "lat 43"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 214,
+    "end": 227,
+    "text": "B. Wróblewska"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 229,
+    "end": 234,
+    "text": "wdowa"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 241,
+    "end": 272,
+    "text": "ul. Zielona 15/37, 62-246 Konin"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 327,
+    "end": 333,
+    "text": "syndyk"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 334,
+    "end": 338,
+    "text": "W.O."
+  }
+]

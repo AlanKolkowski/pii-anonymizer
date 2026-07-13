@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Śmigiel"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 41,
+    "end": 55,
+    "text": "VII Nc 4395/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 65,
+    "end": 81,
+    "text": "Ryszard Kamiński"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 82,
+    "end": 114,
+    "text": "ul. Wierzbowa 53, 60-148 Śmigiel"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 128,
+    "end": 174,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 175,
+    "end": 209,
+    "text": "ul. Graniczna 85/21, 60-646 Leszno"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 215,
+    "end": 225,
+    "text": "3488743149"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 227,
+    "end": 249,
+    "text": "Sąd Okręgowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 251,
+    "end": 280,
+    "text": "WIELKOPOLSKI URZĄD WOJEWÓDZKI"
+  }
+]

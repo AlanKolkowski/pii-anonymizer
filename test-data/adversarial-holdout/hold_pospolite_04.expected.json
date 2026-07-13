@@ -1,0 +1,62 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 8,
+    "end": 20,
+    "text": "Feliks Osioł"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 61,
+    "end": 68,
+    "text": "Kaliszu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 70,
+    "end": 75,
+    "text": "Osioł"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 114,
+    "end": 132,
+    "text": "dyrektor generalny"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 133,
+    "end": 147,
+    "text": "Salomea Papuga"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 186,
+    "end": 192,
+    "text": "Papuga"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 243,
+    "end": 255,
+    "text": "Klemens Karp"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 264,
+    "end": 270,
+    "text": "Śremie"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 297,
+    "end": 306,
+    "text": "sędzia SO"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 308,
+    "end": 312,
+    "text": "Karp"
+  }
+]

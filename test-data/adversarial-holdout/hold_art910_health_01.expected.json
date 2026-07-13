@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 24,
+    "text": "Czesława Jaskółka"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 39,
+    "end": 49,
+    "text": "Czarnkowie"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 64,
+    "end": 102,
+    "text": "zdiagnozowano nowotwór złośliwy piersi"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 114,
+    "end": 153,
+    "text": "cierpi na przewlekłą niewydolność nerek"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 165,
+    "end": 207,
+    "text": "zdiagnozowano u niej stwardnienie rozsiane"
+  }
+]

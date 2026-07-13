@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 39,
+    "text": "Anastazja Pomian-Wolska"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 45,
+    "end": 58,
+    "text": "16.05.1994 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 60,
+    "end": 66,
+    "text": "lat 56"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 68,
+    "end": 75,
+    "text": "wdowiec"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 96,
+    "end": 111,
+    "text": "+48 765 362 569"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 133,
+    "end": 147,
+    "text": "(67) 734-51-25"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 156,
+    "end": 197,
+    "text": "anastazja.pomian-wolska@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 248,
+    "end": 271,
+    "text": "kontakt@przedsiębior.pl"
+  }
+]

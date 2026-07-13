@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 7,
+    "text": "Śmigiel"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 48,
+    "end": 60,
+    "text": "II K 5789/25"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 70,
+    "end": 87,
+    "text": "Andrzej Michalski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 88,
+    "end": 118,
+    "text": "ul. Sosnowa 50, 60-953 Śmigiel"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 132,
+    "end": 168,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 169,
+    "end": 200,
+    "text": "ul. Spokojna 84/13, 63-607 Piła"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 206,
+    "end": 216,
+    "text": "3031914257"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 218,
+    "end": 240,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 242,
+    "end": 271,
+    "text": "WIELKOPOLSKI URZĄD WOJEWÓDZKI"
+  }
+]

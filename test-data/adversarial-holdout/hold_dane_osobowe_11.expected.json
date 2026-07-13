@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 33,
+    "text": "Bożena Wróblewska"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 39,
+    "end": 52,
+    "text": "18.11.1975 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 54,
+    "end": 60,
+    "text": "lat 39"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 62,
+    "end": 74,
+    "text": "rozwiedziona"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 95,
+    "end": 110,
+    "text": "+48 566 519 403"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 132,
+    "end": 146,
+    "text": "(61) 881-29-54"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 155,
+    "end": 190,
+    "text": "bożena.wróblewska@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 241,
+    "end": 264,
+    "text": "kontakt@przedsiębior.pl"
+  }
+]

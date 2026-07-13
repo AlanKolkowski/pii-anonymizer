@@ -1,0 +1,26 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 19,
+    "text": "Klara Czapla"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 34,
+    "end": 44,
+    "text": "Wolsztynie"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 59,
+    "end": 130,
+    "text": "jest członkiem Niezależnego Samorządnego Związku Zawodowego «Metalowcy»"
+  },
+  {
+    "entity_group": "TRADE_UNION_MEMBERSHIP",
+    "start": 142,
+    "end": 189,
+    "text": "reprezentuje pracowników jako delegat związkowy"
+  }
+]

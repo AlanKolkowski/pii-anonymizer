@@ -1,0 +1,81 @@
+{
+  "_comment": "Quota manifest for test-data/adversarial-holdout (RECALL-90-DESIGN.md §3.3). generate-adversarial-corpus.mjs --pool=holdout reads this file and REFUSES to write output if any byType minimum isn't met — the quota is a contract, not an estimate. Actual generated counts are expected to exceed these minimums somewhat (natural overflow from document assembly); see CORPUS-2.0-NOTES.md for the numbers actually produced.",
+
+  "_mapping_notes": [
+    "§3.3's table groups by a human-readable 'class' axis, not always a single entity_group. This section records the interpretive mapping from that table to concrete entity_group quotas, so a reviewer can trace every number back to its source row instead of re-deriving it from prose.",
+    "'Rodzina identyfikatorów' (row target 150, >=15/subtype, 10 subtypes: PESEL, NIP, REGON, KRS, IBAN/NRB, dowod, paszport, prawo jazdy, VIN, rejestracja) maps to entity_group per the app's own findNumericIdentifierEntities/findIbanEntities/findVehicleIdentifierEntities (src/anonymizer.js): PERSON_IDENTIFIER = PESEL+dowod+paszport+prawo_jazdy (4x15=60), ORGANIZATION_IDENTIFIER = NIP+REGON+KRS (3x15=45), BANK_ACCOUNT_IDENTIFIER = IBAN/NRB (15), VEHICLE_IDENTIFIER = VIN+rejestracja (2x15=30). Subtotal 150, matches the row exactly.",
+    "'ORGANIZATION_NAME / _IDENTIFIER' (row target 80) is read as being about ORGANIZATION_NAME specifically (the row's own justification is 'wersaliki komparycji, dowod dla B2', an ORGANIZATION_NAME concern) — its _IDENTIFIER share is already accounted for in the identifier-family row above, so ORGANIZATION_IDENTIFIER is NOT double-counted here.",
+    "'Art. 9-10 (HEALTH, CRIMINAL, TRADE_UNION + pozostale)' (90 = 30/30/15+15) maps HEALTH_DATA=30, CRIMINAL_OFFENCE_DATA=30, TRADE_UNION_MEMBERSHIP=15, and the remaining 15 splits across the four leftover art. 9 categories the app models (RELIGION_OR_BELIEF, POLITICAL_OPINION, SEXUAL_ORIENTATION, ETHNIC_ORIGIN) as 4/4/4/3.",
+    "'POSTAL_ADDRESS / LOCATION' (row target 100) is split 55/45 — no split is specified in the design doc; this repo's own eval history has POSTAL_ADDRESS occurring somewhat more often than bare LOCATION mentions (EVAL-RECALL-AUDIT.md §5 table), so the split leans that way.",
+    "Types the design doc's §3.3 table doesn't quota at all (DATE_OF_BIRTH, PHONE_NUMBER, EMAIL_ADDRESS, PERSON_ATTRIBUTE) get small regression-coverage quotas here, matching the doc's own framing of those as 'klasy mocne... tylko podtrzymuja pokrycie regresyjne' (strong classes that just maintain regression coverage). No other entity_group exists in the dev corpus (test-data/adversarial) either — GENETIC_DATA, BIOMETRIC_DATA, IP_ADDRESS, COOKIE_IDENTIFIER, ACCOUNT_IDENTIFIER, AUTH_SECRET, PAYMENT_CARD*, DEVICE_IDENTIFIER, PERSON_ALIAS, CONTACT_HANDLE, GEO_LOCATION are not realistic content for Polish legal correspondence and dev correctly has zero of them too — holdout follows the same precedent.",
+    "The 'Klasy OCR' row (100 = 20/class x 5) is a CROSS-CUTTING tag, not an additive bucket — exactly like PERSON_NAME's own 'OCR 40' is one of its five subtypes summing to 200, not extra on top. An OCR-degraded entity still carries its true entity_group and counts against that type's quota once; ocrClasses below is tracked and reported by the generator's self-check but is NOT a separate hard gate on the total (see CORPUS-2.0-NOTES.md for the scope note on this)."
+  ],
+
+  "byType": {
+    "PERSON_NAME": 200,
+    "PERSON_ROLE_OR_TITLE": 100,
+    "DOCUMENT_REFERENCE": 80,
+    "PERSON_IDENTIFIER": 60,
+    "ORGANIZATION_IDENTIFIER": 45,
+    "BANK_ACCOUNT_IDENTIFIER": 15,
+    "VEHICLE_IDENTIFIER": 30,
+    "HEALTH_DATA": 30,
+    "CRIMINAL_OFFENCE_DATA": 30,
+    "TRADE_UNION_MEMBERSHIP": 15,
+    "RELIGION_OR_BELIEF": 4,
+    "POLITICAL_OPINION": 4,
+    "SEXUAL_ORIENTATION": 4,
+    "ETHNIC_ORIGIN": 3,
+    "FINANCIAL_AMOUNT": 80,
+    "POSTAL_ADDRESS": 55,
+    "LOCATION": 45,
+    "ORGANIZATION_NAME": 80,
+    "DATE_OF_BIRTH": 25,
+    "PHONE_NUMBER": 30,
+    "EMAIL_ADDRESS": 25,
+    "PERSON_ATTRIBUTE": 25
+  },
+
+  "personNameSubclasses": {
+    "_comment": "PERSON_NAME=200 broken down per §3.3's own subclass note (odmiana 60, inicjaly 30, dwuczlonowe 30, OCR 40, pospolite-pulapki 40). Reported by the generator's self-check; not independently hard-gated (the byType total for PERSON_NAME is the hard gate).",
+    "odmiana": 60,
+    "inicjaly": 30,
+    "dwuczlonowe": 30,
+    "ocr": 40,
+    "pospolitePulapki": 40
+  },
+
+  "identifierSubtypes": {
+    "_comment": "10 subtypes, >=15 each, per §3.3. Reported by self-check; the byType quotas above (PERSON_IDENTIFIER/ORGANIZATION_IDENTIFIER/BANK_ACCOUNT_IDENTIFIER/VEHICLE_IDENTIFIER) are the hard gate.",
+    "pesel": 15,
+    "dowodOsobisty": 15,
+    "paszport": 15,
+    "prawoJazdy": 15,
+    "nip": 15,
+    "regon": 15,
+    "krs": 15,
+    "ibanNrb": 15,
+    "vin": 15,
+    "rejestracja": 15
+  },
+
+  "ocrClasses": {
+    "_comment": "Cross-cutting tag quotas (§3.3 'Klasy OCR', 20/class x 5) — reported, not independently hard-gated. Entities in these classes also count toward their true entity_group's byType quota above.",
+    "glyphSubstitution": 20,
+    "spacedOut": 20,
+    "joined": 20,
+    "lineWrap": 20,
+    "diacritics": 20
+  },
+
+  "trapVolumeFraction": {
+    "_comment": "'Pulapki FP (cytowania, role generyczne, nazwy pospolite, stopy) | ~30 dok.-encji | utrzymac ~12% objetosci' — target share of documents/sentence-insertions that are FP traps (produce ZERO ground-truth entities by design). Measured against total document count, matching how dev's own ~30/279 (~10.7%) was measured in EVAL-RECALL-AUDIT.md §3.3.",
+    "target": 0.12
+  },
+
+  "targetTotalEntities": {
+    "_comment": "RECALL-90-DESIGN.md §3.3 estimates ~1000-1100 entities across ~120-140 documents. In practice, clearing every byType/identifierSubtype/ocrClass minimum with a safety margin, using realistic multi-entity documents (not artificially dense single-purpose ones), overshoots that estimate — the per-type minimums are the actual hard contract (self-check refuses to write under any of them); the aggregate total is not independently capped. 'min' is a floor worth alerting on (sum of byType minimums, ~985); 'max' is descriptive headroom, not a refuse-if-over gate. See CORPUS-2.0-NOTES.md for the number actually generated.",
+    "min": 950,
+    "max": 2000
+  }
+}

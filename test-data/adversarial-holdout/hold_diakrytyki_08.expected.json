@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 29,
+    "text": "Marian Pawłowski"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 36,
+    "end": 67,
+    "text": "ul. Lipowa 28/25, 64-149 Leszno"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 143,
+    "end": 155,
+    "text": "Pawłowskiego"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 221,
+    "end": 233,
+    "text": "Pawłówśkięmu"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 306,
+    "end": 316,
+    "text": "Pawlowśkim"
+  }
+]

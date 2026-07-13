@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 16,
+    "end": 32,
+    "text": "Zofia Sobolewska"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 38,
+    "end": 50,
+    "text": "3.04.1999 r."
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 52,
+    "end": 58,
+    "text": "lat 50"
+  },
+  {
+    "entity_group": "PERSON_ATTRIBUTE",
+    "start": 60,
+    "end": 67,
+    "text": "wdowiec"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 88,
+    "end": 103,
+    "text": "+48 661 285 590"
+  },
+  {
+    "entity_group": "PHONE_NUMBER",
+    "start": 125,
+    "end": 139,
+    "text": "(65) 781-15-78"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 148,
+    "end": 182,
+    "text": "zofia.sobolewska@poczta-testowa.pl"
+  },
+  {
+    "entity_group": "EMAIL_ADDRESS",
+    "start": 233,
+    "end": 256,
+    "text": "kontakt@piekarniapod.pl"
+  }
+]

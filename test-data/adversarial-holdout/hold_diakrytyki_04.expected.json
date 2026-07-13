@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 13,
+    "end": 30,
+    "text": "Bożena Wrobłęwska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 37,
+    "end": 67,
+    "text": "ul. Parkowa 35/35, 61-079 Piła"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 144,
+    "end": 156,
+    "text": "Wróblewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 222,
+    "end": 234,
+    "text": "Wróblewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 307,
+    "end": 317,
+    "text": "Wróblewską"
+  }
+]

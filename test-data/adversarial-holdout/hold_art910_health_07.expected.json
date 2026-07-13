@@ -1,0 +1,32 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 7,
+    "end": 16,
+    "text": "Leon Kruk"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 30,
+    "end": 34,
+    "text": "Pile"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 49,
+    "end": 100,
+    "text": "przebywał na zwolnieniu lekarskim z powodu depresji"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 112,
+    "end": 151,
+    "text": "leczy się psychiatrycznie od pięciu lat"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 163,
+    "end": 200,
+    "text": "przeszedł operację kardiochirurgiczną"
+  }
+]

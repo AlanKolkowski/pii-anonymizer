@@ -1,0 +1,50 @@
+[
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 27,
+    "end": 44,
+    "text": "IX KM 5824/24 upr"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 53,
+    "end": 67,
+    "text": "Urszula Górska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 74,
+    "end": 108,
+    "text": "ul. Dworcowa 13/27, 62-159 Gniezno"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 127,
+    "end": 137,
+    "text": "PLN 80.764"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 190,
+    "end": 201,
+    "text": "1 440,37 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 227,
+    "end": 238,
+    "text": "2.288,95 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 249,
+    "end": 316,
+    "text": "dwadzieścia dwa tysięcy sześćset czterdzieści cztery złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 339,
+    "end": 365,
+    "text": "77388404201841615929764735"
+  }
+]

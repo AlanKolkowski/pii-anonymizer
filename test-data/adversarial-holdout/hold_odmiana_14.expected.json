@@ -1,0 +1,56 @@
+[
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 22,
+    "end": 38,
+    "text": "Zofia Sobolewska"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 45,
+    "end": 81,
+    "text": "ul. Wierzbowa 84/30, 64-808 Września"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 101,
+    "end": 113,
+    "text": "Sobolewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 168,
+    "end": 186,
+    "text": "dyrektor finansowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 197,
+    "end": 209,
+    "text": "Sobolewskiej"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 267,
+    "end": 279,
+    "text": "60.392,85 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 329,
+    "end": 341,
+    "text": "II Ns 922/26"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 352,
+    "end": 364,
+    "text": "Sobolewskiej"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 443,
+    "end": 453,
+    "text": "Sobolewską"
+  }
+]

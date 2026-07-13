@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 18,
+    "text": "Środa Wielkopolska"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 42,
+    "end": 65,
+    "text": "Sąd Rejonowy w Poznaniu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 66,
+    "end": 108,
+    "text": "ul. Wrzosowa 97, 61-917 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 119,
+    "end": 134,
+    "text": "Danuta Zalewska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 142,
+    "end": 153,
+    "text": "76072551032"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 159,
+    "end": 171,
+    "text": "3.05.1954 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 178,
+    "end": 220,
+    "text": "ul. Wrzosowa 97, 61-917 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 243,
+    "end": 253,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 254,
+    "end": 264,
+    "text": "Zalewskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 266,
+    "end": 312,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 323,
+    "end": 359,
+    "text": "Piekarnia „Pod Kogutem\" Wacław Kogut"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 365,
+    "end": 375,
+    "text": "4453128406"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 390,
+    "end": 413,
+    "text": "Grodzisku Wielkopolskim"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 415,
+    "end": 462,
+    "text": "ul. Brzozowa 38/3, 60-663 Grodzisk Wielkopolski"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 490,
+    "end": 502,
+    "text": "2 887,07 EUR"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 559,
+    "end": 574,
+    "text": "ZK/2025/08/0955"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 609,
+    "end": 617,
+    "text": "Zalewska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 662,
+    "end": 686,
+    "text": "starszy sekretarz sądowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 702,
+    "end": 729,
+    "text": "Marianna Junosza-Zdrojewska"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 753,
+    "end": 783,
+    "text": "zdiagnozowano u niego padaczkę"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 881,
+    "end": 894,
+    "text": "30 414,55 EUR"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 949,
+    "end": 961,
+    "text": "67 790,86 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 988,
+    "end": 1000,
+    "text": "87.828,24 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 1011,
+    "end": 1073,
+    "text": "siedemnaście tysięcy sześćset pięćdziesiąt pięć złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1113,
+    "end": 1139,
+    "text": "06578639813456961325378776"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1167,
+    "end": 1185,
+    "text": "aplikant adwokacki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1203,
+    "end": 1213,
+    "text": "Zalewskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1265,
+    "end": 1275,
+    "text": "sekr. sąd."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1276,
+    "end": 1284,
+    "text": "Zalewska"
+  }
+]

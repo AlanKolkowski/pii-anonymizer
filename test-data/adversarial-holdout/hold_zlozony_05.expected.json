@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 8,
+    "text": "Czarnków"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 32,
+    "end": 54,
+    "text": "Sąd Rejonowy w Koninie"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 55,
+    "end": 88,
+    "text": "ul. Sosnowa 56/1, 61-902 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 99,
+    "end": 115,
+    "text": "Jadwiga Głowacka"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 123,
+    "end": 134,
+    "text": "78030806523"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 140,
+    "end": 153,
+    "text": "22.05.1993 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 160,
+    "end": 193,
+    "text": "ul. Sosnowa 56/1, 61-902 Czarnków"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 216,
+    "end": 221,
+    "text": "prok."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 222,
+    "end": 232,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 234,
+    "end": 275,
+    "text": "Wielkopolskie Zakłady Metalowe sp. z o.o."
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 286,
+    "end": 329,
+    "text": "Przedsiębiorstwo Transportowe Emil Dzięcioł"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 335,
+    "end": 345,
+    "text": "8600777215"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 360,
+    "end": 368,
+    "text": "Gnieźnie"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 370,
+    "end": 405,
+    "text": "ul. Słoneczna 59/27, 60-918 Gniezno"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 433,
+    "end": 445,
+    "text": "67.798,00 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 502,
+    "end": 517,
+    "text": "FV/2024/05/0393"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 552,
+    "end": 560,
+    "text": "Głowacka"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 605,
+    "end": 623,
+    "text": "aplikant adwokacki"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 638,
+    "end": 665,
+    "text": "Bronisław Radwan-Zdrojewski"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 689,
+    "end": 726,
+    "text": "przeszedł operację kardiochirurgiczną"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 824,
+    "end": 830,
+    "text": "502 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 885,
+    "end": 895,
+    "text": "PLN 41.344"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 922,
+    "end": 934,
+    "text": "48.862,24 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 945,
+    "end": 1010,
+    "text": "dwadzieścia dwa tysięcy czterysta czterdzieści dwa złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1050,
+    "end": 1076,
+    "text": "81650308314304433694797926"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1104,
+    "end": 1109,
+    "text": "r.pr."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1127,
+    "end": 1137,
+    "text": "Głowackiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1189,
+    "end": 1194,
+    "text": "prok."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1195,
+    "end": 1203,
+    "text": "Głowacka"
+  }
+]

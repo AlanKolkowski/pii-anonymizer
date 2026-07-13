@@ -1,0 +1,176 @@
+[
+  {
+    "entity_group": "LOCATION",
+    "start": 0,
+    "end": 9,
+    "text": "Wągrowiec"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 33,
+    "end": 76,
+    "text": "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 77,
+    "end": 110,
+    "text": "ul. Lipowa 43/8, 64-562 Wągrowiec"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 121,
+    "end": 137,
+    "text": "Teresa Witkowska"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 145,
+    "end": 156,
+    "text": "80120109324"
+  },
+  {
+    "entity_group": "DATE_OF_BIRTH",
+    "start": 162,
+    "end": 175,
+    "text": "19.05.1999 r."
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 182,
+    "end": 215,
+    "text": "ul. Lipowa 43/8, 64-562 Wągrowiec"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 238,
+    "end": 242,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 243,
+    "end": 254,
+    "text": "Witkowskiej"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 256,
+    "end": 288,
+    "text": "Bank Wielkopolski Spółka Akcyjna"
+  },
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 299,
+    "end": 345,
+    "text": "Kancelaria Radcy Prawnego „Górska i Wspólnicy\""
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 351,
+    "end": 361,
+    "text": "9360090636"
+  },
+  {
+    "entity_group": "LOCATION",
+    "start": 376,
+    "end": 398,
+    "text": "Środzie Wielkopolskiej"
+  },
+  {
+    "entity_group": "POSTAL_ADDRESS",
+    "start": 400,
+    "end": 444,
+    "text": "ul. Sosnowa 53/24, 60-443 Środa Wielkopolska"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 472,
+    "end": 484,
+    "text": "77.491,97 zł"
+  },
+  {
+    "entity_group": "DOCUMENT_REFERENCE",
+    "start": 541,
+    "end": 556,
+    "text": "WZ/2026/02/0171"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 591,
+    "end": 600,
+    "text": "Witkowska"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 645,
+    "end": 663,
+    "text": "aplikant radcowski"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 678,
+    "end": 699,
+    "text": "Gustaw Łada-Podgórski"
+  },
+  {
+    "entity_group": "HEALTH_DATA",
+    "start": 723,
+    "end": 761,
+    "text": "zdiagnozowano nowotwór złośliwy piersi"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 859,
+    "end": 871,
+    "text": "75 842,52 zł"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 926,
+    "end": 935,
+    "text": "PLN 9.448"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 962,
+    "end": 972,
+    "text": "PLN 12.698"
+  },
+  {
+    "entity_group": "FINANCIAL_AMOUNT",
+    "start": 983,
+    "end": 1046,
+    "text": "trzydzieści cztery tysięcy sto dwadzieścia jeden złotych 00/100"
+  },
+  {
+    "entity_group": "BANK_ACCOUNT_IDENTIFIER",
+    "start": 1086,
+    "end": 1112,
+    "text": "09163738120340516444907809"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1140,
+    "end": 1155,
+    "text": "główny księgowy"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1173,
+    "end": 1184,
+    "text": "Witkowskiej"
+  },
+  {
+    "entity_group": "PERSON_ROLE_OR_TITLE",
+    "start": 1236,
+    "end": 1240,
+    "text": "adw."
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 1241,
+    "end": 1250,
+    "text": "Witkowska"
+  }
+]

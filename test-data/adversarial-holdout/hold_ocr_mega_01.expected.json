@@ -1,0 +1,38 @@
+[
+  {
+    "entity_group": "ORGANIZATION_NAME",
+    "start": 0,
+    "end": 57,
+    "text": "W I E L K O P O L S K I   U R Z Ą D   W O J E W Ó D Z K I"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 73,
+    "end": 90,
+    "text": "W o j n o w s k a"
+  },
+  {
+    "entity_group": "PERSON_IDENTIFIER",
+    "start": 106,
+    "end": 117,
+    "text": "47O32O21928"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 131,
+    "end": 146,
+    "text": "ReginaWojnowska"
+  },
+  {
+    "entity_group": "PERSON_NAME",
+    "start": 229,
+    "end": 240,
+    "text": "Wojno-\nwską"
+  },
+  {
+    "entity_group": "ORGANIZATION_IDENTIFIER",
+    "start": 270,
+    "end": 284,
+    "text": "6848O36055lO02"
+  }
+]
