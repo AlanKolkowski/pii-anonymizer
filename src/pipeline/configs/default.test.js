@@ -104,15 +104,15 @@ describe('stage helpers', () => {
     expect(steps[0].steps[0].name).toBe('loadModelsStep');
   });
 
-  it('createNerSteps returns a single ner phase with hf step (and regex when active)', () => {
+  it('createNerSteps returns a single ner phase with hf step (and regex/lexicon when active)', () => {
     const noLoad = async () => ({ infer: async () => [], dispose: async () => {} });
-    const withRegex = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, noLoad);
-    expect(withRegex).toHaveLength(1);
-    expect(withRegex[0].phase).toBe('ner');
-    expect(withRegex[0].steps).toHaveLength(2);
+    const withBoth = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, true, noLoad);
+    expect(withBoth).toHaveLength(1);
+    expect(withBoth[0].phase).toBe('ner');
+    expect(withBoth[0].steps).toHaveLength(3);
 
-    const withoutRegex = createNerSteps([], false, noLoad);
-    expect(withoutRegex[0].steps).toHaveLength(2); // ner step always exists; regex step is a no-op when active=false
+    const withNeither = createNerSteps([], false, false, noLoad);
+    expect(withNeither[0].steps).toHaveLength(3); // ner/regex/lexicon steps always exist; regex/lexicon are no-ops when inactive
   });
 
   it('createPostprocessSteps returns a single postprocess phase', () => {

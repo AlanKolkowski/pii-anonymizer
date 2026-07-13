@@ -5,6 +5,12 @@ export const CAT_A = new Set([
   'adw.', 'apl.', 'mec.', 'prof.', 'inż.', 'lek.', 'med.',
   'por.', 'kpt.', 'ks.', 'o.', 'św.', 'p.',
   'rad.',
+  // B4-lite (RECALL-90-DESIGN.md §2.4): protects the trailing dot of role/
+  // title abbreviations the lexicon matches as multi-token spans written
+  // with an internal space ("r. pr.", "sekr. sąd.") — trimTrailingPunctuationStep
+  // only consults the LAST whitespace-delimited token of a matched span, so
+  // "r.pr." alone (below) doesn't cover the spaced variant's own last token.
+  'pr.', 'sąd.', 'radc.',
   // Wielowyrazowe
   'r.pr.',
   // Adresowe

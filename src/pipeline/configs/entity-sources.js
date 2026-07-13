@@ -42,6 +42,7 @@ export const SOURCES = withDtypeOverride({
   'multilang-fp32': { kind: 'hf', id: 'wjarka/eu-pii-anonimization-multilang', dtype: 'fp32', sizeBytes: 1110246874, sizeMB: mb(1110246874), backends: ['webnn-gpu', 'wasm'] },
   'polish-fp16':    { kind: 'hf', id: 'wjarka/eu-pii-anonimization-pl',        dtype: 'fp16', sizeBytes: 555323817,  sizeMB: mb(555323817),  backends: ['webnn-gpu', 'wasm'] },
   'regex':          { kind: 'regex' },
+  'lexicon':        { kind: 'lexicon' },
 });
 
 export const ENTITY_SOURCES = {
@@ -50,7 +51,12 @@ export const ENTITY_SOURCES = {
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
   PERSON_IDENTIFIER:        ['multilang-fp32', 'regex'],
-  PERSON_ROLE_OR_TITLE:     ['multilang-fp32'],
+  // B4-lite (RECALL-90-DESIGN.md §2.4): 'lexicon' added alongside multilang-fp32.
+  // PERSON_ROLE_OR_TITLE is weight 1 (type-weights.js) — below the A8 safety-net
+  // threshold (weight >=4) — so a source NOT listed here is dropped outright by
+  // sourceFilterStep regardless of score. Omitting 'lexicon' here would silently
+  // discard every candidate the new step emits.
+  PERSON_ROLE_OR_TITLE:     ['multilang-fp32', 'lexicon'],
   ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32'],
   ORGANIZATION_IDENTIFIER:  ['multilang-fp32', 'regex'],
   EMAIL_ADDRESS:            ['polish-fp16', 'regex'],

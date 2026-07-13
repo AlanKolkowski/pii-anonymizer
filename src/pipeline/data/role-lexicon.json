@@ -1,0 +1,325 @@
+{
+  "_comment": "B4-lite (RECALL-90-DESIGN.md §2.4): closed, hand-written lexicon of Polish professional titles/functions for PERSON_ROLE_OR_TITLE detection. `entity` entries emit a candidate for every listed form/abbreviation. `nonEntity` entries are procedural/case roles that must NEVER be emitted (corpus policy: role generyczne nieanotowane) — kept here so the disjointness can be tested, not because the pipeline reads this list as a filter (A9's blocklistStep already filters independently). ANCHOR for B4-full: once W1 (W1-W3-MORPHOLOGY-DESIGN.md) compiles `src/verifier/case-detector/role-lemmas.js` from SGJP, its `role` section becomes the single source of truth for A9/B4/W3 (R-6) and the hand-written `forms` arrays below are replaced by compiled paradigms — this file stays as the `abbreviations`/`examplePositive`/`examplePositive` layer on top.",
+  "entityGroup": "PERSON_ROLE_OR_TITLE",
+  "entity": [
+    {
+      "lemma": "adwokat",
+      "forms": ["adwokat", "adwokata", "adwokatowi", "adwokatem", "adwokacie"],
+      "abbreviations": ["adw."],
+      "examplePositive": "Pełnomocnikiem pozwanego jest adwokat Piotr Nowicki.",
+      "exampleNegative": "Adwokatura jest samorządem zawodowym."
+    },
+    {
+      "lemma": "adwokatka",
+      "forms": ["adwokatka", "adwokatki", "adwokatce", "adwokatkę", "adwokatką"],
+      "abbreviations": [],
+      "examplePositive": "W sprawie występuje adwokatka Marta Sienkiewicz.",
+      "exampleNegative": "Izba adwokacka prowadzi listę uprawnionych."
+    },
+    {
+      "lemma": "radca prawny",
+      "forms": ["radca prawny", "radcy prawnego", "radcy prawnemu", "radcę prawnego", "radcą prawnym", "radcy prawnym"],
+      "abbreviations": ["r.pr.", "r. pr."],
+      "examplePositive": "Powoda reprezentuje radca prawny Anna Kowalska.",
+      "exampleNegative": "Rada nadzorcza zebrała się w pełnym składzie."
+    },
+    {
+      "lemma": "aplikant adwokacki",
+      "forms": ["aplikant adwokacki", "aplikanta adwokackiego", "aplikantowi adwokackiemu", "aplikantem adwokackim", "aplikancie adwokackim"],
+      "abbreviations": [],
+      "examplePositive": "Pismo przygotował aplikant adwokacki Marek Zieliński pod nadzorem patrona.",
+      "exampleNegative": "Aplikacja adwokacka trwa trzy lata."
+    },
+    {
+      "lemma": "aplikant radcowski",
+      "forms": ["aplikant radcowski", "aplikanta radcowskiego", "aplikantowi radcowskiemu", "aplikantem radcowskim", "aplikancie radcowskim"],
+      "abbreviations": ["apl. radc."],
+      "examplePositive": "Aplikant radcowski Tomasz Wysocki odebrał odpis pisma.",
+      "exampleNegative": "Egzamin radcowski odbywa się raz w roku."
+    },
+    {
+      "lemma": "aplikant notarialny",
+      "forms": ["aplikant notarialny", "aplikanta notarialnego", "aplikantowi notarialnemu", "aplikantem notarialnym", "aplikancie notarialnym"],
+      "abbreviations": [],
+      "examplePositive": "Akt odebrał aplikant notarialny Paweł Górski w zastępstwie notariusza.",
+      "exampleNegative": "Kancelaria notarialna czynna jest od poniedziałku."
+    },
+    {
+      "lemma": "aplikant",
+      "forms": ["aplikant", "aplikanta", "aplikantowi", "aplikantem", "aplikancie"],
+      "abbreviations": [],
+      "examplePositive": "W rozprawie uczestniczył aplikant Michał Nowak.",
+      "exampleNegative": "Aplikacja do wniosku została dołączona w załączeniu."
+    },
+    {
+      "lemma": "notariusz",
+      "forms": ["notariusz", "notariusza", "notariuszowi", "notariuszem", "notariuszu"],
+      "abbreviations": ["not."],
+      "examplePositive": "Umowę sporządził notariusz Jerzy Malinowski.",
+      "exampleNegative": "Notariat prowadzi rejestr aktów poświadczenia dziedziczenia."
+    },
+    {
+      "lemma": "mecenas",
+      "forms": ["mecenas", "mecenasa", "mecenasowi", "mecenasem", "mecenasie"],
+      "abbreviations": ["mec."],
+      "examplePositive": "Zgodnie z pełnomocnictwem sprawę prowadzi mecenas Katarzyna Wiśniewska.",
+      "exampleNegative": "Mecenat nad wydarzeniem objęła izba gospodarcza."
+    },
+    {
+      "lemma": "asesor",
+      "forms": ["asesor", "asesora", "asesorowi", "asesorem", "asesorze"],
+      "abbreviations": [],
+      "examplePositive": "Czynność wykonał asesor Bartosz Kaczmarek.",
+      "exampleNegative": "Asesura poprzedza powołanie na stanowisko sędziowskie."
+    },
+    {
+      "lemma": "asesor notarialny",
+      "forms": ["asesor notarialny", "asesora notarialnego", "asesorowi notarialnemu", "asesorem notarialnym", "asesorze notarialnym"],
+      "abbreviations": [],
+      "examplePositive": "W zastępstwie notariusza akt podpisał asesor notarialny Krzysztof Lis.",
+      "exampleNegative": "Kancelaria zatrudnia dwóch asesorów w ramach praktyki."
+    },
+    {
+      "lemma": "asesor komorniczy",
+      "forms": ["asesor komorniczy", "asesora komorniczego", "asesorowi komorniczemu", "asesorem komorniczym", "asesorze komorniczym"],
+      "abbreviations": [],
+      "examplePositive": "Czynności terenowe przeprowadził asesor komorniczy Rafał Duda.",
+      "exampleNegative": "Praktyka komornicza wymaga wcześniejszej aplikacji."
+    },
+    {
+      "lemma": "syndyk",
+      "forms": ["syndyk", "syndyka", "syndykowi", "syndykiem", "syndyku"],
+      "abbreviations": [],
+      "examplePositive": "Masą upadłości zarządza syndyk Grzegorz Adamski.",
+      "exampleNegative": "Syndykat zawodowy nie jest stroną postępowania."
+    },
+    {
+      "lemma": "likwidator",
+      "forms": ["likwidator", "likwidatora", "likwidatorowi", "likwidatorem", "likwidatorze"],
+      "abbreviations": [],
+      "examplePositive": "Spółkę w likwidacji reprezentuje likwidator Wojciech Zalewski.",
+      "exampleNegative": "Likwidacja spółki została otwarta uchwałą wspólników."
+    },
+    {
+      "lemma": "tłumacz przysięgły",
+      "forms": ["tłumacz przysięgły", "tłumacza przysięgłego", "tłumaczowi przysięgłemu", "tłumaczem przysięgłym", "tłumaczu przysięgłym"],
+      "abbreviations": [],
+      "examplePositive": "Tłumaczenie poświadczył tłumacz przysięgły Adam Ostrowski.",
+      "exampleNegative": "Lista tłumaczy przysięgłych jest jawna i publikowana."
+    },
+    {
+      "lemma": "mediator",
+      "forms": ["mediator", "mediatora", "mediatorowi", "mediatorem", "mediatorze"],
+      "abbreviations": [],
+      "examplePositive": "Postępowanie mediacyjne prowadził mediator Sławomir Krawczyk.",
+      "exampleNegative": "Mediacja jest dobrowolna i poufna."
+    },
+    {
+      "lemma": "rzeczoznawca majątkowy",
+      "forms": ["rzeczoznawca majątkowy", "rzeczoznawcy majątkowego", "rzeczoznawcy majątkowemu", "rzeczoznawcę majątkowego", "rzeczoznawcą majątkowym", "rzeczoznawcy majątkowym"],
+      "abbreviations": [],
+      "examplePositive": "Operat sporządził rzeczoznawca majątkowy Marian Sokołowski.",
+      "exampleNegative": "Wycena nieruchomości wymaga aktualnego operatu szacunkowego."
+    },
+    {
+      "lemma": "doradca podatkowy",
+      "forms": ["doradca podatkowy", "doradcy podatkowego", "doradcy podatkowemu", "doradcę podatkowego", "doradcą podatkowym", "doradcy podatkowym"],
+      "abbreviations": [],
+      "examplePositive": "Spółkę w postępowaniu podatkowym reprezentuje doradca podatkowy Elżbieta Nowicka.",
+      "exampleNegative": "Doradztwo podatkowe jest zawodem regulowanym."
+    },
+    {
+      "lemma": "protokolant",
+      "forms": ["protokolant", "protokolanta", "protokolantowi", "protokolantem", "protokolancie"],
+      "abbreviations": [],
+      "examplePositive": "Protokół rozprawy sporządził protokolant Dariusz Kowal.",
+      "exampleNegative": "Protokół rozprawy załączono do akt sprawy."
+    },
+    {
+      "lemma": "protokolantka",
+      "forms": ["protokolantka", "protokolantki", "protokolantce", "protokolantkę", "protokolantką"],
+      "abbreviations": [],
+      "examplePositive": "Rozprawie towarzyszyła protokolantka Joanna Michalska.",
+      "exampleNegative": "Protokół rozprawy załączono do akt sprawy."
+    },
+    {
+      "lemma": "sekretarz sądowy",
+      "forms": ["sekretarz sądowy", "sekretarza sądowego", "sekretarzowi sądowemu", "sekretarzem sądowym", "sekretarzu sądowym"],
+      "abbreviations": ["sekr. sąd."],
+      "examplePositive": "Wezwanie podpisał z upoważnienia sekretarz sądowy Piotr Zawadzki.",
+      "exampleNegative": "Sekretariat sądu czynny jest w godzinach urzędowania."
+    },
+    {
+      "lemma": "starszy sekretarz sądowy",
+      "forms": ["starszy sekretarz sądowy", "starszego sekretarza sądowego", "starszemu sekretarzowi sądowemu", "starszym sekretarzem sądowym", "starszym sekretarzu sądowym"],
+      "abbreviations": ["st. sekr. sąd."],
+      "examplePositive": "Protokół sporządził st. sekr. sąd. Tomasz Kwiatkowski.",
+      "exampleNegative": "Starszeństwo służbowe nie wpływa na treść protokołu."
+    },
+    {
+      "lemma": "prokurent",
+      "forms": ["prokurent", "prokurenta", "prokurentowi", "prokurentem", "prokurencie"],
+      "abbreviations": [],
+      "examplePositive": "Umowę w imieniu spółki podpisał prokurent Andrzej Wróbel.",
+      "exampleNegative": "Prokura została ujawniona w Krajowym Rejestrze Sądowym."
+    },
+    {
+      "lemma": "prezes zarządu",
+      "forms": ["prezes zarządu", "prezesa zarządu", "prezesowi zarządu", "prezesem zarządu", "prezesie zarządu"],
+      "abbreviations": [],
+      "examplePositive": "Spółkę reprezentuje jednoosobowo prezes zarządu Marcin Jabłoński.",
+      "exampleNegative": "Zarząd spółki liczy trzech członków."
+    },
+    {
+      "lemma": "wiceprezes zarządu",
+      "forms": ["wiceprezes zarządu", "wiceprezesa zarządu", "wiceprezesowi zarządu", "wiceprezesem zarządu", "wiceprezesie zarządu"],
+      "abbreviations": [],
+      "examplePositive": "Aneks podpisał wiceprezes zarządu Roman Kubiak.",
+      "exampleNegative": "Zarząd spółki liczy trzech członków."
+    },
+    {
+      "lemma": "członek zarządu",
+      "forms": ["członek zarządu", "członka zarządu", "członkowi zarządu", "członkiem zarządu", "członku zarządu"],
+      "abbreviations": [],
+      "examplePositive": "Oświadczenie złożył członek zarządu Grzegorz Piotrowski.",
+      "exampleNegative": "Zarząd spółki liczy trzech członków."
+    },
+    {
+      "lemma": "dyrektor",
+      "forms": ["dyrektor", "dyrektora", "dyrektorowi", "dyrektorem", "dyrektorze"],
+      "abbreviations": [],
+      "examplePositive": "Decyzję podpisał dyrektor Stanisław Wieczorek.",
+      "exampleNegative": "Dyrekcja szkoły wydała stosowne zaświadczenie."
+    },
+    {
+      "lemma": "dyrektor generalny",
+      "forms": ["dyrektor generalny", "dyrektora generalnego", "dyrektorowi generalnemu", "dyrektorem generalnym", "dyrektorze generalnym"],
+      "abbreviations": [],
+      "examplePositive": "Kontrakt zaakceptował dyrektor generalny Tadeusz Sobczak.",
+      "exampleNegative": "Dyrekcja generalna spółki mieści się w Warszawie."
+    },
+    {
+      "lemma": "dyrektor finansowy",
+      "forms": ["dyrektor finansowy", "dyrektora finansowego", "dyrektorowi finansowemu", "dyrektorem finansowym", "dyrektorze finansowym"],
+      "abbreviations": [],
+      "examplePositive": "Raport zatwierdziła dyrektor finansowy Beata Kowalczyk.",
+      "exampleNegative": "Dział finansowy przygotował zestawienie kosztów."
+    },
+    {
+      "lemma": "dyrektor zarządzający",
+      "forms": ["dyrektor zarządzający", "dyrektora zarządzającego", "dyrektorowi zarządzającemu", "dyrektorem zarządzającym", "dyrektorze zarządzającym"],
+      "abbreviations": [],
+      "examplePositive": "Negocjacje prowadził dyrektor zarządzający Filip Nowakowski.",
+      "exampleNegative": "Zarządzanie ryzykiem leży w gestii działu compliance."
+    },
+    {
+      "lemma": "kierownik",
+      "forms": ["kierownik", "kierownika", "kierownikowi", "kierownikiem", "kierowniku"],
+      "abbreviations": [],
+      "examplePositive": "Wniosek podpisał kierownik Jacek Sikora.",
+      "exampleNegative": "Kierownictwo zakładu poinformowało o zmianie regulaminu."
+    },
+    {
+      "lemma": "kierowniczka",
+      "forms": ["kierowniczka", "kierowniczki", "kierowniczce", "kierowniczkę", "kierowniczką"],
+      "abbreviations": [],
+      "examplePositive": "Zaświadczenie wystawiła kierowniczka Agnieszka Baran.",
+      "exampleNegative": "Kierownictwo zakładu poinformowało o zmianie regulaminu."
+    },
+    {
+      "lemma": "główna księgowa",
+      "forms": ["główna księgowa", "głównej księgowej", "główną księgową"],
+      "abbreviations": [],
+      "examplePositive": "Fakturę zaksięgowała główna księgowa Halina Wójcik.",
+      "exampleNegative": "Księgowość spółki prowadzona jest zewnętrznie."
+    },
+    {
+      "lemma": "główny księgowy",
+      "forms": ["główny księgowy", "głównego księgowego", "głównemu księgowemu", "głównym księgowym"],
+      "abbreviations": [],
+      "examplePositive": "Bilans podpisał główny księgowy Zbigniew Krupa.",
+      "exampleNegative": "Księgowość spółki prowadzona jest zewnętrznie."
+    },
+    {
+      "lemma": "księgowa",
+      "forms": ["księgowa", "księgowej", "księgową"],
+      "abbreviations": [],
+      "examplePositive": "Dokument potwierdziła księgowa Renata Szymańska.",
+      "exampleNegative": "Księgowość spółki prowadzona jest zewnętrznie."
+    },
+    {
+      "lemma": "księgowy",
+      "forms": ["księgowy", "księgowego", "księgowemu", "księgowym"],
+      "abbreviations": [],
+      "examplePositive": "Dokument potwierdził księgowy Mariusz Głowacki.",
+      "exampleNegative": "Księgowość spółki prowadzona jest zewnętrznie."
+    },
+    {
+      "lemma": "sędzia (z oznaczeniem sądu)",
+      "forms": [],
+      "abbreviations": ["sędzia SR", "sędzia SO", "sędzia SA", "sędzia SN", "SSR", "SSO", "SSA", "SSN"],
+      "examplePositive": "Wyrok wydał SSR Krzysztof Baranowski.",
+      "exampleNegative": "Sędzia oddalił wniosek dowodowy.",
+      "note": "Bare 'sędzia' celowo POZA leksykonem — patrz nonEntity; tylko forma z oznaczeniem sądu (skrót lub 'sędzia SR/SO/SA/SN') jest jednoznacznie konkretnym tytułem, nie rolą generyczną."
+    },
+    {
+      "lemma": "prokurator (skrót)",
+      "forms": [],
+      "abbreviations": ["prok."],
+      "examplePositive": "Akt oskarżenia podpisał prok. Michał Sawicki.",
+      "exampleNegative": "Prokurator wniósł akt oskarżenia do sądu.",
+      "note": "Bare 'prokurator' celowo POZA leksykonem — patrz nonEntity; tylko skrót 'prok.' (typowy dla podpisu/nagłówka, nie narracji) jest w zakresie B4-lite."
+    }
+  ],
+  "nonEntity": [
+    { "lemma": "powód", "forms": ["powód", "powoda", "powodowi", "powodem", "powodzie"], "reason": "rola procesowa generyczna (strona postępowania cywilnego)" },
+    { "lemma": "powódka", "forms": ["powódka", "powódki", "powódce", "powódkę", "powódką"], "reason": "rola procesowa generyczna" },
+    { "lemma": "pozwany", "forms": ["pozwany", "pozwanego", "pozwanemu", "pozwanym"], "reason": "rola procesowa generyczna" },
+    { "lemma": "pozwana", "forms": ["pozwana", "pozwanej", "pozwaną"], "reason": "rola procesowa generyczna" },
+    { "lemma": "wnioskodawca", "forms": ["wnioskodawca", "wnioskodawcy", "wnioskodawcę", "wnioskodawcą"], "reason": "rola procesowa generyczna (już częściowo A9 blocklistPatterns -awca)" },
+    { "lemma": "wnioskodawczyni", "forms": ["wnioskodawczyni", "wnioskodawczynię", "wnioskodawczynią"], "reason": "rola procesowa generyczna" },
+    { "lemma": "uczestnik", "forms": ["uczestnik", "uczestnika", "uczestnikowi", "uczestnikiem", "uczestniku"], "reason": "rola procesowa generyczna (postępowanie nieprocesowe)" },
+    { "lemma": "uczestniczka", "forms": ["uczestniczka", "uczestniczki", "uczestniczce", "uczestniczkę", "uczestniczką"], "reason": "rola procesowa generyczna" },
+    { "lemma": "dłużnik", "forms": ["dłużnik", "dłużnika", "dłużnikowi", "dłużnikiem", "dłużniku"], "reason": "rola procesowa/materialna generyczna" },
+    { "lemma": "dłużniczka", "forms": ["dłużniczka", "dłużniczki", "dłużniczce", "dłużniczkę", "dłużniczką"], "reason": "rola procesowa/materialna generyczna" },
+    { "lemma": "wierzyciel", "forms": ["wierzyciel", "wierzyciela", "wierzycielowi", "wierzycielem", "wierzycielu"], "reason": "rola procesowa/materialna generyczna" },
+    { "lemma": "wierzycielka", "forms": ["wierzycielka", "wierzycielki", "wierzycielce", "wierzycielkę", "wierzycielką"], "reason": "rola procesowa/materialna generyczna" },
+    { "lemma": "kredytobiorca", "forms": ["kredytobiorca", "kredytobiorcy", "kredytobiorcę", "kredytobiorcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -biorca)" },
+    { "lemma": "kredytobiorczyni", "forms": ["kredytobiorczyni", "kredytobiorczynię", "kredytobiorczynią"], "reason": "rola umowna generyczna" },
+    { "lemma": "pożyczkobiorca", "forms": ["pożyczkobiorca", "pożyczkobiorcy", "pożyczkobiorcę", "pożyczkobiorcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -biorca)" },
+    { "lemma": "pożyczkobiorczyni", "forms": ["pożyczkobiorczyni", "pożyczkobiorczynię", "pożyczkobiorczynią"], "reason": "rola umowna generyczna" },
+    { "lemma": "kredytodawca", "forms": ["kredytodawca", "kredytodawcy", "kredytodawcę", "kredytodawcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -awca)" },
+    { "lemma": "pożyczkodawca", "forms": ["pożyczkodawca", "pożyczkodawcy", "pożyczkodawcę", "pożyczkodawcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -awca)" },
+    { "lemma": "najemca", "forms": ["najemca", "najemcy", "najemcę", "najemcą"], "reason": "rola umowna generyczna (NIE pokryta przez A9 -awca/-biorca)" },
+    { "lemma": "wynajmujący", "forms": ["wynajmujący", "wynajmującego", "wynajmującemu", "wynajmującym"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -ujący)" },
+    { "lemma": "zamawiający", "forms": ["zamawiający", "zamawiającego", "zamawiającemu", "zamawiającym"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -ujący)" },
+    { "lemma": "wykonawca", "forms": ["wykonawca", "wykonawcy", "wykonawcę", "wykonawcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -awca)" },
+    { "lemma": "zleceniodawca", "forms": ["zleceniodawca", "zleceniodawcy", "zleceniodawcę", "zleceniodawcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -awca)" },
+    { "lemma": "zleceniobiorca", "forms": ["zleceniobiorca", "zleceniobiorcy", "zleceniobiorcę", "zleceniobiorcą"], "reason": "rola umowna generyczna (już A9 blocklistPatterns -biorca)" },
+    { "lemma": "poręczyciel", "forms": ["poręczyciel", "poręczyciela", "poręczycielowi", "poręczycielem", "poręczycielu"], "reason": "rola umowna generyczna (NIE pokryta przez A9)" },
+    { "lemma": "spadkobierca", "forms": ["spadkobierca", "spadkobiercy", "spadkobiercę", "spadkobiercą"], "reason": "rola procesowa/materialna generyczna (NIE pokryta przez A9 — '-bierca' różni się od wzorca '-biorca')" },
+    { "lemma": "oskarżony", "forms": ["oskarżony", "oskarżonego", "oskarżonemu", "oskarżonym"], "reason": "rola procesowa generyczna (postępowanie karne)" },
+    { "lemma": "oskarżona", "forms": ["oskarżona", "oskarżonej", "oskarżoną"], "reason": "rola procesowa generyczna" },
+    { "lemma": "pokrzywdzony", "forms": ["pokrzywdzony", "pokrzywdzonego", "pokrzywdzonemu", "pokrzywdzonym"], "reason": "rola procesowa generyczna (postępowanie karne)" },
+    { "lemma": "pokrzywdzona", "forms": ["pokrzywdzona", "pokrzywdzonej", "pokrzywdzoną"], "reason": "rola procesowa generyczna" },
+    { "lemma": "podejrzany", "forms": ["podejrzany", "podejrzanego", "podejrzanemu", "podejrzanym"], "reason": "rola procesowa generyczna (postępowanie przygotowawcze)" },
+    { "lemma": "podejrzana", "forms": ["podejrzana", "podejrzanej", "podejrzaną"], "reason": "rola procesowa generyczna" },
+    { "lemma": "obwiniony", "forms": ["obwiniony", "obwinionego", "obwinionemu", "obwinionym"], "reason": "rola procesowa generyczna (postępowanie wykroczeniowe)" },
+    { "lemma": "obwiniona", "forms": ["obwiniona", "obwinionej", "obwinioną"], "reason": "rola procesowa generyczna" },
+    { "lemma": "upadły", "forms": ["upadły", "upadłego", "upadłemu", "upadłym"], "reason": "rola procesowa generyczna (postępowanie upadłościowe)" },
+    { "lemma": "świadek", "forms": ["świadek", "świadka", "świadkowi", "świadkiem", "świadku"], "reason": "rola procesowa generyczna" },
+    { "lemma": "pełnomocnik", "forms": ["pełnomocnik", "pełnomocnika", "pełnomocnikowi", "pełnomocnikiem", "pełnomocniku"], "reason": "rola procesowa generyczna (odesłanie do KONKRETNEGO tytułu — adwokat/radca prawny — jest osobnym wpisem entity)" },
+    { "lemma": "kurator", "forms": ["kurator", "kuratora", "kuratorowi", "kuratorem", "kuratorze"], "reason": "rola procesowa generyczna (kurator procesowy/spadku/małoletniego)" },
+    { "lemma": "konsument", "forms": ["konsument", "konsumenta", "konsumentowi", "konsumentem", "konsumencie"], "reason": "rola materialnoprawna generyczna (praktyka frankowa/konsumencka)" },
+    { "lemma": "przedsiębiorca", "forms": ["przedsiębiorca", "przedsiębiorcy", "przedsiębiorcę", "przedsiębiorcą"], "reason": "rola materialnoprawna generyczna (obsługa firm)" },
+    { "lemma": "poszkodowany", "forms": ["poszkodowany", "poszkodowanego", "poszkodowanemu", "poszkodowanym"], "reason": "rola materialnoprawna generyczna (szkody, ubezpieczenia)" },
+    { "lemma": "poszkodowana", "forms": ["poszkodowana", "poszkodowanej", "poszkodowaną"], "reason": "rola materialnoprawna generyczna" },
+    { "lemma": "strona", "forms": ["strona", "strony", "stronie", "stronę", "stroną"], "reason": "rola procesowa generyczna nadrzędna" },
+    { "lemma": "przewodniczący", "forms": ["przewodniczący", "przewodniczącego", "przewodniczącemu", "przewodniczącym"], "reason": "DUAL-USE, świadomie odłożone: funkcja sesyjna generyczna (przewodniczący składu/zebrania), potwierdzone przez adw_34_role_generyczne jako pułapka FP; kontekstowe rozróżnienie od konkretnego tytułu odłożone do B4-full (W3 case-detector)" },
+    { "lemma": "biegły", "forms": ["biegły", "biegłego", "biegłemu", "biegłym"], "reason": "DUAL-USE, świadomie odłożone: RECALL-90-DESIGN.md §2.4 wymienia 'biegły' jako przykład encji, ale adw_34_role_generyczne dowodzi, że gołe słowo jest też rolą procesową generyczną ('biegły sądowy w tej sprawie') — bez sygnału kontekstowego (nazwisko/kwalifikacja obok) leksykon nie może bezpiecznie rozstrzygnąć; odłożone do B4-full" },
+    { "lemma": "komornik", "forms": ["komornik", "komornika", "komornikowi", "komornikiem", "komorniku"], "reason": "DUAL-USE, świadomie odłożone: analogicznie do 'biegły' — RECALL-90-DESIGN.md wymienia jako przykład encji, ale adw_34_role_generyczne dowodzi generycznego użycia ('Komornik poinformował wierzyciela'); odłożone do B4-full" },
+    { "lemma": "sędzia", "forms": ["sędzia"], "reason": "DUAL-USE, świadomie odłożone: gołe słowo jest rolą sesyjną generyczną; w zakresie B4-lite pozostaje wyłącznie forma z oznaczeniem sądu (sędzia SR/SO/SA/SN, SSR/SSO/SSA/SSN — patrz entity) jako jednoznacznie konkretny tytuł" },
+    { "lemma": "prokurator", "forms": ["prokurator", "prokuratora", "prokuratorowi", "prokuratorem", "prokuratorze"], "reason": "DUAL-USE, świadomie odłożone: gołe słowo jest rolą procesową generyczną; w zakresie B4-lite pozostaje wyłącznie skrót 'prok.' (patrz entity)" },
+    { "lemma": "referendarz", "forms": ["referendarz", "referendarza", "referendarzowi", "referendarzem", "referendarzu"], "reason": "DUAL-USE, świadomie odłożone: analogicznie do sędzia/prokurator — funkcja procesowa generyczna ('referendarz wydał postanowienie'); odłożone do B4-full" }
+  ]
+}
