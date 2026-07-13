@@ -43,8 +43,8 @@ hardening pod korpus kontradyktoryjny.
 
 - **Desktop był gorszy od web** (q8: syntetyczny 86%). **Po C4 desktop = jakość
   web** (fp16). Czyli desktop już **dogonił** oryginał webowy co do modelu.
-- **Na naszej mierzonej osi** kontradyktoryjny recall: **78,0 → 84,2** (+6,1 p.p.),
-  przecieki treści **−38%**.
+- **Na naszej mierzonej osi** kontradyktoryjny recall: **78,0 → 84,2 → 86,7**
+  (plan A, potem B4 leksykon ról + A7 progi), przecieki treści od 42 do **19**.
 - **Czego jeszcze nie mamy:** mierzonego head-to-head z waniliowym upstreamem na
   tym samym runtime — to da **harness jakości w przeglądarce** (odłożony Track 4).
 
@@ -52,7 +52,7 @@ hardening pod korpus kontradyktoryjny.
 
 - **Na zdolności — już przebijamy:** więcej typów, identyfikatory z sumami,
   art. 9-10 domyślnie, fp16 na desktopie.
-- **Na mierzonej jakości — już wyżej:** kontradyktoryjny 84,2 > pierwotne 78,0.
+- **Na mierzonej jakości — już wyżej:** kontradyktoryjny **86,7** > pierwotne 78,0.
 - **Definitywnie (liczba do obrony w materiałach):** **90%+ na zamrożonym
   holdoucie** (bramka GATE-RECALL-90 z `RECALL-90-DESIGN.md`: dolna granica 95%
   przedziału ufności ≥ 90%, zero pełnych wycieków wagi ≥4). To osiągamy po
@@ -66,7 +66,8 @@ hardening pod korpus kontradyktoryjny.
 ✅ Tor pomiarowy naprawiony + korpus kontradyktoryjny + rejestr przecieków
 ✅ α (art. 9-10 domyślnie) + β (C4 desktop fp16) + γ zidentyfikowane
 ✅ Recall Track 1 (plan A): kontradyktoryjny 84,2%, przecieki −38%
-👉  ── TU JESTEŚMY ──
+✅ Recall B (B4 leksykon ról + A7 progi): kontradyktoryjny 86,7%, PERSON_ROLE R 29→70
+👉  ── TU JESTEŚMY ── (86,7%; cel 90%+ przez B3/B2/B1 + korpus 2.0)
 ⬜ Recall do 90%+  (moduły B: B4 leksykon ról = największa dźwignia, B2 wersaliki,
                     B3 art.9-10, B1 ensemble; + korpus 2.0; + dokończone A7)
 ⬜ C4 build + bench  (domknięcie desktopu fp16: pełne pakowanie + pomiar pamięci/latencji)
