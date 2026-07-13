@@ -19,30 +19,66 @@ export const CASE_FOLDED_SOURCE = 'case-folded';
 const HEADER_LEMMAS = new Set(documentHeaderLemmas.lemmas);
 const FIRST_WORD_RE = /^\p{L}+/u;
 
-// FP guard (RECALL-90-DESIGN.md §2.2 pkt 5): an ORGANIZATION_NAME candidate
-// from the case-folded source whose span *opens* with a document-type lemma
-// ("UMOWA ...", "POZEW ...") is the document's own title declaration, not an
-// organization — reject the whole candidate, however confidently the folded
-// pass scored it. This is exactly how the pre-existing "UMOWA KREDYTU
-// GOTÓWKOWEGO" ORGANIZATION_NAME false positive (RECALL-90-DESIGN.md §5.2)
-// would otherwise reappear, scored on Title Case text this time, at
-// case-folded's own threshold too.
+// Section-numbering markers ("I.", "II.", ..., "XX.") that open a numbered
+// heading in Polish legal documents ("I. Strony umowy", "IV. Żądanie").
+// Closed list, not a general roman-numeral parser — legal-document section
+// counts don't plausibly exceed ~20, and a closed list means this can never
+// accidentally swallow an unrelated all-caps token that happens to consist
+// only of I/V/X letters.
+const SECTION_MARKERS = new Set([
+  'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX',
+]);
+const LEADING_TOKEN_WITH_DOT_RE = /^(\p{L}+)\./u;
+
+// Structural-marker FP guard (RECALL-90-DESIGN.md §2.2 pkt 5, extended
+// after measurement — RECALL-B2-NOTES.md): a candidate from the case-folded
+// source whose span *opens* with either (a) a document-type lemma ("UMOWA
+// ...", "POZEW ...", "PEŁNOMOCNICTWO ...") or (b) a numbered-section marker
+// ("I. ...", "IV. ...") is a piece of document scaffolding, not PII —
+// reject the whole candidate, however confidently the folded pass scored
+// it. Two related but distinct failure modes converge on the same shape
+// (leading token + what follows):
+//   - Lemma case: "UMOWA KREDYTU GOTÓWKOWEGO" scored ORGANIZATION_NAME
+//     (RECALL-90-DESIGN.md §5.2, the original motivating example) and
+//     "PEŁNOMOCNICTWO PROCESOWE" scored PERSON_ROLE_OR_TITLE (measured on
+//     pismo_03 — "pełnomocnictwo" the document vs "pełnomocnik" the role is
+//     a one-letter-away confusion for a model reading Title Case text).
+//   - Section-marker case: "IV. ŻĄDANIE" / "I. PRZYCZYNA" scored
+//     PERSON_NAME — structurally identical to the "J. Kowalski"
+//     initial-plus-surname pattern once folded ("Iv. Żądanie"), which is
+//     exactly the shape PERSON_NAME candidates are expected to have.
+// Applied across all ALLOWED_TYPES (not just the type it was first observed
+// on) because the mechanism — folded document scaffolding resembling SOME
+// entity shape — isn't specific to one type; only the *lemma list itself*
+// stays domain-specific (chosen so none of its entries are plausible
+// surnames/place names/org names, so widening its type scope costs nothing
+// measured on either corpus).
 //
 // Scoped to the candidate's *first word only* (not "does this span contain
-// a lemma anywhere") so a real organization name immediately adjacent to a
-// generic lead-in on the same all-caps line survives, as long as the
-// model's own span boundary doesn't start on the lemma — see pismo_03's
-// "ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH", where the lemma
-// list must NOT reject "Zakładu Ubezpieczeń Społecznych". "ODWOŁANIE" is
-// deliberately absent from document-header-lemmas.json for exactly this
-// reason: that header has no punctuation between the lead-in and the real
-// org name, so if the model ever merged the two into one span, adding
-// "ODWOŁANIE" to the list would make this guard reject the whole thing —
-// trading the true positive away to suppress a false one that, unlike the
-// UMOWA KREDYTU case, has no evidence of actually occurring.
-function isDocumentHeaderSpan(spanText) {
-  const m = spanText.match(FIRST_WORD_RE);
-  return m ? HEADER_LEMMAS.has(m[0].toUpperCase()) : false;
+// a marker anywhere") so a real entity immediately adjacent to a generic
+// lead-in on the same all-caps line survives, as long as the model's own
+// span boundary doesn't start on the marker — see pismo_03's "ODWOŁANIE OD
+// DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH", where this guard must NOT
+// reject "Zakładu Ubezpieczeń Społecznych". "ODWOŁANIE" is deliberately
+// absent from document-header-lemmas.json for exactly this reason: that
+// header has no punctuation between the lead-in and the real org name, so
+// if the model ever merged the two into one span, adding "ODWOŁANIE" to
+// the list would make this guard reject the whole thing — trading a true
+// positive away to suppress a false one that, unlike the UMOWA KREDYTU
+// case, has no evidence of actually occurring.
+//
+// Known residual risk, accepted and documented rather than silently
+// present: a genuine single-initial Polish name ("I. Iwańska") inside a
+// qualifying all-caps segment would also be rejected by the section-marker
+// half of this guard. Checked against both corpora at measurement time —
+// zero such GT entities exist in either — so this costs nothing *measured*;
+// flagged here for whoever extends the corpus with that shape later.
+function isStructuralMarkerSpan(spanText) {
+  const word = spanText.match(FIRST_WORD_RE);
+  if (word && HEADER_LEMMAS.has(word[0].toUpperCase())) return true;
+  const dotted = spanText.match(LEADING_TOKEN_WITH_DOT_RE);
+  return dotted ? SECTION_MARKERS.has(dotted[1].toUpperCase()) : false;
 }
 
 function overlapsAny(candidate, existingEntities) {
@@ -131,7 +167,7 @@ export function createCaseFoldedNerStep(sources, loadModel, options = {}) {
 
     const candidates = rawEntities
       .filter((e) => ALLOWED_TYPES.has(e.entity_group))
-      .filter((e) => e.entity_group !== 'ORGANIZATION_NAME' || !isDocumentHeaderSpan(ctx.text.slice(e.start, e.end)))
+      .filter((e) => !isStructuralMarkerSpan(ctx.text.slice(e.start, e.end)))
       .filter((e) => fillsGap(e, ctx.entities))
       .map((e) => ({ ...e, source: CASE_FOLDED_SOURCE }));
 

@@ -598,19 +598,50 @@ describe('createCaseFoldedNerStep', () => {
     expect(result.entities).toHaveLength(1);
   });
 
-  it('does not apply the header-lemma guard to non-ORGANIZATION_NAME types', async () => {
-    // Contrived candidate text (a model would not really tag "Wezwanie" as a
-    // role) — this only proves the guard is scoped to ORGANIZATION_NAME.
+  it('applies the document-lemma guard to types other than ORGANIZATION_NAME too (measured: PEŁNOMOCNICTWO PROCESOWE scored as PERSON_ROLE_OR_TITLE, pismo_03)', async () => {
     const mockLoadModel = async () => ({
       infer: async (text) => {
-        const idx = text.indexOf('Wezwanie');
+        const idx = text.indexOf('Pełnomocnictwo Procesowe');
         if (idx < 0) return [];
-        return [{ entity_group: 'PERSON_ROLE_OR_TITLE', start: idx, end: idx + 'Wezwanie'.length, score: 0.95 }];
+        return [{ entity_group: 'PERSON_ROLE_OR_TITLE', start: idx, end: idx + 'Pełnomocnictwo Procesowe'.length, score: 0.97 }];
       },
       dispose: async () => {},
     });
     const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
-    const text = 'WEZWANIE DO ZAPŁATY';
+    const text = 'PEŁNOMOCNICTWO PROCESOWE';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('drops a PERSON_NAME candidate whose span opens on a numbered-section marker (measured: "IV. ŻĄDANIE", "I. PRZYCZYNA" scored as PERSON_NAME)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Iv. Żądanie');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 'Iv. Żądanie'.length, score: 0.95 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'IV. ŻĄDANIE';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('does not apply the section-marker guard to a plain word that merely starts with a letter also used in roman numerals', async () => {
+    // "Iwańska" starts with "I" but is not "I." (no dot) — must survive.
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Iwańska');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 'Iwańska'.length, score: 0.95 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'PODPISANO: IWAŃSKA';
     const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
     const result = await step(ctx);
     expect(result.entities).toHaveLength(1);
