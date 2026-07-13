@@ -77,15 +77,24 @@ export const ENTITY_SOURCES = {
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
   VEHICLE_IDENTIFIER:       ['polish-fp16', 'regex'],
-  HEALTH_DATA:              ['multilang-fp32'], // The only model that catches all
+  // B3 (RECALL-90-DESIGN.md §2.3): 'lexicon' added alongside the model for
+  // the three proven-leak categories (EVAL-RECALL-AUDIT.md #2/#11/#30) plus
+  // the remaining art. 9 categories below — same reasoning as B4-lite's
+  // PERSON_ROLE_OR_TITLE comment above: these are all weight 5
+  // (type-weights.js), well above the A8 safety-net floor, but a source not
+  // listed here is still dropped outright by sourceFilterStep regardless of
+  // score, so omitting 'lexicon' would silently discard every candidate the
+  // new step emits. Landed incrementally, one category per commit
+  // (feature/recall-b3), as special-category-lexicon.json grew.
+  HEALTH_DATA:              ['multilang-fp32', 'lexicon'], // The only model that catches all
   GENETIC_DATA:             ['polish-fp16'],
   BIOMETRIC_DATA:           ['polish-fp16'],
-  RELIGION_OR_BELIEF:       ['polish-fp16'],
-  POLITICAL_OPINION:        ['polish-fp16'],
-  SEXUAL_ORIENTATION:       ['polish-fp16'],
-  TRADE_UNION_MEMBERSHIP:   ['polish-fp16'],
-  ETHNIC_ORIGIN:            ['polish-fp16'],
-  CRIMINAL_OFFENCE_DATA:    ['polish-fp16'],
+  RELIGION_OR_BELIEF:       ['polish-fp16', 'lexicon'],
+  POLITICAL_OPINION:        ['polish-fp16', 'lexicon'],
+  SEXUAL_ORIENTATION:       ['polish-fp16', 'lexicon'],
+  TRADE_UNION_MEMBERSHIP:   ['polish-fp16', 'lexicon'],
+  ETHNIC_ORIGIN:            ['polish-fp16', 'lexicon'],
+  CRIMINAL_OFFENCE_DATA:    ['polish-fp16', 'lexicon'],
 };
 
 export const ENTITY_LABELS = {

@@ -109,10 +109,10 @@ describe('stage helpers', () => {
     const withBoth = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, true, noLoad);
     expect(withBoth).toHaveLength(1);
     expect(withBoth[0].phase).toBe('ner');
-    expect(withBoth[0].steps).toHaveLength(3);
+    expect(withBoth[0].steps).toHaveLength(4);
 
     const withNeither = createNerSteps([], false, false, noLoad);
-    expect(withNeither[0].steps).toHaveLength(3); // ner/regex/lexicon steps always exist; regex/lexicon are no-ops when inactive
+    expect(withNeither[0].steps).toHaveLength(4); // ner/regex/lexicon/special-category-lexicon steps always exist; regex/lexicon are no-ops when inactive
   });
 
   it('createPostprocessSteps returns a single postprocess phase', () => {
