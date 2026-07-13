@@ -69,8 +69,9 @@ hardening pod korpus kontradyktoryjny.
 ✅ Recall Track 1 (plan A): kontradyktoryjny 84,2%, przecieki −38%
 ✅ Recall B (B4 leksykon ról + A7 progi): kontradyktoryjny 86,7%, PERSON_ROLE R 29→70
 ✅ Recall B3 (leksykon art. 9-10): kontradyktoryjny 87,5%, trzy wycieki wagi 5 zamknięte
-✅ Recall B2 (wersaliki): syntetyczny ZUS zamknięty; kontradyktoryjny bez zmian (brak okazji w GT tego korpusu); zdolność wersalikowa dla produktu
-👉  ── TU JESTEŚMY ── (87,5%; koniec „ślepych" modułów — dalej B1 ensemble + korpus 2.0)
+✅ Recall B2 (wersaliki): syntetyczny ZUS zamknięty; kontradyktoryjny bez zmian; zdolność wersalikowa dla produktu
+✅ Korpus 2.0 ZBUDOWANY (holdout 206 dok./1685 encji, dev/holdout rozłączne) + naprawa evalu; pomiar bramkowy przenosi się na PC (32 GB)
+👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie; **obronialny 90% = pomiar korpusu 2.0 na PC**, potem ewentualnie B1)
 ⬜ Recall do 90%+  (moduły B: B4 leksykon ról = największa dźwignia, B2 wersaliki,
                     B3 art.9-10, B1 ensemble; + korpus 2.0; + dokończone A7)
 ⬜ C4 build + bench  (domknięcie desktopu fp16: pełne pakowanie + pomiar pamięci/latencji)
