@@ -4,6 +4,7 @@ import { mergeAbbreviationsStep } from '../steps/merge-abbreviations.js';
 import { tightenSegmentsStep } from '../steps/tighten-segments.js';
 import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
+import { createCaseFoldedNerStep } from '../steps/case-folded-ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createLexiconStep } from '../steps/lexicon.js';
 import { createSpecialCategoryLexiconStep } from '../steps/special-category-lexicon.js';
@@ -53,9 +54,19 @@ export function createModelLoadSteps(hfSubset, loadModel, options = {}) {
 }
 
 export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, options = {}) {
+  // B2 (RECALL-90-DESIGN.md §2.2): options.caseFoldedActive defaults to
+  // active — the common case (createDefaultPipeline, below) always wants it
+  // given the full hfSubset. The one caller that must suppress it explicitly
+  // is cache-orchestrator.js's per-source NER loop: it calls this factory
+  // once per HF source for incremental caching, and createCaseFoldedNerStep
+  // cannot be meaningfully driven with only one of the two models (folding
+  // is a joint pass over both) — see that file's dedicated, once-per-text
+  // cache.caseFolded block and createCaseFoldedNerStep's own doc comment.
+  const caseFoldedActive = options.caseFoldedActive ?? true;
   return [
     { phase: 'ner', steps: [
       createNerStep(hfSubset, loadModel, options),
+      createCaseFoldedNerStep(hfSubset, loadModel, { active: caseFoldedActive }),
       createRegexStep(regexActive),
       createLexiconStep(lexiconActive),
       createSpecialCategoryLexiconStep(lexiconActive),

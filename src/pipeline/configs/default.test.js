@@ -109,10 +109,35 @@ describe('stage helpers', () => {
     const withBoth = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, true, noLoad);
     expect(withBoth).toHaveLength(1);
     expect(withBoth[0].phase).toBe('ner');
-    expect(withBoth[0].steps).toHaveLength(4);
+    expect(withBoth[0].steps).toHaveLength(5);
 
     const withNeither = createNerSteps([], false, false, noLoad);
-    expect(withNeither[0].steps).toHaveLength(4); // ner/regex/lexicon/special-category-lexicon steps always exist; regex/lexicon are no-ops when inactive
+    expect(withNeither[0].steps).toHaveLength(5); // ner/case-folded-ner/regex/lexicon/special-category-lexicon steps always exist; regex/lexicon/case-folded are no-ops when inactive/non-qualifying
+  });
+
+  it('createNerSteps suppresses the case-folded pass when options.caseFoldedActive is false (cache-orchestrator.js per-source loop)', async () => {
+    let loadCount = 0;
+    const loadModel = async () => {
+      loadCount++;
+      return {
+        infer: async (text) => (text.includes('Zakładu') // only the folded (Title Case) variant matches
+          ? [{ entity_group: 'ORGANIZATION_NAME', start: text.indexOf('Zakładu'), end: text.indexOf('Zakładu') + 7, score: 0.9 }]
+          : []),
+        dispose: async () => {},
+      };
+    };
+    const source = { alias: 'multilang-q8', id: 'x', dtype: 'q8' };
+    const text = 'ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+
+    const suppressed = createNerSteps([source], false, false, loadModel, { caseFoldedActive: false });
+    const suppressedResult = await runPipeline(ctx, suppressed);
+    expect(suppressedResult.entities.some((e) => e.source === 'case-folded')).toBe(false);
+
+    loadCount = 0;
+    const active = createNerSteps([source], false, false, loadModel);
+    const activeResult = await runPipeline(ctx, active);
+    expect(activeResult.entities.some((e) => e.source === 'case-folded')).toBe(true);
   });
 
   it('createPostprocessSteps returns a single postprocess phase', () => {

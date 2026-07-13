@@ -1,0 +1,29 @@
+{
+  "_comment": "RECALL-90-DESIGN.md §2.2 pkt 5 — closed list of Polish legal/business document-type openers (~20 lemmas). Consumed by src/pipeline/steps/case-folded-ner.js's FP guard: an ORGANIZATION_NAME candidate from the case-folded source whose span opens with one of these words is the document's own title declaration, not an organization, and must not be created — see that file for the exact matching rule and why 'ODWOŁANIE' is deliberately NOT in this list.",
+  "lemmas": [
+    "UMOWA",
+    "ANEKS",
+    "POROZUMIENIE",
+    "UGODA",
+    "REGULAMIN",
+    "STATUT",
+    "POZEW",
+    "WYROK",
+    "POSTANOWIENIE",
+    "NAKAZ",
+    "UZASADNIENIE",
+    "APELACJA",
+    "ZAŻALENIE",
+    "SPRZECIW",
+    "ZARZUTY",
+    "SKARGA",
+    "WNIOSEK",
+    "ODPOWIEDŹ",
+    "ZAŚWIADCZENIE",
+    "OŚWIADCZENIE",
+    "PEŁNOMOCNICTWO",
+    "PROTOKÓŁ",
+    "ZARZĄDZENIE",
+    "WEZWANIE"
+  ]
+}

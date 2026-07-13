@@ -10,6 +10,7 @@ import { createLexiconStep } from './lexicon.js';
 import { backfillOccurrencesStep } from './backfill.js';
 import { tokenizeStep } from './tokenize.js';
 import { createNerStep } from './ner.js';
+import { createCaseFoldedNerStep } from './case-folded-ner.js';
 
 describe('normalizeWhitespace', () => {
   it('passes text through unchanged (no-op)', () => {
@@ -462,6 +463,276 @@ describe('createNerStep', () => {
     };
     const result = await step(ctx);
     expect(result.entities[0].source).toBe('multilang-q8');
+  });
+});
+
+describe('createCaseFoldedNerStep', () => {
+  it('is a no-op (never calls loadModel) when no segment has a qualifying uppercase word — the common case', async () => {
+    let loadCount = 0;
+    const mockLoadModel = async () => {
+      loadCount++;
+      return { infer: async () => [], dispose: async () => {} };
+    };
+    const step = createCaseFoldedNerStep([{ alias: 'multilang-fp32', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'Zwykłe zdanie bez wersalików, jak większość dokumentu.';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+    expect(loadCount).toBe(0);
+  });
+
+  it('is a no-op when options.active is false, regardless of content (cache-orchestrator per-source loop)', async () => {
+    let loadCount = 0;
+    const mockLoadModel = async () => { loadCount++; return { infer: async () => [], dispose: async () => {} }; };
+    const step = createCaseFoldedNerStep(
+      [{ alias: 'multilang-fp32', id: 'x', dtype: 'fp32' }],
+      mockLoadModel,
+      { active: false },
+    );
+    const text = 'ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+    expect(loadCount).toBe(0);
+  });
+
+  it('runs inference on the folded (Title Case) text and maps offsets back to the original all-caps text', async () => {
+    const seenTexts = [];
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        seenTexts.push(text);
+        const idx = text.indexOf('Zakładu Ubezpieczeń Społecznych');
+        if (idx < 0) return [];
+        return [{
+          entity_group: 'ORGANIZATION_NAME',
+          start: idx,
+          end: idx + 'Zakładu Ubezpieczeń Społecznych'.length,
+          score: 0.9,
+        }];
+      },
+      dispose: async () => {},
+    });
+
+    const step = createCaseFoldedNerStep([{ alias: 'polish-fp16', id: 'x', dtype: 'fp16' }], mockLoadModel);
+    const original = 'ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH';
+    const ctx = { text: original, segments: [{ text: original, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+
+    expect(seenTexts[0]).toBe('Odwołanie Od Decyzji Zakładu Ubezpieczeń Społecznych');
+    expect(result.entities).toHaveLength(1);
+    const [entity] = result.entities;
+    expect(entity.entity_group).toBe('ORGANIZATION_NAME');
+    expect(entity.source).toBe('case-folded');
+    expect(original.slice(entity.start, entity.end)).toBe('ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH');
+  });
+
+  it('offsets a candidate found in a later segment by that segment\'s own offset, not the first segment\'s', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Nowak');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 'Nowak'.length, score: 0.92 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const seg1 = 'Zwykłe zdanie.';
+    const seg2 = 'PODPISANO: JAN NOWAK';
+    const text = `${seg1} ${seg2}`;
+    const ctx = {
+      text,
+      segments: [
+        { text: seg1, offset: 0 },
+        { text: seg2, offset: seg1.length + 1 },
+      ],
+      entities: [],
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(text.slice(result.entities[0].start, result.entities[0].end)).toBe('NOWAK');
+  });
+
+  it('drops candidates outside the closed type list (PERSON_NAME, ORGANIZATION_NAME, POSTAL_ADDRESS, LOCATION, PERSON_ROLE_OR_TITLE)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async () => [{ entity_group: 'EMAIL_ADDRESS', start: 0, end: 5, score: 0.99 }],
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'ODWOŁANIE OD DECYZJI';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('drops an ORGANIZATION_NAME candidate whose span opens on a document-header lemma (the UMOWA KREDYTU GOTÓWKOWEGO false positive, RECALL-90-DESIGN.md §5.2)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Umowa Kredytu Gotówkowego');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Umowa Kredytu Gotówkowego'.length, score: 1.0 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'UMOWA KREDYTU GOTÓWKOWEGO NR KG/2025/02/00871';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('keeps an ORGANIZATION_NAME candidate that does not open on a header lemma', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Bank Pomorski');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Bank Pomorski'.length, score: 0.9 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'BANK POMORSKI SPÓŁKA AKCYJNA';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+  });
+
+  it('applies the document-lemma guard to types other than ORGANIZATION_NAME too (measured: PEŁNOMOCNICTWO PROCESOWE scored as PERSON_ROLE_OR_TITLE, pismo_03)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Pełnomocnictwo Procesowe');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_ROLE_OR_TITLE', start: idx, end: idx + 'Pełnomocnictwo Procesowe'.length, score: 0.97 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'PEŁNOMOCNICTWO PROCESOWE';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('drops a PERSON_NAME candidate whose span opens on a numbered-section marker (measured: "IV. ŻĄDANIE", "I. PRZYCZYNA" scored as PERSON_NAME)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Iv. Żądanie');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 'Iv. Żądanie'.length, score: 0.95 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'IV. ŻĄDANIE';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('does not apply the section-marker guard to a plain word that merely starts with a letter also used in roman numerals', async () => {
+    // "Iwańska" starts with "I" but is not "I." (no dot) — must survive.
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Iwańska');
+        if (idx < 0) return [];
+        return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 'Iwańska'.length, score: 0.95 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'PODPISANO: IWAŃSKA';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].source).toBe('case-folded');
+  });
+
+  it('drops a candidate whose span overlaps an entity the main pass already produced, of ANY type (gap-filling guard)', async () => {
+    // Reproduces the measured regression (RECALL-B2-NOTES.md): the main
+    // pass already has an (imperfect but real) POSTAL_ADDRESS here; a
+    // case-folded LOCATION candidate for the same span must not be allowed
+    // to compete for it in dedup, or it can win and evict the correct type.
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Zus Oddział');
+        if (idx < 0) return [];
+        return [{ entity_group: 'LOCATION', start: idx, end: idx + 'Zus Oddział'.length, score: 0.98 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'Za pośrednictwem: ZUS Oddział w Łodzi';
+    const zusStart = text.indexOf('ZUS');
+    const ctx = {
+      text,
+      segments: [{ text, offset: 0 }],
+      // Main pass already found something overlapping "ZUS" — exact
+      // type/value don't matter, only that a span is already claimed.
+      entities: [{ entity_group: 'ORGANIZATION_NAME', start: zusStart, end: zusStart + 3, score: 0.9, source: 'polish-fp16' }],
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    const newOnes = result.entities.filter((e) => e.source === 'case-folded');
+    expect(newOnes).toEqual([]);
+  });
+
+  it('still contributes a candidate that does not overlap anything the main pass already found', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Zakładu Ubezpieczeń Społecznych');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Zakładu Ubezpieczeń Społecznych'.length, score: 0.9 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'ODWOŁANIE OD DECYZJI ZAKŁADU UBEZPIECZEŃ SPOŁECZNYCH';
+    const ctx = {
+      text,
+      segments: [{ text, offset: 0 }],
+      entities: [], // main pass found nothing at all here — the target scenario
+      anonymized: '',
+      legend: {},
+    };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].source).toBe('case-folded');
+  });
+
+  it('drops a bare identifier-label acronym (measured: "PESEL" repeated as a field label scored ORGANIZATION_NAME, adw_09_pesel_formaty)', async () => {
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Pesel');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Pesel'.length, score: 0.91 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'PESEL: 92071314764 ORAZ NIP FIRMY';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toEqual([]);
+  });
+
+  it('does not drop a candidate that merely contains an identifier-label word as part of a longer, real span', async () => {
+    // Guard is whole-span, not substring — "Firma Pesel Group" (contrived,
+    // but proves the check isn't accidentally substring-based).
+    const mockLoadModel = async () => ({
+      infer: async (text) => {
+        const idx = text.indexOf('Firma Pesel Group');
+        if (idx < 0) return [];
+        return [{ entity_group: 'ORGANIZATION_NAME', start: idx, end: idx + 'Firma Pesel Group'.length, score: 0.9 }];
+      },
+      dispose: async () => {},
+    });
+    const step = createCaseFoldedNerStep([{ alias: 'a', id: 'x', dtype: 'fp32' }], mockLoadModel);
+    const text = 'FIRMA PESEL GROUP SPÓŁKA AKCYJNA';
+    const ctx = { text, segments: [{ text, offset: 0 }], entities: [], anonymized: '', legend: {} };
+    const result = await step(ctx);
+    expect(result.entities).toHaveLength(1);
   });
 });
 

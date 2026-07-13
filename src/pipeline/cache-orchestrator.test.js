@@ -321,3 +321,99 @@ describe('classifyWithCache', () => {
     expect(ctx.entities.some((e) => e.source === 'lexicon')).toBe(true);
   });
 });
+
+// B2 (RECALL-90-DESIGN.md §2.2): 'case-folded' is a third non-'hf'-keyed
+// bucket alongside regex/lexicon — but unlike them it DOES drive real HF
+// inference (both models at once), so it must run as a single dedicated
+// pass with every currently-required source, never through the per-source
+// loop above (see cache-orchestrator.js's own comment on caseFoldedNeeded).
+describe('classifyWithCache — case-folded (B2)', () => {
+  const ENTITY_SOURCES_WITH_CASE_FOLDED = {
+    ...TEST_ENTITY_SOURCES,
+    PERSON_NAME: ['multilang-q8', 'case-folded'],
+  };
+
+  function makeCaseFoldedLoader(callLog) {
+    return async ({ id }) => ({
+      infer: async (segText) => {
+        callLog.push(id);
+        // Matches only the folded (Title Case) form — proves the model
+        // actually receives folded text, not the untouched all-caps original.
+        if (id === 'm-q8' && segText.includes('Nowak')) {
+          const idx = segText.indexOf('Nowak');
+          return [{ entity_group: 'PERSON_NAME', start: idx, end: idx + 5, score: 0.9 }];
+        }
+        return [];
+      },
+      dispose: async () => {},
+    });
+  }
+
+  it('cold start: computes case-folded entities once (every required source together) and caches them under cache.caseFolded', async () => {
+    const callLog = [];
+    const { ctx, cache } = await classifyWithCache({
+      text: 'PODPISANO: JAN NOWAK',
+      enabledEntities: ['PERSON_NAME'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: ENTITY_SOURCES_WITH_CASE_FOLDED,
+      loadModel: makeCaseFoldedLoader(callLog),
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+
+    expect(Array.isArray(cache.caseFolded)).toBe(true);
+    const found = ctx.entities.find((e) => e.source === 'case-folded');
+    expect(found).toBeDefined();
+    expect(found.entity_group).toBe('PERSON_NAME');
+    expect('PODPISANO: JAN NOWAK'.slice(found.start, found.end)).toBe('NOWAK');
+  });
+
+  it('cache hit: reuses cache.caseFolded without recomputation and without invoking loadModel for it', async () => {
+    const callLog = [];
+    const loader = makeCaseFoldedLoader(callLog);
+    const { cache: cache1 } = await classifyWithCache({
+      text: 'PODPISANO: JAN NOWAK',
+      enabledEntities: ['PERSON_NAME'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: ENTITY_SOURCES_WITH_CASE_FOLDED,
+      loadModel: loader,
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+    callLog.length = 0;
+
+    const { ctx, cache: cache2 } = await classifyWithCache({
+      text: 'PODPISANO: JAN NOWAK',
+      enabledEntities: ['PERSON_NAME'],
+      cache: cache1,
+      sources: TEST_SOURCES,
+      entitySources: ENTITY_SOURCES_WITH_CASE_FOLDED,
+      loadModel: loader,
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+
+    expect(callLog).toEqual([]);
+    expect(cache2.caseFolded).toBe(cache1.caseFolded);
+    expect(ctx.entities.some((e) => e.source === 'case-folded')).toBe(true);
+  });
+
+  it('the per-source HF loop never produces case-folded candidates itself (only the dedicated pass does)', async () => {
+    const callLog = [];
+    // multilang-q8 is "missing" (nothing cached yet) so the per-source loop
+    // runs for it — case-folded must come *only* from the dedicated block,
+    // not leak out of that loop too (which would double-run it per source
+    // once more than one HF model is required).
+    const { ctx } = await classifyWithCache({
+      text: 'PODPISANO: JAN NOWAK',
+      enabledEntities: ['PERSON_NAME'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: ENTITY_SOURCES_WITH_CASE_FOLDED,
+      loadModel: makeCaseFoldedLoader(callLog),
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+
+    const caseFoldedHits = ctx.entities.filter((e) => e.source === 'case-folded');
+    expect(caseFoldedHits).toHaveLength(1); // not duplicated
+  });
+});
