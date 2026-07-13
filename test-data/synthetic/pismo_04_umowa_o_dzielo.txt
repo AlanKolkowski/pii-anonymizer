@@ -14,7 +14,7 @@ ZAMAWIAJĄCYM:
   REGON: 302 456 789
   KRS: 0000567234
   Reprezentowana przez: Prezesa Zarządu – Pana Sebastiana Grabowskiego,
-  nr PESEL: 80042312309
+  nr PESEL: 80042312307
   e-mail: s.grabowski@archonstudio.pl
   tel.: +48 61 852 34 56
 
@@ -25,7 +25,7 @@ a
 WYKONAWCĄ:
   Imię i nazwisko: Marta Lewandowska-Ostrów
   Adres zamieszkania: ul. Ułańska 7/11, 60-748 Poznań
-  PESEL: 92051867234
+  PESEL: 92051867239
   NIP: 972-123-45-67
   Nr dowodu osobistego: BPK 778901
   Rachunek bankowy: PL 27 1600 1462 1800 0003 1234 5678 (Alior Bank S.A.)
@@ -184,7 +184,7 @@ Uwagi Zamawiającego (w terminie 5 dni roboczych):
                         RACHUNEK DO UMOWY O DZIEŁO – TRANSZA I
 
 Wystawiający:     Marta Lewandowska-Ostrów, ul. Ułańska 7/11, 60-748 Poznań
-NIP Wykonawcy:    972-123-45-67, PESEL: 92051867234
+NIP Wykonawcy:    972-123-45-67, PESEL: 92051867239
 
 Odbiorca:         ARCHON STUDIO sp. z o.o., ul. Święty Marcin 29/8,
                   61-806 Poznań, NIP: 779-234-56-01
