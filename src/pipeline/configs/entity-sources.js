@@ -92,7 +92,7 @@ export const ENTITY_SOURCES = {
   RELIGION_OR_BELIEF:       ['polish-fp16'],
   POLITICAL_OPINION:        ['polish-fp16'],
   SEXUAL_ORIENTATION:       ['polish-fp16'],
-  TRADE_UNION_MEMBERSHIP:   ['polish-fp16'],
+  TRADE_UNION_MEMBERSHIP:   ['polish-fp16', 'lexicon'],
   ETHNIC_ORIGIN:            ['polish-fp16'],
   CRIMINAL_OFFENCE_DATA:    ['polish-fp16', 'lexicon'],
 };

@@ -104,6 +104,26 @@
       "exampleNegative": "Wysokość odszkodowania jest uzależniona od stopnia przyczynienia się poszkodowanego.",
       "mustCover": "w prywatnej klinice terapii uzależnień",
       "note": "Dopełnienie celowo ograniczone do zamkniętej listy przedmiotów uzależnienia (nie chorób) — bare 'uzależniony/-a od X' jest w polskim prawniczym języku ogólną konstrukcją warunkową ('zależy od'), nie tylko uzależnieniem; bez tego ograniczenia byłby to najszerszy generator FP w całym leksykonie."
+    },
+    {
+      "id": "union-czlonek",
+      "category": "TRADE_UNION_MEMBERSHIP",
+      "pattern": "(?:członek|członka|członkowi|członkiem|członku|członkini|członkinię|członkinią)\\s+(?:związk(?:u|ów)\\s+zawodow(?:ego|ych)|NSZZ|OPZZ|ZNP)",
+      "description": "członek/członkini <związku zawodowego / NSZZ / OPZZ / ZNP>",
+      "examplePositive": "Powódka jest członkinią Związku Zawodowego Pracowników Przetwórstwa Spożywczego i z tego tytułu korzystała z ochrony przed wypowiedzeniem.",
+      "exampleNegative": "Wniosek podpisał członek zarządu spółki działający jednoosobowo.",
+      "mustCover": "Pracowników Przetwórstwa Spożywczego",
+      "note": "Wymaga sąsiedztwa wskaźnika związkowego (związek zawodowy / NSZZ / OPZZ / ZNP) — bare 'członek' to w praktyce najczęściej członek zarządu/rodziny/klubu, nie związku."
+    },
+    {
+      "id": "union-nalezy-przynaleznosc",
+      "category": "TRADE_UNION_MEMBERSHIP",
+      "pattern": "(?:należy\\s+do|przynależność\\s+do)\\s+(?:związk(?:u|ów)\\s+zawodow(?:ego|ych)|NSZZ|OPZZ|ZNP)",
+      "description": "należy do / przynależność do <związku zawodowego / NSZZ / OPZZ / ZNP>",
+      "examplePositive": "Pracownik należy do NSZZ Solidarność od 2015 roku i korzysta ze szczególnej ochrony stosunku pracy.",
+      "exampleNegative": "Nieruchomość należy do pozwanego na podstawie umowy darowizny z 2018 roku.",
+      "mustCover": "Solidarność",
+      "note": "Ta sama ochrona co union-czlonek: 'należeć do' bez wskaźnika związkowego to zwykłe 'być własnością/przynależeć', najpospolitsza konstrukcja prawnicza opisująca własność."
     }
   ]
 }

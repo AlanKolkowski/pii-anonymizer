@@ -145,13 +145,20 @@ describe('findSpecialCategoryEntities — boundary safety (real corpus near-miss
   });
 });
 
+describe('findSpecialCategoryEntities — boundary safety (real corpus near-misses, TRADE_UNION_MEMBERSHIP)', () => {
+  it('requires a union indicator: "członek zarządu" (board member) does not match', () => {
+    expect(findSpecialCategoryEntities('Wniosek podpisał członek zarządu spółki działający jednoosobowo.')).toEqual([]);
+  });
+
+  it('requires a union indicator: bare "należy do" (ownership) does not match', () => {
+    expect(findSpecialCategoryEntities('Nieruchomość należy do pozwanego na podstawie umowy darowizny.')).toEqual([]);
+  });
+});
+
 describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden regression', () => {
   // EVAL-RECALL-AUDIT.md leaks #2, #11, #30 all come from this document.
   // Read straight from test-data/adversarial so this can never drift from
   // the actual corpus fixture (mirrors lexicon.test.js's adw_34 golden test).
-  // At this commit (criminal + health) #2 and #11 are closed; #30
-  // (TRADE_UNION_MEMBERSHIP) is closed in a later commit, and this test
-  // grows with it.
   const text = normalizeEol(readFileSync(
     join(REPO_ROOT, 'test-data/adversarial/adw_38_kategorie_szczegolne.txt'),
     'utf8',
@@ -181,6 +188,17 @@ describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden reg
   it('also catches the first HEALTH_DATA instance exactly ("choruje na cukrzycę typu 2", ground truth [47,73))', () => {
     const m = matches.find((e) => e.entity_group === 'HEALTH_DATA' && e.start === 47);
     expect(m).toMatchObject({ start: 47, end: 73 });
+  });
+
+  it('leak #30 (TRADE_UNION_MEMBERSHIP "członkinią Związku Zawodowego Pracowników Przetwórstwa Spożywczego") is fully covered', () => {
+    // Ground truth span [352, 418) — matched exactly.
+    expect(coveredBy(352, 418)).toBe(true);
+    const m = matches.find((e) => e.entity_group === 'TRADE_UNION_MEMBERSHIP');
+    expect(m).toMatchObject({ start: 352, end: 418 });
+  });
+
+  it('produces exactly four matches on this document (no over-triggering)', () => {
+    expect(matches).toHaveLength(4);
   });
 });
 
@@ -248,6 +266,22 @@ describe('findSpecialCategoryEntities — dedup interaction with model spans', (
 
     const result = deduplicateEntities([modelSpan, lexiconSpan], text);
     expect(result).toHaveLength(1);
+    expect(text.slice(result[0].start, result[0].end)).toBe(wide);
+  });
+
+  it('our TRADE_UNION_MEMBERSHIP span wins over a narrower cross-type ORGANIZATION_NAME model candidate (leak #30 mechanism)', () => {
+    const text = 'Powódka jest członkinią Związku Zawodowego Pracowników Przetwórstwa Spożywczego i korzysta z ochrony.';
+    const wide = 'członkinią Związku Zawodowego Pracowników Przetwórstwa Spożywczego';
+    const orgName = 'Związku Zawodowego Pracowników Przetwórstwa Spożywczego';
+    const lexiconSpan = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'TRADE_UNION_MEMBERSHIP');
+    expect(text.slice(lexiconSpan.start, lexiconSpan.end)).toBe(wide);
+
+    const orgStart = text.indexOf(orgName);
+    const modelSpan = { entity_group: 'ORGANIZATION_NAME', start: orgStart, end: orgStart + orgName.length, score: 0.95, source: 'polish-fp16' };
+
+    const result = deduplicateEntities([modelSpan, lexiconSpan], text);
+    expect(result).toHaveLength(1);
+    expect(result[0].entity_group).toBe('TRADE_UNION_MEMBERSHIP');
     expect(text.slice(result[0].start, result[0].end)).toBe(wide);
   });
 });
