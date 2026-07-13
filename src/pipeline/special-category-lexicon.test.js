@@ -123,13 +123,35 @@ describe('findSpecialCategoryEntities — boundary safety (real corpus near-miss
   });
 });
 
+describe('findSpecialCategoryEntities — boundary safety (real corpus near-misses, HEALTH_DATA)', () => {
+  it('does not match "cierpi" as a substring of first-person "Cierpię" (pismo_03)', () => {
+    expect(findSpecialCategoryEntities('Cierpię na następujące schorzenia, udokumentowane poniżej:')).toEqual([]);
+  });
+
+  it('requires "z powodu": "zwolnieniem lekarskim" alone does not match (adw_05)', () => {
+    expect(findSpecialCategoryEntities('Sąd usprawiedliwił nieobecność zwolnieniem lekarskim.')).toEqual([]);
+  });
+
+  it('requires "z powodu": "zwolnienie od kosztów" (fee waiver) does not match (adw_25)', () => {
+    expect(findSpecialCategoryEntities('Powód wniósł o zwolnienie od kosztów sądowych.')).toEqual([]);
+  });
+
+  it('requires the closed addiction-object list: generic "uzależniona od" (depends on) does not match', () => {
+    expect(findSpecialCategoryEntities('Wysokość odszkodowania jest uzależniona od stopnia przyczynienia się poszkodowanego.')).toEqual([]);
+  });
+
+  it('requires the specific disability/incapacity qualifier: "orzeczenie o kosztach" does not match', () => {
+    expect(findSpecialCategoryEntities('Sąd wydał orzeczenie o kosztach postępowania.')).toEqual([]);
+  });
+});
+
 describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden regression', () => {
   // EVAL-RECALL-AUDIT.md leaks #2, #11, #30 all come from this document.
   // Read straight from test-data/adversarial so this can never drift from
   // the actual corpus fixture (mirrors lexicon.test.js's adw_34 golden test).
-  // At this commit (criminal category only) only leak #2 is closed; #11
-  // (HEALTH_DATA) and #30 (TRADE_UNION_MEMBERSHIP) are closed in later
-  // commits in this branch, and this test grows with them.
+  // At this commit (criminal + health) #2 and #11 are closed; #30
+  // (TRADE_UNION_MEMBERSHIP) is closed in a later commit, and this test
+  // grows with it.
   const text = normalizeEol(readFileSync(
     join(REPO_ROOT, 'test-data/adversarial/adw_38_kategorie_szczegolne.txt'),
     'utf8',
@@ -145,6 +167,20 @@ describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden reg
     expect(coveredBy(237, 291)).toBe(true);
     const m = matches.find((e) => e.entity_group === 'CRIMINAL_OFFENCE_DATA');
     expect(m).toMatchObject({ start: 237, end: 291 });
+  });
+
+  it('leak #11 (HEALTH_DATA "epizodu depresyjnego", ground truth [192,212)) is fully covered by a wider span', () => {
+    // Anchor "zwolnieniu z powodu" is not itself in ground truth (only the
+    // disease name is) so this is a superset match, not an exact one —
+    // still zero leak, since charCoverage (src/eval/analyze.js) is
+    // type/boundary-agnostic: any predicted span union covering the GT
+    // range counts as fully covered.
+    expect(coveredBy(192, 212)).toBe(true);
+  });
+
+  it('also catches the first HEALTH_DATA instance exactly ("choruje na cukrzycę typu 2", ground truth [47,73))', () => {
+    const m = matches.find((e) => e.entity_group === 'HEALTH_DATA' && e.start === 47);
+    expect(m).toMatchObject({ start: 47, end: 73 });
   });
 });
 
@@ -185,6 +221,35 @@ describe('findSpecialCategoryEntities — dedup interaction with model spans', (
     expect(result).toHaveLength(2);
     expect(result.find((e) => e.source === 'regex')).toEqual(regexSpan);
   });
+
+  it('our wide HEALTH_DATA span wins over a narrower same-type model candidate nested at the same start', () => {
+    const text = 'Powódka od 2019 r. choruje na cukrzycę typu 2 i pozostaje pod opieką poradni.';
+    const wide = 'choruje na cukrzycę typu 2';
+    const narrow = 'cukrzycę typu 2';
+    const lexiconSpan = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'HEALTH_DATA');
+    expect(text.slice(lexiconSpan.start, lexiconSpan.end)).toBe(wide);
+
+    const narrowStart = text.indexOf(narrow);
+    const modelSpan = { entity_group: 'HEALTH_DATA', start: narrowStart, end: narrowStart + narrow.length, score: 0.98, source: 'multilang-fp32' };
+
+    const result = deduplicateEntities([modelSpan, lexiconSpan], text);
+    expect(result).toHaveLength(1);
+    expect(text.slice(result[0].start, result[0].end)).toBe(wide);
+  });
+
+  it('a genuinely wider, close-scoring model span still wins over ours (no "perfect tier" veto — mirrors B4-lite\'s LEXICON_SCORE reasoning)', () => {
+    const text = 'Choruje na cukrzycę i nadciśnienie przewlekłe, co potwierdza dokumentacja.';
+    const lexiconSpan = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'HEALTH_DATA');
+    // Our complement stops at the coordinating conjunction "i" by design.
+    expect(text.slice(lexiconSpan.start, lexiconSpan.end)).toBe('Choruje na cukrzycę');
+
+    const wide = 'Choruje na cukrzycę i nadciśnienie przewlekłe';
+    const modelSpan = { entity_group: 'HEALTH_DATA', start: 0, end: wide.length, score: 0.9, source: 'multilang-fp32' };
+
+    const result = deduplicateEntities([modelSpan, lexiconSpan], text);
+    expect(result).toHaveLength(1);
+    expect(text.slice(result[0].start, result[0].end)).toBe(wide);
+  });
 });
 
 describe('findSpecialCategoryEntities — span extension mechanics', () => {
@@ -200,8 +265,32 @@ describe('findSpecialCategoryEntities — span extension mechanics', () => {
     expect(text.slice(m.start, m.end)).toBe('niekarany');
   });
 
+  it('stops at a standalone coordinating conjunction ("i") without consuming it', () => {
+    const text = 'Choruje na astmę i nie może pracować w pełnym wymiarze.';
+    const m = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'HEALTH_DATA');
+    expect(text.slice(m.start, m.end)).toBe('Choruje na astmę');
+  });
+
+  it('does not treat a letter sequence merely containing a conjunction word as a stop (e.g. "Warszawie" contains no standalone "a")', () => {
+    const text = 'Choruje na boreliozę rozpoznaną w klinice w Warszawie ostatniej zimy.';
+    const m = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'HEALTH_DATA');
+    // Stops at the sentence-ending period, not at any "a"/"w" inside a longer word.
+    expect(text.slice(m.start, m.end)).toBe('Choruje na boreliozę rozpoznaną w klinice w Warszawie ostatniej zimy');
+  });
+
+  it('caps the complement at 60 characters past the anchor when no terminator appears sooner', () => {
+    const complement = 'x'.repeat(80);
+    const text = `Choruje na ${complement}.`;
+    const m = findSpecialCategoryEntities(text).find((e) => e.entity_group === 'HEALTH_DATA');
+    const spanText = text.slice(m.start, m.end);
+    // Truncated well before the trailing period — the full 80-x complement
+    // (plus its terminating period) never makes it into the span.
+    expect(spanText).not.toContain(`${complement}.`);
+    expect(spanText.length).toBeLessThan('Choruje na '.length + complement.length);
+  });
+
   it('returns entities sorted by start offset', () => {
-    const text = 'Skazany za oszustwo. Ukarany za wykroczenie drogowe.';
+    const text = 'Choruje na astmę. Skazany za oszustwo. Ukarany za wykroczenie drogowe.';
     const matches = findSpecialCategoryEntities(text);
     const starts = matches.map((m) => m.start);
     expect(starts).toEqual([...starts].sort((a, b) => a - b));

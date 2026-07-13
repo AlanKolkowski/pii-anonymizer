@@ -47,6 +47,63 @@
       "exampleNegative": "Sąd powołał się na wyrok z dnia 14 maja 2021 r. (V CSKP 12/21) dotyczący wykładni art. 385¹ k.c.",
       "mustCover": "oszustwa",
       "note": "Wymaga literalnie 'w sprawie karnej' — bare 'wyrok' to w tym korpusie w większości cytowania orzecznictwa cywilnego (adw_32), nie dana osobowa. Uwaga: dopełnienie zawierające skrót ze średnikiem/kropką w środku (np. 'sygn. akt') może przedwcześnie uciąć span na kropce skrótu — znane, udokumentowane ograniczenie algorytmu granicy (brak świadomości skrótów, w przeciwieństwie do trimTrailingPunctuationStep)."
+    },
+    {
+      "id": "health-choruje-cierpi-na",
+      "category": "HEALTH_DATA",
+      "pattern": "(?:choruje|cierpi)\\s+na",
+      "description": "choruje/cierpi na <jednostka chorobowa> (3. os. lp. — forma 1. os. 'cierpię' celowo pominięta, patrz notatka)",
+      "examplePositive": "Powódka od 2019 r. choruje na cukrzycę typu 2 i pozostaje pod opieką poradni diabetologicznej.",
+      "exampleNegative": "Cierpię na następujące schorzenia, udokumentowane w załączonej dokumentacji medycznej:",
+      "mustCover": "cukrzycę typu 2",
+      "note": "Forma 1. os. 'cierpię' pominięta świadomie: w pismo_03 (korpus syntetyczny) otwiera zdanie-nagłówek listy ('Cierpię na następujące schorzenia:'), a każda konkretna jednostka chorobowa jest już osobno wykryta przez model — dodanie 1. os. dodałoby FP na nagłówku bez żadnego zysku pokrycia."
+    },
+    {
+      "id": "health-zdiagnozowano",
+      "category": "HEALTH_DATA",
+      "pattern": "zdiagnozowano",
+      "description": "zdiagnozowano <jednostka chorobowa>",
+      "examplePositive": "W dokumentacji medycznej zdiagnozowano u powoda zespół bólowy kręgosłupa lędźwiowego.",
+      "exampleNegative": "Diagnoza wstępna zostanie przedstawiona po zapoznaniu się z pełną dokumentacją sprawy.",
+      "mustCover": "zespół bólowy kręgosłupa lędźwiowego"
+    },
+    {
+      "id": "health-leczy-sie",
+      "category": "HEALTH_DATA",
+      "pattern": "lecz(?:y|ył|yła)\\s+si[eę]\\s+(?:na|w)",
+      "description": "leczy/leczył/leczyła się (na|w) <jednostka chorobowa/placówka>",
+      "examplePositive": "Powód leczy się na przewlekłe nadciśnienie tętnicze od trzech lat.",
+      "exampleNegative": "Powódka odwołuje się od decyzji organu rentowego w całości.",
+      "mustCover": "nadciśnienie tętnicze"
+    },
+    {
+      "id": "health-orzeczenie-o",
+      "category": "HEALTH_DATA",
+      "pattern": "orzeczeni(?:e|em|u)\\s+o\\s+(?:niepełnosprawności|niezdolności\\s+do\\s+pracy)",
+      "description": "orzeczenie/orzeczeniem/orzeczeniu o niepełnosprawności/niezdolności do pracy <stopień?>",
+      "examplePositive": "Powódka legitymuje się orzeczeniem o niepełnosprawności w stopniu znacznym wydanym przez zespół orzekający.",
+      "exampleNegative": "Sąd wydał orzeczenie o kosztach postępowania obciążających stronę przegrywającą.",
+      "mustCover": "w stopniu znacznym"
+    },
+    {
+      "id": "health-zwolnienie-z-powodu",
+      "category": "HEALTH_DATA",
+      "pattern": "zwolnieni(?:e|u)(?:\\s+lekarski(?:m)?)?\\s+z\\s+powodu",
+      "description": "zwolnienie/zwolnieniu (lekarskie/-im)? z powodu <jednostka chorobowa>",
+      "examplePositive": "W okresie objętym sporem przebywała na zwolnieniu z powodu epizodu depresyjnego.",
+      "exampleNegative": "Sąd usprawiedliwił nieobecność świadka zwolnieniem lekarskim.",
+      "mustCover": "epizodu depresyjnego",
+      "note": "Wymaga literalnie 'z powodu' — samo 'zwolnienie lekarskie' (adw_05) czy 'zwolnienie od kosztów' (adw_25) nie ujawnia jednostki chorobowej i nie powinno trafiać."
+    },
+    {
+      "id": "health-uzaleznienie-od",
+      "category": "HEALTH_DATA",
+      "pattern": "uzależni(?:enie|enia|ony|ona)\\s+od\\s+(?:alkoholu|narkotyków|hazardu|nikotyny|dopalaczy|leków(?:\\s+uspokajających)?|substancji\\s+psychoaktywnych)",
+      "description": "uzależnienie/uzależniony/-a od <zamknięta lista: alkohol/narkotyki/hazard/nikotyna/dopalacze/leki/substancje psychoaktywne>",
+      "examplePositive": "Z dokumentacji wynika, że pozwany leczy się z uzależnienia od alkoholu w prywatnej klinice terapii uzależnień.",
+      "exampleNegative": "Wysokość odszkodowania jest uzależniona od stopnia przyczynienia się poszkodowanego.",
+      "mustCover": "w prywatnej klinice terapii uzależnień",
+      "note": "Dopełnienie celowo ograniczone do zamkniętej listy przedmiotów uzależnienia (nie chorób) — bare 'uzależniony/-a od X' jest w polskim prawniczym języku ogólną konstrukcją warunkową ('zależy od'), nie tylko uzależnieniem; bez tego ograniczenia byłby to najszerszy generator FP w całym leksykonie."
     }
   ]
 }

@@ -86,7 +86,7 @@ export const ENTITY_SOURCES = {
   // score, so omitting 'lexicon' would silently discard every candidate the
   // new step emits. Added incrementally, one category per commit, as
   // special-category-lexicon.json grows.
-  HEALTH_DATA:              ['multilang-fp32'], // The only model that catches all
+  HEALTH_DATA:              ['multilang-fp32', 'lexicon'], // The only model that catches all
   GENETIC_DATA:             ['polish-fp16'],
   BIOMETRIC_DATA:           ['polish-fp16'],
   RELIGION_OR_BELIEF:       ['polish-fp16'],
