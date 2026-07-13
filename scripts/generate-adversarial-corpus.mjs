@@ -24,6 +24,7 @@
 //   still read the garbled value.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { assembleHoldoutDocs, buildHoldoutDoc } from './corpus/holdout-templates.mjs';
 import { collectIdentifyingValues, findDisjointnessViolations } from './corpus/holdout-disjointness.mjs';
 import holdoutManifest from './corpus/holdout-manifest.json' with { type: 'json' };
@@ -903,7 +904,14 @@ async function main() {
   await generateHoldout();
 }
 
-main().catch((err) => {
-  console.error('Generation failed:', err);
-  process.exit(1);
-});
+// CLI entry only. Importing this module (tests use DOCS/build) must NOT run
+// main(): doing so regenerated the corpus on import, and parallel vitest
+// workers raced on the file writes, truncating .expected.json files (the
+// "cause unknown" corruption in CORPUS-2.0-NOTES.md, root-caused at the Opus
+// gate). Generation now happens only via `node scripts/generate-adversarial-corpus.mjs`.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error('Generation failed:', err);
+    process.exit(1);
+  });
+}
