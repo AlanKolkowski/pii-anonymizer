@@ -24,6 +24,7 @@
     "eval:compare": "node src/eval/compare.js",
     "eval:list": "node src/eval/compare.js --list",
     "eval:score": "node src/eval/score.js",
+    "eval:score:tiers": "node src/eval/score-tiers.js",
     "eval:analyze": "node src/eval/analyze.js",
     "eval:view": "node src/eval/viewer.js",
     "eval:snapshot-segments": "node scripts/snapshot-segments.js",
