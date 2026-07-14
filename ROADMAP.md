@@ -60,6 +60,42 @@ hardening pod korpus kontradyktoryjny.
   modułach B + korpusie 2.0. **To jest kamień, po którym „przebiliśmy oryginał"
   staje się zdaniem, które radca może napisać i obronić.**
 
+## §4a. Piwot zakresu: trzy warstwy i widok „W1" (2026-07-14/15)
+
+Po pomiarze holdoutu (76% „ogółem") Alan przedefiniował zakres
+(`ZAKRES-ANONIMIZACJI.md`, decyzja 2026-07-14): nie każdy typ, który wykrywa
+model, jest daną osobową w rozumieniu art. 4 pkt 1 RODO. Trzy warstwy:
+**W1 maskuj automatycznie** (rdzeń danych osobowych — cel recall ≥ 95%),
+**W2 do decyzji radcy** (wrażliwe, ale nieidentyfikujące samodzielnie —
+role, atrybuty, art. 9-10, kwoty, lokalizacje — silnik wykrywa i pokazuje,
+nie maskuje w ciemno), **W3 nie maskuj** (podmioty, sygnatury cytowane —
+nie są danymi osobowymi). Mechanika (`SCOPE-TIERS-DESIGN.md`, ST-1…ST-8)
+jest zaprojektowana; **ST-1** (`TYPE_TIERS`) i **ST-7a** (scoring
+trójdzielny) są zaimplementowane (`feature/scope-st7a`) — ST-2…ST-6
+(partycja w pipeline, kosz UI, allowlista sygnatur) czekają na GATE-SCOPE.
+
+**Uwaga: 76% „ogółem" NIE jest kasowane** — to uczciwa liczba na pełnej
+taksonomii modelu upstream i zostaje w §1/§3 jako punkt odniesienia
+historycznego. **W1 to nowa, węższa i bardziej trafna „liczba do obrony"**
+— mierzy dokładnie to, co RODO nazywa daną osobową, bez kary za
+niemaskowanie sygnatur, nazw sądów czy kwot.
+
+**Widok W1 — PODGLĄD, nie liczba do obrony** (pełne wyliczenie:
+[`SCOPE-TIERS-RESCORE-NOTES.md`](SCOPE-TIERS-RESCORE-NOTES.md)):
+
+| Próba | Dok. | W1 Recall | W1 Precision | W1 F1 |
+|---|---|---|---|---|
+| Holdout (wycinek, **11 z 206**) | 11 | 85,5% | 92,2% | 88,7% |
+| Dev/adversarial (pełny, strojeniowy) | 38 | 88,6% | 87,6% | 88,1% |
+
+Obie próby są małe i/lub strojeniowe — **żadna nie jest bramkowa**. Zgodne
+z ręcznym szacunkiem z `ZAKRES-ANONIMIZACJI.md` §4 („rdzeń W1 ≈ 86%").
+**Pełny W1 na zamrożonym holdoucie 206 dok. / 1685 encji: pomiar oczekuje
+na re-scoring artefaktów PC** (przebieg istnieje w 7 paczkach na PC, jego
+`entities.json` nie są dostępne na laptopie — komenda repro w notatce §4).
+Dopóki ten pomiar nie padnie, cel „95%+ W1" (`ZAKRES` §2,
+`SCOPE-TIERS-DESIGN.md` §6.4) pozostaje celem, nie osiągnięciem.
+
 ## §5. Roadmap — gdzie jesteśmy
 
 ```
@@ -71,7 +107,8 @@ hardening pod korpus kontradyktoryjny.
 ✅ Recall B3 (leksykon art. 9-10): kontradyktoryjny 87,5%, trzy wycieki wagi 5 zamknięte
 ✅ Recall B2 (wersaliki): syntetyczny ZUS zamknięty; kontradyktoryjny bez zmian; zdolność wersalikowa dla produktu
 ✅ Korpus 2.0 ZBUDOWANY (holdout 206 dok./1685 encji, dev/holdout rozłączne) + naprawa evalu; pomiar bramkowy przenosi się na PC (32 GB)
-👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie; **obronialny 90% = pomiar korpusu 2.0 na PC**, potem ewentualnie B1)
+✅ Piwot zakresu (W1/W2/W3, ZAKRES-ANONIMIZACJI.md) + ST-1/ST-7a scoring trójdzielny (feature/scope-st7a); widok W1 PODGLĄD 85,5-88,6% na małych próbach (§4a) — pełny W1/206 PENDING na PC
+👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie „ogółem"; W1 podgląd ~86-89% na małych próbach; **obronialny W1/95%+ = pomiar korpusu 2.0 na PC**, potem ST-2…ST-6 pod GATE-SCOPE)
 ⬜ Recall do 90%+  (moduły B: B4 leksykon ról = największa dźwignia, B2 wersaliki,
                     B3 art.9-10, B1 ensemble; + korpus 2.0; + dokończone A7)
 ⬜ C4 build + bench  (domknięcie desktopu fp16: pełne pakowanie + pomiar pamięci/latencji)
