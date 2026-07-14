@@ -45,7 +45,12 @@ export function resolveScoringFilter({ runEnabledEntities, overrideEntities }) {
 
 // ── Metrics ─────────────────────────────────────────────────────────
 
-function computeMetrics(expected, predicted, options) {
+// Exported for reuse by score-tiers.js (SCOPE-TIERS-DESIGN.md §6.2 pt 2):
+// W1 is defined as "exactly today's strict scoring, narrowed to mask-tier
+// types" — importing this function instead of reimplementing it is what
+// makes that guarantee structural rather than a promise two files could
+// silently drift apart on.
+export function computeMetrics(expected, predicted, options) {
   const { matched, missed, spurious, typeMismatched } = matchEntities(expected, predicted, options);
 
   // Strict scoring: only exact boundary matches count as TP
@@ -95,7 +100,7 @@ export function computeSegmentMetrics(expected, predicted) {
   return { tp, fp, fn, tpPartial, precision, recall, f1, matched, missed, spurious };
 }
 
-function computeByType(expected, predicted, options) {
+export function computeByType(expected, predicted, options) {
   const types = new Set([...expected.map(e => e.entity_group), ...predicted.map(e => e.entity_group)]);
   const byType = {};
 
