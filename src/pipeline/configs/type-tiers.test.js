@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TYPE_TIERS, tierFor } from './type-tiers.js';
+import { TYPE_TIERS, tierFor, effectiveTier } from './type-tiers.js';
 import { TYPE_WEIGHTS } from './type-weights.js';
 import { allEntityTypes } from './entity-sources.js';
 
@@ -76,6 +76,43 @@ describe('tierFor', () => {
     expect(tierFor('SOME_FUTURE_TYPE_NOBODY_HAS_SEEN')).toBe('mask');
     expect(tierFor(undefined)).toBe('mask');
     expect(tierFor('')).toBe('mask');
+  });
+});
+
+describe('effectiveTier (ST-2, SCOPE-TIERS-DESIGN.md §3.2 pkt 1)', () => {
+  it('falls back to the static TYPE_TIERS map when nothing else applies', () => {
+    expect(effectiveTier({ entity_group: 'PERSON_NAME' }, {})).toBe('mask');
+    expect(effectiveTier({ entity_group: 'LOCATION' }, {})).toBe('review');
+    expect(effectiveTier({ entity_group: 'ORGANIZATION_NAME' }, {})).toBe('pass');
+  });
+
+  it('defaults opts to {} — calling with no second argument is safe', () => {
+    expect(effectiveTier({ entity_group: 'PERSON_NAME' })).toBe('mask');
+  });
+
+  it('a tierOverrides entry beats the static default', () => {
+    const opts = { tierOverrides: { LOCATION: 'pass' } };
+    expect(effectiveTier({ entity_group: 'LOCATION' }, opts)).toBe('pass');
+    // Unrelated types are untouched by the override.
+    expect(effectiveTier({ entity_group: 'PERSON_NAME' }, opts)).toBe('mask');
+  });
+
+  it('a per-entity forceTier beats both tierOverrides and the static default', () => {
+    const entity = { entity_group: 'ORGANIZATION_NAME', forceTier: 'mask' };
+    expect(effectiveTier(entity, {})).toBe('mask');
+    expect(effectiveTier(entity, { tierOverrides: { ORGANIZATION_NAME: 'review' } })).toBe('mask');
+  });
+
+  it('GS-5: allMask wins even over a per-entity forceTier — the single-tier profile has no exceptions', () => {
+    const entity = { entity_group: 'ORGANIZATION_NAME', forceTier: 'review' };
+    expect(effectiveTier(entity, { allMask: true })).toBe('mask');
+    expect(effectiveTier(entity, { allMask: true, tierOverrides: { ORGANIZATION_NAME: 'pass' } })).toBe('mask');
+  });
+
+  it('allMask masks every type regardless of its configured tier', () => {
+    for (const type of allEntityTypes()) {
+      expect(effectiveTier({ entity_group: type }, { allMask: true })).toBe('mask');
+    }
   });
 });
 

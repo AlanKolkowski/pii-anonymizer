@@ -58,3 +58,16 @@ export const TYPE_TIERS = {
 export function tierFor(type) {
   return TYPE_TIERS[type] ?? 'mask';
 }
+
+// Single source of truth for "what tier does this entity actually resolve
+// to", consumed by dedup/backfill/tierPartitionStep alike (ST-2,
+// SCOPE-TIERS-DESIGN.md §3.2 pkt 1). Precedence: allMask (measurement/legacy
+// profile) beats everything, including a per-entity forceTier (GS-5 — an
+// allowlisted signature or JDG fallback must still be masked in the
+// single-tier world, never silently exempted) — then forceTier (ST-5
+// allowlist hits) beats a session tierOverride, which beats the static
+// TYPE_TIERS default.
+export function effectiveTier(entity, opts = {}) {
+  if (opts.allMask) return 'mask';
+  return entity.forceTier ?? opts.tierOverrides?.[entity.entity_group] ?? tierFor(entity.entity_group);
+}
