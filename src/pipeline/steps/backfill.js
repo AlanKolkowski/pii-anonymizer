@@ -19,14 +19,21 @@ function positionKey(start, end) {
   return `${start}:${end}`;
 }
 
-function overlapsAny(start, end, spans) {
+// ST-2 H-2 (SCOPE-TIERS-DESIGN.md §3.2 pkt 4): optional `tierOf` resolver —
+// (entity) => 'mask'|'review'|'pass'. Omitted (all existing call sites),
+// every span blocks a backfill candidate exactly as today. Given, a 'pass'
+// span (e.g. an organization name) doesn't hide its characters, so it must
+// not block a name known from elsewhere in the document from being backfilled
+// inside it — only 'mask' and 'review' spans still count as occupied.
+function overlapsAny(start, end, spans, tierOf) {
   for (const s of spans) {
+    if (tierOf && tierOf(s) === 'pass') continue;
     if (start < s.end && end > s.start) return true;
   }
   return false;
 }
 
-export function backfillOccurrencesStep(ctx) {
+export function backfillOccurrencesStep(ctx, tierOf) {
   const { text, entities } = ctx;
   if (!entities || entities.length === 0) return ctx;
 
@@ -47,8 +54,8 @@ export function backfillOccurrencesStep(ctx) {
 
   const additions = [];
   const addIfFree = (entity_group, start, end) => {
-    if (overlapsAny(start, end, entities)) return;
-    if (overlapsAny(start, end, additions)) return;
+    if (overlapsAny(start, end, entities, tierOf)) return;
+    if (overlapsAny(start, end, additions, tierOf)) return;
     additions.push({ entity_group, start, end, score: 1.0, source: 'rescan' });
   };
 
@@ -67,8 +74,8 @@ export function backfillOccurrencesStep(ctx) {
     for (const m of text.matchAll(NAME_CANDIDATE)) {
       const start = m.index;
       const end = start + m[0].length;
-      if (overlapsAny(start, end, entities)) continue;
-      if (overlapsAny(start, end, additions)) continue;
+      if (overlapsAny(start, end, entities, tierOf)) continue;
+      if (overlapsAny(start, end, additions, tierOf)) continue;
       for (const value of valuesMap.values()) {
         if (couldBeSamePerson(m[0], value)) {
           addIfFree(type, start, end);

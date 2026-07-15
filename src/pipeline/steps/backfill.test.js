@@ -87,3 +87,49 @@ describe('backfillOccurrencesStep', () => {
     expect(roles).toHaveLength(1);
   });
 });
+
+describe('backfillOccurrencesStep — ST-2 H-2 tier-aware collision (SCOPE-TIERS-DESIGN.md §3.2 pkt 4)', () => {
+  const tierOf = (e) => (e.entity_group === 'ORGANIZATION_NAME' ? 'pass' : 'mask');
+
+  it('without a resolver, a wider overlapping span still blocks backfill (unchanged legacy behavior)', () => {
+    const text = 'Kancelaria Radcy Prawnego Jan Kowalski oraz Jan Kowalski osobiście.';
+    const nestedStart = text.indexOf('Jan Kowalski');
+    const orgEnd = nestedStart + 'Jan Kowalski'.length;
+    const standaloneStart = text.lastIndexOf('Jan Kowalski');
+    const entities = [
+      { entity_group: 'ORGANIZATION_NAME', start: 0, end: orgEnd, score: 0.9, source: 'multilang-fp32' },
+      { entity_group: 'PERSON_NAME', start: standaloneStart, end: standaloneStart + 'Jan Kowalski'.length, score: 0.95, source: 'polish-fp16' },
+    ];
+    const result = backfillOccurrencesStep(ctx(text, entities));
+    expect(result.entities.filter((e) => e.source === 'rescan')).toHaveLength(0);
+  });
+
+  it('with a resolver, a pass-tier span does not block backfill of a mask value nested inside it', () => {
+    const text = 'Kancelaria Radcy Prawnego Jan Kowalski oraz Jan Kowalski osobiście.';
+    const nestedStart = text.indexOf('Jan Kowalski');
+    const orgEnd = nestedStart + 'Jan Kowalski'.length;
+    const standaloneStart = text.lastIndexOf('Jan Kowalski');
+    const entities = [
+      { entity_group: 'ORGANIZATION_NAME', start: 0, end: orgEnd, score: 0.9, source: 'multilang-fp32' },
+      { entity_group: 'PERSON_NAME', start: standaloneStart, end: standaloneStart + 'Jan Kowalski'.length, score: 0.95, source: 'polish-fp16' },
+    ];
+    const result = backfillOccurrencesStep(ctx(text, entities), tierOf);
+    const added = result.entities.filter((e) => e.source === 'rescan');
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({ entity_group: 'PERSON_NAME', start: nestedStart, end: orgEnd });
+  });
+
+  it('with a resolver, a mask-tier or review-tier span still blocks backfill (only pass is exempt)', () => {
+    const text = 'Jan Kowalski, dyrektor, spotkal Jan Kowalski ponownie.';
+    const firstStart = text.indexOf('Jan Kowalski');
+    const secondStart = text.lastIndexOf('Jan Kowalski');
+    // A second, wider mask-tier entity happens to swallow the second occurrence.
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: firstStart, end: firstStart + 'Jan Kowalski'.length, score: 0.9, source: 'polish-fp16' },
+      { entity_group: 'PERSON_ROLE_OR_TITLE', start: secondStart - 5, end: secondStart + 'Jan Kowalski'.length, score: 0.85, source: 'multilang-fp32' },
+    ];
+    const roleAwareTierOf = (e) => (e.entity_group === 'ORGANIZATION_NAME' ? 'pass' : e.entity_group === 'PERSON_ROLE_OR_TITLE' ? 'review' : 'mask');
+    const result = backfillOccurrencesStep(ctx(text, entities), roleAwareTierOf);
+    expect(result.entities.filter((e) => e.source === 'rescan')).toHaveLength(0);
+  });
+});
