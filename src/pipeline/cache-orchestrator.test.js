@@ -322,6 +322,54 @@ describe('classifyWithCache', () => {
   });
 });
 
+describe('classifyWithCache — ST-2 tierOverrides/allMask plumbing (worker configure -> here)', () => {
+  it('omitted (today\'s worker/tests): HEALTH_DATA (review-tier) still comes back in ctx.entities, reviewCandidates stays empty', async () => {
+    const { ctx } = await classifyWithCache({
+      text: 'Jan ma cukrzyca.',
+      enabledEntities: ['PERSON_NAME', 'HEALTH_DATA'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: get_sentence_boundaries,
+    });
+    expect(ctx.entities.map((e) => e.entity_group)).toContain('HEALTH_DATA');
+    expect(ctx.reviewCandidates).toEqual([]);
+  });
+
+  it('allMask: false activates real tiering end to end: HEALTH_DATA moves to ctx.reviewCandidates', async () => {
+    const { ctx } = await classifyWithCache({
+      text: 'Jan ma cukrzyca.',
+      enabledEntities: ['PERSON_NAME', 'HEALTH_DATA'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: get_sentence_boundaries,
+      allMask: false,
+    });
+    expect(ctx.entities.map((e) => e.entity_group)).not.toContain('HEALTH_DATA');
+    expect(ctx.entities.map((e) => e.entity_group)).toContain('PERSON_NAME');
+    expect(ctx.reviewCandidates.map((c) => c.entity_group)).toContain('HEALTH_DATA');
+  });
+
+  it('tierOverrides moves a normally-mask type to review, without allMask needing to be false explicitly set elsewhere', async () => {
+    const { ctx } = await classifyWithCache({
+      text: 'Jan ma cukrzyca.',
+      enabledEntities: ['PERSON_NAME', 'HEALTH_DATA'],
+      cache: null,
+      sources: TEST_SOURCES,
+      entitySources: TEST_ENTITY_SOURCES,
+      loadModel: makeMockLoader([]),
+      getSentenceBoundaries: get_sentence_boundaries,
+      allMask: false,
+      tierOverrides: { PERSON_NAME: 'review' },
+    });
+    expect(ctx.entities.map((e) => e.entity_group)).not.toContain('PERSON_NAME');
+    expect(ctx.reviewCandidates.map((c) => c.entity_group)).toContain('PERSON_NAME');
+  });
+});
+
 // B2 (RECALL-90-DESIGN.md §2.2): 'case-folded' is a third non-'hf'-keyed
 // bucket alongside regex/lexicon — but unlike them it DOES drive real HF
 // inference (both models at once), so it must run as a single dedicated

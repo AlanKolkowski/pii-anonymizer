@@ -57,6 +57,8 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {Function} params.loadModel - async ({alias, id, dtype}) => { infer, dispose }
  * @param {Function} params.getSentenceBoundaries - (lang, text) => boundaries[]
  * @param {Function} [params.sortSources] - optional ordering of HF sources
+ * @param {object} [params.tierOverrides] - ST-2: per-type tier overrides, forwarded to createPostprocessSteps
+ * @param {boolean} [params.allMask] - ST-2: forces the single-tier (legacy) profile when true/omitted
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
  * @param {Function} [params.onProgress] - optional fine-grained progress hook receiving progress events
  * @param {Function} [params.prepareModel] - async hook for downloading/caching one model source before inference
@@ -72,6 +74,8 @@ export async function classifyWithCache({
   loadModel,
   getSentenceBoundaries,
   sortSources,
+  tierOverrides,
+  allMask,
   onTimingMark = () => {},
   onProgress = () => {},
   prepareModel = null,
@@ -243,7 +247,7 @@ export async function classifyWithCache({
 
   // --- Stage 3: postprocess on the merged entity union ---
   const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? []), ...(caseFolded ?? [])];
-  const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources });
+  const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources, tierOverrides, allMask });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1
     ? postprocessPhase.steps

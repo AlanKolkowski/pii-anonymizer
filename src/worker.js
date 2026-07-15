@@ -409,7 +409,11 @@ async function runConfigure(data) {
     });
     const enabledEntities = data.enabledEntities ?? [];
     const requiredAliases = requiredSources(enabledEntities).filter((a) => SOURCES[a]?.kind === 'hf');
-    currentConfig = { enabledEntities, requiredAliases };
+    // ST-2 (SCOPE-TIERS-DESIGN.md §3.4 pkt 4): minimal wiring only — no UI
+    // sets these yet (O-ST-7), so both are normally undefined and
+    // createPostprocessSteps' own allMask default (true) keeps today's
+    // single-tier behavior unchanged.
+    currentConfig = { enabledEntities, requiredAliases, tierOverrides: data.tierOverrides, allMask: data.allMask };
     await disposeUnusedModels(requiredAliases);
     self.postMessage({ type: 'configured', requiredAliases, configRequestId });
   } catch (err) {
@@ -445,6 +449,8 @@ async function runClassify(data) {
     const { ctx, cache: newEntry } = await classifyWithCache({
       text: data.text,
       enabledEntities: currentConfig.enabledEntities,
+      tierOverrides: currentConfig.tierOverrides,
+      allMask: currentConfig.allMask,
       cache: prev,
       sources: SOURCES,
       entitySources: ENTITY_SOURCES,
