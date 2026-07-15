@@ -116,50 +116,72 @@ Pominięto (dropped by tier): **31** encji GT.
   `SCOPE-TIERS-DESIGN.md` §6.4) mierzy się na **pełnym, zamrożonym holdoucie
   206 dokumentów / 1685 encji**, nie na tych podglądach.
 
-### Autorytatywna liczba (PENDING — wymaga PC)
+### Autorytatywna liczba — ZAMKNIĘTE 2026-07-15
 
 Pełny przebieg 206-dok. holdoutu został wykonany na PC w **7 paczkach
 (~30 dok. każda)** — commit `e4f4d04` („corpus 2.0 built (206 docs/1685
-entities) + eval fix; measurement moves to PC"). Te `entities.json` nie są
-dostępne na tym laptopie. Gdy będą (na PC, albo po skopiowaniu 7 katalogów
-`test-data/results/<run-id>/` na laptopa):
+entities) + eval fix; measurement moves to PC"), etykiety `holdout-full-b1`
+… `holdout-full-b7` (`test-data/results/2026-07-14T06-12-20` …
+`06-23-06`; 30+30+30+30+30+30+26, nazwy dokumentów zweryfikowane jako
+rozłączne, suma 206). Scalone 2026-07-15 na PC do
+`test-data/results/holdout-206-merged` i przeliczone:
 
 ```powershell
-# Na PC (lub po skopiowaniu 7 katalogów przebiegów z PC na laptop).
-# 1) Podstaw 7 rzeczywistych run ID paczek holdoutu poniżej.
-$batches = @('<run-id-batch-1>', '<run-id-batch-2>', '<run-id-batch-3>',
-             '<run-id-batch-4>', '<run-id-batch-5>', '<run-id-batch-6>',
-             '<run-id-batch-7>')
+$batches = @('2026-07-14T06-12-20', '2026-07-14T06-14-10', '2026-07-14T06-15-28',
+             '2026-07-14T06-17-03', '2026-07-14T06-19-32', '2026-07-14T06-21-22',
+             '2026-07-14T06-23-06')
 $merged = 'test-data/results/holdout-206-merged'
 New-Item -ItemType Directory -Force $merged | Out-Null
-
-# 2) Nazwy dokumentów są rozłączne między paczkami (każda pokrywa inny
-#    wycinek 206), więc scalenie podkatalogów per-dokument jest bezpieczne.
 foreach ($b in $batches) {
   Get-ChildItem "test-data/results/$b" -Directory | ForEach-Object {
     Copy-Item $_.FullName -Destination (Join-Path $merged $_.Name) -Recurse -Force
   }
 }
-
-# 3) summary.json wystarczy skopiować z jednej paczki — textConvention i
-#    docsDir (test-data/adversarial-holdout) są identyczne we wszystkich 7.
 Copy-Item "test-data/results/$($batches[0])/summary.json" "$merged/summary.json" -Force
 
-# 4) Jedna linijka do liczby autorytatywnej:
 npm run eval:score:tiers -- holdout-206-merged --dir=test-data/adversarial-holdout
 ```
 
-Zweryfikuj przed zapisaniem liczby: konsola musi pokazać
-`Documents scored: 206 of 206 in corpus` i **brak** ostrzeżenia
-„PUŁAPKA 0/0/0". Jeżeli nazwy dokumentów paczek okażą się z jakiegoś
-powodu nakładać (nie powinny), alternatywa z zadania: policzyć
-`node src/eval/score-tiers.js <batch-id> --dir=test-data/adversarial-holdout`
-osobno dla każdej z 7 paczek i zsumować `tp`/`fp`/`fn` z zapisanych
-`tiers-scores.json` ręcznie (P/R/F1 przeliczyć z sum, nie uśredniać
-przeliczonych procentów).
+Konsola potwierdziła `Documents scored: 206 of 206 in corpus` i **brak**
+ostrzeżenia „PUŁAPKA 0/0/0".
 
-**To jest jedyny krok, którego ten pakiet NIE wykonał — brak artefaktów
-na laptopie, zero inferencji to twardy zakaz tej sesji.**
+#### W1 (ścisły, liczba do obrony — typy warstwy mask) — AUTORYTATYWNE
+
+**P: 87,4% R: 85,7% F1: 86,5%** — TP 829, FP 120, FN 138 (74 partial → FP+FN).
+
+| Typ | P | R | F1 | TP | FP | FN |
+|---|---|---|---|---|---|---|
+| BANK_ACCOUNT_IDENTIFIER | 100,0% | 100,0% | 100,0% | 41 | 0 | 0 |
+| DATE_OF_BIRTH | 100,0% | 100,0% | 100,0% | 26 | 0 | 0 |
+| EMAIL_ADDRESS | 81,8% | 75,0% | 78,3% | 27 | 6 | 9 |
+| ORGANIZATION_IDENTIFIER | 100,0% | 100,0% | 100,0% | 110 | 0 | 0 |
+| PERSON_IDENTIFIER | 98,6% | 81,0% | 88,9% | 68 | 1 | 16 |
+| PERSON_NAME | 80,1% | 78,6% | 79,3% | 378 | 94 | 103 |
+| PHONE_NUMBER | 100,0% | 97,2% | 98,6% | 35 | 0 | 1 |
+| POSTAL_ADDRESS | 89,3% | 96,7% | 92,9% | 117 | 14 | 4 |
+| VEHICLE_IDENTIFIER | 84,4% | 84,4% | 84,4% | 27 | 5 | 5 |
+
+#### W2 (pokrycie do przeglądu — typy warstwy review)
+
+GT encji review: **488**. Pokrytych (≥50% znaków, review∪mask): **403**
+(**82,6%**). Szum kosza: 41 kandydatów bez odpowiednika w GT (śr.
+0,20/dok.) — ergonomia, bez bramki (O-ST-6).
+
+#### W3 (poza metrykami — typy warstwy pass)
+
+Pominięto (dropped by tier): **230** encji GT.
+
+**To domyka jedyny krok, którego pakiet ST-7a nie wykonał** (brak
+artefaktów na laptopie, zero inferencji był twardym zakazem tamtej sesji).
+F1 86,5% W1 jest teraz **autorytatywną liczbą all-mask** dla pełnego
+206-dokumentowego holdoutu — zastępuje podglądy z §2 (11 dok.) i §3
+(38 dok.) jako liczba do cytowania; te dwa pozostają jako potwierdzenie
+kierunku/spójności, nie jako liczby do obrony. To **nadal nie jest werdykt
+bramkowy GATE-RECALL-90** (cel 95%+ W1, `ZAKRES-ANONIMIZACJI.md` §2,
+`SCOPE-TIERS-DESIGN.md` §6.4) — liczby są przed wdrożeniem ST-2 (patrz §6
+pkt 3 poniżej) i przed domknięciem luk nazwiskowych z `ZAKRES-ANONIMIZACJI.md`
+§5. Artefakty (`test-data/results/holdout-206-merged/`) są gitignorowane —
+zostają lokalnie na tej maszynie, nie w historii git.
 
 ---
 

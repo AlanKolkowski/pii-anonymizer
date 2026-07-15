@@ -85,16 +85,20 @@ niemaskowanie sygnatur, nazw sądów czy kwot.
 
 | Próba | Dok. | W1 Recall | W1 Precision | W1 F1 |
 |---|---|---|---|---|
-| Holdout (wycinek, **11 z 206**) | 11 | 85,5% | 92,2% | 88,7% |
+| Holdout (wycinek, 11 z 206) | 11 | 85,5% | 92,2% | 88,7% |
 | Dev/adversarial (pełny, strojeniowy) | 38 | 88,6% | 87,6% | 88,1% |
+| **Holdout (pełny, zamrożony) — all-mask, AUTORYTATYWNE** | **206** | **85,7%** | **87,4%** | **86,5%** |
 
-Obie próby są małe i/lub strojeniowe — **żadna nie jest bramkowa**. Zgodne
-z ręcznym szacunkiem z `ZAKRES-ANONIMIZACJI.md` §4 („rdzeń W1 ≈ 86%").
-**Pełny W1 na zamrożonym holdoucie 206 dok. / 1685 encji: pomiar oczekuje
-na re-scoring artefaktów PC** (przebieg istnieje w 7 paczkach na PC, jego
-`entities.json` nie są dostępne na laptopie — komenda repro w notatce §4).
-Dopóki ten pomiar nie padnie, cel „95%+ W1" (`ZAKRES` §2,
-`SCOPE-TIERS-DESIGN.md` §6.4) pozostaje celem, nie osiągnięciem.
+Pierwsze dwie próby są małe i/lub strojeniowe — kontekst/potwierdzenie
+kierunku, nie liczby do cytowania. Zgodne z ręcznym szacunkiem z
+`ZAKRES-ANONIMIZACJI.md` §4 („rdzeń W1 ≈ 86%"). **Pełny W1 na zamrożonym
+holdoucie 206 dok. / 1685 encji (all-mask, przed wdrożeniem ST-2 partycji
+w pipeline) zmierzony 2026-07-15: F1 86,5% (P 87,4% / R 85,7%)** — pełna
+tabela per-typu i metodologia w `SCOPE-TIERS-RESCORE-NOTES.md` §4. **To
+jeszcze nie werdykt bramkowy GATE-RECALL-90** — cel „95%+ W1" (`ZAKRES` §2,
+`SCOPE-TIERS-DESIGN.md` §6.4) pozostaje celem: 86,5% jest obronialnym
+punktem startowym przed domknięciem luk nazwiskowych (OCR-spacing, nazwiska
+pospolite — `ZAKRES-ANONIMIZACJI.md` §5) i przed ST-2…ST-6.
 
 ## §5. Roadmap — gdzie jesteśmy
 
@@ -107,8 +111,8 @@ Dopóki ten pomiar nie padnie, cel „95%+ W1" (`ZAKRES` §2,
 ✅ Recall B3 (leksykon art. 9-10): kontradyktoryjny 87,5%, trzy wycieki wagi 5 zamknięte
 ✅ Recall B2 (wersaliki): syntetyczny ZUS zamknięty; kontradyktoryjny bez zmian; zdolność wersalikowa dla produktu
 ✅ Korpus 2.0 ZBUDOWANY (holdout 206 dok./1685 encji, dev/holdout rozłączne) + naprawa evalu; pomiar bramkowy przenosi się na PC (32 GB)
-✅ Piwot zakresu (W1/W2/W3, ZAKRES-ANONIMIZACJI.md) + ST-1/ST-7a scoring trójdzielny (feature/scope-st7a); widok W1 PODGLĄD 85,5-88,6% na małych próbach (§4a) — pełny W1/206 PENDING na PC
-👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie „ogółem"; W1 podgląd ~86-89% na małych próbach; **obronialny W1/95%+ = pomiar korpusu 2.0 na PC**, potem ST-2…ST-6 pod GATE-SCOPE)
+✅ Piwot zakresu (W1/W2/W3, ZAKRES-ANONIMIZACJI.md) + ST-1/ST-7a scoring trójdzielny (feature/scope-st7a); pełny W1/206 all-mask zmierzony: F1 86,5% (P 87,4%/R 85,7%) — §4a
+👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie „ogółem"; **W1 all-mask na pełnym 206-dok. holdoucie: F1 86,5%** (§4a), punkt startowy nie bramka; **cel 95%+ W1** wymaga domknięcia luk nazwiskowych + ST-2…ST-6 pod GATE-SCOPE)
 ⬜ Recall do 90%+  (moduły B: B4 leksykon ról = największa dźwignia, B2 wersaliki,
                     B3 art.9-10, B1 ensemble; + korpus 2.0; + dokończone A7)
 ⬜ C4 build + bench  (domknięcie desktopu fp16: pełne pakowanie + pomiar pamięci/latencji)
