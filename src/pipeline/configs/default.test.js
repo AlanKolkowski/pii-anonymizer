@@ -153,3 +153,37 @@ describe('stage helpers', () => {
     expect(pipeline.map(p => p.phase)).toEqual(['preprocess', 'segment', 'model-load', 'ner', 'postprocess']);
   });
 });
+
+describe('ST-2 tier activation default (SCOPE-TIERS-DESIGN.md §3.4 pkt 2, §9)', () => {
+  // HEALTH_DATA is 'review' tier in TYPE_TIERS (not 'mask') — the sharpest
+  // possible check that a caller who has never heard of tiers (no
+  // tierOverrides, no allMask) still gets today's single-tier output.
+  const mockLoadModel = async () => ({
+    infer: async (text) => (text.includes('cukrzyca')
+      ? [{ word: 'cukrzyca', entity: 'B-HEALTH_DATA', score: 0.95, index: 0 }]
+      : []),
+    dispose: async () => {},
+  });
+
+  it('a caller that passes no tier options gets exactly today\'s single-tier behavior — review-tier entities stay masked, reviewCandidates stays empty', async () => {
+    const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, { enabledEntities: ALL_ENTITIES });
+    const result = await runPipeline('Pacjent ma cukrzyca.', pipeline);
+
+    expect(result.anonymized).not.toContain('cukrzyca');
+    expect(result.anonymized).toContain('[HEALTH_DATA_');
+    expect(result.reviewCandidates ?? []).toEqual([]);
+  });
+
+  it('allMask: false explicitly activates real tiering — a review-tier entity moves to reviewCandidates and stays visible in the text', async () => {
+    const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, {
+      enabledEntities: ALL_ENTITIES,
+      allMask: false,
+    });
+    const result = await runPipeline('Pacjent ma cukrzyca.', pipeline);
+
+    expect(result.anonymized).toContain('cukrzyca');
+    expect(result.anonymized).not.toContain('[HEALTH_DATA_');
+    expect(result.reviewCandidates).toHaveLength(1);
+    expect(result.reviewCandidates[0]).toMatchObject({ entity_group: 'HEALTH_DATA', tier: 'review' });
+  });
+});

@@ -18,8 +18,21 @@ import { maxLengthStep } from '../steps/max-length.js';
 import { dedupStep } from '../steps/dedup.js';
 import { mergeStep } from '../steps/merge.js';
 import { backfillOccurrencesStep } from '../steps/backfill.js';
+import { createTierPartitionStep } from '../steps/tier-partition.js';
 import { tokenizeStep } from '../steps/tokenize.js';
 import { ENTITY_SOURCES, SOURCES, requiredSources } from './entity-sources.js';
+import { effectiveTier } from './type-tiers.js';
+
+// A factory-produced step must keep the name of the function it wraps —
+// cache-orchestrator.js locates backfillOccurrencesStep by `step.name` to
+// split the postprocess phase into a cacheable prefix and a cheap
+// no-inference "rescan" suffix (dedup/backfill/merge/tierPartition/tokenize).
+// Renaming would silently break that split (see cache-orchestrator.js).
+function bindTierOf(fn, tierOf) {
+  const bound = (ctx) => fn(ctx, tierOf);
+  Object.defineProperty(bound, 'name', { value: fn.name, configurable: true });
+  return bound;
+}
 
 function resolveActiveSources({ enabledEntities, entitySources, sources }) {
   const needed = requiredSources(enabledEntities);
@@ -77,6 +90,15 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
 export function createPostprocessSteps(options) {
   const entitySources = options.entitySources ?? ENTITY_SOURCES;
   const enabledEntities = options.enabledEntities;
+  // ST-2 (SCOPE-TIERS-DESIGN.md §3.4 pkt 2/§9): allMask defaults true, so
+  // every caller that doesn't know about tiers yet (today's worker/eval/
+  // tests) keeps today's single-tier behavior byte-for-byte — tiering only
+  // activates for a caller that explicitly opts in with allMask: false.
+  const allMask = options.allMask ?? true;
+  const tierOverrides = options.tierOverrides;
+  const tierOpts = { allMask, tierOverrides };
+  const tierOf = (entity) => effectiveTier(entity, tierOpts);
+
   return [
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
@@ -86,9 +108,10 @@ export function createPostprocessSteps(options) {
       trimTrailingPunctuationStep,
       blocklistStep,
       maxLengthStep,
-      dedupStep,
-      backfillOccurrencesStep,
+      bindTierOf(dedupStep, tierOf),
+      bindTierOf(backfillOccurrencesStep, tierOf),
       mergeStep,
+      createTierPartitionStep(tierOpts),
       tokenizeStep,
     ] },
   ];
@@ -112,6 +135,11 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
     ...createPreSegmentSteps(getSentenceBoundaries),
     ...createModelLoadSteps(orderedHf, loadModel),
     ...createNerSteps(orderedHf, regexActive, lexiconActive, loadModel),
-    ...createPostprocessSteps({ enabledEntities, entitySources }),
+    ...createPostprocessSteps({
+      enabledEntities,
+      entitySources,
+      tierOverrides: options.tierOverrides,
+      allMask: options.allMask,
+    }),
   ];
 }
