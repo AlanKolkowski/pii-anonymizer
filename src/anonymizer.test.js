@@ -455,6 +455,80 @@ describe('deduplicateEntities — A6 trim instead of drop on partial regex overl
   });
 });
 
+describe('deduplicateEntities — ST-2 H-1 tier-aware arbitration (SCOPE-TIERS-DESIGN.md §3.2 pkt 3)', () => {
+  const TIERS = { PERSON_NAME: 'mask', ORGANIZATION_NAME: 'pass', PERSON_ROLE_OR_TITLE: 'review' };
+  const tierOf = (e) => TIERS[e.entity_group] ?? 'mask';
+
+  it('mask/pass pair: both survive untouched even though spans overlap (nested JDG name)', () => {
+    const org = { start: 0, end: 40, score: 0.95, entity_group: 'ORGANIZATION_NAME' };
+    const name = { start: 27, end: 39, score: 0.9, entity_group: 'PERSON_NAME' };
+    const result = deduplicateEntities([org, name], undefined, tierOf);
+    expect(result).toHaveLength(2);
+    expect(result).toEqual(expect.arrayContaining([org, name]));
+  });
+
+  it('mask/review pair: both survive untouched', () => {
+    const role = { start: 0, end: 20, score: 0.9, entity_group: 'PERSON_ROLE_OR_TITLE' };
+    const name = { start: 10, end: 25, score: 0.9, entity_group: 'PERSON_NAME' };
+    const result = deduplicateEntities([role, name], undefined, tierOf);
+    expect(result).toHaveLength(2);
+  });
+
+  it('review/pass pair: both survive untouched', () => {
+    const org = { start: 0, end: 30, score: 0.9, entity_group: 'ORGANIZATION_NAME' };
+    const role = { start: 5, end: 25, score: 0.9, entity_group: 'PERSON_ROLE_OR_TITLE' };
+    const result = deduplicateEntities([org, role], undefined, tierOf);
+    expect(result).toHaveLength(2);
+  });
+
+  it('same-tier pair still arbitrates exactly as without a resolver', () => {
+    const wide = { start: 0, end: 10, score: 0.87, entity_group: 'PERSON_NAME' };
+    const narrow = { start: 5, end: 12, score: 0.9, entity_group: 'PERSON_NAME' };
+    const withResolver = deduplicateEntities([wide, narrow], undefined, tierOf);
+    const withoutResolver = deduplicateEntities([wide, narrow]);
+    expect(withResolver).toEqual(withoutResolver);
+    expect(withResolver).toHaveLength(1);
+  });
+
+  it('three-way chain: an unrelated different-tier span sitting between two same-tier spans does not stop them arbitrating against each other', () => {
+    // X (mask, 0-10) .. Y (pass, 5-30, bridges) .. Z (mask, 8-15)
+    // X and Z directly overlap (8 < 10) and are the SAME tier — they must
+    // still arbitrate even though Y (a different tier) is processed between
+    // them and would otherwise become the naive "last kept" reference point.
+    const x = { start: 0, end: 10, score: 0.7, entity_group: 'PERSON_NAME' };
+    const y = { start: 5, end: 30, score: 0.9, entity_group: 'ORGANIZATION_NAME' };
+    const z = { start: 8, end: 15, score: 0.95, entity_group: 'PERSON_NAME' };
+    const result = deduplicateEntities([x, y, z], undefined, tierOf);
+    const maskSurvivors = result.filter((e) => e.entity_group === 'PERSON_NAME');
+    expect(maskSurvivors).toHaveLength(1);
+    expect(maskSurvivors[0]).toBe(z); // higher score, meaningfully so (0.95 vs 0.7) — z wins
+    expect(result).toContainEqual(y);
+  });
+
+  it('all-mask mode (resolver returns "mask" for every entity): identical result to no resolver at all — the structural invariance proof', () => {
+    const entities = [
+      { start: 0, end: 40, score: 0.95, entity_group: 'ORGANIZATION_NAME' },
+      { start: 27, end: 39, score: 0.9, entity_group: 'PERSON_NAME' },
+      { start: 50, end: 70, score: 0.85, entity_group: 'PERSON_ROLE_OR_TITLE' },
+      { start: 60, end: 65, score: 0.99, entity_group: 'FINANCIAL_AMOUNT' },
+    ];
+    const allMaskResolver = () => 'mask';
+    const withAllMaskResolver = deduplicateEntities(entities, undefined, allMaskResolver);
+    const legacy = deduplicateEntities(entities);
+    expect(withAllMaskResolver).toEqual(legacy);
+  });
+
+  it('does not change output order for the single-bucket (no resolver) path — still start-sorted', () => {
+    const entities = [
+      { start: 20, end: 25, score: 0.9, entity_group: 'X' },
+      { start: 0, end: 5, score: 0.9, entity_group: 'X' },
+      { start: 10, end: 15, score: 0.9, entity_group: 'X' },
+    ];
+    const result = deduplicateEntities(entities);
+    expect(result.map((e) => e.start)).toEqual([0, 10, 20]);
+  });
+});
+
 describe('couldBeSamePerson', () => {
   it('matches Polish nominative vs genitive (full name)', () => {
     expect(couldBeSamePerson('Marcin Jabłoński', 'Marcina Jabłońskiego')).toBe(true);

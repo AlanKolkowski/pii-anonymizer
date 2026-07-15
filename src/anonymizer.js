@@ -633,6 +633,11 @@ export function snapToWordBoundaries(entities, text) {
 
 const DEDUP_SCORE_EPSILON = 0.1;
 
+// Bucket key used when deduplicateEntities is called without a tier
+// resolver — every entity lands in the one bucket, so the per-tier frontier
+// below degenerates into the original single-pass arbitration exactly.
+const SINGLE_TIER_BUCKET = Symbol('dedup-single-bucket');
+
 function spansOverlap(a, b) {
   return a.start < b.end && b.start < a.end;
 }
@@ -720,23 +725,37 @@ function trimOrDropCoveredByPreciseRegex(entities, text) {
   return result;
 }
 
-export function deduplicateEntities(entities, text) {
+// ST-2 H-1 (SCOPE-TIERS-DESIGN.md §3.2 pkt 3): optional third argument
+// `tierOf` — (entity) => 'mask'|'review'|'pass' — makes overlap arbitration
+// tier-aware. Omitted (all existing call sites), every entity shares
+// SINGLE_TIER_BUCKET and the loop below is exactly today's single-pass
+// arbitration. Given, overlaps only arbitrate within the same effective
+// tier: a wide W3 span (e.g. an organization name) must never suppress a
+// nested W1 span (e.g. the person's name inside it) merely because it
+// happened to win the scan-order race — both survive untouched, and each
+// tier keeps its own independent "frontier" (last kept entry) so a chain
+// like mask/pass/mask (bridged by an unrelated pass span in between) still
+// arbitrates the two mask entities against each other correctly.
+export function deduplicateEntities(entities, text, tierOf) {
   if (entities.length <= 1) return entities;
 
   const candidates = trimOrDropCoveredByPreciseRegex(entities, text);
   candidates.sort((a, b) => a.start - b.start || b.score - a.score);
 
-  const result = [candidates[0]];
-  for (let i = 1; i < candidates.length; i++) {
-    const prev = result[result.length - 1];
-    const curr = candidates[i];
+  const result = [];
+  const frontier = new Map(); // tier bucket -> index of its last-kept entry in `result`
 
-    if (curr.start < prev.end) {
+  for (const curr of candidates) {
+    const bucket = tierOf ? tierOf(curr) : SINGLE_TIER_BUCKET;
+    const idx = frontier.get(bucket);
+    const prev = idx === undefined ? undefined : result[idx];
+
+    if (prev && curr.start < prev.end) {
       // Perfect-score (regex) entities are precise — prefer them over wider NER
       const prevPerfect = prev.score === 1.0;
       const currPerfect = curr.score === 1.0;
       if (prevPerfect !== currPerfect) {
-        if (currPerfect) result[result.length - 1] = curr;
+        if (currPerfect) result[idx] = curr;
       } else {
         // Same precision tier: when scores are close (within epsilon), prefer
         // wider span; when scores differ meaningfully, trust the higher score
@@ -746,16 +765,22 @@ export function deduplicateEntities(entities, text) {
         const currSpan = curr.end - curr.start;
         const scoresClose = Math.abs(curr.score - prev.score) <= DEDUP_SCORE_EPSILON;
         if (scoresClose) {
-          if (currSpan > prevSpan) result[result.length - 1] = curr;
+          if (currSpan > prevSpan) result[idx] = curr;
         } else if (curr.score > prev.score) {
-          result[result.length - 1] = curr;
+          result[idx] = curr;
         }
       }
     } else {
+      frontier.set(bucket, result.length);
       result.push(curr);
     }
   }
 
+  // Cross-tier survivors can interleave result's insertion order (a later
+  // same-tier replacement can land behind an already-pushed different-tier
+  // entry) — re-sort so output stays start-ordered regardless of tierOf.
+  // No-op for the single-bucket path: it's already produced in this order.
+  result.sort((a, b) => a.start - b.start || b.score - a.score);
   return result;
 }
 
