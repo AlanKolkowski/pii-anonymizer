@@ -1,7 +1,8 @@
-# FABLE-SPRINT-HANDOFF — mapa 9 branchy do bramkowania
+# FABLE-SPRINT-HANDOFF — mapa 10 branchy do bramkowania
 
-**Data:** 2026-07-16. **Autor:** Fable (sesja implementacyjna, kolejka [1]–[9]).
-**Odbiorca:** Opus (bramka), wtórnie Alan (decyzje).
+**Data:** 2026-07-16 (aktualizacja: po awarii workflow przeglądu i po B3).
+**Autor:** Fable (sesja implementacyjna, kolejka [1]–[9] + B3 na zlecenie
+Opusa). **Odbiorca:** Opus (bramka), wtórnie Alan (decyzje).
 **Stan:** wszystkie branche wypchnięte, zero niezacommitowanego WIP,
 `npm test` zielony na KAŻDYM branchu przed każdym commitem (liczby niżej).
 Nic nie mergowałam. Main i `allMask: true` nietknięte — warstwowość śpi.
@@ -67,7 +68,18 @@ W trakcie sesji drzewo robocze zostało DWUKROTNIE przełączone zewnętrznie
   Moja weryfikacja = `npm test` zielony na branchu (2175) + przeczytanie
   komunikatu commita. NIE przeglądałam tego kodu.
 
-### 0.4 Czego NIE zrobiłam globalnie (zakazy sesji)
+### 0.4 Przegląd kontradyktoryjny NIE odbył się — nie licz na niego
+
+Na polecenie hardeningu odpaliłam workflow: 9 agentów-recenzentów (jeden na
+branch, statycznie po `git diff main...branch`) z fazą weryfikacji znalezisk.
+**Wszystkich 9 agentów uderzyło w limit sesji i NIE zwróciło wyników** —
+puste listy „confirmed" w artefaktach workflow to skutek awarii, nie czysty
+przegląd. Spaliło to ~880k tokenów bez rezultatu. Wniosek praktyczny: **jedyną
+mapą słabych punktów jest ten dokument (sekcje „Na skróty / niepewne")** —
+branche nie przeszły żadnej dodatkowej recenzji poza moimi własnymi testami.
+Bramkuj tak, jakby nikt ich po mnie nie czytał, bo nikt ich nie czytał.
+
+### 0.5 Czego NIE zrobiłam globalnie (zakazy sesji)
 
 - Zero `npm run eval` / ładowania modeli. Skutek: wszystkie twierdzenia
   o niezmienności i skuteczności detekcji są udowodnione WYŁĄCZNIE testami
@@ -458,6 +470,43 @@ writer) były już na main.
 
 ---
 
+## 9a. `feature/b3-art910-extension` — rozszerzenie leksykonu art. 9–10 (1 commit)
+
+**Wg projektu:** RECALL-90-DESIGN.md §2.3 (kotwica+dopełnienie; polityka
+spanu B3 BEZ ZMIAN — SCOPE-TIERS §6.3). Zrobione na zlecenie Opusa z listą
+dokładnych fraz-wycieków wagi 5 z holdoutu.
+
+**Zrobione (DANE-only, matcher/krok nietknięte):** 8 nowych wpisów
++ poszerzona kotwica `criminal-skazany-za` (stara NIE pokrywała „skazany
+wyrokiem za" ani „skazany prawomocnie za" — to były realne wycieki).
+Nowe: toczy-się-przeciwko-postępowanie (obie frazy z holdoutu jedną
+kotwicą), tymczasowo-aresztowany (sam fakt = art. 10, analogia
+„niekarany"), postawiono-zarzut (zaimek mu/jej/im OBOWIĄZKOWY — odsiewa
+procesowe zarzuty apelacyjne), delegat-związkowy, wiece-organizacji,
+członek-partii, struktura-partyjna, pod-opieką-medyczną.
+
+**Testy:** pakiet data-driven pokrywa każdy wpis automatycznie
+(pozytyw+negatyw+mustCover); pułapki adw_32/33/34 nadal ZERO trafień;
+golden adw_38 zaktualizowany 4→5 (nowa kotwica zdrowotna łapie PIĄTY
+prawdziwy fakt zdrowotny, który fixture zawsze zawierał — zysk pokrycia,
+nie over-triggering; przypięte rozbiciem per kategoria). Pakiet 2189.
+
+**Na skróty / niepewne:**
+- `health-pod-opieka` wymaga kwalifikatora medycznego przez SUFIKSY
+  (-logiczną/-iatryczną/-chirurgiczną, lekar/medyczn/poradni/szpital) —
+  świadome tarcie z zasadą „zero taksonomii" (§2.3 pkt 4), wymuszone
+  pułapką „pod opieką kuratora" (częste w pismach rodzinnych). Opisane
+  w `note` wpisu; do akceptu na bramce.
+- Frazy z listy Opusa wpisałam jako examplePositive w realistycznych
+  zdaniach — NIE mam dostępu do samego holdoutu, więc dokładne konteksty
+  holdoutowe mogą się różnić od moich zdań testowych; kotwice są jednak
+  szersze niż pojedyncze zdanie.
+- Eval tagowany po tej zmianie danych — do zrobienia na PC jak dla trio
+  detekcyjnego (dyscyplina „eval po każdej zmianie src/pipeline" obejmuje
+  dane leksykonu).
+
+---
+
 ## 10. Otwarte decyzje — zestawienie
 
 | Decyzja | Kto | Blokuje |
@@ -466,7 +515,7 @@ writer) były już na main.
 | O-3: kotwiczenie SGJP/PESEL, licencje u źródła, sui generis (1.2.3) | Alan + Opus | dane morfologii, SG-full, B4-full |
 | O-ST-2: art. 9–10 w trwałym słowniku | Alan (werdykt w GS-3) | nic w kodzie — silnik nie ogranicza |
 | O-ST-3: trwałość allowlisty (kod = RAM/sesja, rekomendacja projektu) | Alan (w GATE-SCOPE) | nic — zaimplementowane zachowawczo |
-| Eval tagowany os1/st5/sg-lite na obu korpusach | PC stacjonarny | merge tych trzech branchy |
+| Eval tagowany os1/st5/sg-lite/b3-art910 na obu korpusach | PC stacjonarny | merge tych czterech branchy |
 | GATE-SCOPE (GS-1…GS-6) | Opus | merge st3/st4/st5/st6 |
 | O-1…O-9 + C-DOCX-1…10 | Opus | merge docx-rebuild |
 
