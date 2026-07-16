@@ -61,12 +61,11 @@ W trakcie sesji drzewo robocze zostało DWUKROTNIE przełączone zewnętrznie
 
 - Mój niezacommitowany WIP ST-4 został zacommitowany przez proces
   zewnętrzny jako `65205be` (autor: Alan) na `feature/st4-bucket-ui`.
-  Zweryfikowałam: testy przechodzą, treść zgodna z tym, co pisałam, ale
-  commit jest WARIANTEM mojego kodu (przeredagowany plik testowy) — nie
-  robiłam diffa linia-po-linii. Bramkuj go jak obcy kod.
+  **AKTUALIZACJA: przejrzany linia-po-linii — patrz §9b** (6/7 plików to
+  dosłownie mój kod, siódmy to równoważny wariant testu; grep GS-2 czysty).
 - `feature/st8-migration` (c0ea2ae) powstał W CAŁOŚCI w sesji równoległej.
-  Moja weryfikacja = `npm test` zielony na branchu (2175) + przeczytanie
-  komunikatu commita. NIE przeglądałam tego kodu.
+  **AKTUALIZACJA: przejrzany linia-po-linii — patrz §9b** (solidny,
+  design-faithful; jeden nit komentarzowy przy sygnaturze stempla).
 
 ### 0.4 Przegląd kontradyktoryjny NIE odbył się — nie licz na niego
 
@@ -507,6 +506,64 @@ nie over-triggering; przypięte rozbiciem per kategoria). Pakiet 2189.
 - Eval tagowany po tej zmianie danych — do zrobienia na PC jak dla trio
   detekcyjnego (dyscyplina „eval po każdej zmianie src/pipeline" obejmuje
   dane leksykonu).
+
+---
+
+## 9b. Przegląd obcych commitów 65205be / c0ea2ae (na zlecenie Opusa, linia-po-linii)
+
+### 65205be (`feature/st4-bucket-ui`) — ZWERYFIKOWANY, czysty
+
+Diff przeczytany w całości vs SCOPE-TIERS §4.2. Ustalenia:
+
+- **6 z 7 plików to DOSŁOWNIE mój WIP** (view-model.js, view-model.test.js,
+  index.js renderera, styles.css, sources-list, main.js — porównane linia
+  po linii z tym, co pisałam przed przełączeniem drzewa; zero obcych
+  wstawek). Siódmy plik (`main.review-bucket-ui.test.js`) to redakcyjny
+  WARIANT mojego testu e2e: ta sama struktura i 8 przypadków (badge liczy
+  WARTOŚCI, grupy zwinięte + grep air-gap po Kopiuj/Eksport, mask→undo
+  round-trip po liczniku tokenów, skip z równorzędnym stylem R-ST-2,
+  słownik tylko na jawny checkbox + kontrola negatywna, bulk+finish,
+  plakietka „słownik" odwracalna, brak kandydatów → sekcja ukryta);
+  jedyna różnica: DOM-owa asercja kolejności grup wypadła, ale porządek
+  wag jest przypięty w view-model.test (HEALTH_DATA przed kwotami).
+- **Grep bezpieczeństwa po całym diffie (GS-2): czysto.** Zero
+  clipboard/fetch/WebSocket/navigator; `innerHTML` wyłącznie czyszczące
+  (`root.innerHTML = ''`) i harness testowy; cała treść wchodzi przez
+  `textContent`/`createTextNode`. Żadnego eksportu ani schowka kosza.
+- Pokrycie §4.3: pkt 1/3/4 wprost w e2e; pkt 2 (rerun) na poziomie ST-3
+  (review-flow); pkt 5 (annotation-editor nietknięty) — plik bez zmian
+  w diffie.
+
+Werdykt: bramkuj jak mój kod, bo to jest mój kod — z jednym
+przeredagowanym testem o równoważnym pokryciu.
+
+### c0ea2ae (`feature/st8-migration`) — ZWERYFIKOWANY, solidny, 1 nit
+
+Diff przeczytany w całości vs SCOPE-TIERS §8. Ustalenia:
+
+- **Snapshot golden (§8.1 pkt 3/§8.2):** test w outcomes-coordinator —
+  token ORG deanonimizuje się bajt w bajt po tym, jak żywa legenda go
+  traci (symulacja piwotu przez refreshLegend) ✓.
+- **Stempel konfiguracji (§8.1 pkt 2, R-ST-4):** sygnatura łapana
+  W CHWILI DISPATCHU (`inFlightConfigStamps` w dispatchNextClassify),
+  stemplowana na result — poprawne wobec wyścigu „zmiana selekcji w trakcie
+  classify"; fallback na bieżącą sygnaturę przy braku wpisu; odświeżanie
+  plakietek podpięte pod onChange selektora; dryf powrotny czyści znacznik
+  bez re-runu (wynika z porównania `!==`); nic nie reanonimizuje się samo ✓.
+  Dedykowany test `main.config-stamp.test.js` (182 linie) pokrywa cykl.
+- **Odmowa eval:compare (§8.1 pkt 4):** czysty moduł `score-compat.js` —
+  różnica scoringVersion (w tym format sprzed piwotu = null) albo
+  tiersConfig ⇒ delty ukryte + głośne ostrzeżenie z instrukcją re-score;
+  dwa przebiegi PRZED-piwotowe (null==null) pozostają porównywalne —
+  poprawnie ✓. Wpięte w compare.js przez bramkowanie sameEnabled.
+- **NIT (nie-bug):** komentarz przy `currentConfigSignature()` twierdzi,
+  że tierOverrides/allMask „dołączą do sygnatury automatycznie" z UI
+  O-ST-7 — nieprawda w sensie dosłownym: sygnatura zawiera dziś TYLKO
+  `entities` i przy wdrożeniu O-ST-7 trzeba ją jawnie rozszerzyć o jedno
+  pole. Zero skutku runtime dziś (main nie ustawia warstw); odnotować
+  przy implementacji O-ST-7.
+
+Werdykt: merge-owalny bez poprawek; nit do zapamiętania przy O-ST-7.
 
 ---
 
