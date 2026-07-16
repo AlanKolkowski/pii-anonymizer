@@ -19,6 +19,7 @@ import {
 import { extractText } from './file-import/index.js';
 import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
+import { parseDictionary, resolveClassifyResult } from './review-engine.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -67,6 +68,19 @@ const LS_KEY = 'pii.selected-entities';
 const GPU_LS_KEY = 'pii.allow-gpu';
 const PRELOAD_OCR_LS_KEY = 'pii.preload-ocr';
 const PRELOAD_NER_LS_KEY = 'pii.preload-ner';
+// ST-3 (SCOPE-TIERS-DESIGN.md §4.1 pkt 5): persistent review dictionary —
+// alwaysMask/alwaysSkip phrases per type. Configuration (same data class as
+// entity-rules blocklists), never legend or case content; D2 verdict is
+// GATE-SCOPE GS-3. Read at boot; entries are written only by an explicit
+// "remember" action in the review UI (ST-4).
+const REVIEW_DICTIONARY_LS_KEY = 'pii.review-dictionary';
+const reviewDictionary = parseDictionary(localStorage.getItem(REVIEW_DICTIONARY_LS_KEY));
+
+// The annotation editor's post-edit pass, shared with review-decision
+// application (§4.1 pkt 3): one backfill mechanism, not two.
+function reviewPostEdit(text, entities) {
+  return backfillOccurrencesStep({ text, entities }).entities;
+}
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 function isAnyFileImportInFlight() { return inFlightFileImportIds.size > 0; }
@@ -390,14 +404,14 @@ const sourcesList = createSourcesList(sourcesListRoot, {
   entityCategories: ENTITY_CATEGORIES,
   entityLabels: ENTITY_LABELS,
   postEdit(text, entities) {
-    return backfillOccurrencesStep({ text, entities }).entities;
+    return reviewPostEdit(text, entities);
   },
   onAddPaste() {
     const id = crypto.randomUUID();
     const label = nextPasteLabel();
     const mcpLabel = nextSourceMcpLabel();
     sources.push({
-      id, label, mcpLabel, text: '', entities: [], meta: null, status: 'idle', error: null, lastReadyText: null,
+      id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'idle', error: null, lastReadyText: null,
     });
     sourcesList.addSource(id, label, {
       text: '', entities: [], status: 'idle', type: 'paste', mcpLabel,
@@ -541,7 +555,7 @@ async function addSourceFromFile(file, batch = {}) {
   const label = file.name || `Plik ${sources.length + 1}`;
   const mcpLabel = nextSourceMcpLabel();
   sources.push({
-    id, label, mcpLabel, text: '', entities: [], meta: null, status: 'pending', error: null, lastReadyText: null,
+    id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'pending', error: null, lastReadyText: null,
   });
   sourcesList.addSource(id, label, {
     text: '', entities: [], status: 'pending', type: 'file', mcpLabel,
@@ -1189,14 +1203,31 @@ worker.onmessage = (e) => {
       const s = sources.find((x) => x.id === id);
       const dispatchedText = inFlightClassifyTexts.get(id);
       if (s && dispatchedText === s.text) {
-        s.entities = msg.data;
+        // ST-3 (SCOPE-TIERS-DESIGN.md §4.1 pkt 5): reconcile the fresh W2
+        // candidates with the document's decision memory and the persistent
+        // dictionary — remembered 'mask' decisions are re-applied to the
+        // fresh entities, resolved values are not asked again. With tiering
+        // asleep (allMask default) candidates is [] and entities pass
+        // through unchanged.
+        const resolved = resolveClassifyResult({
+          text: s.text,
+          entities: msg.data,
+          candidates: msg.candidates ?? [],
+          prevDecisions: s.reviewDecisions,
+          dictionary: reviewDictionary,
+          postEdit: reviewPostEdit,
+        });
+        s.entities = resolved.entities;
+        s.candidates = resolved.candidates;
+        s.reviewDecisions = resolved.decisions;
         s.status = 'ready';
         s.error = null;
         s.lastReadyText = s.text;
-        sourcesList.setSourceEntities(id, msg.data);
+        sourcesList.setSourceEntities(id, resolved.entities);
         sourcesList.setSourceStatus(id, 'ready');
       } else if (s) {
         s.entities = [];
+        s.candidates = [];
         s.status = 'idle';
         s.error = null;
         s.lastReadyText = null;
