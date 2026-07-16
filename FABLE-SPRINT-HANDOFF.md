@@ -177,9 +177,10 @@ nietknięty, gramatyka spacje-only, kontrakty snap/dedup/merge bez zmian).
 - Znany limit R-OS-5 przypięty testem: dwa słowa C rozdzielone 1 spacją
   sklejają się w śmieciowy leksem („SĄDREJONOWY") — siatką jest brak
   potwierdzenia NER.
-- Zmapowane encje niosą surowe pola modelu (`word` z wariantu ≠ span
-  z oryginału) — kosmetyka widoczna tylko w debug; główny pass ma tę samą
-  własność.
+- ~~Zmapowane encje niosą surowe pola modelu (`word` z wariantu ≠ span
+  z oryginału)~~ — **DOMKNIĘTE** w przebiegu hardeningowym (commit
+  fef2c72): `word` jest zdejmowany przy remapie, mock testowy emituje go
+  jak realny pipeline, żeby strip był przypięty.
 - **Kryterium 2.3 pkt 2 (bajt w bajt bez flagi) na poziomie korpusu
   NIEUDOWODNIONE** — tylko golden izolacji. Eval na PC przed merge.
 
@@ -447,11 +448,13 @@ writer) były już na main.
 **Testy:** 12+15+5+11 nowych; pakiet 2208.
 
 **Na skróty / niepewne (dużo, bo moduł duży):**
-- **Skan rezyduów jest PRE-podmianowy** (gramatyka na strumieniu
-  oryginalnym + detekcja urwanych prefiksów), a §6.2 chce skanu
-  PO podmianie. Różnica ujawnia się tylko, gdy WSTAWIONA wartość zawiera
-  literał tokena (nie jest podmieniana — brak kaskady ✓ — ale nie byłaby
-  też zaraportowana). Świadomy skrót; łatwy do domknięcia w MD6.
+- ~~Skan rezyduów jest PRE-podmianowy~~ — **DOMKNIĘTE** w przebiegu
+  hardeningowym (commit 985fa1b): skan chodzi po FINALNYM strumieniu
+  akapitu po aplikacji planu (§6.2 dosłownie); literał tokena wstrzyknięty
+  wartością jest raportowany z własnym powodem `literał-w-wartości`
+  (nadal nigdy nie podmieniany — reguła jednego przebiegu §4.5 stoi);
+  akapity bez podmian reużywają zbudowany strumień (zero dodatkowego
+  kosztu). Przypięte testem.
 - **O-6 (wierność XMLSerializer wobec realnego Worda) NIEZWERYFIKOWANE** —
   złote pliki w Word/LibreOffice to MD6, poza zasięgiem tej sesji.
   Deklarację XML doklejam heurystycznie, bo jsdom-owy serializer ją gubi;
