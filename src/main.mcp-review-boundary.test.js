@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
 //
-// ST-3 wiring (SCOPE-TIERS-DESIGN.md §4.1): worker 'result' messages carry W2
-// review candidates; main.js reconciles them with the document's decision
-// memory and the persistent dictionary (localStorage pii.review-dictionary)
-// before entities reach the legend. The engine itself is unit-tested in
-// review-engine.test.js — these tests drive the app shell end to end with a
-// fake worker, the same harness as main.stale-classify.test.js.
+// ST-6 (SCOPE-TIERS-DESIGN.md §7.1 pkt 2): the negative contract — W2 review
+// candidates do not exist in ANY MCP payload. This drives the real app shell
+// (fake worker, real WebMCP tool handlers registered by main.js), puts a
+// source into the in-review state, then calls EVERY bridge tool and greps
+// every response for the candidate value. Zero hits allowed.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const TEXT = 'Anna Nowak, wdowiec, mieszka sama.';
-const TEXT_RERUN = 'Anna Nowak, wdowiec, mieszka sama. Dopisek.';
+const CANDIDATE_VALUE = 'wdowiec';
 const PERSON_ENTITY = {
   entity_group: 'PERSON_NAME',
   start: 0,
@@ -19,8 +18,8 @@ const PERSON_ENTITY = {
 };
 const WIDOWER_CANDIDATE = {
   entity_group: 'PERSON_ATTRIBUTE',
-  start: TEXT.indexOf('wdowiec'),
-  end: TEXT.indexOf('wdowiec') + 'wdowiec'.length,
+  start: TEXT.indexOf(CANDIDATE_VALUE),
+  end: TEXT.indexOf(CANDIDATE_VALUE) + CANDIDATE_VALUE.length,
   score: 0.9,
   source: 'ner',
   tier: 'review',
@@ -100,11 +99,6 @@ function installWebMcpFake() {
   return tools;
 }
 
-function mcpText(tools, name, args = {}) {
-  const response = tools.get(name)(args);
-  return response.content[0].text;
-}
-
 async function bootApp() {
   vi.resetModules();
   FakeWorker.instances = [];
@@ -138,19 +132,15 @@ function addPasteSourceWithText(text) {
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-function editReadySourceText(id, text) {
-  document.querySelector(`[data-testid="source-edit-${id}"]`).click();
-  const textarea = document.querySelector(`[data-testid="source-card-${id}"] .ann-editor-textarea`);
-  expect(textarea).not.toBeNull();
-  textarea.value = text;
-  textarea.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
 function clickAnonymize() {
   document.querySelector('[data-action="anonymize"]').click();
 }
 
-describe('review candidates wiring', () => {
+function callTool(tools, name, args = {}) {
+  return JSON.stringify(tools.get(name)(args));
+}
+
+describe('ST-6 — candidates do not exist in any MCP payload', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     delete globalThis.Worker;
@@ -158,15 +148,10 @@ describe('review candidates wiring', () => {
     localStorage.clear();
   });
 
-  it('a dictionary alwaysMask entry resolves a fresh candidate and masks it end to end', async () => {
-    localStorage.setItem(
-      'pii.review-dictionary',
-      JSON.stringify({ alwaysMask: { PERSON_ATTRIBUTE: ['wdowiec'] } }),
-    );
+  it('a source in review is unlistable and unreadable; no tool response carries the candidate value', async () => {
     const { worker, tools } = await bootApp();
     addPasteSourceWithText(TEXT);
     clickAnonymize();
-
     worker.emit({
       type: 'result',
       id: 's2',
@@ -174,34 +159,30 @@ describe('review candidates wiring', () => {
       candidates: [WIDOWER_CANDIDATE],
     });
 
+    // Ready in the UI, but the bridge must not see it before the review ends.
     expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
-    expect(document.querySelector('[data-testid="run-bar-tokens"]').textContent).toBe('2');
-    expect(mcpText(tools, 'read_source', { id: 's2' }))
-      .toBe('[PERSON_NAME_1], [PERSON_ATTRIBUTE_1], mieszka sama.');
+    const listSources = callTool(tools, 'list_sources');
+    expect(JSON.parse(JSON.parse(listSources).content[0].text)).toEqual([]);
+
+    const readSource = callTool(tools, 'read_source', { id: 's2' });
+    expect(readSource).toContain('w przeglądzie');
+
+    const writeOutcome = callTool(tools, 'write_outcome', { label: 'Szkic', text: 'Pismo o [PERSON_NAME_1].' });
+    const listOutcomes = callTool(tools, 'list_outcomes');
+    const outcomeId = JSON.parse(JSON.parse(writeOutcome).content[0].text).id;
+    const readOutcome = callTool(tools, 'read_outcome', { id: outcomeId });
+
+    // §7.1 pkt 2: grep EVERY response — the candidate value, its count and
+    // its context exist nowhere in the bridge's world.
+    for (const payload of [listSources, readSource, writeOutcome, listOutcomes, readOutcome]) {
+      expect(payload).not.toContain(CANDIDATE_VALUE);
+      expect(payload).not.toContain('PERSON_ATTRIBUTE');
+    }
+    // The raw text (with the pending value in context) never crossed either.
+    expect(readSource).not.toContain('Anna Nowak');
   });
 
-  it('without a dictionary entry the candidate stays pending — nothing masked, bridge closed (ST-6)', async () => {
-    const { worker, tools } = await bootApp();
-    addPasteSourceWithText(TEXT);
-    clickAnonymize();
-
-    worker.emit({
-      type: 'result',
-      id: 's2',
-      data: [PERSON_ENTITY],
-      candidates: [WIDOWER_CANDIDATE],
-    });
-
-    expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
-    expect(document.querySelector('[data-testid="run-bar-tokens"]').textContent).toBe('1');
-    // A pending review closes the MCP bridge for this source (ST-6, hard
-    // variant) — and the refusal carries no candidate data.
-    const refusal = mcpText(tools, 'read_source', { id: 's2' });
-    expect(refusal).toContain('w przeglądzie');
-    expect(refusal).not.toContain('wdowiec');
-  });
-
-  it('a rerun re-resolves candidates without stacking duplicate entities', async () => {
+  it('a dictionary-resolved review opens the bridge without any UI action', async () => {
     localStorage.setItem(
       'pii.review-dictionary',
       JSON.stringify({ alwaysMask: { PERSON_ATTRIBUTE: ['wdowiec'] } }),
@@ -210,53 +191,15 @@ describe('review candidates wiring', () => {
     addPasteSourceWithText(TEXT);
     clickAnonymize();
     worker.emit({
-      type: 'result', id: 's2', data: [PERSON_ENTITY], candidates: [WIDOWER_CANDIDATE],
-    });
-
-    editReadySourceText('s2', TEXT_RERUN);
-    clickAnonymize();
-    expect(worker.messages.filter((m) => m.type === 'classify')).toHaveLength(2);
-    worker.emit({
-      type: 'result',
-      id: 's2',
-      data: [PERSON_ENTITY],
-      candidates: [{ ...WIDOWER_CANDIDATE }],
-    });
-
-    expect(document.querySelector('[data-testid="run-bar-tokens"]').textContent).toBe('2');
-    expect(mcpText(tools, 'read_source', { id: 's2' }))
-      .toBe('[PERSON_NAME_1], [PERSON_ATTRIBUTE_1], mieszka sama. Dopisek.');
-  });
-
-  it('a legacy result without a candidates field behaves exactly like today', async () => {
-    const { worker, tools } = await bootApp();
-    addPasteSourceWithText(TEXT);
-    clickAnonymize();
-
-    worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY] });
-
-    expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
-    expect(document.querySelector('[data-testid="run-bar-tokens"]').textContent).toBe('1');
-    expect(mcpText(tools, 'read_source', { id: 's2' }))
-      .toBe('[PERSON_NAME_1], wdowiec, mieszka sama.');
-  });
-
-  it('a corrupt persisted dictionary degrades to empty instead of breaking boot', async () => {
-    localStorage.setItem('pii.review-dictionary', '{broken json');
-    const { worker, tools } = await bootApp();
-    addPasteSourceWithText(TEXT);
-    clickAnonymize();
-
-    worker.emit({
       type: 'result',
       id: 's2',
       data: [PERSON_ENTITY],
       candidates: [WIDOWER_CANDIDATE],
     });
 
-    expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
-    // Empty dictionary = candidate pending = bridge closed (ST-6); the boot
-    // itself surviving the corrupt JSON is the point of this test.
-    expect(mcpText(tools, 'read_source', { id: 's2' })).toContain('w przeglądzie');
+    const listing = JSON.parse(JSON.parse(callTool(tools, 'list_sources')).content[0].text);
+    expect(listing).toHaveLength(1);
+    const readSource = JSON.parse(callTool(tools, 'read_source', { id: 's2' }));
+    expect(readSource.content[0].text).toBe('[PERSON_NAME_1], [PERSON_ATTRIBUTE_1], mieszka sama.');
   });
 });
