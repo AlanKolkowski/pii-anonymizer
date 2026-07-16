@@ -223,8 +223,14 @@ describe('findSpecialCategoryEntities — adw_38_kategorie_szczegolne golden reg
     expect(m).toMatchObject({ start: 352, end: 418 });
   });
 
-  it('produces exactly four matches on this document (no over-triggering)', () => {
-    expect(matches).toHaveLength(4);
+  it('produces exactly five matches on this document (no over-triggering)', () => {
+    // Was four; the B3 extension's 'health-pod-opieka' anchor legitimately
+    // catches a FIFTH real health fact this fixture always contained
+    // ("pozostaje pod opieką poradni diabetologicznej w Toruniu") — a
+    // coverage gain, not over-triggering (the FP criterion lives in the
+    // adw_32/33/34 trap tests below, still zero).
+    expect(matches).toHaveLength(5);
+    expect(matches.filter((e) => e.entity_group === 'HEALTH_DATA')).toHaveLength(3);
   });
 });
 

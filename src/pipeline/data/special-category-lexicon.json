@@ -4,11 +4,12 @@
     {
       "id": "criminal-skazany-za",
       "category": "CRIMINAL_OFFENCE_DATA",
-      "pattern": "skazan(?:y|a|ego|ej|emu|ym|ą)(?:\\s+prawomocnym\\s+wyrokiem)?\\s+za",
+      "pattern": "skazan(?:y|a|ego|ej|emu|ym|ą)(?:\\s+prawomocnie)?(?:\\s+prawomocnym\\s+wyrokiem|\\s+wyrokiem)?\\s+za",
       "description": "skazany/-a (prawomocnym wyrokiem)? za <czyn>",
       "examplePositive": "Pozwany był uprzednio skazany prawomocnym wyrokiem za przywłaszczenie mienia, co ma znaczenie dla oceny jego wiarygodności.",
       "exampleNegative": "W umowie najmu wskazano czynsz płatny do 10. dnia każdego miesiąca.",
-      "mustCover": "przywłaszczenie mienia"
+      "mustCover": "przywłaszczenie mienia",
+      "note": "Rozszerzone o warianty 'skazany wyrokiem za' i 'skazany prawomocnie za' (pelne wycieki wagi 5 z holdoutu); stara postac pokrywala tylko 'za' i 'prawomocnym wyrokiem za'."
     },
     {
       "id": "criminal-ukarany-za",
@@ -164,6 +165,81 @@
       "exampleNegative": "Towar posiada świadectwo pochodzenia potwierdzone przez izbę handlową.",
       "mustCover": "romskiej",
       "note": "Bare 'pochodzenia' wymaga kwalifikatora 'etniczn-' — bez niego to najczęściej pochodzenie towaru/środków (dokumenty handlowe, AML), nie dana o osobie."
+    },
+    {
+      "id": "criminal-toczy-sie-postepowanie",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "tocz(?:y|yło|ą)\\s+się\\s+przeciwko\\s+(?:\\p{L}+\\s+){1,3}(?:dochodzenie|śledztwo|postępowanie(?:\\s+karne)?)(?:\\s+o)?",
+      "description": "toczy/toczylo sie przeciwko <komu> dochodzenie/sledztwo/postepowanie (karne)? (o)? <czyn>",
+      "examplePositive": "Przed Prokuraturą Rejonową toczyło się przeciwko niej dochodzenie o zniesławienie, umorzone w 2022 r.",
+      "exampleNegative": "Postępowanie egzekucyjne toczy się przed komornikiem przy Sądzie Rejonowym w Toruniu.",
+      "mustCover": "zniesławienie",
+      "note": "Zaimek/fraza miedzy 'przeciwko' a rzeczownikiem ograniczona do 1-3 slow (niej / niemu / pozwanemu Janowi Kowalskiemu); druga fraza z holdoutu ('toczy sie przeciwko niemu postepowanie karne o oszustwo') pokryta ta sama kotwica."
+    },
+    {
+      "id": "criminal-tymczasowo-aresztowany",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "(?:tymczasowo\\s+)?aresztowan(?:y|a|ego|ej|emu|ym|ą)",
+      "description": "(tymczasowo)? aresztowany/-a <w sprawie o czyn>? - sam fakt aresztowania jest dana art. 10 (jak niekarany)",
+      "examplePositive": "Podejrzany był tymczasowo aresztowany w sprawie o rozbój do czasu uchylenia środka.",
+      "exampleNegative": "Komornik dokonał zajęcia ruchomości oraz nałożył areszt na rachunek bankowy dłużnika.",
+      "mustCover": "w sprawie o rozbój"
+    },
+    {
+      "id": "criminal-postawiono-zarzut",
+      "category": "CRIMINAL_OFFENCE_DATA",
+      "pattern": "postawiono\\s+(?:mu|jej|im)\\s+zarzuty?",
+      "description": "postawiono mu/jej/im zarzut(y) <czyn>",
+      "examplePositive": "W toku śledztwa postawiono mu zarzut fałszowania dokumentów na szkodę spadkodawcy.",
+      "exampleNegative": "W apelacji postawiono zarzut naruszenia prawa materialnego przez błędną wykładnię art. 385¹ k.c.",
+      "mustCover": "fałszowania dokumentów",
+      "note": "Zaimek (mu/jej/im) jest obowiazkowy - odsiwa procesowe 'postawiono zarzut naruszenia...' z apelacji (pulapka FP z korpusu)."
+    },
+    {
+      "id": "union-delegat-zwiazkowy",
+      "category": "TRADE_UNION_MEMBERSHIP",
+      "pattern": "delegat(?:em|a|owi)?\\s+związkow(?:y|ym|ego|emu)",
+      "description": "delegat zwiazkowy (kazdy przypadek) - sama funkcja jest dana o przynaleznosci zwiazkowej",
+      "examplePositive": "Reprezentuje pracowników jako delegat związkowy w zakładzie pracy pozwanej.",
+      "exampleNegative": "Związek przyczynowy między zdarzeniem a szkodą nie budzi wątpliwości.",
+      "mustCover": "delegat związkowy"
+    },
+    {
+      "id": "health-pod-opieka",
+      "category": "HEALTH_DATA",
+      "pattern": "pozostaje\\s+pod\\s+(?:stałą\\s+)?opieką(?=\\s+(?:\\p{L}+(?:logiczną|iatryczną|chirurgiczną)|lekarsk|lekarza|medyczn|poradni|szpital))",
+      "description": "pozostaje pod (stala)? opieka <specjalnosc medyczna/placowka>",
+      "examplePositive": "Powod pozostaje pod stałą opieką kardiologiczną od zawału w 2020 r.",
+      "exampleNegative": "Małoletni pozostaje pod stałą opieką kuratora sądowego ustanowionego przez sąd.",
+      "mustCover": "kardiologiczną",
+      "note": "Lookahead wymaga kwalifikatora medycznego (sufiksy -logiczna/-iatryczna/-chirurgiczna albo lekar/medyczn/poradni/szpital) - swiadome tarcie z zasada braku taksonomii (§2.3 pkt 4), wymuszone pulapka 'pod opieka kuratora/matki' (czeste w pismach rodzinnych, zero zwiazku ze zdrowiem). To sufiksy morfologiczne specjalnosci, nie lista chorob."
+    },
+    {
+      "id": "political-wiece-organizacji",
+      "category": "POLITICAL_OPINION",
+      "pattern": "uczestniczy(?:ł|ła)?\\s+w\\s+wiec(?:u|ach)",
+      "description": "uczestniczy(l/la) w wiecu/wiecach <czyich/o jakich pogladach>",
+      "examplePositive": "Uczestniczył w wiecach organizacji o poglądach konserwatywnych na terenie województwa.",
+      "exampleNegative": "Uczestniczył w rozprawach sądowych wyłącznie w charakterze publiczności.",
+      "mustCover": "poglądach konserwatywnych"
+    },
+    {
+      "id": "political-czlonek-partii",
+      "category": "POLITICAL_OPINION",
+      "pattern": "członk(?:iem|a|ini|inią)?\\s+partii",
+      "description": "czlonek/czlonkiem partii <politycznej o profilu ...> - przynaleznosc partyjna jest dana art. 9",
+      "examplePositive": "Jest członkiem partii politycznej o profilu lewicowym od 2018 roku.",
+      "exampleNegative": "Został członkiem zarządu spółki z ograniczoną odpowiedzialnością.",
+      "mustCover": "profilu lewicowym"
+    },
+    {
+      "id": "political-struktura-partyjna",
+      "category": "POLITICAL_OPINION",
+      "pattern": "struktur(?:ze|ach|y)\\s+partyjn(?:ej|ych)",
+      "description": "dziala w (lokalnej) strukturze partyjnej - zaangazowanie partyjne jako fakt art. 9",
+      "examplePositive": "Działa w lokalnej strukturze partyjnej jako skarbnik koła.",
+      "exampleNegative": "Struktura organizacyjna pozwanej spółki obejmuje trzy działy operacyjne.",
+      "mustCover": "strukturze partyjnej"
     }
   ]
 }
