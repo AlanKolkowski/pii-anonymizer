@@ -109,3 +109,40 @@ describe('mergeStep', () => {
     expect(result.entities[0].source).toBe('polish-q8');
   });
 });
+
+// ST-2 H-1 extended to merging (ST-5): with a tierOf resolver, only pairs of
+// the same effective tier merge; forceTier survives a same-tier merge.
+describe('mergeStep tier awareness', () => {
+  const ctx = (text, entities) => ({ text, segments: [], entities, anonymized: '', legend: {}, debug: [] });
+  const tierOf = (e) => e.forceTier ?? (e.entity_group === 'DOCUMENT_REFERENCE' ? 'pass' : 'mask');
+
+  it('does not merge same-type neighbors of different effective tiers', () => {
+    const text = 'I C 1552/23, III CZP 6/21';
+    const result = mergeStep(ctx(text, [
+      { entity_group: 'DOCUMENT_REFERENCE', start: 0, end: 11, score: 1.0, source: 'case-allowlist', forceTier: 'mask' },
+      { entity_group: 'DOCUMENT_REFERENCE', start: 13, end: 25, score: 1.0, source: 'regex' },
+    ]), tierOf);
+    expect(result.entities).toHaveLength(2);
+    expect(result.entities[0].forceTier).toBe('mask');
+    expect(result.entities[1].forceTier).toBeUndefined();
+  });
+
+  it('preserves forceTier when same-tier duplicates of one span merge', () => {
+    const text = 'I C 1552/23 w aktach';
+    const result = mergeStep(ctx(text, [
+      { entity_group: 'DOCUMENT_REFERENCE', start: 0, end: 11, score: 1.0, source: 'case-allowlist', forceTier: 'mask' },
+      { entity_group: 'DOCUMENT_REFERENCE', start: 0, end: 11, score: 1.0, source: 'case-allowlist', forceTier: 'mask' },
+    ]), tierOf);
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].forceTier).toBe('mask');
+  });
+
+  it('without tierOf behaves exactly as before (single-tier callers)', () => {
+    const text = 'I C 1552/23, III CZP 6/21';
+    const result = mergeStep(ctx(text, [
+      { entity_group: 'DOCUMENT_REFERENCE', start: 0, end: 11, score: 1.0, source: 'regex' },
+      { entity_group: 'DOCUMENT_REFERENCE', start: 13, end: 25, score: 1.0, source: 'regex' },
+    ]));
+    expect(result.entities).toHaveLength(1);
+  });
+});

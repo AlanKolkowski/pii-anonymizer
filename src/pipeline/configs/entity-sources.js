@@ -51,6 +51,12 @@ export const SOURCES = withDtypeOverride({
   // on purpose — the step self-gates on segment content, not an active flag
   // computed from this registry (see createCaseFoldedNerStep's own doc comment).
   'case-folded':    { kind: 'case-folded' },
+  // ST-5 (SCOPE-TIERS-DESIGN.md §5.2): deterministic matcher over the user's
+  // own case-signature allowlist — no model, no download. Registered like
+  // 'case-folded' so requiredSources()/snapshotConfig() can resolve it;
+  // resolveActiveSources()'s kind switch has no branch on purpose — the step
+  // self-gates on a non-empty allowlist passed through configure.
+  'case-allowlist': { kind: 'case-allowlist' },
 });
 
 export const ENTITY_SOURCES = {
@@ -87,7 +93,12 @@ export const ENTITY_SOURCES = {
   BANK_ACCOUNT_IDENTIFIER:  ['polish-fp16', 'regex'],
   PAYMENT_CARD:             ['polish-fp16'],
   PAYMENT_CARD_SECURITY:    ['polish-fp16'],
-  DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16', 'regex'],
+  // ST-5 (SCOPE-TIERS-DESIGN.md §5.2 pkt 3): 'case-allowlist' alias for the
+  // user's own case signatures — same trap as B3/B4-lite/B2 entries above:
+  // sourceFilterStep drops any candidate whose source isn't listed for its
+  // type, regardless of score, so omitting it would silently discard every
+  // candidate createCaseAllowlistStep emits.
+  DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16', 'regex', 'case-allowlist'],
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
   VEHICLE_IDENTIFIER:       ['polish-fp16', 'regex'],

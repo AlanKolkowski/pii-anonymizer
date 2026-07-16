@@ -413,7 +413,15 @@ async function runConfigure(data) {
     // sets these yet (O-ST-7), so both are normally undefined and
     // createPostprocessSteps' own allMask default (true) keeps today's
     // single-tier behavior unchanged.
-    currentConfig = { enabledEntities, requiredAliases, tierOverrides: data.tierOverrides, allMask: data.allMask };
+    // ST-5 (§5.2): caseAllowlist rides configure like enabledEntities; the
+    // list lives in main.js RAM only (O-ST-3 — never persisted to disk).
+    currentConfig = {
+      enabledEntities,
+      requiredAliases,
+      tierOverrides: data.tierOverrides,
+      allMask: data.allMask,
+      caseAllowlist: data.caseAllowlist ?? [],
+    };
     await disposeUnusedModels(requiredAliases);
     self.postMessage({ type: 'configured', requiredAliases, configRequestId });
   } catch (err) {
@@ -451,6 +459,7 @@ async function runClassify(data) {
       enabledEntities: currentConfig.enabledEntities,
       tierOverrides: currentConfig.tierOverrides,
       allMask: currentConfig.allMask,
+      caseAllowlist: currentConfig.caseAllowlist,
       cache: prev,
       sources: SOURCES,
       entitySources: ENTITY_SOURCES,

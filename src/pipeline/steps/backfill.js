@@ -2,7 +2,11 @@ import { couldBeSamePerson } from '../../anonymizer.js';
 import { rulesFor } from '../configs/entity-rules.js';
 
 const CAP_WORD = '[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:-[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)*';
-const NAME_CANDIDATE = new RegExp(`${CAP_WORD}(?:\\s+${CAP_WORD})+`, 'g');
+// Exported for ST-5's JDG review fallback (SCOPE-TIERS-DESIGN.md §5.2 pkt 5):
+// the same two-plus-capitalized-words shape this file uses for fuzzy
+// backfill decides whether a pass-tier organization name may contain a
+// person's name — one pattern, not a copied literal.
+export const NAME_CANDIDATE = new RegExp(`${CAP_WORD}(?:\\s+${CAP_WORD})+`, 'g');
 
 const MIN_VALUE_LENGTH = 2;
 
