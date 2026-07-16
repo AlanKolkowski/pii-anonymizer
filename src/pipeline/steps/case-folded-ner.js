@@ -5,8 +5,10 @@ import documentHeaderLemmas from '../data/document-header-lemmas.json' with { ty
 // RECALL-90-DESIGN.md §2.2 pkt 4: closed list of types the case-folded
 // source may originate candidates for — only types where a fully-uppercase
 // span plausibly still carries a recognizable proper-noun/role shape once
-// restored to Title Case.
-const ALLOWED_TYPES = new Set([
+// restored to Title Case. Exported because OS-1's despaced pass uses the
+// SAME closed list by contract (OCR-SPACING-DESIGN.md §2.2 pkt 4:
+// "identycznej z B2") — one source of truth, not a copied literal.
+export const ALLOWED_TYPES = new Set([
   'PERSON_NAME',
   'ORGANIZATION_NAME',
   'POSTAL_ADDRESS',
@@ -102,7 +104,11 @@ function isBareIdentifierLabel(spanText) {
 // half of this guard. Checked against both corpora at measurement time —
 // zero such GT entities exist in either — so this costs nothing *measured*;
 // flagged here for whoever extends the corpus with that shape later.
-function isStructuralMarkerSpan(spanText) {
+// Exported for OS-1's despaced pass: a spaced-out all-caps header glued and
+// folded to Title Case ("U M O W A  K R E D Y T U" → "Umowa Kredytu") is the
+// same folded-scaffolding shape this guard was measured against — same
+// mechanism, same guard, not a new list.
+export function isStructuralMarkerSpan(spanText) {
   if (isBareIdentifierLabel(spanText)) return true;
   const word = spanText.match(FIRST_WORD_RE);
   if (word && HEADER_LEMMAS.has(word[0].toUpperCase())) return true;
