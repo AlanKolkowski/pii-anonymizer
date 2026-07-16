@@ -1,0 +1,101 @@
+/* ST-4 (SCOPE-TIERS-DESIGN.md §4.2): review-bucket section inside a source
+   card. Quiet by default (collapsed groups), decision buttons equal-weight
+   (R-ST-2: no blessed default between Maskuj and Pomiń). */
+
+.review-bucket {
+  margin-top: 10px;
+  border: 1px solid var(--border, #d9d4c8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--panel, #faf8f2);
+  font-size: 13px;
+}
+
+.review-bucket[hidden] { display: none; }
+
+.rb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rb-title { font-weight: 600; }
+
+.rb-done {
+  color: var(--accent-ink, #2f6b3a);
+  font-weight: 600;
+}
+
+.rb-note {
+  margin: 6px 0 8px;
+  color: var(--muted-ink, #6b675e);
+  font-size: 12px;
+}
+
+.rb-group {
+  border-top: 1px solid var(--border, #e4dfd4);
+  padding: 6px 0;
+}
+
+.rb-group-head {
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.rb-group-done { color: var(--accent-ink, #2f6b3a); }
+
+.rb-bulk {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.rb-row {
+  border-top: 1px dashed var(--border, #e4dfd4);
+  padding: 6px 0;
+}
+
+.rb-row[data-decision='mask'] .rb-value { text-decoration: line-through; }
+
+.rb-row-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.rb-value { font-weight: 600; }
+.rb-count { color: var(--muted-ink, #6b675e); }
+
+.rb-context {
+  margin: 4px 0;
+  color: var(--muted-ink, #4c483f);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.rb-mark {
+  background: var(--highlight, #f3e3a8);
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.rb-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rb-remember {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--muted-ink, #6b675e);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rb-decision { font-weight: 500; }

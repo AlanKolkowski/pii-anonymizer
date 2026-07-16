@@ -1,4 +1,5 @@
 import { createAnnotationEditor } from '../annotation-editor/index.js';
+import { renderReviewBucket } from '../review-bucket/index.js';
 import { formatOcrRanges } from '../../ocr/range-format.js';
 
 // Track 2 (background-tabs / OCR review): surfaces the OCR confidence
@@ -338,8 +339,32 @@ export function createSourcesList(rootEl, opts) {
       getGlobalSeen: opts.getGlobalSeen,
     });
 
+    // ST-4 (SCOPE-TIERS-DESIGN.md §4.2): the W2 review-bucket section lives
+    // under the annotation editor of each card; content renders exclusively
+    // from the review state main.js pushes via setSourceReview.
+    const bucketRoot = document.createElement('div');
+    bucketRoot.hidden = true;
+    wrapper.appendChild(bucketRoot);
+
     cardsHost.appendChild(wrapper);
-    return { wrapper, editor };
+    return { wrapper, editor, bucketRoot, review: null, reviewOpenTypes: new Set() };
+  }
+
+  function renderBucket(id) {
+    const card = cards.get(id);
+    if (!card) return;
+    renderReviewBucket(card.bucketRoot, {
+      sourceId: id,
+      state: card.review,
+      entityLabels: opts.entityLabels ?? {},
+      openTypes: card.reviewOpenTypes,
+      callbacks: {
+        onDecision: (sid, valueKey, decision, options) => opts.onReviewDecision?.(sid, valueKey, decision, options),
+        onBulkDecision: (sid, type, decision) => opts.onReviewBulkDecision?.(sid, type, decision),
+        onUndo: (sid, valueKey) => opts.onReviewUndo?.(sid, valueKey),
+        onFinishReview: (sid) => opts.onFinishReview?.(sid),
+      },
+    });
   }
 
   function refreshToolbar() {
@@ -676,6 +701,12 @@ export function createSourcesList(rootEl, opts) {
     setSourceEntities(id, entities) {
       cards.get(id)?.editor.setEntities(entities);
       if (id === activeId) refreshToolbar();
+    },
+    setSourceReview(id, review) {
+      const card = cards.get(id);
+      if (!card) return;
+      card.review = review;
+      renderBucket(id);
     },
     setSourceLabel(id, label) {
       const card = cards.get(id);
