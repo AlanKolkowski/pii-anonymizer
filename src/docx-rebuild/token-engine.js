@@ -169,20 +169,10 @@ export function rebuildPart({ xmlText, partName, legend, resolveReplacement = nu
     }
     if (!stream.includes('[')) continue;
 
-    const tokens = findTokens(stream);
     const matches = [];
-    const matchedIndexes = new Set();
-    for (const token of tokens) {
-      matchedIndexes.add(token.index);
+    for (const token of findTokens(stream)) {
       const baseValue = legend[token.token];
-      if (baseValue === undefined) {
-        left.push({
-          token: token.token,
-          reason: 'brak-w-legendzie',
-          context: contextAround(stream, token.index, token.index + token.rawLength),
-        });
-        continue;
-      }
+      if (baseValue === undefined) continue; // reported by the post-scan below
       const resolved = resolveReplacement
         ? resolveReplacement({
           token: token.token,
@@ -196,25 +186,43 @@ export function rebuildPart({ xmlText, partName, legend, resolveReplacement = nu
       sanitizedTotal += sanitized;
       matches.push({ index: token.index, rawLength: token.rawLength, value, token: token.token });
     }
-    left.push(...findBrokenTokenResidues(stream, matchedIndexes));
-    if (matches.length === 0) continue;
 
-    for (const segment of segments) {
-      const affected = matches.some((m) =>
-        m.index < segment.start + segment.length && m.index + m.rawLength > segment.start);
-      if (!affected) continue;
-      const nextText = newTextForSegment(segment, matches, stream);
-      // Values enter as text node content ONLY (O-3) — textContent replaces
-      // children with a single text node; the serializer escapes on write.
-      segment.node.textContent = nextText;
-      if (/^\s|\s$/.test(nextText) && !segment.node.getAttributeNS(XML_NS, 'space')) {
-        segment.node.setAttributeNS(XML_NS, 'xml:space', 'preserve');
+    if (matches.length > 0) {
+      for (const segment of segments) {
+        const affected = matches.some((m) =>
+          m.index < segment.start + segment.length && m.index + m.rawLength > segment.start);
+        if (!affected) continue;
+        const nextText = newTextForSegment(segment, matches, stream);
+        // Values enter as text node content ONLY (O-3) — textContent replaces
+        // children with a single text node; the serializer escapes on write.
+        segment.node.textContent = nextText;
+        if (/^\s|\s$/.test(nextText) && !segment.node.getAttributeNS(XML_NS, 'space')) {
+          segment.node.setAttributeNS(XML_NS, 'xml:space', 'preserve');
+        }
+      }
+      for (const match of matches) {
+        replacedCounts.set(match.token, (replacedCounts.get(match.token) ?? 0) + 1);
+        anyReplacement = true;
       }
     }
-    for (const match of matches) {
-      replacedCounts.set(match.token, (replacedCounts.get(match.token) ?? 0) + 1);
-      anyReplacement = true;
+
+    // §6.2: the residue scan runs AFTER replacement, over the part's actual
+    // final stream — so the report can never disagree with the file. Every
+    // grammar hit that survived is a residue: a token unknown to the legend,
+    // or a legend-token literal that arrived INSIDE an inserted value (the
+    // one-pass rule §4.5 rightly never replaces those — no cascade — but the
+    // user must still see it in the map).
+    const postStream = matches.length > 0 ? paragraphStream(paragraph).stream : stream;
+    const postMatchedIndexes = new Set();
+    for (const token of findTokens(postStream)) {
+      postMatchedIndexes.add(token.index);
+      left.push({
+        token: token.token,
+        reason: token.token in legend ? 'literał-w-wartości' : 'brak-w-legendzie',
+        context: contextAround(postStream, token.index, token.index + token.rawLength),
+      });
     }
+    left.push(...findBrokenTokenResidues(postStream, postMatchedIndexes));
   }
 
   let xml = null;
