@@ -3,6 +3,7 @@ import { join, basename, extname, resolve, relative, sep } from 'node:path';
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
 import { runPipeline } from '../pipeline/runner.js';
+import { createContext } from '../pipeline/context.js';
 import { createDefaultPipeline } from '../pipeline/configs/default.js';
 import { ENTITY_SOURCES, SOURCES, allEntityTypes, requiredSources } from '../pipeline/configs/entity-sources.js';
 import { rulesFor } from '../pipeline/configs/entity-rules.js';
@@ -81,7 +82,15 @@ async function processDocument(filePath, pipelineConfig, runDir) {
   console.log(`\nProcessing: ${name} (${text.length} chars)`);
   const startTime = performance.now();
 
-  const ctx = await runPipeline(text, pipelineConfig);
+  // OS-1 (OCR-SPACING-DESIGN.md §2.2 pkt 6): eval-side provenance comes from
+  // the document's name (the *ocr* corpus classes — hold_ocr_mega and
+  // friends); it gates the despaced NER pass exactly like the worker's
+  // import-metadata flag does in the browser.
+  const ocrProvenance = name.toLowerCase().includes('ocr');
+  const ctx = await runPipeline(
+    { ...createContext(text), meta: { ocrProvenance } },
+    pipelineConfig,
+  );
 
   const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
   console.log(`  Done in ${elapsed}s — ${ctx.segments.length} segments, ${ctx.entities.length} entities, ${Object.keys(ctx.legend).length} tokens`);

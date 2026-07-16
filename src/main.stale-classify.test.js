@@ -196,6 +196,7 @@ describe('classify result text snapshots', () => {
       type: 'classify',
       id: 's2',
       text: TEXT_AT_DISPATCH,
+      ocrProvenance: false,
     });
 
     const textarea = document.querySelector('.ann-editor-textarea');
@@ -268,13 +269,13 @@ describe('re-anonymize source selection', () => {
 
     clickAnonymize();
     expect(classifyMessages(worker)).toEqual([
-      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH, ocrProvenance: false },
     ]);
 
     worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY_FOR_DISPATCH_TEXT] });
     expect(classifyMessages(worker)).toEqual([
-      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
-      { type: 'classify', id: 's3', text: DOC_B_TEXT },
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH, ocrProvenance: false },
+      { type: 'classify', id: 's3', text: DOC_B_TEXT, ocrProvenance: false },
     ]);
 
     worker.emit({ type: 'result', id: 's3', data: [PERSON_ENTITY_FOR_DOC_B] });
@@ -301,9 +302,9 @@ describe('re-anonymize source selection', () => {
     clickAnonymize();
 
     expect(classifyMessages(worker)).toEqual([
-      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
-      { type: 'classify', id: 's3', text: DOC_B_TEXT },
-      { type: 'classify', id: 's3', text: DOC_B_EDITED_TEXT },
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH, ocrProvenance: false },
+      { type: 'classify', id: 's3', text: DOC_B_TEXT, ocrProvenance: false },
+      { type: 'classify', id: 's3', text: DOC_B_EDITED_TEXT, ocrProvenance: false },
     ]);
     expect(document.querySelector('[data-testid="source-status-s2"]').dataset.status).toBe('ready');
     expect(mcpText(tools, 'read_source', { id: 's2' })).toBe('[LOCATION_1] podpisał umowę.');
@@ -383,7 +384,7 @@ describe('queued source removal', () => {
 
     clickAnonymize();
     expect(classifyMessages(worker)).toEqual([
-      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH, ocrProvenance: false },
     ]);
 
     document.querySelector('[data-testid="source-remove-s3"]').click();
@@ -392,7 +393,7 @@ describe('queued source removal', () => {
     worker.emit({ type: 'result', id: 's2', data: [PERSON_ENTITY_FOR_DISPATCH_TEXT] });
 
     expect(classifyMessages(worker)).toEqual([
-      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH },
+      { type: 'classify', id: 's2', text: TEXT_AT_DISPATCH, ocrProvenance: false },
     ]);
     expect(JSON.stringify(classifyMessages(worker))).not.toContain(SECOND_QUEUED_TEXT);
     expect(mcpJson(tools, 'list_sources')).toEqual([

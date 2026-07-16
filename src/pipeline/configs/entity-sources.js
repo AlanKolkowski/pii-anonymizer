@@ -51,6 +51,13 @@ export const SOURCES = withDtypeOverride({
   // on purpose — the step self-gates on segment content, not an active flag
   // computed from this registry (see createCaseFoldedNerStep's own doc comment).
   'case-folded':    { kind: 'case-folded' },
+  // OS-1 (OCR-SPACING-DESIGN.md §2.2 pkt 4): same construction as
+  // 'case-folded' — not a model of its own; createDespacedNerStep reuses the
+  // HF sources on glued variants of OCR-spaced segments and relabels the
+  // output. Registered so requiredSources()/sourceFilterStep accept it;
+  // resolveActiveSources()'s kind switch has no branch for it on purpose —
+  // the step self-gates on ctx.meta.ocrProvenance and segment content.
+  'despaced':       { kind: 'despaced' },
 });
 
 export const ENTITY_SOURCES = {
@@ -60,7 +67,7 @@ export const ENTITY_SOURCES = {
   // are — sourceFilterStep drops any candidate whose source isn't listed
   // here for its type, regardless of score, so omitting it would silently
   // discard every candidate createCaseFoldedNerStep emits.
-  PERSON_NAME:              ['multilang-fp32', 'case-folded'],
+  PERSON_NAME:              ['multilang-fp32', 'case-folded', 'despaced'],
   DATE_OF_BIRTH:            ['polish-fp16'],
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
@@ -70,14 +77,14 @@ export const ENTITY_SOURCES = {
   // threshold (weight >=4) — so a source NOT listed here is dropped outright by
   // sourceFilterStep regardless of score. Omitting 'lexicon' here would silently
   // discard every candidate the new step emits.
-  PERSON_ROLE_OR_TITLE:     ['multilang-fp32', 'lexicon', 'case-folded'],
-  ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32', 'case-folded'],
+  PERSON_ROLE_OR_TITLE:     ['multilang-fp32', 'lexicon', 'case-folded', 'despaced'],
+  ORGANIZATION_NAME:        ['polish-fp16', 'multilang-fp32', 'case-folded', 'despaced'],
   ORGANIZATION_IDENTIFIER:  ['multilang-fp32', 'regex'],
   EMAIL_ADDRESS:            ['polish-fp16', 'regex'],
   PHONE_NUMBER:             ['polish-fp16', 'regex'],
   CONTACT_HANDLE:           ['polish-fp16'],
-  POSTAL_ADDRESS:           ['polish-fp16', 'case-folded'],
-  LOCATION:                 ['polish-fp16', 'case-folded'],
+  POSTAL_ADDRESS:           ['polish-fp16', 'case-folded', 'despaced'],
+  LOCATION:                 ['polish-fp16', 'case-folded', 'despaced'],
   GEO_LOCATION:             ['polish-fp16'],
   IP_ADDRESS:               ['polish-fp16'],
   DEVICE_IDENTIFIER:        ['multilang-fp32'],

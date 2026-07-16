@@ -109,10 +109,10 @@ describe('stage helpers', () => {
     const withBoth = createNerSteps([{ alias: 'multilang-q8', id: 'x', dtype: 'q8' }], true, true, noLoad);
     expect(withBoth).toHaveLength(1);
     expect(withBoth[0].phase).toBe('ner');
-    expect(withBoth[0].steps).toHaveLength(5);
+    expect(withBoth[0].steps).toHaveLength(6);
 
     const withNeither = createNerSteps([], false, false, noLoad);
-    expect(withNeither[0].steps).toHaveLength(5); // ner/case-folded-ner/regex/lexicon/special-category-lexicon steps always exist; regex/lexicon/case-folded are no-ops when inactive/non-qualifying
+    expect(withNeither[0].steps).toHaveLength(6); // ner/case-folded-ner/despaced-ner/regex/lexicon/special-category-lexicon steps always exist; regex/lexicon/case-folded/despaced are no-ops when inactive/non-qualifying
   });
 
   it('createNerSteps suppresses the case-folded pass when options.caseFoldedActive is false (cache-orchestrator.js per-source loop)', async () => {
