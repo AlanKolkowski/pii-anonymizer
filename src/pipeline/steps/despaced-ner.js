@@ -90,7 +90,12 @@ export function createDespacedNerStep(sources, loadModel, options = {}) {
       );
       if (!coversWord) continue;
 
-      candidates.push({ ...entity, start, end, source: DESPACED_SOURCE });
+      // Strip the raw model's `word` (and any other surface-text field): it
+      // holds the GLUED variant text, while start/end now point at the
+      // spaced original — a mismatched word would mislead debug output and
+      // eval artifacts. Everything downstream reads text.slice(start, end).
+      const { word: _variantWord, ...mappedFields } = entity;
+      candidates.push({ ...mappedFields, start, end, source: DESPACED_SOURCE });
     }
 
     return { ...ctx, entities: [...ctx.entities, ...candidates] };

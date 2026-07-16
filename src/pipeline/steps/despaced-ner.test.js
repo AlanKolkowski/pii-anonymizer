@@ -16,7 +16,8 @@ function makeMock(matchers) {
       const out = [];
       for (const { needle, group, score } of matchers) {
         const idx = text.indexOf(needle);
-        if (idx >= 0) out.push({ entity_group: group, start: idx, end: idx + needle.length, score: score ?? 0.9 });
+        // `word` mirrors the HF pipeline's raw output shape - the step must strip it on remap.
+        if (idx >= 0) out.push({ entity_group: group, start: idx, end: idx + needle.length, score: score ?? 0.9, word: needle });
       }
       return out;
     },
@@ -83,6 +84,9 @@ describe('createDespacedNerStep — remap and filters', () => {
       expect(entity.source).toBe(DESPACED_SOURCE);
       expect(entity.entity_group).toBe('PERSON_NAME');
       expect(SPACED_TEXT.slice(entity.start, entity.end)).toBe('W r ó b l e w s k a');
+      // The raw model's `word` carries VARIANT text — mismatched with the
+      // remapped span, so the mapping must strip it.
+      expect(entity).not.toHaveProperty('word');
     }
   });
 
