@@ -126,3 +126,50 @@ describe('rebuildDocx — export gates', () => {
     await expect(rebuildDocx(await docxBytes(doctype), LEGEND)).rejects.toMatchObject({ code: 'DOCTYPE' });
   });
 });
+
+// Deflate-path integration: the store-only fixtures above keep jsdom free of
+// CompressionStream assumptions; this block runs the SAME golden through
+// method-8 entries when the runtime provides the streams (Node >= 18 does),
+// covering reader-inflate, writer verbatim-copy of compressed entries and
+// the recompress path for modified parts.
+describe('rebuildDocx — deflate container round-trip', () => {
+  const hasStreams = typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
+
+  it.runIf(hasStreams)('replaces tokens inside a deflate-compressed container', async () => {
+    const input = await buildZip(Object.entries(goldenParts()).map(([name, data]) => ({ name, data, method: 8 })));
+    const { status, bytes } = await rebuildDocx(input, LEGEND);
+    expect(status).toBe('ok');
+    const result = openZip(bytes);
+    expect(decode(await result.extract('word/document.xml'))).toContain('Pozwany Jan Kowalski');
+    // Untouched deflate entries travel verbatim: same compressed bytes.
+    const source = openZip(input);
+    expect(result.extractRaw('word/styles.xml').compressedBytes)
+      .toEqual(source.extractRaw('word/styles.xml').compressedBytes);
+    expect(result.entries.find((e) => e.name === 'word/document.xml').method).toBe(8);
+  });
+
+  it('signals loudly if the runtime ever lacks the streams (environment canary)', () => {
+    expect(hasStreams).toBe(true);
+  });
+});
+
+// §5.1: a w:fldSimple keeps its instruction in an ATTRIBUTE (inspected by
+// MD3) while its child runs are the field RESULT — replaced normally.
+describe('rebuildDocx — fldSimple result runs', () => {
+  it('replaces a token inside the field result, never touching the instruction', async () => {
+    const fieldDoc = `${XML_DECL}<w:document xmlns:w="${W}"><w:body>`
+      + '<w:p><w:fldSimple w:instr=" DOCPROPERTY Klient "><w:r><w:t>Klient: [PERSON_NAME_1]</w:t></w:r></w:fldSimple></w:p>'
+      + '</w:body></w:document>';
+    const { status, bytes, report } = await rebuildDocx(
+      await docxBytes(goldenParts({ 'word/document.xml': fieldDoc })), LEGEND,
+    );
+    expect(status).toBe('ok');
+    const doc = decode(await openZip(bytes).extract('word/document.xml'));
+    expect(doc).toContain('Klient: Jan Kowalski');
+    expect(doc).toContain('w:instr=" DOCPROPERTY Klient "');
+    // Golden header1.xml carries its own token, so assert per-part.
+    const docPart = report.parts.find((p) => p.part === 'word/document.xml');
+    expect(docPart.replaced.reduce((sum, r) => sum + r.count, 0)).toBe(1);
+    expect(docPart.left).toEqual([]);
+  });
+});

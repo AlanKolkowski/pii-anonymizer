@@ -74,6 +74,38 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
       .rejects.toThrow(/nie znaleziono żadnego tokenu/);
   });
 
+  it('mixed export (docx + text outcome) zips both, report only for the rebuilt one', async () => {
+    const bytes = await docxBytes(docxParts('<w:p><w:r><w:t>Pozwany [PERSON_NAME_1] wnosi.</w:t></w:r></w:p>'));
+    const textOutcome = {
+      id: 'o2', label: 'Notatka.txt', mcpLabel: 'Wynik 2',
+      text: 'Czysty [PERSON_NAME_1].', legendSnapshot: { ...LEGEND },
+    };
+    const result = await exportDeanonOutcomes({
+      outcomes: [docxOutcome(bytes), textOutcome], legend: LEGEND, format: 'docx',
+    });
+
+    expect(result.archive).toBe(true);
+    expect(result.count).toBe(2);
+    expect(result.fileName).toBe('zdeanonimizowane-docx.zip');
+    expect(result.files).toHaveLength(2);
+
+    // Exactly one report — for the reconstructed outcome, matched by name.
+    expect(result.reports).toHaveLength(1);
+    expect(result.files).toContain(result.reports[0].name);
+    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0 });
+
+    // The ZIP holds both files; the rebuilt entry is a real DOCX whose
+    // document.xml carries the deanonymized value, not the token.
+    const zip = openZip(new Uint8Array(await result.blob.arrayBuffer()));
+    const names = zip.entries.map((e) => e.name).sort();
+    expect(names).toEqual([...result.files].sort());
+    const rebuiltEntry = await zip.extract(result.reports[0].name);
+    const inner = openZip(new Uint8Array(rebuiltEntry));
+    const doc = new TextDecoder().decode(await inner.extract('word/document.xml'));
+    expect(doc).toContain('Pozwany Jan Kowalski wnosi.');
+    expect(doc).not.toContain('[PERSON_NAME_1]');
+  });
+
   it('text outcomes still export flat, untouched by the DOCX path', async () => {
     const textOutcome = {
       id: 'o2', label: 'Wynik tekstowy', mcpLabel: 'Wynik 2',
