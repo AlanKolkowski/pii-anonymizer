@@ -415,6 +415,19 @@ export function createSourcesList(rootEl, opts) {
       left.appendChild(ocrEl);
     }
 
+    // ST-8 (SCOPE-TIERS-DESIGN.md §8.1 pkt 2, R-ST-4): two documents in one
+    // session must never silently live in two configuration scopes — a ready
+    // card anonymized under an older configuration says so out loud until
+    // the user re-runs Anonimizuj.
+    if (card.configOutdated) {
+      left.appendChild(sep());
+      const staleEl = document.createElement('span');
+      staleEl.className = 'meta srclist-config-stale';
+      staleEl.dataset.testid = `editor-toolbar-config-stale-${activeId}`;
+      staleEl.textContent = 'zanonimizowano starszą konfiguracją';
+      left.appendChild(staleEl);
+    }
+
     const right = document.createElement('div');
     right.className = 'right';
 
@@ -692,6 +705,14 @@ export function createSourcesList(rootEl, opts) {
       const card = cards.get(id);
       if (!card) return;
       card.meta = meta ?? null;
+      if (id === activeId) refreshToolbar();
+    },
+    setSourceConfigOutdated(id, outdated) {
+      const card = cards.get(id);
+      if (!card) return;
+      const next = Boolean(outdated);
+      if (card.configOutdated === next) return;
+      card.configOutdated = next;
       if (id === activeId) refreshToolbar();
     },
     setSourceStatus(id, status, error) {
