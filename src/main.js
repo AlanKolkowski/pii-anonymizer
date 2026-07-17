@@ -19,7 +19,16 @@ import {
 import { extractText } from './file-import/index.js';
 import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
-import { parseDictionary, resolveClassifyResult } from './review-engine.js';
+import {
+  parseDictionary,
+  serializeDictionary,
+  addDictionaryEntry,
+  resolveClassifyResult,
+  applyDecision,
+  clearDecision,
+  finishReview,
+  pendingValueKeys,
+} from './review-engine.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -30,6 +39,7 @@ import {
 import './style.css';
 import './ui/annotation-editor/styles.css';
 import './ui/sources-list/styles.css';
+import './ui/review-bucket/styles.css';
 
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
@@ -74,7 +84,14 @@ const PRELOAD_NER_LS_KEY = 'pii.preload-ner';
 // GATE-SCOPE GS-3. Read at boot; entries are written only by an explicit
 // "remember" action in the review UI (ST-4).
 const REVIEW_DICTIONARY_LS_KEY = 'pii.review-dictionary';
-const reviewDictionary = parseDictionary(localStorage.getItem(REVIEW_DICTIONARY_LS_KEY));
+let reviewDictionary = parseDictionary(localStorage.getItem(REVIEW_DICTIONARY_LS_KEY));
+
+// ST-4: dictionary entries are created ONLY by the explicit "zapamiętaj na
+// stałe" action on a decision (§4.1 pkt 5) — never automatically.
+function rememberReviewDecision(valueKey, decision) {
+  reviewDictionary = addDictionaryEntry(reviewDictionary, valueKey, decision);
+  localStorage.setItem(REVIEW_DICTIONARY_LS_KEY, serializeDictionary(reviewDictionary));
+}
 
 // The annotation editor's post-edit pass, shared with review-decision
 // application (§4.1 pkt 3): one backfill mechanism, not two.
@@ -474,7 +491,63 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     updateSourceDirtyState(id, dirty);
   },
   onModeChange() { refreshAnonymizeButton(); },
+  // ST-4 (SCOPE-TIERS-DESIGN.md §4.2): review-bucket actions — thin wiring
+  // over the ST-3 engine; entities/legend go through the exact same paths
+  // as annotation-editor edits.
+  onReviewDecision(id, valueKey, decision, options) {
+    handleReviewDecision(id, [valueKey], decision, options);
+  },
+  onReviewBulkDecision(id, type, decision) {
+    const s = sources.find((x) => x.id === id);
+    if (!s) return;
+    const keys = pendingValueKeys(s.candidates, s.reviewDecisions, s.text)
+      .filter((key) => key.startsWith(`${type}::`));
+    handleReviewDecision(id, keys, decision, { origin: 'bulk' });
+  },
+  onReviewUndo(id, valueKey) {
+    const s = sources.find((x) => x.id === id);
+    if (!s || s.status !== 'ready') return;
+    const result = clearDecision({
+      text: s.text, entities: s.entities, decisions: s.reviewDecisions, valueKey,
+    });
+    s.entities = result.entities;
+    s.reviewDecisions = result.decisions;
+    pushReviewState(s);
+  },
+  onFinishReview(id) {
+    const s = sources.find((x) => x.id === id);
+    if (!s || s.status !== 'ready') return;
+    s.reviewDecisions = finishReview(s.candidates, s.reviewDecisions, s.text);
+    pushReviewState(s);
+  },
 });
+
+function handleReviewDecision(id, valueKeys, decision, { origin = 'user', remember = false } = {}) {
+  const s = sources.find((x) => x.id === id);
+  if (!s || s.status !== 'ready') return;
+  let entities = s.entities;
+  let decisions = s.reviewDecisions;
+  for (const valueKey of valueKeys) {
+    const result = applyDecision({
+      text: s.text, entities, candidates: s.candidates, decisions,
+      valueKey, decision, origin, postEdit: reviewPostEdit,
+    });
+    entities = result.entities;
+    decisions = result.decisions;
+    if (remember) rememberReviewDecision(valueKey, decision);
+  }
+  s.entities = entities;
+  s.reviewDecisions = decisions;
+  pushReviewState(s);
+}
+
+// One place that mirrors review-engine state into the UI and the legend —
+// the same refresh pair every entity mutation in this file uses.
+function pushReviewState(s) {
+  sourcesList.setSourceEntities(s.id, s.entities);
+  sourcesList.setSourceReview(s.id, { text: s.text, candidates: s.candidates, decisions: s.reviewDecisions });
+  refreshLegend();
+}
 sourcesList.renderDocList(docListRoot);
 
 const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
@@ -1224,6 +1297,7 @@ worker.onmessage = (e) => {
         s.error = null;
         s.lastReadyText = s.text;
         sourcesList.setSourceEntities(id, resolved.entities);
+        sourcesList.setSourceReview(id, { text: s.text, candidates: s.candidates, decisions: s.reviewDecisions });
         sourcesList.setSourceStatus(id, 'ready');
       } else if (s) {
         s.entities = [];
@@ -1232,6 +1306,7 @@ worker.onmessage = (e) => {
         s.error = null;
         s.lastReadyText = null;
         sourcesList.setSourceEntities(id, []);
+        sourcesList.setSourceReview(id, null);
         sourcesList.setSourceStatus(id, 'idle');
       }
       inFlightClassifyTexts.delete(id);
