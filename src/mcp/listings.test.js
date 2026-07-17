@@ -134,3 +134,79 @@ describe('createLabelSequence', () => {
     expect(sources()).toBe('Źródło 2');
   });
 });
+
+// ST-6 (SCOPE-TIERS-DESIGN.md §7.1): review-bucket boundary — a source with
+// unresolved W2 candidates is invisible to the bridge until the review is
+// closed; the refusal carries no candidate data whatsoever.
+describe('review-complete boundary (ST-6)', () => {
+  const seen = {
+    'PERSON_NAME::Jan Kowalski': '[PERSON_NAME_1]',
+    'PERSON_ATTRIBUTE::wdowiec': '[PERSON_ATTRIBUTE_1]',
+  };
+  const text = 'Pozew Jan Kowalski, wdowiec.';
+
+  function sourceInReview(overrides = {}) {
+    return {
+      id: 's1',
+      label: 'prywatna_nazwa.pdf',
+      mcpLabel: 'Źródło 1',
+      text,
+      entities: [{ entity_group: 'PERSON_NAME', start: 6, end: 18, score: 0.99 }],
+      candidates: [{
+        entity_group: 'PERSON_ATTRIBUTE',
+        start: text.indexOf('wdowiec'),
+        end: text.indexOf('wdowiec') + 'wdowiec'.length,
+        score: 0.9,
+        source: 'ner',
+        tier: 'review',
+        valueKey: 'PERSON_ATTRIBUTE::wdowiec',
+      }],
+      reviewDecisions: new Map(),
+      status: 'ready',
+      ...overrides,
+    };
+  }
+
+  it('does not list a ready source with pending candidates', () => {
+    expect(listings.buildSourceListing([sourceInReview()], seen)).toEqual([]);
+  });
+
+  it('read_source refuses with a review message carrying no candidate data', () => {
+    const response = listings.buildReadSourceContent([sourceInReview()], seen, 's1');
+    const body = response.content[0].text;
+    expect(body).toContain('w przeglądzie');
+    expect(body).not.toContain('wdowiec');
+    expect(body).not.toContain('Kowalski');
+    expect(body).not.toMatch(/\d+ kandydat/);
+  });
+
+  it('a decision on every valueKey (mask or skip) makes the source readable again', () => {
+    const masked = sourceInReview({
+      reviewDecisions: new Map([['PERSON_ATTRIBUTE::wdowiec', { decision: 'mask', origin: 'user' }]]),
+    });
+    expect(listings.buildSourceListing([masked], seen)).toHaveLength(1);
+
+    const skipped = sourceInReview({
+      reviewDecisions: new Map([['PERSON_ATTRIBUTE::wdowiec', { decision: 'skip', origin: 'bulk' }]]),
+    });
+    const response = listings.buildReadSourceContent([skipped], seen, 's1');
+    // Skip is a HUMAN decision — the visible value crossing afterwards is
+    // the designed behavior (§7.1 pkt 1), not a leak.
+    expect(response.content[0].text).toBe('Pozew [PERSON_NAME_1], wdowiec.');
+  });
+
+  it('a purely-W2 source (zero mask entities) stays unreadable even after skip-all (§7.1 pkt 3)', () => {
+    const pureW2 = sourceInReview({
+      entities: [],
+      reviewDecisions: new Map([['PERSON_ATTRIBUTE::wdowiec', { decision: 'skip', origin: 'bulk' }]]),
+    });
+    expect(listings.buildSourceListing([pureW2], seen)).toEqual([]);
+    const response = listings.buildReadSourceContent([pureW2], seen, 's1');
+    expect(response.content[0].text).toContain('nie zawiera wykrytych encji');
+  });
+
+  it('sources without candidate fields (pre-tier world) behave exactly as before', () => {
+    const legacy = sourceInReview({ candidates: undefined, reviewDecisions: undefined });
+    expect(listings.buildSourceListing([legacy], seen)).toHaveLength(1);
+  });
+});

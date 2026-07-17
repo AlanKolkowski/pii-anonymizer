@@ -1,5 +1,6 @@
 import { applyTokens } from '../anonymizer.js';
 import { containsToken } from '../tokens.js';
+import { reviewComplete } from '../review-engine.js';
 
 // Payload for the `list_sources` MCP tool. Only `mcpLabel` (a synthetic or
 // user-shared name) crosses the boundary — never the private `label`, which may
@@ -22,8 +23,20 @@ function hasDetectedEntities(source) {
   return Array.isArray(source.entities) && source.entities.length > 0;
 }
 
+// ST-6 (SCOPE-TIERS-DESIGN.md §7.1 pkt 1): HARD condition — a source with
+// unresolved W2 review candidates is invisible to the bridge until the
+// review is closed. The bridge may only ever see tokenized text AFTER the
+// user's decisions; the soft variant (readable immediately, review in
+// parallel) was rejected by design (O-ST-5) because it opens exactly the
+// race the constraint forbids: the LLM reading the text before the radca
+// masked a quasi-identifying role. A source without candidates is complete
+// by definition (ST-3), so pre-tier sources behave exactly as today.
+function isReviewComplete(source) {
+  return reviewComplete(source.candidates, source.reviewDecisions, source.text ?? '');
+}
+
 function isReadableSource(source) {
-  return source?.status === 'ready' && hasDetectedEntities(source);
+  return source?.status === 'ready' && hasDetectedEntities(source) && isReviewComplete(source);
 }
 
 function hasAnonymizationToken(text) {
@@ -47,6 +60,13 @@ export function buildReadSourceContent(sources, seen, id) {
   const source = sources.find((x) => x.id === id);
   if (!source || source.status !== 'ready') {
     return jsonContent({ error: `Dokument źródłowy ${id} nie jest gotowy` });
+  }
+  // ST-6: the error deliberately carries no counts, no values, no contexts —
+  // candidates do not exist in any MCP payload (§7.1 pkt 2).
+  if (!isReviewComplete(source)) {
+    return jsonContent({
+      error: `Dokument źródłowy ${id} jest w przeglądzie; treść będzie dostępna po zakończeniu przeglądu w aplikacji`,
+    });
   }
   if (!hasDetectedEntities(source)) {
     return jsonContent({
