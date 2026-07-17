@@ -2,6 +2,7 @@ import { readdir, readFile, readlink, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { allEntityTypes } from '../pipeline/configs/entity-sources.js';
 import { sameEnabledSets, NEQ_MARKER } from './enabled-entities.js';
+import { scoreComparability } from './score-compat.js';
 
 const RESULTS_DIR = join(import.meta.dirname, '../../test-data/results');
 
@@ -125,13 +126,24 @@ async function main() {
 
   const oldEnabled = oldScores?.enabledEntities ?? oldSummary.enabledEntities ?? allEntityTypes();
   const newEnabled = newScores?.enabledEntities ?? newSummary.enabledEntities ?? allEntityTypes();
-  const sameEnabled = sameEnabledSets(oldEnabled, newEnabled);
+  // ST-8 (§8.1 pkt 4): score files from different scoring versions or tier
+  // configurations are not the same measurement — refuse the diff loudly
+  // instead of printing quiet numbers.
+  const compat = scoreComparability(oldScores, newScores);
+  const sameEnabled = sameEnabledSets(oldEnabled, newEnabled) && compat.comparable;
 
   console.log(`\nComparing eval runs:`);
   console.log(`  OLD: ${oldId}${oldLabel}`);
   console.log(`  NEW: ${newId}${newLabel}\n`);
 
-  if (!sameEnabled) {
+  if (!compat.comparable) {
+    console.log('  ⚠ score files are not comparable — score deltas hidden (≠scoring).');
+    for (const reason of compat.reasons) console.log(`     ${reason}`);
+    console.log('     Re-score the OLD run with the current scorer (npm run eval:score) to compare.');
+    console.log('');
+  }
+
+  if (!sameEnabledSets(oldEnabled, newEnabled)) {
     console.log('  ⚠ enabledEntities differ between runs — score and count deltas hidden (≠types).');
     console.log('     Pipeline behavior is non-distributive over types: re-run with matched subsets to compare.');
     const onlyOld = oldEnabled.filter(t => !newEnabled.includes(t));

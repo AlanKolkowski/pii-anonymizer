@@ -59,6 +59,7 @@ const nextOutcomeMcpLabel = createLabelSequence('Wynik');
 let lastRun = null;
 const inFlightSourceIds = new Set();
 const inFlightClassifyTexts = new Map();
+const inFlightConfigStamps = new Map();
 const inFlightFileImportIds = new Set();
 let configuredOnce = false;
 let everConfigured = false;
@@ -358,8 +359,27 @@ const selector = createEntitySelector(selectorRoot, {
     refreshAnonymizeButton();
     updateWebnnHint(selected);
     scheduleConfigure(selected);
+    refreshConfigStamps();
   },
 });
+
+// ST-8 (SCOPE-TIERS-DESIGN.md §8.1 pkt 2, R-ST-4): every classify result is
+// stamped with the configuration that produced it; when the live
+// configuration drifts (today: entity selection; tierOverrides/allMask join
+// the signature automatically once O-ST-7's UI writes them), ready cards get
+// a visible "zanonimizowano starszą konfiguracją" marker instead of two
+// documents silently living in two scopes. Nothing re-anonymizes by itself —
+// the Anonimizuj button's selectionChanged path stays the only trigger.
+function currentConfigSignature() {
+  return JSON.stringify({ entities: [...selector.getSelected()].sort() });
+}
+
+function refreshConfigStamps() {
+  for (const s of sources) {
+    if (s.status !== 'ready' || !s.configStamp) continue;
+    sourcesList.setSourceConfigOutdated(s.id, s.configStamp !== currentConfigSignature());
+  }
+}
 
 allowGpuInput?.addEventListener('change', () => {
   persistBoolean(GPU_LS_KEY, isGpuAllowed());
@@ -428,7 +448,7 @@ const sourcesList = createSourcesList(sourcesListRoot, {
     const label = nextPasteLabel();
     const mcpLabel = nextSourceMcpLabel();
     sources.push({
-      id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'idle', error: null, lastReadyText: null,
+      id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'idle', error: null, lastReadyText: null, configStamp: null,
     });
     sourcesList.addSource(id, label, {
       text: '', entities: [], status: 'idle', type: 'paste', mcpLabel,
@@ -628,7 +648,7 @@ async function addSourceFromFile(file, batch = {}) {
   const label = file.name || `Plik ${sources.length + 1}`;
   const mcpLabel = nextSourceMcpLabel();
   sources.push({
-    id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'pending', error: null, lastReadyText: null,
+    id, label, mcpLabel, text: '', entities: [], candidates: [], reviewDecisions: new Map(), meta: null, status: 'pending', error: null, lastReadyText: null, configStamp: null,
   });
   sourcesList.addSource(id, label, {
     text: '', entities: [], status: 'pending', type: 'file', mcpLabel,
@@ -1175,6 +1195,7 @@ function dispatchNextClassify() {
   syncClassifyLock();
   if (!next) return;
   inFlightClassifyTexts.set(next.id, next.text);
+  inFlightConfigStamps.set(next.id, currentConfigSignature());
   clearProgressHideTimer();
   progressSourceIndex += 1;
   updateProgress({
@@ -1296,20 +1317,25 @@ worker.onmessage = (e) => {
         s.status = 'ready';
         s.error = null;
         s.lastReadyText = s.text;
+        s.configStamp = inFlightConfigStamps.get(id) ?? currentConfigSignature();
         sourcesList.setSourceEntities(id, resolved.entities);
         sourcesList.setSourceReview(id, { text: s.text, candidates: s.candidates, decisions: s.reviewDecisions });
         sourcesList.setSourceStatus(id, 'ready');
+        sourcesList.setSourceConfigOutdated(id, s.configStamp !== currentConfigSignature());
       } else if (s) {
         s.entities = [];
         s.candidates = [];
         s.status = 'idle';
         s.error = null;
         s.lastReadyText = null;
+        s.configStamp = null;
         sourcesList.setSourceEntities(id, []);
         sourcesList.setSourceReview(id, null);
         sourcesList.setSourceStatus(id, 'idle');
+        sourcesList.setSourceConfigOutdated(id, false);
       }
       inFlightClassifyTexts.delete(id);
+      inFlightConfigStamps.delete(id);
       inFlightSourceIds.delete(id);
       dispatchNextClassify();
       refreshLegend();
@@ -1354,6 +1380,7 @@ worker.onmessage = (e) => {
         updateProgress({ type: 'error', id, t: performance.now() });
         inFlightSourceIds.delete(id);
         inFlightClassifyTexts.delete(id);
+        inFlightConfigStamps.delete(id);
         dispatchNextClassify();
       }
       if (!isAnyClassifyInFlight()) {

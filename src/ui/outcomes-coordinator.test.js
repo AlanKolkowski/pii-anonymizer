@@ -173,3 +173,48 @@ describe('createOutcomesCoordinator', () => {
     );
   });
 });
+
+// ST-8 (SCOPE-TIERS-DESIGN.md §8.1 pkt 3 / §8.2): outcomes created before a
+// tier-configuration change keep deanonymizing byte-for-byte — the legend
+// snapshot, not the live configuration, is the truth for old outcomes. New
+// sources simply stop generating such tokens; nothing already written moves.
+describe('outcome legend snapshots survive a tier-configuration pivot (ST-8)', () => {
+  it('an ORG token deanonymizes identically after the live legend loses it', () => {
+    document.body.innerHTML = '<div id="legacy"></div><div id="deanon"></div>';
+    const outcomes = [];
+    let legend = {
+      '[PERSON_NAME_1]': 'Jan Kowalski',
+      '[ORGANIZATION_NAME_2]': 'Kancelaria Radcy Prawnego K-Law',
+    };
+
+    const legacy = createOutcomesList(document.getElementById('legacy'), {
+      onRemove: vi.fn(), onAdd: vi.fn(), onEdit: vi.fn(),
+    });
+    const deanon = createDeanonWorkspace(document.getElementById('deanon'), {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      onAdd: vi.fn(), onUpdate: vi.fn(), onRemove: vi.fn(),
+      entityLabels: {},
+    });
+    deanon.render();
+    const coordinator = createOutcomesCoordinator({
+      outcomes,
+      outcomesList: legacy,
+      deanonWorkspace: deanon,
+      getLegend: () => legend,
+      makeId: () => 'mig-1',
+    });
+
+    coordinator.createOutcome('Pismo', 'Umowa z [ORGANIZATION_NAME_2] dla [PERSON_NAME_1].');
+    const before = document.querySelector('[data-testid="outcome-body-mig-1"]').textContent;
+    expect(before).toBe('Umowa z Kancelaria Radcy Prawnego K-Law dla Jan Kowalski.');
+
+    // The pivot: ORGANIZATION_NAME becomes pass-tier, the source is rerun,
+    // and the recomputed global legend no longer carries the ORG token.
+    legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    coordinator.refreshLegend(legend);
+
+    const after = document.querySelector('[data-testid="outcome-body-mig-1"]').textContent;
+    expect(after).toBe(before);
+  });
+});
