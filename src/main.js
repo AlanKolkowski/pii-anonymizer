@@ -16,7 +16,7 @@ import {
   fileImportProgressReducer,
   getFileImportProgressView,
 } from './ui/file-import-progress-state.js';
-import { extractText } from './file-import/index.js';
+import { extractText, MAX_BYTES } from './file-import/index.js';
 import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
 import {
@@ -596,6 +596,9 @@ const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
   onExport(format) {
     return exportDeanonDocuments(format);
   },
+  onImportDocx(file) {
+    return importDocxOutcome(file);
+  },
 });
 
 const outcomeCoordinator = createOutcomesCoordinator({
@@ -615,8 +618,39 @@ const modeController = createToolModeController(toolRoot, {
 // Single code path for outcome creation — used by both the deanonymize-tab UI
 // affordance and the write_outcome MCP handler. Caller is responsible for
 // validating `label` and `text` are non-empty strings.
-function createOutcome(label, text, mcpLabel) {
-  return outcomeCoordinator.createOutcome(label, text, mcpLabel);
+function createOutcome(label, text, mcpLabel, extra) {
+  return outcomeCoordinator.createOutcome(label, text, mcpLabel, extra);
+}
+
+// DOCX-REBUILD §3.4/§7.1: the only v1 input path for a formatted pismo from
+// the AI — the user picks a .docx file; it is inspected up front (macros/
+// Strict/DTD reject outright, external references classified §9.3), the
+// mammoth preview becomes the read-only outcome text, and the RAW BYTES stay
+// in RAM on the outcome for the reconstruction export. No IPC, no network.
+async function importDocxOutcome(file) {
+  try {
+    if (file.size > MAX_BYTES) {
+      throw new Error(`Plik przekracza limit ${Math.floor(MAX_BYTES / (1024 * 1024))} MB`);
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const [{ openZip }, { inspectDocx }] = await Promise.all([
+      import('./docx-rebuild/zip-reader.js'),
+      import('./docx-rebuild/ooxml-inspect.js'),
+    ]);
+    const inspection = await inspectDocx(openZip(bytes));
+    const { extractDocx } = await import('./file-import/docx.js');
+    const { text } = await extractDocx(file);
+    createOutcome(file.name || 'pismo-od-AI.docx', text, nextOutcomeMcpLabel(), {
+      docx: { bytes, inspection },
+    });
+    if (inspection.external.blocked.length > 0) {
+      deanonWorkspace.showMessage(
+        `Uwaga: dokument zawiera ${inspection.external.blocked.length} zewnętrznych odwołań innych niż hiperłącza — eksport DOCX będzie zablokowany do czasu ich usunięcia.`,
+      );
+    }
+  } catch (err) {
+    deanonWorkspace.showMessage(`Import DOCX nieudany: ${err.message}`);
+  }
 }
 
 // Single code path for outcome updates — used by both the inline edit
@@ -633,7 +667,9 @@ function removeOutcome(id) {
 async function exportDeanonDocuments(format) {
   const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
   const result = await exportDeanonOutcomes({
-    outcomes: outcomes.map((o) => ({ id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot })),
+    outcomes: outcomes.map((o) => ({
+      id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot, docx: o.docx,
+    })),
     legend: { ...legend },
     format,
   });

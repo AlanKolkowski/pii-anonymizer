@@ -22,10 +22,13 @@ export function createOutcomesCoordinator({
     return typeof getLegend === 'function' ? getLegend() : {};
   }
 
-  function createOutcome(label, text, mcpLabel = label) {
+  function createOutcome(label, text, mcpLabel = label, extra = {}) {
     const id = makeId();
     const liveLegend = currentLegend();
-    const outcome = { id, label, mcpLabel, text, legendSnapshot: legendSnapshot(liveLegend) };
+    // DOCX-REBUILD §3.4: a DOCX outcome carries `docx: { bytes, inspection }`
+    // — RAM only, gone with the outcome; never serialized anywhere and never
+    // part of any MCP payload (listings read `text` exclusively).
+    const outcome = { id, label, mcpLabel, text, legendSnapshot: legendSnapshot(liveLegend), ...extra };
     outcomes.push(outcome);
     outcomesList.addOutcome(id, label, text, effectiveLegend(outcome, liveLegend));
     deanonWorkspace.activateOutcome(id);
@@ -35,6 +38,10 @@ export function createOutcomesCoordinator({
   function updateOutcomeFields(id, label, text, { mcpLabel } = {}) {
     const outcome = outcomes.find((x) => x.id === id);
     if (!outcome) return false;
+    // DOCX-REBUILD §3.4: the text of a DOCX outcome is a READ-ONLY preview —
+    // the bytes are the source of truth, and an edited preview would promise
+    // an export that cannot reflect it.
+    if (outcome.docx) return false;
     const liveLegend = currentLegend();
     outcome.label = label;
     outcome.text = text;

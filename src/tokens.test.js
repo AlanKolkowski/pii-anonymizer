@@ -11,7 +11,7 @@ describe('tokens grammar — corpus of real entity types', () => {
       const token = `[${type}_1]`;
       expect(containsToken(token)).toBe(true);
       expect(isTokenLiteral(token)).toBe(true);
-      expect(findTokens(token)).toEqual([{ token, tokenId: `${type}_1`, type, index: 0 }]);
+      expect(findTokens(token)).toEqual([{ token, tokenId: `${type}_1`, type, index: 0, rawLength: token.length }]);
       expect(tokenType(`${type}_1`)).toBe(type);
       expect(splitTokenParts(token)).toEqual([{ token, tokenId: `${type}_1`, type }]);
     }
@@ -65,7 +65,7 @@ describe('edge-case literals', () => {
 
   it('matches only the inner token when brackets are doubled', () => {
     const found = findTokens('[[TYPE_1]]');
-    expect(found).toEqual([{ token: '[TYPE_1]', tokenId: 'TYPE_1', type: 'TYPE', index: 1 }]);
+    expect(found).toEqual([{ token: '[TYPE_1]', tokenId: 'TYPE_1', type: 'TYPE', index: 1, rawLength: 8 }]);
   });
 
   it('matches a token at the very start of text', () => {
