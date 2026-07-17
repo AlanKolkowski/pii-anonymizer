@@ -463,10 +463,15 @@ async function runClassify(data) {
     });
     nerCache.set(hash, newEntry);
 
+    // ST-3 (SCOPE-TIERS-DESIGN.md §4.1 pkt 1): W2 review candidates ride the
+    // same local postMessage as entities — no new egress channel. With the
+    // allMask default this is always [] (tierPartitionStep finds no review
+    // tier), so today's consumers see no change.
     self.postMessage({
       type: 'result',
       id,
       data: ctx.entities,
+      candidates: ctx.reviewCandidates ?? [],
       anonymized: ctx.anonymized,
       legend: ctx.legend,
       debug: ctx.debug,

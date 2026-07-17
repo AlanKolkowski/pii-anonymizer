@@ -1,6 +1,9 @@
 import { effectiveTier } from '../configs/type-tiers.js';
 
-function foldValue(value) {
+// Exported for the review engine (ST-3, src/review-engine.js): decision keys
+// there must fold values exactly the way candidate valueKeys are folded here,
+// or a remembered decision would silently stop matching its own candidate.
+export function foldValue(value) {
   return value.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pl');
 }
 
