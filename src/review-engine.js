@@ -1,5 +1,6 @@
 import { foldValue } from './pipeline/steps/tier-partition.js';
 import { overlapsAny } from './ui/annotation-editor/operations.js';
+import { weightFor } from './pipeline/configs/type-weights.js';
 
 // ST-3 (SCOPE-TIERS-DESIGN.md §4.1): the W2 review-bucket engine. Pure
 // functions only — document state (candidates, decisions) lives in main.js,
@@ -223,6 +224,33 @@ export function finishReview(candidates, decisions, text = '') {
 // phrases in entity-rules.js (see the design's D2 argument; final verdict is
 // GATE-SCOPE GS-3). Entries are created only by an explicit "remember" action
 // in the UI (ST-4) — never automatically.
+//
+// GS-3 gate (SCOPE-TIERS-DESIGN.md §7, table row GS-3) resolves the D2
+// question — is a dictionary entry configuration or a case-content artifact
+// on disk? — differently by weight. TYPE_WEIGHTS-5 types (art. 9-10 RODO
+// special categories, plus PERSON_IDENTIFIER/AUTH_SECRET) are refused: a
+// standing, cross-document "always skip this HEALTH_DATA phrase" is no
+// longer generic configuration once the phrase is specific enough to
+// identify a person's health/beliefs/orientation/record — persisting a whole
+// LIST of such phrases across cases is itself a profile of the radca's
+// caseload sitting on disk (exactly the D2 "zero artefaktów o wartości akt"
+// asset the RAM-only legend already protects), and a future document's
+// mosaic case (the same generic-looking phrase, but identifying in THAT
+// document) would auto-skip review with no human ever looking at it again.
+// Weight ≤4 types (e.g. PERSON_ATTRIBUTE "wdowiec") are unaffected — that is
+// exactly the generic-configuration case D2 was written to allow.
+//
+// THIS IS A SAFE DEFAULT IMPLEMENTING THE GATE'S RECOMMENDATION, NOT A FINAL
+// ANSWER: O-ST-2 (Alan's decision, still open per the design's decision
+// register) is precisely whether art. 9-10 types may ever be persisted.
+// Loosening this — allowing any weight-5 type into the persistent
+// dictionary — requires Alan's explicit, informed sign-off on O-ST-2, not a
+// silent code change.
+const DICTIONARY_RESTRICTED_WEIGHT = 5;
+
+function isRestrictedFromDictionary(type) {
+  return weightFor(type) === DICTIONARY_RESTRICTED_WEIGHT;
+}
 
 export function emptyDictionary() {
   return { version: 1, alwaysMask: {}, alwaysSkip: {} };
@@ -238,6 +266,12 @@ function sanitizeSection(raw) {
   const section = {};
   if (raw && typeof raw === 'object') {
     for (const [type, list] of Object.entries(raw)) {
+      // GS-3 gate: ignore weight-5 (art. 9-10 + identifier) entries even if
+      // they are already sitting in localStorage — e.g. hand-edited JSON, or
+      // a dictionary written by a future/older build with a looser rule.
+      // Read-time enforcement, not just write-time, so the gate holds no
+      // matter how the entry got onto disk (defense in depth for D2).
+      if (isRestrictedFromDictionary(type)) continue;
       const values = sanitizeList(list);
       if (values) section[type] = values;
     }
@@ -292,6 +326,16 @@ function withoutEntry(section, type, folded) {
 export function addDictionaryEntry(dictionary, valueKey, decision) {
   const { type, folded } = parseValueKey(valueKey);
   if (!folded) return dictionary;
+  // GS-3 gate (see the block comment above sanitizeSection): weight-5 types
+  // (art. 9-10 RODO + identifiers) never enter the persistent dictionary.
+  // Silent no-op by design — this is a "remember" action the radca took
+  // deliberately, so it must not surface as an error; it must simply not
+  // write art. 9-10 material to disk. The decision itself is not lost: it
+  // still applies for the current document via the in-RAM decisions map
+  // (resolveClassifyResult's level 1/2), it just never becomes a standing,
+  // cross-document, on-disk rule. Loosening this requires Alan's O-ST-2
+  // sign-off — see the comment above sanitizeSection.
+  if (isRestrictedFromDictionary(type)) return dictionary;
   const target = decision === 'mask' ? 'alwaysMask' : 'alwaysSkip';
   const other = decision === 'mask' ? 'alwaysSkip' : 'alwaysMask';
   const targetSection = { ...dictionary[target] };

@@ -465,15 +465,15 @@ describe('dictionary', () => {
   it('add/remove round-trips through serialization', () => {
     let dict = emptyDictionary();
     dict = addDictionaryEntry(dict, 'PERSON_ATTRIBUTE::wdowiec', 'skip');
-    dict = addDictionaryEntry(dict, 'HEALTH_DATA::cukrzyca', 'mask');
+    dict = addDictionaryEntry(dict, 'ORGANIZATION_NAME::przykladowa kancelaria', 'mask');
     const revived = parseDictionary(serializeDictionary(dict));
     expect(dictionaryDecisionFor(revived, 'PERSON_ATTRIBUTE::wdowiec')).toBe('skip');
-    expect(dictionaryDecisionFor(revived, 'HEALTH_DATA::cukrzyca')).toBe('mask');
-    expect(dictionaryDecisionFor(revived, 'HEALTH_DATA::wdowiec')).toBe(null);
+    expect(dictionaryDecisionFor(revived, 'ORGANIZATION_NAME::przykladowa kancelaria')).toBe('mask');
+    expect(dictionaryDecisionFor(revived, 'ORGANIZATION_NAME::wdowiec')).toBe(null);
 
     const removed = removeDictionaryEntry(revived, 'PERSON_ATTRIBUTE::wdowiec');
     expect(dictionaryDecisionFor(removed, 'PERSON_ATTRIBUTE::wdowiec')).toBe(null);
-    expect(dictionaryDecisionFor(removed, 'HEALTH_DATA::cukrzyca')).toBe('mask');
+    expect(dictionaryDecisionFor(removed, 'ORGANIZATION_NAME::przykladowa kancelaria')).toBe('mask');
   });
 
   it('a value is never on both sides — adding flips the side', () => {
@@ -489,6 +489,60 @@ describe('dictionary', () => {
     const dict = emptyDictionary();
     addDictionaryEntry(dict, 'PERSON_ATTRIBUTE::wdowiec', 'mask');
     expect(dict).toEqual(emptyDictionary());
+  });
+
+  // GS-3 gate (SCOPE-TIERS-DESIGN.md §7; O-ST-2 open decision, THREAT-MODEL
+  // D2): weight-5 types (art. 9-10 RODO special categories + identifiers)
+  // must never reach the persistent, cross-document, on-disk dictionary —
+  // review-engine.js's isRestrictedFromDictionary implements this as a safe
+  // default pending Alan's explicit O-ST-2 sign-off.
+  describe('GS-3 gate — weight-5 types excluded from the persistent dictionary', () => {
+    it('refuses to write weight-5 (art. 9-10 + identifier) entries — silent no-op, dictionary unchanged', () => {
+      let dict = emptyDictionary();
+      dict = addDictionaryEntry(dict, 'HEALTH_DATA::cukrzyca', 'mask');
+      dict = addDictionaryEntry(dict, 'PERSON_IDENTIFIER::92050112345', 'skip');
+      dict = addDictionaryEntry(dict, 'AUTH_SECRET::haslo123', 'mask');
+      dict = addDictionaryEntry(dict, 'CRIMINAL_OFFENCE_DATA::wyrok skazujący', 'mask');
+
+      expect(dict).toEqual(emptyDictionary());
+      expect(dictionaryDecisionFor(dict, 'HEALTH_DATA::cukrzyca')).toBe(null);
+      expect(dictionaryDecisionFor(dict, 'PERSON_IDENTIFIER::92050112345')).toBe(null);
+      expect(dictionaryDecisionFor(dict, 'AUTH_SECRET::haslo123')).toBe(null);
+      expect(dictionaryDecisionFor(dict, 'CRIMINAL_OFFENCE_DATA::wyrok skazujący')).toBe(null);
+    });
+
+    it('still writes a weight ≤4 entry normally (PERSON_ATTRIBUTE "wdowiec", weight 3) — the gate is weight-scoped, not a global lockdown', () => {
+      const dict = addDictionaryEntry(emptyDictionary(), 'PERSON_ATTRIBUTE::wdowiec', 'skip');
+      expect(dictionaryDecisionFor(dict, 'PERSON_ATTRIBUTE::wdowiec')).toBe('skip');
+      expect(dictionaryEntries(dict)).toEqual([
+        { valueKey: 'PERSON_ATTRIBUTE::wdowiec', type: 'PERSON_ATTRIBUTE', folded: 'wdowiec', decision: 'skip' },
+      ]);
+    });
+
+    it('ignores a hand-injected weight-5 entry on load (defense against manually-edited localStorage JSON)', () => {
+      const raw = JSON.stringify({
+        alwaysMask: {
+          HEALTH_DATA: ['cukrzyca'], // hand-edited straight into localStorage — must be dropped on parse
+          PERSON_ATTRIBUTE: ['wdowiec'], // legitimate weight-3 entry, in the SAME section — must survive
+        },
+        alwaysSkip: {
+          AUTH_SECRET: ['haslo123'], // hand-edited — must be dropped
+        },
+      });
+      const dict = parseDictionary(raw);
+
+      expect(dictionaryDecisionFor(dict, 'HEALTH_DATA::cukrzyca')).toBe(null);
+      expect(dictionaryDecisionFor(dict, 'AUTH_SECRET::haslo123')).toBe(null);
+      expect(dictionaryDecisionFor(dict, 'PERSON_ATTRIBUTE::wdowiec')).toBe('mask');
+      // Not just unreachable via dictionaryDecisionFor — genuinely absent
+      // from the parsed structure, so a UI listing (dictionaryEntries) or a
+      // future re-serialization can never surface or re-persist it either.
+      expect(dict.alwaysMask.HEALTH_DATA).toBeUndefined();
+      expect(dict.alwaysSkip.AUTH_SECRET).toBeUndefined();
+      expect(dictionaryEntries(dict)).toEqual([
+        { valueKey: 'PERSON_ATTRIBUTE::wdowiec', type: 'PERSON_ATTRIBUTE', folded: 'wdowiec', decision: 'mask' },
+      ]);
+    });
   });
 });
 
