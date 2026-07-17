@@ -419,7 +419,7 @@ pakiet (2175 zielony). **Nie przeglądałam kodu.** Bramkuj bez taryfy.
 
 ---
 
-## 9. `feature/docx-rebuild` — MD3+MD4+MD5+UI+docs (3 commity)
+## 9. `feature/docx-rebuild` — MD3+MD4+MD5+UI+docs+MD6-częściowe (9 commitów, HEAD c6521a8)
 
 **Kontekst:** Twoja instrukcja „nie zaczynaj DOCX" dotarła PO tym, jak
 całość była już zaimplementowana i wypchnięta (robiłam kolejkę Alana
@@ -469,16 +469,73 @@ writer) były już na main.
   Deklarację XML doklejam heurystycznie, bo jsdom-owy serializer ją gubi;
   zachowanie serializera w realnym Chromium może się różnić od jsdom —
   testów w realnej przeglądarce (Playwright, kryterium MD5) NIE MA.
-- Fixtury testowe używają metody store (0), żeby jsdom nie potrzebował
-  CompressionStream — ścieżka deflate composeZip jest pokryta testami
-  MD2 z main, ale moje testy integracyjne jej nie przechodzą.
+- ~~Fixtury testowe używają metody store (0)…~~ — **DOMKNIĘTE** (a649964):
+  CompressionStream JEST dostępny w vitest/jsdom (Node 22 global); round-trip
+  deflate w teście integracyjnym (inflate → verbatim-copy nietkniętych wpisów
+  na strumieniach SKOMPRESOWANYCH → recompress części zmienionej) + kanarek
+  środowiska, który zawali test, gdyby streams kiedyś zniknęły (cichy skip
+  nie może udawać pokrycia).
 - PDF wpisu DOCX zostaje płaski z podglądu (odnotowane w docs).
 - Blokada egress w eksporcie wielodokumentowym: JEDEN zablokowany wpis
   DOCX wywala CAŁY eksport (zachowawczo; per-plik pominięcie byłoby
   może lepszym UX — decyzja produktowa).
-- MD6 w całości niezrobione: smoke desktop (+packaged/offline),
-  aktualizacje SECURITY-CHECKLIST/THREAT-MODEL, pomiar czasu na realnym
-  piśmie, otwarcie wyników w realnym Wordzie.
+- ~~MD6 w całości niezrobione~~ — **CZĘŚCIOWO DOMKNIĘTE**, patrz niżej
+  „Dokończenie 2026-07-17"; zostały wyłącznie elementy wymagające
+  środowiska (smoke z modelami/binarką, realny Word).
+
+### Dokończenie 2026-07-17 (na Twoje polecenie #5: „dokończ porządnie")
+
+Sześć commitów ponad stan z pierwotnego wpisu:
+
+- **a649964** testy: deflate round-trip (jw.), wynik pola `w:fldSimple`
+  podmieniany normalnie przy nietkniętej instrukcji-atrybucie (§5.1),
+  eksport mieszany (wpis DOCX + tekstowy w jednym ZIP: raport tylko dla
+  rekonstruowanego, wewnętrzny document.xml zdeanonimizowany), pomiar MD6.
+- **POMIAR §3.1 wykonany** (`rebuild-docx.perf.test.js`, log-only,
+  asercje na poprawność nie na czas): realistyczne pismo ~15 stron /
+  ~94 KB XML = **113 ms w jsdom** (Chromium szybszy) → próg ~200 ms
+  NIEprzekroczony → decyzja projektu „wątek główny, bez Web Locka"
+  POTWIERDZONA pomiarem. Stress 150 stron: 764 ms, wzrost liniowy.
+- **e722b0e** złote pliki §12: `test-data/docx/` — `golden-pismo.docx`
+  (KAŻDA struktura §5 w jednym pliku: run-split, hyperlink, fldSimple,
+  ins/del, nagłówek+stopka, dozwolony hiperlink zewnętrzny) + 5 wrogich
+  (attachedTemplate, DOCTYPE/XXE, billion-laughs, makra, nie-ZIP);
+  generator deterministyczny (zerowe timestampy ZIP = regeneracja bajt
+  w bajt); **`goldens.test.js` wiąże ZACOMMITOWANE bajty z silnikiem**
+  (golden: 8 podmian/0 rezyduów, delText raport-only, rels bajtowo
+  identyczne; wrogie: dokładne kody odmów). README = scenariusz
+  ręcznego testu Word/LibreOffice dla Alana (RD-2, papier firmowy,
+  pułapka F9).
+- **4e31bed** `.gitattributes` (NOWY plik repo-wide): `*.docx`, `*.pdf`,
+  `*.png`, `*.onnx` jako `binary` — po incydencie autocrlf z audytu eval;
+  złote pliki nie mogą być konwertowane przy checkout. UWAGA DLA BRAMKI:
+  dotyczy całego repo, nie tylko tej gałęzi (świadome — inne gałęzie nie
+  mają .gitattributes, konflikt niemożliwy).
+- **26f5c72** incydent: `token-engine.test.js` był traktowany przez
+  git/grep jako BINARNY — jeden literalny bajt 0x00 w asercji
+  sanitizeValue (pozostałość moich heredoców). Diff byłby nieczytelny
+  dla Twojego przeglądu. Zamieniony na escape, asercja ta sama, 15/15.
+- **c6521a8** dokumenty §11: SECURITY-CHECKLIST sekcja 3 + 10 wierszy
+  C-DOCX-1…10 (każdy PASS z dowodem plik:linia + nazwane suity, w tym
+  goldeny), poprawki C-INP-5 (DRUGI konsument DOCX — każda zmiana DOCX
+  przechodzi OBA tory) i C-PERS-1 (bajty RAM-only), sekcja testów
+  przedwydaniowych z uczciwymi `?`; THREAT-MODEL wiersz STRIDE bomby
+  dekompresyjnej + akapit S4 o drugim konsumencie z odsyłaczem do §9
+  projektu (S-DOCX-1…6, RD-1…4); SECURITY.md §14 wpis o zmianie stanu.
+  **Rozjazd projektu:** §11.3 kazał „przenieść z planów" pozycję
+  „formatowany eksport deanonimizacji", która w §14 NIGDY nie istniała —
+  wpis powstał teraz, z adnotacją o rozjeździe.
+
+**Świadomie NIEZROBIONE (środowisko, nie lenistwo) — do MD6 przy bramce:**
+- rozszerzenie `desktop:smoke` (+`:packaged`/`:offline`) o import
+  golden/hostile: harness wymaga modeli i binarki (zakaz sesji);
+  smoke napisany na ślepo bez JEDNEGO uruchomienia = fałszywy dowód,
+  wolałam uczciwe `?` w checkliście z dokładną instrukcją,
+- ręczny test Word/LibreOffice (scenariusz gotowy w
+  `test-data/docx/README.md`),
+- O-6 (serializer w realnym Chromium vs jsdom) BEZ ZMIAN niezweryfikowane —
+  pełnoprzepływowe e2e wymaga legendy → modeli; nawet import-only e2e nie
+  pokryje serializera bez eksportu. Realny Chromium dopiero przy bramce.
 
 ---
 
