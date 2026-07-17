@@ -103,6 +103,38 @@ describe('removeToken', () => {
     const result = removeToken(before, a, 'hello');
     expect(result).not.toBe(before);
   });
+
+  // ST-3 gate follow-up #2 (SCOPE-TIERS-DESIGN.md; W1 leak fixed in
+  // review-engine.js's applyMaskDecision/removeAppliedEntities): is
+  // removeToken's "delete by canonical value" a twin of that bug? No — and
+  // this is the test that PINS the distinction, not just argues it.
+  //
+  // The review-engine bug was about ATTRIBUTION across a two-phase
+  // operation: postEdit silently added an entity of value B as a side
+  // effect of deciding value A, and undoing A must remove only what A
+  // itself added, never a pre-existing, decision-independent B. removeToken
+  // has no such two-phase add-then-undo structure at all — it is a single,
+  // synchronous "remove every CURRENT entity sharing the anchor's canonical
+  // value" filter, and that full removal (including Polish-declined
+  // sibling occurrences) is its DECLARED, user-disclosed contract: the
+  // confirm dialog it's invoked from (index.js openConfirmDelete) tells the
+  // radca up front exactly how many occurrences will disappear ("Z
+  // dokumentu zostanie usuniętych N wystąpień") before they confirm. There
+  // is no hidden/silent blast radius for this test to catch — so it simply
+  // pins the two halves of that contract explicitly, so neither erodes
+  // silently in a future refactor: (1) every occurrence of the SAME value
+  // is removed together, (2) an entity of a DIFFERENT value is never
+  // touched, no matter how it got there (NER, backfill, or a manual
+  // annotation added for a completely unrelated reason).
+  it('pins the contract: removes every occurrence of the SAME value, never touches entities of a DIFFERENT value', () => {
+    const a = { entity_group: 'PERSON_NAME', start: 4, end: 19 };  // Krzysztof Nowak
+    const b = { entity_group: 'PERSON_NAME', start: 27, end: 44 }; // Krzysztofa Nowaka (declined) — same person
+    // "Adam", added for a totally unrelated reason (e.g. a manual
+    // annotation days later) — must survive deleting the Nowak token.
+    const unrelated = { entity_group: 'PERSON_NAME', start: 51, end: 55 };
+    const result = removeToken([a, b, unrelated], a, text);
+    expect(result).toEqual([unrelated]);
+  });
 });
 
 describe('updateTypeForToken', () => {
@@ -215,6 +247,42 @@ describe('tokensFromEntities', () => {
     expect(tokens.get(1)).toBe('[PERSON_NAME_7]');
   });
 
+  // Found while auditing removeToken for a twin of the ST-3 W1-leak bug
+  // (review-engine.js): not the same bug (removeToken has no add-then-undo
+  // structure to misattribute — see operations.test.js's removeToken
+  // "pins the contract" test), but a REAL, separate defect in the shared
+  // grouping logic both removeToken and the annotation editor's delete
+  // confirmation dialog (index.js openConfirmDelete) depend on.
+  //
+  // globalSeen is looked up per RAW text form, independently for each
+  // entity — but buildTokenMap's LOCAL folding (ingestSource in
+  // anonymizer.js) already unifies Polish-declined forms of one name under
+  // ONE canonical key. A globalSeen that has seen only SOME raw forms of a
+  // canonical group (e.g. a cross-document legend that knows "Kowalski"
+  // from another, already-processed source, but not yet this document's own
+  // "Kowalskiego") used to split one canonical person into two different
+  // token identities: the override applied to whichever entity's raw text
+  // happened to match, and the other fell back to the local token — even
+  // though buildTokenMap's own declension folding says they are the same
+  // group. That silently broke every caller that groups entities by "same
+  // token": removeToken (an occurrence could survive a delete that visually
+  // and canonically should have caught it), the hover-highlight
+  // (data-token, index.js render), and the delete confirmation's own
+  // disclosed count (see render.test.js for the end-to-end reproduction).
+  it('a globalSeen hit on only ONE declined form does not split the canonical group', () => {
+    const text = 'Krzysztof Nowak przyszedł. Widzę Krzysztofa Nowaka codziennie.';
+    const aStart = text.indexOf('Krzysztof Nowak');
+    const bStart = text.indexOf('Krzysztofa Nowaka');
+    const a = { entity_group: 'PERSON_NAME', start: aStart, end: aStart + 'Krzysztof Nowak'.length }; // nominative
+    const b = { entity_group: 'PERSON_NAME', start: bStart, end: bStart + 'Krzysztofa Nowaka'.length }; // genitive
+    // Only the nominative raw form is cached globally — as if another,
+    // already-processed source document mentioned this person but never in
+    // this exact declined form.
+    const globalSeen = { 'PERSON_NAME::Krzysztof Nowak': '[PERSON_NAME_9]' };
+    const tokens = tokensFromEntities([a, b], text, globalSeen);
+    expect(tokens.get(0)).toBe(tokens.get(1));
+  });
+
   it('threads globalSeen through removeToken', () => {
     const text = 'Anna and Anna again';
     const a = { entity_group: 'PERSON_NAME', start: 0, end: 4 };
@@ -222,6 +290,24 @@ describe('tokensFromEntities', () => {
     const globalSeen = { 'PERSON_NAME::Anna': '[PERSON_NAME_7]' };
     const result = removeToken([a, b], a, text, globalSeen);
     expect(result).toHaveLength(0);
+  });
+
+  // Concrete consequence of the grouping bug above, at the removeToken level:
+  // without the fix, the declined-form sibling would silently survive a
+  // delete that removeToken's own documented contract ("removes all entities
+  // sharing the canonical key (incl. Polish declension)", see the
+  // removeToken describe block) says it should catch — a name occurrence
+  // left exposed by an anonymizer is the worst direction for this bug to
+  // fail in.
+  it('a partial globalSeen hit does not let a declined-form sibling survive removeToken', () => {
+    const text = 'Krzysztof Nowak przyszedł. Widzę Krzysztofa Nowaka codziennie.';
+    const aStart = text.indexOf('Krzysztof Nowak');
+    const bStart = text.indexOf('Krzysztofa Nowaka');
+    const a = { entity_group: 'PERSON_NAME', start: aStart, end: aStart + 'Krzysztof Nowak'.length };
+    const b = { entity_group: 'PERSON_NAME', start: bStart, end: bStart + 'Krzysztofa Nowaka'.length };
+    const globalSeen = { 'PERSON_NAME::Krzysztof Nowak': '[PERSON_NAME_9]' };
+    const result = removeToken([a, b], a, text, globalSeen);
+    expect(result).toEqual([]);
   });
 
   it('threads globalSeen through updateTypeForToken', () => {
