@@ -79,7 +79,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-INP-2 | Każdy `innerHTML` konsumuje wyłącznie stałe albo wartości przepuszczone przez escape | **PASS** | `src/main.js:1372,1410` (`escHtml`); `src/ui/annotation-editor/index.js:360,525` (`escapeHtml`). Brak `document.write`, `insertAdjacentHTML`, `srcdoc`, `eval` w `src/`. |
 | C-INP-3 | Nazwa pliku nigdy nie buduje ścieżki, URL-a ani HTML-a | **PASS** | pliki czytane przez `File.arrayBuffer()`; nazwa idzie do `textContent` (`src/ui/sources-list/index.js:272`) |
 | C-INP-4 | SVG **nie jest** akceptowanym formatem wejściowym i nigdy nie jest inline'owany | **PASS** | `src/file-import/index.js:12-31` (pdf, docx, txt, png, jpg, jpeg, heic, heif) |
-| C-INP-5 | DOCX: brak XXE, brak wyjścia HTML | **PASS** | `mammoth.extractRawText` (`src/file-import/docx.js:22`), nigdy `convertToHtml`; XML przez `@xmldom/xmldom`, brak I/O, brak rozwijania encji zewnętrznych |
+| C-INP-5 | DOCX: brak XXE, brak wyjścia HTML | **PASS** | `mammoth.extractRawText` (`src/file-import/docx.js:22`), nigdy `convertToHtml`; XML przez `@xmldom/xmldom`, brak I/O, brak rozwijania encji zewnętrznych. Uwaga: od DOCX-REBUILD istnieje DRUGI konsument DOCX (`src/docx-rebuild/`, import pisma od AI na zakładce deanonimizacji) z własnym reżimem C-DOCX-1/2 — zmiany w obsłudze DOCX muszą przejść przez OBA tory |
 | C-INP-6 | PDF: XFA wyłączone, brak zdalnych `cMapUrl`/`standardFontDataUrl`, worker same-origin, osadzony JS nigdy nie wykonywany | **PASS** | `src/file-import/pdf.js:99` nie ustawia `enableXfa`; `wasmUrl` z `document.baseURI` (`:20-23`); brak wywołań `getJSActions` |
 | C-INP-7 | `isEvalSupported: false` w `getDocument` | **PASS** | Naprawione (2026-07-11): `src/file-import/pdf.js` → `getDocument({ data, wasmUrl, isEvalSupported: false })`. `npm test` (`pdf.test.js`, 20/20) i OCR skanu PDF w `desktop:smoke`/`desktop:smoke:packaged` przechodzą bez zmian. |
 | C-INP-8 | CSP strony **bez** `'unsafe-eval'` | **FAIL(S), świadome odstępstwo** | `electron/app-protocol.mjs:61`. Wymuszone przez glue OpenCV w SDK PaddleOCR na wątku głównym. Zamknąć po przeniesieniu OpenCV do workera. Worker zachowuje `'unsafe-eval'` osobno (`:88`). |
@@ -87,6 +87,23 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 | C-INP-10 | Limit rozmiaru pliku wejściowego (obrona przed bombą dekompresyjną) | **PASS** | 25 MB, `src/file-import/index.js:10` |
 | C-INP-11 | Tar modeli OCR rozpakowywany wyłącznie z zaufanego źródła, nigdy z dokumentu użytkownika | **PASS** | `src/ocr/models.js:61-74` (stałe URL-e), `src/ocr/paddle.js:200-201` |
 | C-INP-12 | `require-trusted-types-for 'script'` + `frame-ancestors 'none'` w CSP | **FAIL(nice)** | `electron/app-protocol.mjs:59-79` |
+| C-DOCX-1 | Części XML parsowane wyłącznie po pre-skanie odrzucającym `<!DOCTYPE`/`<!ENTITY`; `parsererror` = twarde odrzucenie | **PASS** | `src/docx-rebuild/ooxml-inspect.js:30-42` (`rejectDoctype` PRZED parserem, kod `DOCTYPE`; `PARSE` przy `parsererror`). Testy: `ooxml-inspect.test.js` (XXE, billion-laughs) + `goldens.test.js` na zacommitowanych plikach `test-data/docx/hostile-doctype-xxe.docx`, `hostile-billion-laughs.docx` |
+| C-DOCX-2 | Kontener ZIP: allow-lista metod (store/deflate), odrzucenie szyfrowania/ZIP64/duplikatów nazw; limity ≤ 2048 wpisów, ≤ 50 MiB/część, ≤ 200 MiB sumarycznie; dekompresja wyłącznie części inspekcji i tokenowych | **PASS** | `src/docx-rebuild/zip-reader.js:24-26` (limity), `:113-123` (szyfrowanie, metody, ZIP64), `:134` (duplikaty), `:216-219` (egzekucja limitów przy `extract()`); wyłącznie centralny katalog jako źródło prawdy. Dekompresowane tylko części z `inspectDocx` (`ooxml-inspect.js:130-142` → `rebuild-docx.js`, pętla po `tokenParts`). Testy: `zip-reader.test.js` (każda klasa odrzucenia na własnym fixturze) |
+| C-DOCX-3 | Zero zapisu na dysk w przetwarzaniu (zip-slip strukturalnie niemożliwy); bajty wejścia/wyniku wyłącznie w RAM renderera | **PASS** | `src/docx-rebuild/rebuild-docx.js` — czysta funkcja bajty→bajty, brak importów `fs`/IPC; wpisy ZIP czytane wyłącznie do buforów (nigdy do ścieżek), więc zip-slip nie ma gdzie zaistnieć. Import trzyma bajty w obiekcie wyniku w pamięci (`src/main.js`, `importDocxOutcome`), pobranie przez istniejący, jawny download |
+| C-DOCX-4 | Treść i raport z .docx trafiają do DOM wyłącznie przez `textContent`/`createTextNode` (rozszerzenie C-INP-1 na nowe UI) | **PASS** | `src/ui/deanon-workspace/index.js:118,127-129,331,339` (treść/metadane przez `textContent`/`createTextNode`); `innerHTML` tylko czyszczenie (`:124`) i stałe szablony (`:140` — `emptyState`, wszystkie 3 wywołania `:383,:454,:460` z literałami; ikony `:260,:376,:411` to stałe SVG). Zero interpolacji danych dokumentu w HTML |
+| C-DOCX-5 | Wynik nie wnosi żadnej nowej relacji/części/odwołania: komplet `*.rels` wejścia i wyjścia bajtowo identyczny | **PASS** | części `.rels` nigdy nie są w `tokenParts`, więc jadą verbatim przez `zip-writer`. Test automatyczny: `goldens.test.js` (porównanie bajtowe `_rels/.rels` i `word/_rels/document.xml.rels` wejścia i wyniku), `rebuild-docx.test.js` (deflate round-trip: identyczne bajty SKOMPRESOWANE nietkniętych wpisów) |
+| C-DOCX-6 | Podmiana wyłącznie literałów tokenów obecnych w legendzie, przez węzły tekstowe DOM; złośliwe wartości legendy nieszkodliwe | **PASS** | `src/docx-rebuild/token-engine.js:86` (`sanitizeValue`: znaki sterujące → spacja, licznik w raporcie), podmiana przez `document.createTextNode` (znaczniki/encje w wartości stają się tekstem, nigdy strukturą). Testy: `token-engine.test.js` (wartości ze znacznikami, encjami, CR/LF/NUL) |
+| C-DOCX-7 | Fail-safe: token nieznany/przerwany/w części raport-only pozostaje widoczny i policzony w raporcie; zero heurystyk podmiany | **PASS** | skan rezyduów PO podmianie, na finalnym strumieniu części (`token-engine.js:107-121,209-215`), powody: `brak-w-legendzie`/`literał-w-wartości`/`przerwany-elementem`; warstwy `instrText`/`delText` raport-only (`:37,:67`). Testy: `token-engine.test.js`, `rebuild-docx.test.js`, golden `w:delText` w `goldens.test.js` |
+| C-DOCX-8 | Odwołania zewnętrzne wejścia: klasyfikacja wg §9.3 projektu; nie-hiperłącza blokują eksport; hiperłącza raportowane | **PASS** | `src/docx-rebuild/ooxml-inspect.js` (klasyfikacja `TargetMode="External"`), `rebuild-docx.js` (`blocked-egress` bez bajtów wyniku). Testy: `ooxml-inspect.test.js`, `deanon-docx.test.js` (blokada eksportu z `attachedTemplate`), `goldens.test.js` (`golden-pismo.docx`: hiperłącze zliczone, nie blokuje; `hostile-egress-template.docx`: blokada) |
+| C-DOCX-9 | `vbaProject`/makra, Strict OOXML, kontener niebędący ZIP → odmowa z czytelnym błędem (nigdy ciche zero podmian) | **PASS** | kody `MACROS` (`ooxml-inspect.js:107,113`), `STRICT_OOXML` (`:126`), `NOT_DOCX` (`:102,119,121`), `ZipFormatError` dla nie-ZIP; dodatkowo zero podmian = `blocked-no-replacements` (P-4), nigdy cichy sukces (`rebuild-docx.js:87-89`). Testy: `ooxml-inspect.test.js` + `goldens.test.js` (`hostile-macros.docx`, `hostile-not-a-zip.docx`) |
+| C-DOCX-10 | Części bez podmian kopiowane bajt-w-bajt (porównanie strumieni skompresowanych); liczniki raportu pochodzą z silnika, nie z podglądu tekstowego | **PASS** | `rebuild-docx.test.js` (deflate: `compressedBytes` nietkniętego `word/styles.xml` identyczne wejście↔wynik); raport budowany wyłącznie z wyników `rebuildPart` (`rebuild-docx.js:62-66`), UI renderuje liczby silnika (`src/ui/deanon-workspace/index.js:183` — komentarz kontraktowy) |
+
+Uwaga do wierszy C-DOCX: opisują kod na gałęzi `feature/docx-rebuild`
+(przed bramką Opusa i merge); pomiar §3.1 wykonany (jsdom: realistyczne
+pismo ~113 ms < progu 200 ms → przetwarzanie zostaje na wątku głównym,
+`rebuild-docx.perf.test.js`). Ręczny test otwarcia wyników w Wordzie /
+LibreOffice: scenariusz w `test-data/docx/README.md`, wynik do wpisania
+tutaj po wykonaniu przez Alana.
 
 ## 4. IPC
 
@@ -117,7 +134,7 @@ empirycznej, do czasu weryfikacji liczone jako FAIL.
 
 | ID | Pozycja | Status | Jak sprawdzić |
 |---|---|---|---|
-| C-PERS-1 | Legenda i treść dokumentu **nigdy** nie trafiają na dysk | **PASS** | `src/main.js:44`; brak `indexedDB`/`sessionStorage`/`showSaveFilePicker` w `src/`; `localStorage` trzyma wyłącznie preferencje (`src/main.js:295,319`) |
+| C-PERS-1 | Legenda i treść dokumentu **nigdy** nie trafiają na dysk | **PASS** | `src/main.js:44`; brak `indexedDB`/`sessionStorage`/`showSaveFilePicker` w `src/`; `localStorage` trzyma wyłącznie preferencje (`src/main.js:295,319`). Bajty importowanego .docx (DOCX-REBUILD) żyją w RAM jak tekst dokumentów — w obiekcie wyniku, zero nowych magazynów; jedyny artefakt to jawny download wyniku |
 | C-PERS-2 | Zamknięcie okna kończy proces (legenda ginie) | **PASS** | `electron/main.mjs:208-212` |
 | C-PERS-3 | Brak plików tymczasowych z rasteryzacji PDF / OCR / HEIC | **PASS** | `OffscreenCanvas` (`src/file-import/pdf.js:31`), `createImageBitmap` (`src/ocr/index.js:4`); zero `os.tmpdir`/`writeFile` w ścieżce runtime |
 | C-PERS-4 | `GPUCache`/`DawnCache` nie zawierają fragmentów dokumentu | **`?`** | Przebieg z PDF-em, potem przegląd `%APPDATA%\<app>\GPUCache` narzędziem `strings` |
@@ -188,6 +205,18 @@ npx @electron/fuses read --app "release/win-unpacked/Lokalny anonimizator.exe"
 
 Test ręczny, nieusuwalny: fizyczny tryb samolotowy → instalacja z `release/…exe`
 → pełny przebieg na prawdziwym dokumencie.
+
+Po merge DOCX-REBUILD (`feature/docx-rebuild`) do zestawu dochodzą — **`?`,
+jeszcze nie wykonane/nie wpięte**:
+
+- rozszerzenie `desktop:smoke` (+ `:packaged`, `:offline`) o przebieg:
+  import `test-data/docx/golden-pismo.docx` → eksport → weryfikacja podmian
+  i `blockedTotal === 0`, oraz import plików `hostile-*` → odmowy (MD6);
+  krok świadomie NIE dopisany na gałęzi — harness wymaga modeli i binarki,
+  których w sesji implementacyjnej nie wolno było uruchamiać, a smoke
+  napisany na ślepo bez uruchomienia byłby fałszywym dowodem,
+- ręczny test otwarcia wyniku w Wordzie i LibreOffice
+  (scenariusz: `test-data/docx/README.md`).
 
 ---
 
