@@ -550,7 +550,9 @@ function removeOutcome(id) {
 async function exportDeanonDocuments(format) {
   const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
   const result = await exportDeanonOutcomes({
-    outcomes: outcomes.map((o) => ({ id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot })),
+    outcomes: outcomes.map((o) => ({
+      id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot, docx: o.docx,
+    })),
     legend: { ...legend },
     format,
   });
