@@ -8,6 +8,7 @@ import {
 import { createCaseFoldedNerStep } from './steps/case-folded-ner.js';
 import { createCaseAllowlistStep } from './steps/case-allowlist.js';
 import { createDespacedNerStep } from './steps/despaced-ner.js';
+import { createGazetteerStep } from './steps/gazetteer.js';
 
 export async function sha256Hex(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -285,7 +286,7 @@ export async function classifyWithCache({
   }
 
   // --- Stage 3: postprocess on the merged entity union ---
-  const merged = [
+  let merged = [
     ...[...bySource.values()].flat(),
     ...(regex ?? []),
     ...(lexicon ?? []),
@@ -295,6 +296,19 @@ export async function classifyWithCache({
     ...(despacedNeeded ? (despaced ?? []) : []),
     ...caseAllowlistEntities,
   ];
+
+  // SG-lite: deliberately NOT cached on its own field — the S3 slot signal
+  // reads PERSON_ROLE_OR_TITLE entities from the union above, which varies
+  // with enabledEntities while the NER cache is keyed by text hash alone.
+  // The scan is a model-free token pass; recomputing per call is cheap and
+  // can never serve stale slot decisions.
+  if (needed.includes('gazetteer')) {
+    const gazCtx = await runPipeline(
+      makeSeededCtx({ text: normalizedText, segments, entities: merged }),
+      [{ phase: 'ner', steps: [createGazetteerStep(true)] }],
+    );
+    merged = gazCtx.entities;
+  }
   const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources, tierOverrides, allMask });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1

@@ -11,6 +11,7 @@ import { createDespacedNerStep } from '../steps/despaced-ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createLexiconStep } from '../steps/lexicon.js';
 import { createSpecialCategoryLexiconStep } from '../steps/special-category-lexicon.js';
+import { createGazetteerStep } from '../steps/gazetteer.js';
 import { createSourceFilterStep } from '../steps/source-filter.js';
 import { createThresholdStep } from '../steps/threshold.js';
 import { refineFinancialAmountStep } from '../steps/refine-financial-amount.js';
@@ -42,14 +43,16 @@ function resolveActiveSources({ enabledEntities, entitySources, sources }) {
   const hf = [];
   let regexActive = false;
   let lexiconActive = false;
+  let gazetteerActive = false;
   for (const alias of needed) {
     const def = sources[alias];
     if (!def) continue;
     if (def.kind === 'hf') hf.push({ alias, id: def.id, dtype: def.dtype });
     else if (def.kind === 'regex') regexActive = true;
     else if (def.kind === 'lexicon') lexiconActive = true;
+    else if (def.kind === 'gazetteer') gazetteerActive = true;
   }
-  return { hf, regexActive, lexiconActive };
+  return { hf, regexActive, lexiconActive, gazetteerActive };
 }
 
 export function createPreSegmentSteps(getSentenceBoundaries) {
@@ -85,6 +88,10 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
   // the flag, the step itself is a hard no-op unless ctx.meta.ocrProvenance
   // is set (provenance gate, §2.2 pkt 6).
   const despacedActive = options.despacedActive ?? true;
+  // SG-lite: gazetteerStep must come LAST — its S3 slot reads role entities
+  // emitted by the model pass and B4's lexiconStep (reuse of an existing
+  // detection as the slot signal, SURNAME-GAZETTEER-DESIGN.md §2.2 pkt 6).
+  const gazetteerActive = options.gazetteerActive ?? false;
   return [
     { phase: 'ner', steps: [
       createNerStep(hfSubset, loadModel, options),
@@ -97,6 +104,7 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
       // self-inactive when the allowlist is empty, so the zero-entry world
       // stays byte-identical (§5.3 pkt 4).
       createCaseAllowlistStep(options.caseAllowlist ?? []),
+      createGazetteerStep(gazetteerActive),
     ] },
   ];
 }
@@ -146,7 +154,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
   const entitySources = options.entitySources ?? ENTITY_SOURCES;
   const sources = options.sources ?? SOURCES;
   const enabledEntities = options.enabledEntities;
-  const { hf, regexActive, lexiconActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
+  const { hf, regexActive, lexiconActive, gazetteerActive } = resolveActiveSources({ enabledEntities, entitySources, sources });
   const orderedHf = options.sortSources ? options.sortSources(hf) : hf;
 
   return [
@@ -154,6 +162,7 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
     ...createModelLoadSteps(orderedHf, loadModel),
     ...createNerSteps(orderedHf, regexActive, lexiconActive, loadModel, {
       caseAllowlist: options.caseAllowlist,
+      gazetteerActive,
     }),
     ...createPostprocessSteps({
       enabledEntities,

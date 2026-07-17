@@ -64,6 +64,11 @@ export const SOURCES = withDtypeOverride({
   // resolveActiveSources()'s kind switch has no branch for it on purpose —
   // the step self-gates on ctx.meta.ocrProvenance and segment content.
   'despaced':       { kind: 'despaced' },
+  // SG-lite (SURNAME-GAZETTEER-DESIGN.md §2.2 pkt 4): hand-written collision
+  // gazetteer (surname ∩ common noun) bundled in the repo — no model, no
+  // download. Own alias (not shared 'lexicon') because the semantics differ
+  // (case-SENSITIVE, per-entity tiering) and eval reads per-source numbers.
+  'gazetteer':      { kind: 'gazetteer' },
 });
 
 export const ENTITY_SOURCES = {
@@ -73,7 +78,10 @@ export const ENTITY_SOURCES = {
   // are — sourceFilterStep drops any candidate whose source isn't listed
   // here for its type, regardless of score, so omitting it would silently
   // discard every candidate createCaseFoldedNerStep emits.
-  PERSON_NAME:              ['multilang-fp32', 'case-folded', 'despaced'],
+  // SG-lite: 'gazetteer' listed explicitly — same trap as every comment
+  // below: sourceFilterStep drops any candidate whose source isn't listed
+  // for its type, regardless of score (we do not lean on the A8 net).
+  PERSON_NAME:              ['multilang-fp32', 'case-folded', 'despaced', 'gazetteer'],
   DATE_OF_BIRTH:            ['polish-fp16'],
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
