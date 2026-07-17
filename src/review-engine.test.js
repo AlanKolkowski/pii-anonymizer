@@ -20,6 +20,8 @@ import {
 } from './review-engine.js';
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
+import { createTierPartitionStep } from './pipeline/steps/tier-partition.js';
+import { effectiveTier } from './pipeline/configs/type-tiers.js';
 
 function candidateAt(text, value, entity_group, from = 0, extra = {}) {
   const start = text.indexOf(value, from);
@@ -311,6 +313,120 @@ describe('applyDecision / clearDecision — golden flow', () => {
       text: crossText, entities: masked.entities, decisions: masked.decisions, valueKey: amountKey,
     });
     expect(cleared.entities).toEqual([preExisting]);
+  });
+});
+
+describe('applyDecision / clearDecision — the same W1 leak, derived from the REAL postprocess tail', () => {
+  // The "golden flow" describe block above proves the invariant with a
+  // hand-built reviewCandidate standing in for "a W2 span that blocked a
+  // backfill slot, then vanished" (see that test's own comment). That proves
+  // the bookkeeping (appliedPositions/removeAppliedEntities) is correct once
+  // the hole exists — but it constructs the hole by assertion, not by running
+  // the code that actually creates one. This test derives the hole from the
+  // REAL production chain instead:
+  //
+  //   bindTierOf(backfillOccurrencesStep, tierOf) -> createTierPartitionStep({allMask:false})
+  //
+  // — exactly how createPostprocessSteps (src/pipeline/configs/default.js)
+  // composes them (bindTierOf is a same-file-private wrapper that just calls
+  // `fn(ctx, tierOf)`; calling backfillOccurrencesStep(ctx, tierOf) directly
+  // is the identical call). No HF model is involved in either step — both
+  // run on ctx.entities *after* NER, so hand-built "as if from NER" entities
+  // (the same license the rest of this suite's candidateAt/entityAt helpers
+  // already rely on) are a faithful stand-in for the one thing that actually
+  // needs a model (bardsai/eu-pii-anonimization) and is banned on this
+  // machine (16 GB RAM, ONNX OOM history — see MEMORY.md).
+  it('a hole tierPartitionStep leaves behind survives a full postprocess-tail -> mask -> undo cycle', () => {
+    const text = 'Jan Kowalski zawarł umowę. Prezes Zarządu Jan Kowalski podpisał aneks. '
+      + 'Spółka zapłaci 5000 zł tytułem wynagrodzenia.';
+
+    // "As if from NER": a clean, standalone PERSON_NAME mention (this is the
+    // W1 entity that must survive) plus, separately, a role-title mention
+    // whose span happens to *contain* a second, textually identical
+    // "Jan Kowalski" — modelled as ONE label over the whole phrase
+    // (PERSON_ROLE_OR_TITLE), not a nested PERSON_NAME underneath it, exactly
+    // as a single-label NER model would emit it. Nothing but that role span
+    // "occupies" the second occurrence until tierPartitionStep pulls it out
+    // of ctx.entities into reviewCandidates.
+    const firstName = entityAt(text, 'Jan Kowalski', 'PERSON_NAME');
+    const roleStart = text.indexOf('Prezes Zarządu');
+    const secondNameStart = text.indexOf('Jan Kowalski', roleStart);
+    const roleSpan = {
+      entity_group: 'PERSON_ROLE_OR_TITLE',
+      start: roleStart,
+      end: secondNameStart + 'Jan Kowalski'.length,
+      score: 0.95,
+      source: 'test-model',
+    };
+    const amount = entityAt(text, '5000 zł', 'FINANCIAL_AMOUNT');
+    const rawEntities = [firstName, roleSpan, amount];
+
+    // The REAL postprocess tail. allMask:false is what wakes tiering up at
+    // all (SCOPE-TIERS-DESIGN.md §3.4 pkt 2) — every other caller (worker,
+    // eval, the rest of this suite) leaves it at the default true and never
+    // reaches this path.
+    const tierOpts = { allMask: false };
+    const tierOf = (entity) => effectiveTier(entity, tierOpts);
+    const afterBackfill = backfillOccurrencesStep({ text, entities: rawEntities }, tierOf);
+    const { entities: pipelineEntities, reviewCandidates } = createTierPartitionStep(tierOpts)(afterBackfill);
+
+    // Sanity check on the setup, not the invariant under test: confirms the
+    // hole is real. The role span (still 'review' tier, not 'pass') blocked
+    // the first backfill pass from seeding a second PERSON_NAME entity, then
+    // tierPartitionStep demoted the role span itself to reviewCandidates-only
+    // — so the second "Jan Kowalski" occurrence is now covered by NOTHING in
+    // ctx.entities, even though its characters are still fully visible in the
+    // anonymized output today (single-tier/allMask production behavior).
+    expect(pipelineEntities).toEqual([firstName]);
+    expect(reviewCandidates.map((c) => c.entity_group).sort()).toEqual(['FINANCIAL_AMOUNT', 'PERSON_ROLE_OR_TITLE']);
+    const amountCandidate = reviewCandidates.find((c) => c.entity_group === 'FINANCIAL_AMOUNT');
+    const amountKey = amountCandidate.valueKey;
+
+    // Radca masks the (unrelated) amount. Production always wires
+    // postEdit = reviewPostEdit (main.js:81-83, always supplied at
+    // main.js:1218) = backfillOccurrencesStep with NO tierOf — the exact
+    // function under test, invoked exactly the way production invokes it.
+    const productionPostEdit = (t, ents) => backfillOccurrencesStep({ text: t, entities: ents }).entities;
+    const masked = applyDecision({
+      text,
+      entities: pipelineEntities,
+      candidates: reviewCandidates,
+      decisions: new Map(),
+      valueKey: amountKey,
+      decision: 'mask',
+      postEdit: productionPostEdit,
+    });
+
+    // The amount decision's postEdit rescanned the WHOLE document for known
+    // values (not just the amount) and — because the role span's "occupied"
+    // signal is gone now — found and seeded the second "Jan Kowalski".
+    expect(masked.entities).toHaveLength(3);
+    const secondName = masked.entities.find((e) => e !== firstName && e.entity_group === 'PERSON_NAME');
+    expect(secondName).toBeDefined();
+    expect(text.slice(secondName.start, secondName.end)).toBe('Jan Kowalski');
+
+    // Radca rozmyśla się: flips ONLY the amount decision. The pre-existing,
+    // decision-independent "Jan Kowalski" (firstName — unconditionally
+    // masked long before this decision ever ran, and never part of it) must
+    // survive. This is the exact W1-leak shape the ST-3 fix closed: an
+    // unrelated undo must never delete it.
+    const flipped = applyDecision({
+      text,
+      entities: masked.entities,
+      candidates: [amountCandidate],
+      decisions: masked.decisions,
+      valueKey: amountKey,
+      decision: 'skip',
+    });
+    expect(flipped.entities).toEqual([firstName]);
+
+    // clearDecision shares removeAppliedEntities with the mask->skip flip
+    // above — same invariant, same route, asserted directly rather than by
+    // code-sharing argument alone (SCOPE-TIERS-DESIGN.md audit, step D).
+    const cleared = clearDecision({
+      text, entities: masked.entities, decisions: masked.decisions, valueKey: amountKey,
+    });
+    expect(cleared.entities).toEqual([firstName]);
   });
 });
 
