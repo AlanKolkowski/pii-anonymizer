@@ -301,6 +301,16 @@ describe('applyDecision / clearDecision — golden flow', () => {
       decision: 'skip',
     });
     expect(flipped.entities).toEqual([preExisting]);
+
+    // Step D (SCOPE-TIERS-DESIGN.md audit): clearDecision shares
+    // removeAppliedEntities with applyDecision's mask→skip flip above, so it
+    // must hold the same invariant from the same contaminated-looking state —
+    // not just "undo" in the abstract, but the concrete `masked` produced by
+    // this exact postEdit-tainted application.
+    const cleared = clearDecision({
+      text: crossText, entities: masked.entities, decisions: masked.decisions, valueKey: amountKey,
+    });
+    expect(cleared.entities).toEqual([preExisting]);
   });
 });
 
