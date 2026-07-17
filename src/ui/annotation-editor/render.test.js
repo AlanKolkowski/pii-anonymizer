@@ -162,3 +162,53 @@ describe('annotation-editor — global token IDs', () => {
     expect(personPill.title).toMatch(/^\[PERSON_NAME_\d+\] · Anna$/);
   });
 });
+
+describe('annotation-editor — delete confirmation vs. actual removal (ST-3 twin audit)', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  // Found while checking removeToken for a twin of the ST-3 W1-leak bug
+  // (review-engine.js applyMaskDecision/removeAppliedEntities). Not the same
+  // bug — removeToken has no add-then-undo structure to misattribute (see
+  // operations.test.js) — but this end-to-end mount surfaces a real,
+  // separate defect the investigation turned up in the shared grouping
+  // logic (operations.js tokensFromEntities): a cross-document legend
+  // (getGlobalSeen) that has only seen ONE declined form of a name splits
+  // that name into two token identities, so the delete confirmation dialog
+  // (index.js openConfirmDelete) can silently DISCLOSE fewer occurrences
+  // than a click-through actually removes — the radca clicks "Usuń"
+  // expecting to remove one mistaken annotation and, without being warned,
+  // a second, wanted redaction elsewhere in the document loses its mask too.
+  it('the confirm dialog discloses every occurrence a click will actually remove', () => {
+    const text = 'Krzysztof Nowak przyszedł. Widzę Krzysztofa Nowaka codziennie.';
+    const aStart = text.indexOf('Krzysztof Nowak');
+    const bStart = text.indexOf('Krzysztofa Nowaka');
+    const entities = [
+      { entity_group: 'PERSON_NAME', start: aStart, end: aStart + 'Krzysztof Nowak'.length, score: 0.99 },
+      { entity_group: 'PERSON_NAME', start: bStart, end: bStart + 'Krzysztofa Nowaka'.length, score: 0.99 },
+    ];
+    let lastChange = null;
+    const { root } = mount({
+      text,
+      entities,
+      // Simulates a cross-document legend that has already seen the
+      // nominative form from a different, already-processed source, but not
+      // yet this document's own declined form.
+      getGlobalSeen: () => ({ 'PERSON_NAME::Krzysztof Nowak': '[PERSON_NAME_9]' }),
+      onChange: (next) => { lastChange = next; },
+    });
+
+    const pills = [...root.querySelectorAll('.anno[data-type="PERSON_NAME"]')];
+    expect(pills).toHaveLength(2);
+    // Same canonical person must hover-highlight together too, not just at
+    // delete time.
+    expect(pills[0].dataset.token).toBe(pills[1].dataset.token);
+
+    pills[0].querySelector('.ann-ent-chip-x').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    const confirmBody = document.querySelector('.ann-confirm-body');
+    expect(confirmBody).not.toBeNull();
+    expect(confirmBody.textContent).toMatch(/2/);
+
+    document.querySelector('.ann-confirm .danger').click();
+    expect(lastChange).toEqual([]);
+  });
+});
