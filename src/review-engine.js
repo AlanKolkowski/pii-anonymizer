@@ -10,11 +10,20 @@ import { overlapsAny } from './ui/annotation-editor/operations.js';
 // the annotation editor's token granularity.
 //
 // A decisions map is `Map<valueKey, { decision: 'mask'|'skip',
-// origin: 'user'|'bulk'|'dictionary', appliedKeys?: string[] }>`.
-// `appliedKeys` exists only on applied 'mask' records: the valueKeys of every
-// entity the application added (full spans, uncovered remainders, and
-// postEdit-backfilled occurrences), so undo can remove exactly what the
-// decision caused — acceptance §4.3 pkt 1: "cofnięcie przywraca stan".
+// origin: 'user'|'bulk'|'dictionary', appliedPositions?: string[] }>`.
+// `appliedPositions` exists only on applied 'mask' records: the POSITION keys
+// (`start:end`, see positionKey) of every entity the application added (full
+// spans, uncovered remainders, and postEdit-backfilled occurrences), so undo
+// can remove exactly what the decision caused — acceptance §4.3 pkt 1:
+// "cofnięcie przywraca stan". Position-keyed, not value-keyed: postEdit runs
+// unscoped (it backfills occurrences of ANY value already present in the
+// array, e.g. filling a hole tierPartitionStep left by moving a blocking W2
+// span into reviewCandidates), so it can seed a duplicate of a value some
+// other, pre-existing, decision-independent entity already carries elsewhere
+// in the document. A value-keyed applied set would make undo delete that
+// unrelated entity too — a confirmed W1 leak across the MCP boundary, fixed
+// here by tracking exactly which entities THIS application added, by
+// identity (position), not by what value they happen to hold.
 
 // Fragments shorter than this (after whitespace trim) are not worth a token —
 // same floor as backfill's MIN_VALUE_LENGTH (src/pipeline/steps/backfill.js).
@@ -102,9 +111,17 @@ function positionKey(entity) {
 // full span — every still-visible character of the candidate gets masked,
 // which is what §3.2 pkt 3 means by "decyzja «maskuj» obejmie całość".
 //
-// Returns { entities, appliedKeys }: appliedKeys are the valueKeys of every
-// entity this application added (diffed by position, so postEdit's additions
-// are attributed too) — the undo set for this decision.
+// Returns { entities, appliedPositions }: appliedPositions are the position
+// keys (start:end) of every entity this application added — diffed by
+// position against the entities array as it stood before this call, so
+// postEdit's additions are attributed too. Position, not value: postEdit
+// scans the whole array for any known value, not just valueKey, so it can
+// seed a duplicate of a value some unrelated, pre-existing entity already
+// carries elsewhere — attributing that by value would poison the undo set
+// for THIS decision with an entity it never touched (see module comment).
+// `valueKey` is accepted for the caller-facing "this application concerns
+// this value" contract shared by every function in this module; it is not
+// needed to compute appliedPositions.
 export function applyMaskDecision({ text, entities, occurrences, valueKey, postEdit = null }) {
   const additions = [];
   const occupied = () => [...entities, ...additions];
@@ -136,23 +153,22 @@ export function applyMaskDecision({ text, entities, occurrences, valueKey, postE
   const after = postEdit ? postEdit(text, withAdditions) : withAdditions;
 
   const before = new Set(entities.map(positionKey));
-  const appliedKeys = new Set([valueKey]);
-  for (const entity of after) {
-    if (!before.has(positionKey(entity))) appliedKeys.add(entityValueKey(entity, text));
-  }
-  return { entities: after, appliedKeys: [...appliedKeys] };
+  const appliedPositions = after.filter((entity) => !before.has(positionKey(entity))).map(positionKey);
+  return { entities: after, appliedPositions };
 }
 
-// Removes everything a 'mask' decision added: entities whose valueKey is in
-// the decision's applied set. Value-keyed (not span-keyed) on purpose — it
-// also catches backfilled copies of the same value, and it mirrors
-// removeToken's "remove all entities sharing the token" semantics
-// (annotation-editor/operations.js), extended across case/whitespace variants
-// the way the decision itself was keyed.
-function removeAppliedEntities(text, entities, record, valueKey) {
-  const keys = new Set(record?.appliedKeys ?? [valueKey]);
-  keys.add(valueKey);
-  return entities.filter((entity) => !keys.has(entityValueKey(entity, text)));
+// Removes everything a 'mask' decision added: entities at a position in the
+// decision's applied set. Position-keyed (not value-keyed) — see
+// applyMaskDecision's comment: postEdit runs unscoped, so a decision's
+// applied set can include a backfilled entity that happens to share its
+// value with an unrelated, pre-existing entity elsewhere in the document;
+// filtering by value (the previous design) deleted that untouched entity
+// too. A record with no applied positions (e.g. a stale decision whose
+// candidate no longer exists) removes nothing — undo can only remove what
+// the application actually added, never more.
+function removeAppliedEntities(entities, record) {
+  const positions = new Set(record?.appliedPositions ?? []);
+  return entities.filter((entity) => !positions.has(positionKey(entity)));
 }
 
 // Records a decision for one valueKey and applies its effect to entities.
@@ -163,14 +179,14 @@ export function applyDecision({ text, entities, candidates, decisions, valueKey,
   const nextDecisions = new Map(decisions ?? []);
   const previous = nextDecisions.get(valueKey);
   let nextEntities = previous?.decision === 'mask'
-    ? removeAppliedEntities(text, entities, previous, valueKey)
+    ? removeAppliedEntities(entities, previous)
     : entities;
 
   if (decision === 'mask') {
     const occurrences = (candidates ?? []).filter((c) => candidateKey(c, text) === valueKey);
     const applied = applyMaskDecision({ text, entities: nextEntities, occurrences, valueKey, postEdit });
     nextEntities = applied.entities;
-    nextDecisions.set(valueKey, { decision: 'mask', origin, appliedKeys: applied.appliedKeys });
+    nextDecisions.set(valueKey, { decision: 'mask', origin, appliedPositions: applied.appliedPositions });
   } else {
     nextDecisions.set(valueKey, { decision: 'skip', origin });
   }
@@ -185,7 +201,7 @@ export function clearDecision({ text, entities, decisions, valueKey }) {
   if (!previous) return { entities, decisions: nextDecisions };
   nextDecisions.delete(valueKey);
   const nextEntities = previous.decision === 'mask'
-    ? removeAppliedEntities(text, entities, previous, valueKey)
+    ? removeAppliedEntities(entities, previous)
     : entities;
   return { entities: nextEntities, decisions: nextDecisions };
 }
@@ -344,7 +360,7 @@ export function resolveClassifyResult({ text, entities, candidates, prevDecision
       text, entities: nextEntities, occurrences: group.occurrences, valueKey: key, postEdit,
     });
     nextEntities = applied.entities;
-    decisions.set(key, { ...record, appliedKeys: applied.appliedKeys });
+    decisions.set(key, { ...record, appliedPositions: applied.appliedPositions });
   }
   return { entities: nextEntities, candidates, decisions };
 }

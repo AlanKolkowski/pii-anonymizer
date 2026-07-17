@@ -114,7 +114,7 @@ describe('applyMaskDecision', () => {
   it('adds free occurrences whole, preserving span, type, score and source', () => {
     const text = 'Jan jest wdowiec od maja.';
     const occurrence = candidateAt(text, 'wdowiec', 'PERSON_ATTRIBUTE');
-    const { entities, appliedKeys } = applyMaskDecision({
+    const { entities, appliedPositions } = applyMaskDecision({
       text, entities: [], occurrences: [occurrence], valueKey: occurrence.valueKey,
     });
     expect(entities).toEqual([{
@@ -124,7 +124,7 @@ describe('applyMaskDecision', () => {
       score: 0.9,
       source: 'test-model',
     }]);
-    expect(appliedKeys).toContain('PERSON_ATTRIBUTE::wdowiec');
+    expect(appliedPositions).toEqual([`${occurrence.start}:${occurrence.end}`]);
   });
 
   it('masks only the uncovered remainders of a partially covered occurrence', () => {
@@ -165,13 +165,16 @@ describe('applyMaskDecision', () => {
       candidateAt(text, 'wdowiec', 'PERSON_ATTRIBUTE'),
       candidateAt(text, 'wdowiec', 'PERSON_ATTRIBUTE', 10),
     ];
-    const { entities, appliedKeys } = applyMaskDecision({
+    const { entities, appliedPositions } = applyMaskDecision({
       text, entities: [], occurrences, valueKey: occurrences[0].valueKey, postEdit: postEditBackfill,
     });
     // Third occurrence seeded by backfill even though no candidate covered it.
     expect(entities).toHaveLength(3);
     expect(entities.map((e) => text.slice(e.start, e.end))).toEqual(['wdowiec', 'wdowiec', 'wdowiec']);
-    expect(appliedKeys).toEqual(['PERSON_ATTRIBUTE::wdowiec']);
+    // All three are new (entities started empty) — appliedPositions is keyed
+    // by position (start:end), not value, so undo can tell exactly which
+    // entities THIS application added (see review-engine.js module comment).
+    expect(appliedPositions).toEqual(entities.map((e) => `${e.start}:${e.end}`));
     assertNonOverlapping(entities);
   });
 });
@@ -242,6 +245,62 @@ describe('applyDecision / clearDecision — golden flow', () => {
     });
     const undone = clearDecision({ text, entities: masked.entities, decisions: masked.decisions, valueKey });
     expect(undone.entities).toEqual([other]);
+  });
+
+  // Regression for the W1 MCP leak (SCOPE-TIERS-DESIGN.md §4.3 pkt 1: "cofnięcie
+  // przywraca stan"). The test above passes even on the broken code because it
+  // never supplies `postEdit` — without a backfill pass, applyMaskDecision can
+  // never add an entity of a value it wasn't explicitly asked about, so the
+  // old value-keyed appliedKeys accidentally lines up with the position-keyed
+  // intent. Production ALWAYS supplies postEdit (main.js:1218, reviewPostEdit
+  // = backfillOccurrencesStep with no tierOf) — this is what actually runs.
+  //
+  // Scenario: "Jan Kowalski" already exists as its own, decision-independent
+  // entity (e.g. an unconditionally-masked W1 mention). A second, unrelated
+  // decision (masking "5000 zł") triggers postEdit, which — because it scans
+  // the WHOLE document for known values, not just the decided one — discovers
+  // a second, previously-uncovered "Jan Kowalski" (standing in for the hole
+  // tierPartitionStep leaves when it pulls a blocking W2 span, e.g. a
+  // "Prezes Zarządu Jan Kowalski" role mention, out of ctx.entities) and seeds
+  // it too. The amount decision's applied set must capture ONLY what IT
+  // added — the amount plus the seeded duplicate — never the pre-existing,
+  // decision-independent "Jan Kowalski".
+  it('does not remove a pre-existing entity merely because postEdit backfills a same-valued duplicate elsewhere', () => {
+    const crossText = 'Jan Kowalski zawarł umowę. Pozwana zapłaci 5000 zł. Podpisał Jan Kowalski.';
+    const preExisting = entityAt(crossText, 'Jan Kowalski', 'PERSON_NAME');
+    const amountCandidate = candidateAt(crossText, '5000 zł', 'FINANCIAL_AMOUNT');
+    const amountKey = amountCandidate.valueKey;
+
+    const masked = applyDecision({
+      text: crossText,
+      entities: [preExisting],
+      candidates: [amountCandidate],
+      decisions: new Map(),
+      valueKey: amountKey,
+      decision: 'mask',
+      postEdit: postEditBackfill,
+    });
+    // Sanity check on the reproduction itself: postEdit really did seed a
+    // second, distinct "Jan Kowalski" entity (not just re-find the first).
+    expect(masked.entities).toHaveLength(3);
+    const secondJanKowalski = masked.entities.find(
+      (e) => e !== preExisting && e.entity_group === 'PERSON_NAME',
+    );
+    expect(secondJanKowalski).toBeDefined();
+    expect(crossText.slice(secondJanKowalski.start, secondJanKowalski.end)).toBe('Jan Kowalski');
+
+    // Radca rozmyśla się: flips the SAME amount decision to 'skip'. Only the
+    // amount and the seeded duplicate were caused by that decision; the
+    // pre-existing "Jan Kowalski" predates it and must survive untouched.
+    const flipped = applyDecision({
+      text: crossText,
+      entities: masked.entities,
+      candidates: [amountCandidate],
+      decisions: masked.decisions,
+      valueKey: amountKey,
+      decision: 'skip',
+    });
+    expect(flipped.entities).toEqual([preExisting]);
   });
 });
 
@@ -364,7 +423,9 @@ describe('resolveClassifyResult', () => {
   it('re-applies surviving mask decisions to the fresh entity list after a rerun', () => {
     const candidates = [candidateAt(text, 'wdowiec', 'PERSON_ATTRIBUTE')];
     const prevDecisions = new Map([
-      ['PERSON_ATTRIBUTE::wdowiec', { decision: 'mask', origin: 'user', appliedKeys: ['PERSON_ATTRIBUTE::wdowiec'] }],
+      ['PERSON_ATTRIBUTE::wdowiec', {
+        decision: 'mask', origin: 'user', appliedPositions: [`${candidates[0].start}:${candidates[0].end}`],
+      }],
     ]);
     const freshEntities = [entityAt(text, 'Jan Kowalski', 'PERSON_NAME')];
     const result = resolveClassifyResult({
@@ -379,8 +440,10 @@ describe('resolveClassifyResult', () => {
 
   it('stale decisions (valueKey no longer among candidates) stay dormant and harmless', () => {
     const candidates = [candidateAt(text, '500 zł', 'FINANCIAL_AMOUNT')];
+    // Position is a placeholder — irrelevant here, since this valueKey has no
+    // matching candidate and is therefore never re-applied by the loop below.
     const prevDecisions = new Map([
-      ['PERSON_ATTRIBUTE::rozwodnik', { decision: 'mask', origin: 'user', appliedKeys: ['PERSON_ATTRIBUTE::rozwodnik'] }],
+      ['PERSON_ATTRIBUTE::rozwodnik', { decision: 'mask', origin: 'user', appliedPositions: ['0:9'] }],
     ]);
     const result = resolveClassifyResult({
       text, entities: [], candidates, prevDecisions, dictionary: emptyDictionary(),
