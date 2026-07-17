@@ -6,6 +6,7 @@ import {
   createPostprocessSteps,
 } from './configs/default.js';
 import { createCaseFoldedNerStep } from './steps/case-folded-ner.js';
+import { createCaseAllowlistStep } from './steps/case-allowlist.js';
 
 export async function sha256Hex(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -59,6 +60,7 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {Function} [params.sortSources] - optional ordering of HF sources
  * @param {object} [params.tierOverrides] - ST-2: per-type tier overrides, forwarded to createPostprocessSteps
  * @param {boolean} [params.allMask] - ST-2: forces the single-tier (legacy) profile when true/omitted
+ * @param {string[]} [params.caseAllowlist] - ST-5: the user's own case signatures (raw entries); empty = step inactive
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
  * @param {Function} [params.onProgress] - optional fine-grained progress hook receiving progress events
  * @param {Function} [params.prepareModel] - async hook for downloading/caching one model source before inference
@@ -76,6 +78,7 @@ export async function classifyWithCache({
   sortSources,
   tierOverrides,
   allMask,
+  caseAllowlist,
   onTimingMark = () => {},
   onProgress = () => {},
   prepareModel = null,
@@ -245,8 +248,21 @@ export async function classifyWithCache({
   }
   emit('pipeline:ner:end');
 
+  // ST-5: the allowlist scan is deterministic and model-free, so it is
+  // deliberately NOT cached — the NER cache is keyed by text hash alone,
+  // while these results depend on the allowlist contents, which can change
+  // between classifies of the same text. Recomputing is one regex pass.
+  let caseAllowlistEntities = [];
+  if ((caseAllowlist ?? []).length > 0) {
+    const allowCtx = await runPipeline(
+      makeSeededCtx({ text: normalizedText, segments, entities: [] }),
+      [{ phase: 'ner', steps: [createCaseAllowlistStep(caseAllowlist)] }],
+    );
+    caseAllowlistEntities = allowCtx.entities;
+  }
+
   // --- Stage 3: postprocess on the merged entity union ---
-  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? []), ...(caseFolded ?? [])];
+  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? []), ...(caseFolded ?? []), ...caseAllowlistEntities];
   const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources, tierOverrides, allMask });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1

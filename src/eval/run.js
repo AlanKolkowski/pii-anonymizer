@@ -1,4 +1,4 @@
-import { readdir, mkdir, writeFile, symlink, unlink } from 'node:fs/promises';
+import { readdir, readFile, mkdir, writeFile, symlink, unlink } from 'node:fs/promises';
 import { join, basename, extname, resolve, relative, sep } from 'node:path';
 import { pipeline as hfPipeline } from '@huggingface/transformers';
 import { get_sentence_boundaries } from 'sentencex';
@@ -74,7 +74,21 @@ async function loadModelNode(model) {
   };
 }
 
-async function processDocument(filePath, pipelineConfig, runDir) {
+// Sibling options file (<name>.options.json) for one corpus document, or
+// null. Malformed JSON is a corpus authoring error — fail loudly, not
+// silently without the options.
+async function readDocOptions(filePath) {
+  const optionsPath = filePath.replace(/\.txt$/, '.options.json');
+  let raw;
+  try {
+    raw = await readFile(optionsPath, 'utf-8');
+  } catch {
+    return null;
+  }
+  return JSON.parse(raw);
+}
+
+async function processDocument(filePath, pipelineConfig, runDir, docOptions = null) {
   const text = await readEvalText(filePath);
   const name = basename(filePath, extname(filePath));
 
@@ -112,6 +126,7 @@ async function processDocument(filePath, pipelineConfig, runDir) {
     tokenCount: Object.keys(ctx.legend).length,
     entitiesByType: countByType(ctx.entities),
     elapsed,
+    ...(docOptions && { options: docOptions }),
   };
 }
 
@@ -181,7 +196,19 @@ async function main() {
 
   const results = [];
   for (const file of files) {
-    results.push(await processDocument(file, pipelineConfig, runDir));
+    // ST-5 (SCOPE-TIERS-DESIGN.md §5.2 pkt 3 / §6.3 pkt 4): a document may
+    // carry a sibling <name>.options.json (today: { caseAllowlist: [...] })
+    // — the eval-side stand-in for the per-session configuration the browser
+    // passes through configure. Steps are plain per-run functions (models
+    // load and dispose inside runPipeline either way), so a per-document
+    // pipeline config costs nothing extra.
+    const docOptions = await readDocOptions(file);
+    const docConfig = docOptions?.caseAllowlist?.length
+      ? createDefaultPipeline(loadModelNode, get_sentence_boundaries, {
+        enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES, caseAllowlist: docOptions.caseAllowlist,
+      })
+      : pipelineConfig;
+    results.push(await processDocument(file, docConfig, runDir, docOptions));
   }
 
   // Build summary
@@ -196,6 +223,7 @@ async function main() {
       tokenCount: r.tokenCount,
       entitiesByType: r.entitiesByType,
       elapsed: r.elapsed,
+      ...(r.options && { options: r.options }),
     };
     totalEntities += r.entityCount;
     totalTokens += r.tokenCount;

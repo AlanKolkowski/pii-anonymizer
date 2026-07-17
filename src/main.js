@@ -255,11 +255,21 @@ function beginConfigureRequest() {
   return configRequestId;
 }
 
+// ST-5 (SCOPE-TIERS-DESIGN.md §5.2 pkt 1): "Sygnatury mojej sprawy" — raw
+// entries shared by every document of the session. RAM only, session
+// lifetime, never persisted (O-ST-3: a case signature identifies the case,
+// so writing it to disk falls under the spirit of THREAT-MODEL D2). The
+// input UI arrives with ST-4; until then the list stays empty and the
+// allowlist step is inactive — ST-4's setter must call postConfigure after
+// changing it, like every other configuration change.
+const caseAllowlist = [];
+
 function postConfigureForRequest(enabledEntities, requestId) {
   worker.postMessage({
     type: 'configure',
     enabledEntities,
     backend: requestedBackend(),
+    caseAllowlist,
     configRequestId: requestId,
   });
 }

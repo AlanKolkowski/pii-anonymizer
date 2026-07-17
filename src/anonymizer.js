@@ -697,7 +697,7 @@ function isGluedRemainder(text, entity, remainder) {
 // than the regex match (e.g. it also caught a trailing character the regex
 // couldn't validate) must not lose the part the regex didn't reach
 // (EVAL-RECALL-AUDIT §8 A6 — REGON in adw_11 leaked this way).
-function trimOrDropCoveredByPreciseRegex(entities, text) {
+function trimOrDropCoveredByPreciseRegex(entities, text, tierOf) {
   const preciseRegexEntities = entities.filter(isPreciseRegexEntity);
   if (preciseRegexEntities.length === 0) return entities;
 
@@ -707,8 +707,17 @@ function trimOrDropCoveredByPreciseRegex(entities, text) {
       result.push(entity);
       continue;
     }
+    // ST-2 H-1 (SCOPE-TIERS-DESIGN.md §3.2 pkt 3) extends to this trim too:
+    // overlaps arbitrate only within the same effective tier. Without the
+    // guard, a precise pass-tier regex hit (e.g. DOCKET_RE's
+    // DOCUMENT_REFERENCE) would swallow a same-type mask-tier entity over
+    // the same span (ST-5's allowlisted signature, forceTier 'mask') — and
+    // the masked span would come out visible. tierOf omitted (single-tier
+    // callers) or allMask: identical tiers, exactly today's behavior.
     const overlapping = preciseRegexEntities.filter(
-      (regexEntity) => regexEntity.entity_group === entity.entity_group && spansOverlap(regexEntity, entity),
+      (regexEntity) => regexEntity.entity_group === entity.entity_group
+        && spansOverlap(regexEntity, entity)
+        && (!tierOf || tierOf(regexEntity) === tierOf(entity)),
     );
     if (overlapping.length === 0) {
       result.push(entity);
@@ -739,7 +748,7 @@ function trimOrDropCoveredByPreciseRegex(entities, text) {
 export function deduplicateEntities(entities, text, tierOf) {
   if (entities.length <= 1) return entities;
 
-  const candidates = trimOrDropCoveredByPreciseRegex(entities, text);
+  const candidates = trimOrDropCoveredByPreciseRegex(entities, text, tierOf);
   candidates.sort((a, b) => a.start - b.start || b.score - a.score);
 
   const result = [];

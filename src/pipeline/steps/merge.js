@@ -22,7 +22,17 @@ function canMergePair(prev, curr) {
   return null;
 }
 
-export function mergeStep(ctx) {
+// ST-2 H-1 (SCOPE-TIERS-DESIGN.md §3.2 pkt 3) applies to merging exactly as
+// it does to dedup — merging is same-family arbitration of adjacent spans.
+// The optional `tierOf` resolver ((entity) => 'mask'|'review'|'pass')
+// restricts merging to pairs of the SAME effective tier: without the guard a
+// pass-tier signature could swallow an adjacent forceTier-'mask' one (the
+// masked span would come out visible), or a mask-tier address could silently
+// consume a review-tier location that belongs in the W2 bucket. Omitted
+// (single-tier callers) or under allMask every pair shares one tier and the
+// behavior is byte-for-byte today's. Discovered during ST-5 (the design
+// names dedup/backfill as H-1/H-2 carriers; merge is the same hazard).
+export function mergeStep(ctx, tierOf) {
   const { text, entities } = ctx;
   if (entities.length <= 1) return ctx;
 
@@ -39,6 +49,11 @@ export function mergeStep(ctx) {
       continue;
     }
 
+    if (tierOf && tierOf(prev) !== tierOf(curr)) {
+      result.push(curr);
+      continue;
+    }
+
     const pair = canMergePair(prev, curr);
     if (!pair) {
       result.push(curr);
@@ -46,6 +61,10 @@ export function mergeStep(ctx) {
     }
 
     const mergedSources = unionSources(prev.source, curr.source);
+    // Both sides share one effective tier (guard above); carrying either
+    // forceTier over keeps an allowlisted signature masked after it merges
+    // with its own duplicate from another source.
+    const forceTier = prev.forceTier ?? curr.forceTier;
     result[result.length - 1] = {
       entity_group: pair.host,
       start: prev.start,
@@ -54,6 +73,7 @@ export function mergeStep(ctx) {
       ...(mergedSources.length > 0 && {
         source: mergedSources.length === 1 ? mergedSources[0] : mergedSources,
       }),
+      ...(forceTier && { forceTier }),
     };
   }
 

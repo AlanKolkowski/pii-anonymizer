@@ -5,6 +5,8 @@ import { tightenSegmentsStep } from '../steps/tighten-segments.js';
 import { createLoadModelsStep } from '../steps/load-models.js';
 import { createNerStep } from '../steps/ner.js';
 import { createCaseFoldedNerStep } from '../steps/case-folded-ner.js';
+import { createCaseAllowlistStep } from '../steps/case-allowlist.js';
+import { createJdgReviewFallbackStep } from '../steps/jdg-review-fallback.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createLexiconStep } from '../steps/lexicon.js';
 import { createSpecialCategoryLexiconStep } from '../steps/special-category-lexicon.js';
@@ -83,6 +85,10 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
       createRegexStep(regexActive),
       createLexiconStep(lexiconActive),
       createSpecialCategoryLexiconStep(lexiconActive),
+      // ST-5 (SCOPE-TIERS-DESIGN.md §5.2 pkt 3): deterministic, model-free;
+      // self-inactive when the allowlist is empty, so the zero-entry world
+      // stays byte-identical (§5.3 pkt 4).
+      createCaseAllowlistStep(options.caseAllowlist ?? []),
     ] },
   ];
 }
@@ -110,7 +116,11 @@ export function createPostprocessSteps(options) {
       maxLengthStep,
       bindTierOf(dedupStep, tierOf),
       bindTierOf(backfillOccurrencesStep, tierOf),
-      mergeStep,
+      bindTierOf(mergeStep, tierOf),
+      // ST-5 (SCOPE-TIERS-DESIGN.md §5.2 pkt 5): marks pass-tier org names
+      // that may contain a person's name as review candidates; hard no-op
+      // under allMask, so today's single-tier world is untouched.
+      createJdgReviewFallbackStep(tierOpts),
       createTierPartitionStep(tierOpts),
       tokenizeStep,
     ] },
@@ -134,7 +144,9 @@ export function createDefaultPipeline(loadModel, getSentenceBoundaries, options)
   return [
     ...createPreSegmentSteps(getSentenceBoundaries),
     ...createModelLoadSteps(orderedHf, loadModel),
-    ...createNerSteps(orderedHf, regexActive, lexiconActive, loadModel),
+    ...createNerSteps(orderedHf, regexActive, lexiconActive, loadModel, {
+      caseAllowlist: options.caseAllowlist,
+    }),
     ...createPostprocessSteps({
       enabledEntities,
       entitySources,

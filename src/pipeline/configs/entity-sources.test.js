@@ -67,12 +67,14 @@ describe('entity-sources config', () => {
 
   // A12 is "free": enabling art. 9-10 adds no model beyond the two already
   // required by the identity/contact defaults, so it costs nothing at load time.
-  // 'lexicon' (B4-lite) and 'case-folded' (B2) are listed alongside but are not
-  // HF models either — a bundled JSON lexicon and a relabeling of the two
-  // existing models' own output, zero download cost — so neither breaks "free".
+  // 'lexicon' (B4-lite), 'case-folded' (B2) and 'case-allowlist' (ST-5) are
+  // listed alongside but are not HF models either — a bundled JSON lexicon,
+  // a relabeling of the two existing models' own output, and a deterministic
+  // matcher over user-typed signatures, zero download cost — so none of them
+  // breaks "free".
   it('enabling art. 9-10 by default adds no new model source (A12 is free)', () => {
     expect(requiredSources(defaultEnabledEntities()).sort())
-      .toEqual(['case-folded', 'lexicon', 'multilang-fp32', 'polish-fp16', 'regex']);
+      .toEqual(['case-allowlist', 'case-folded', 'lexicon', 'multilang-fp32', 'polish-fp16', 'regex']);
   });
 
   it('requiredSources is empty for empty selection', () => {

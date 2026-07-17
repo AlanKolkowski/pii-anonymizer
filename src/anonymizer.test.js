@@ -1233,3 +1233,23 @@ describe('buildTokenMapMulti', () => {
   });
 });
 
+
+// ST-2 H-1 extended to the precise-regex trim (ST-5): a precise pass-tier
+// regex hit must not swallow a same-type, same-span mask-tier entity.
+describe('deduplicateEntities tier-aware precise-regex trim', () => {
+  const REGEX_DOC = { entity_group: 'DOCUMENT_REFERENCE', start: 10, end: 21, score: 1.0, source: 'regex' };
+  const ALLOWLISTED = { entity_group: 'DOCUMENT_REFERENCE', start: 10, end: 21, score: 1.0, source: 'case-allowlist', forceTier: 'mask' };
+  const text = 'sygn. akt I C 1552/23 w aktach sprawy';
+
+  it('keeps a forceTier-mask entity alongside the covering pass-tier regex hit', () => {
+    const tierOf = (e) => e.forceTier ?? 'pass';
+    const result = deduplicateEntities([REGEX_DOC, ALLOWLISTED], text, tierOf);
+    expect(result).toHaveLength(2);
+    expect(result.some((e) => e.forceTier === 'mask')).toBe(true);
+  });
+
+  it('without tierOf the same pair collapses as today (single-tier callers)', () => {
+    const result = deduplicateEntities([REGEX_DOC, { ...ALLOWLISTED, forceTier: undefined }], text);
+    expect(result).toHaveLength(1);
+  });
+});
