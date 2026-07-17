@@ -75,3 +75,20 @@ z form poświadczonych w v1 (13), wskazówki przypadka od LLM w v1 (17).
   struktury „form poświadczonych" co nazwiska — bez drugiej bazy w v1.
 - **Decyzja 5** wymaga mechanizmu keep-alive w adapterze (M6) i pomiaru
   zachowania klientów w M8.
+
+---
+
+## Scope-tiers / decyzje po sprincie Fable (2026-07-18)
+
+- **O-ST-4: liczba do materiałów = recall W1-only, cel ≥95%.** Benchmark marketingowy
+  mierzy recall na rzeczywistych danych osobowych (warstwa `mask`/W1), nie „ogółem".
+  „Ogółem" (76% F1) i W1 (dziś 86,5% F1, holdout 206 all-mask) liczą INNY mianownik –
+  nie porównywać wprost. 95%+ to cel, nie deklaracja końcowa. (Decyzja Alana.)
+- **O-ST-2: art. 9-10 + identyfikatory (waga 5) NIE w trwałym słowniku przeglądu.**
+  Decyzje o nich per dokument, w RAM; blokada przy zapisie i odczycie `localStorage`.
+  Poluzowanie wymaga jawnej zgody Alana. (Realizacja: `03f664f`.)
+- **GATE-SCOPE** (werdykt w `GATE-SCOPE.md`): stos scope-tiers zbramkowany i zintegrowany
+  na `integration/sprint` (2477 testów zielonych, main nietknięty); aktywacja warstwowości
+  ZABLOKOWANA do B6 (H-3: 8 wycieków wagi ≥4 na 49 dok.). Sprzątanie sprintu naprawiło 5
+  defektów w kodzie z zielonymi testami (wyciek W1 na most, błąd licznika tokenów, dziura
+  D2, wyciek sygnatury EPU Nc-e, martwa rekonstrukcja DOCX omijająca 2 bramki).

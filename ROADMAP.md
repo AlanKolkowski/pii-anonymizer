@@ -111,8 +111,9 @@ pospolite — `ZAKRES-ANONIMIZACJI.md` §5) i przed ST-2…ST-6.
 ✅ Recall B3 (leksykon art. 9-10): kontradyktoryjny 87,5%, trzy wycieki wagi 5 zamknięte
 ✅ Recall B2 (wersaliki): syntetyczny ZUS zamknięty; kontradyktoryjny bez zmian; zdolność wersalikowa dla produktu
 ✅ Korpus 2.0 ZBUDOWANY (holdout 206 dok./1685 encji, dev/holdout rozłączne) + naprawa evalu; pomiar bramkowy przenosi się na PC (32 GB)
-✅ Piwot zakresu (W1/W2/W3, ZAKRES-ANONIMIZACJI.md) + ST-1/ST-7a scoring trójdzielny (feature/scope-st7a); pełny W1/206 all-mask zmierzony: F1 86,5% (P 87,4%/R 85,7%) — §4a
-👉  ── TU JESTEŚMY ── (87,5% na dev-korpusie „ogółem"; **W1 all-mask na pełnym 206-dok. holdoucie: F1 86,5%** (§4a), punkt startowy nie bramka; **cel 95%+ W1** wymaga domknięcia luk nazwiskowych + ST-2…ST-6 pod GATE-SCOPE)
+✅ Piwot zakresu (W1/W2/W3, ZAKRES-ANONIMIZACJI.md) + ST-1/ST-7a scoring trójdzielny; pełny W1/206 all-mask zmierzony: F1 86,5% (P 87,4%/R 85,7%) — §4a
+✅ Sprint Fable ZBRAMKOWANY + ZINTEGROWANY na `integration/sprint` (ST-3…ST-8, OS-1, SG-lite, morfologia W1, B3, DOCX; 2477 testów zielonych, 5 defektów naprawionych, main nietknięty) — patrz `GATE-SCOPE.md`
+👉  ── TU JESTEŚMY ── (W1 all-mask 206-dok. holdout **F1 86,5%** (§4a); sprint zbramkowany na gałęzi; **aktywacja warstwowości ZABLOKOWANA do B6** — H-3: 8 wycieków wagi ≥4; następny krok: **PC-eval `integration/sprint` → merge → B6 → aktywacja**; cel **95%+ W1**)
 ⬜ Recall do 90%+  (moduły B: B4 leksykon ról = największa dźwignia, B2 wersaliki,
                     B3 art.9-10, B1 ensemble; + korpus 2.0; + dokończone A7)
 ⬜ C4 build + bench  (domknięcie desktopu fp16: pełne pakowanie + pomiar pamięci/latencji)
@@ -147,5 +148,6 @@ anonimizatora. Marketing (dla obu) czeka na odpowiednie bramki jakościowe.
 - `GATE-RECALL-REMEDIATION.md` — werdykt planu A (Track 1, 84,2%).
 - `GATE-LEGAL-VERIFIER.md` — werdykt weryfikatora (fundament + 2 warunki MEDIUM).
 - `GATE-PHASE0.md` — werdykt fundamentu.
+- `GATE-SCOPE.md` — werdykt stosu scope-tiers + sprintu Fable (2026-07-18); aktywacja zablokowana do B6, integracja na `integration/sprint`.
 - `PRODUCT-DECISIONS.md` — decyzje Alana (21 + audyt/recall).
 - `PROJECT-MAP.md` — mapa dwóch produktów.
