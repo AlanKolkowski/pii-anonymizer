@@ -67,6 +67,21 @@ describe('ST-5 goldens — own case signature masked, citations stay visible (ti
   });
 });
 
+describe('ST-5 goldens — hyphenated e-court repertorium "Nc-e" (tiered)', () => {
+  // EPU / e-Sąd signatures use the repertorium "Nc-e" (hyphenated) — a
+  // very common Polish civil-collection signature shape. Under allMask:false
+  // this MUST be maskable via the allowlist like any other own signature;
+  // before the fix, parseSignature rejected the hyphen and the signature
+  // stayed visible (pass tier) despite being the user's own case.
+  const text = 'W sprawie o sygn. akt VI Nc-e 1234567/23 wydano nakaz zapłaty.';
+
+  it('masks the allowlisted Nc-e signature (own case, tiered profile)', async () => {
+    const result = await runPipeline(text, pipelineWith(['VI Nc-e 1234567/23'], TIERED));
+    expect(result.anonymized).toBe('W sprawie o sygn. akt [DOCUMENT_REFERENCE_1] wydano nakaz zapłaty.');
+    expect(result.legend['[DOCUMENT_REFERENCE_1]']).toBe('VI Nc-e 1234567/23');
+  });
+});
+
 describe('ST-5 goldens — JDG fallback reaches the review bucket (tiered profile)', () => {
   const text = 'Pozwana: Kancelaria Radcy Prawnego Jan Kowalski, ul. Piekary 33, Toruń.';
 

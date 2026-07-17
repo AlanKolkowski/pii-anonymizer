@@ -22,6 +22,11 @@ describe('parseSignature', () => {
     expect(parseSignature('X 123/23')).toEqual({ division: null, repertorium: 'X', number: '123', year: '23', upr: false });
   });
 
+  it('accepts the hyphenated e-court repertorium "Nc-e" (EPU)', () => {
+    expect(parseSignature('VI Nc-e 1234567/23')).toEqual({ division: 'VI', repertorium: 'Nc-e', number: '1234567', year: '23', upr: false });
+    expect(parseSignature('Nc-e 1234567/23')).toEqual({ division: null, repertorium: 'Nc-e', number: '1234567', year: '23', upr: false });
+  });
+
   it('rejects non-signatures', () => {
     expect(parseSignature('')).toBeNull();
     expect(parseSignature('Jan Kowalski')).toBeNull();
@@ -95,6 +100,22 @@ describe('findAllowlistedSignatures — golden 5.3 pkt 1-2', () => {
   it('finds all occurrences across the document', () => {
     const text = 'sygn. I C 1552/23; ponownie I C 1552/2023 oraz I C 1552 / 23.';
     expect(spansText(text, ENTRY)).toEqual(['I C 1552/23', 'I C 1552/2023', 'I C 1552 / 23']);
+  });
+});
+
+describe('findAllowlistedSignatures — hyphenated e-court repertorium (Nc-e)', () => {
+  const ENTRY = ['VI Nc-e 1234567/23'];
+
+  it('matches the exact hyphenated-repertorium occurrence', () => {
+    expect(spansText('sygn. akt VI Nc-e 1234567/23, dalej', ENTRY)).toEqual(['VI Nc-e 1234567/23']);
+  });
+
+  it('does not match a different repertorium (own signature must not over-match "Nc")', () => {
+    expect(spansText('sygn. akt VI Nc 1234567/23', ENTRY)).toEqual([]);
+  });
+
+  it('does not match a different number under the same hyphenated repertorium', () => {
+    expect(spansText('sygn. akt VI Nc-e 9999999/23', ENTRY)).toEqual([]);
   });
 });
 

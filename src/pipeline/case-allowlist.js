@@ -42,7 +42,11 @@ function escapeRegex(s) {
 export function parseSignature(raw) {
   if (typeof raw !== 'string') return null;
   const cleaned = raw.normalize('NFC').replace(/\s+/g, ' ').replace(/ ?\/ ?/g, '/').trim();
-  const m = /^(?:(\p{L}+) )?(\p{L}+) (\d+)\/(\d{2}|\d{4})( upr)?$/iu.exec(cleaned);
+  // The repertorium may carry one hyphenated suffix segment (e.g. "Nc-e", the
+  // EPU / e-Sąd electronic-collection repertorium) — a plain letter run is
+  // not enough to model real Polish repertoria. The division token (roman
+  // numeral, checked below against a closed list) never has a hyphen.
+  const m = /^(?:(\p{L}+) )?(\p{L}+(?:-\p{L}+)?) (\d+)\/(\d{2}|\d{4})( upr)?$/iu.exec(cleaned);
   if (!m) return null;
   const [, first, second, number, year, upr] = m;
   let division = null;
