@@ -460,6 +460,10 @@ async function runClassify(data) {
       tierOverrides: currentConfig.tierOverrides,
       allMask: currentConfig.allMask,
       caseAllowlist: currentConfig.caseAllowlist,
+      // OS-1 (OCR-SPACING-DESIGN.md §2.2 pkt 6): per-document OCR provenance
+      // set by main.js from the source's import metadata; gates the despaced
+      // NER pass. Absent/false = the pass never runs.
+      meta: { ocrProvenance: Boolean(data.ocrProvenance) },
       cache: prev,
       sources: SOURCES,
       entitySources: ENTITY_SOURCES,

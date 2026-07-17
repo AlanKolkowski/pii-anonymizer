@@ -1215,7 +1215,24 @@ function dispatchNextClassify() {
     total: progressBatchTotal || 1,
     t: performance.now(),
   });
-  worker.postMessage({ type: 'classify', id: next.id, text: next.text });
+  const source = sources.find((s) => s.id === next.id);
+  worker.postMessage({
+    type: 'classify',
+    id: next.id,
+    text: next.text,
+    // OS-1 (OCR-SPACING-DESIGN.md §2.2 pkt 6): OCR provenance from the
+    // import metadata gates the despaced NER pass in the worker. Pasted
+    // text has no provenance by design (O-OS-5: no silent activation).
+    ocrProvenance: sourceHasOcrProvenance(source),
+  });
+}
+
+// A source came through OCR when the import recorded an OCR engine
+// (image.js always, pdf.js when it OCR-ed at least one page) or any page is
+// marked source:'ocr' (pdf.js records pages even when confidence is absent).
+function sourceHasOcrProvenance(source) {
+  return Boolean(source?.meta?.ocr)
+    || Boolean(source?.meta?.pages?.some((page) => page.source === 'ocr'));
 }
 
 worker.onmessage = (e) => {

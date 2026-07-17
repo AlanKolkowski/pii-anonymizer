@@ -7,13 +7,14 @@ import {
 } from './configs/default.js';
 import { createCaseFoldedNerStep } from './steps/case-folded-ner.js';
 import { createCaseAllowlistStep } from './steps/case-allowlist.js';
+import { createDespacedNerStep } from './steps/despaced-ner.js';
 
 export async function sha256Hex(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function makeSeededCtx({ text, segments, entities, modelHandles = null }) {
+function makeSeededCtx({ text, segments, entities, modelHandles = null, meta = null }) {
   return {
     text,
     segments,
@@ -22,6 +23,7 @@ function makeSeededCtx({ text, segments, entities, modelHandles = null }) {
     legend: {},
     debug: [],
     ...(modelHandles && { modelHandles }),
+    ...(meta && { meta }),
   };
 }
 
@@ -61,6 +63,7 @@ function requiredSourcesFor(enabledEntities, entitySources) {
  * @param {object} [params.tierOverrides] - ST-2: per-type tier overrides, forwarded to createPostprocessSteps
  * @param {boolean} [params.allMask] - ST-2: forces the single-tier (legacy) profile when true/omitted
  * @param {string[]} [params.caseAllowlist] - ST-5: the user's own case signatures (raw entries); empty = step inactive
+ * @param {object} [params.meta] - OS-1: document metadata; meta.ocrProvenance gates the despaced pass (OCR-SPACING-DESIGN.md §2.2 pkt 6)
  * @param {Function} [params.onTimingMark] - optional progress hook receiving mark names
  * @param {Function} [params.onProgress] - optional fine-grained progress hook receiving progress events
  * @param {Function} [params.prepareModel] - async hook for downloading/caching one model source before inference
@@ -79,6 +82,7 @@ export async function classifyWithCache({
   tierOverrides,
   allMask,
   caseAllowlist,
+  meta,
   onTimingMark = () => {},
   onProgress = () => {},
   prepareModel = null,
@@ -104,6 +108,12 @@ export async function classifyWithCache({
   // dedicated block below and createCaseFoldedNerStep's own doc comment for
   // why it can't be driven from the per-source loop the way the main pass is).
   const caseFoldedNeeded = needed.includes('case-folded');
+  // OS-1 (OCR-SPACING-DESIGN.md §2.2): same construction as case-folded,
+  // additionally gated on the document's OCR provenance. The gate is applied
+  // both here (skip the inference entirely) and at merge time below — the
+  // NER cache is keyed by text hash alone, so the same text classified once
+  // with and once without provenance must not leak candidates across.
+  const despacedNeeded = needed.includes('despaced') && Boolean(meta?.ocrProvenance);
 
   emit('pipeline:load:start');
   if (prepareModels) {
@@ -144,6 +154,7 @@ export async function classifyWithCache({
   let regex = hit ? cache.regex : null;
   let lexicon = hit ? cache.lexicon : null;
   let caseFolded = hit ? cache.caseFolded : null;
+  let despaced = hit ? (cache.despaced ?? null) : null;
   let modelHandles = new Map();
 
   emit('pipeline:model-load:start');
@@ -195,6 +206,7 @@ export async function classifyWithCache({
           makeSeededCtx({ text: normalizedText, segments, entities: [], modelHandles }),
           createNerSteps([source], false, false, loadModel, {
             caseFoldedActive: false, // one model at a time here — see caseFoldedNeeded block below
+            despacedActive: false, // same constraint — see despacedNeeded block below
             onInference: () => {
               completedInferences += 1;
               emitProgress({
@@ -216,7 +228,7 @@ export async function classifyWithCache({
     if (regexNeeded && regex === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([], true, false, loadModel, { caseFoldedActive: false }),
+        createNerSteps([], true, false, loadModel, { caseFoldedActive: false, despacedActive: false }),
       );
       regex = ctx.entities;
     }
@@ -224,7 +236,7 @@ export async function classifyWithCache({
     if (lexiconNeeded && lexicon === null) {
       const ctx = await runPipeline(
         makeSeededCtx({ text: normalizedText, segments, entities: [] }),
-        createNerSteps([], false, true, loadModel, { caseFoldedActive: false }),
+        createNerSteps([], false, true, loadModel, { caseFoldedActive: false, despacedActive: false }),
       );
       lexicon = ctx.entities;
     }
@@ -242,6 +254,17 @@ export async function classifyWithCache({
         [{ phase: 'ner', steps: [createCaseFoldedNerStep(requiredHf, loadModel)] }],
       );
       caseFolded = ctx.entities;
+    }
+
+    // OS-1: like case-folded — once per text, full source set, own cache
+    // bucket. Seeded ctx carries meta so the step's own provenance gate
+    // stays the single source of truth for activation.
+    if (despacedNeeded && despaced === null) {
+      const ctx = await runPipeline(
+        makeSeededCtx({ text: normalizedText, segments, entities: [], meta }),
+        [{ phase: 'ner', steps: [createDespacedNerStep(requiredHf, loadModel)] }],
+      );
+      despaced = ctx.entities;
     }
   } finally {
     await disposeModelHandles(modelHandles);
@@ -262,7 +285,16 @@ export async function classifyWithCache({
   }
 
   // --- Stage 3: postprocess on the merged entity union ---
-  const merged = [...[...bySource.values()].flat(), ...(regex ?? []), ...(lexicon ?? []), ...(caseFolded ?? []), ...caseAllowlistEntities];
+  const merged = [
+    ...[...bySource.values()].flat(),
+    ...(regex ?? []),
+    ...(lexicon ?? []),
+    ...(caseFolded ?? []),
+    // Gated on THIS call's provenance, not just on the cached value —
+    // see the despacedNeeded comment above.
+    ...(despacedNeeded ? (despaced ?? []) : []),
+    ...caseAllowlistEntities,
+  ];
   const [postprocessPhase] = createPostprocessSteps({ enabledEntities, entitySources, tierOverrides, allMask });
   const rescanIndex = postprocessPhase.steps.findIndex((step) => step.name === 'backfillOccurrencesStep');
   const postSteps = rescanIndex === -1
@@ -297,6 +329,6 @@ export async function classifyWithCache({
 
   return {
     ctx: finalCtx,
-    cache: { textHash: hash, normalizedText, segments, bySource, regex, lexicon, caseFolded },
+    cache: { textHash: hash, normalizedText, segments, bySource, regex, lexicon, caseFolded, despaced },
   };
 }

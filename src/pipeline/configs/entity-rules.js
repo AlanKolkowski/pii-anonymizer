@@ -30,8 +30,16 @@ const IDENTIFIER_RULE = {
 // asserted (npm run eval on both corpora — see RECALL-B2-NOTES.md).
 const CASE_FOLDED_THRESHOLD = 0.8;
 
+// OS-1 (OCR-SPACING-DESIGN.md §2.2 pkt 4): starting threshold for the
+// despaced source, same value and same rationale as CASE_FOLDED_THRESHOLD —
+// the glued variant's sentence context is disrupted the same way a folded
+// header's is, and the closed five-type list does the precision work.
+// A starting point per the design ("start 0,8; finalnie z pomiaru na dev"),
+// to be finalized by tagged eval, not asserted here.
+const DESPACED_THRESHOLD = 0.8;
+
 export const ENTITY_RULES = {
-  PERSON_NAME:              { maxLength: 50, threshold: 0.5, fuzzyBackfill: true, thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD } },
+  PERSON_NAME:              { maxLength: 50, threshold: 0.5, fuzzyBackfill: true, thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD, 'despaced': DESPACED_THRESHOLD } },
   // A7 (EVAL-RECALL-AUDIT §8): weight>=3 thresholds were calibrated for
   // precision, not professional secrecy (§7.1) — a passport number at model
   // score 0.78 (adw_14) and a vehicle plate at 0.67 (adw_31, missed the old
@@ -87,9 +95,9 @@ export const ENTITY_RULES = {
     // above). Applied literally per RECALL-90-DESIGN.md §2.2 pkt 4 and
     // checked for regression by eval, not raised pre-emptively without
     // evidence — see RECALL-B2-NOTES.md for the measured outcome.
-    thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD },
+    thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD, 'despaced': DESPACED_THRESHOLD },
   },
-  ORGANIZATION_NAME:        { maxLength: 120, threshold: 0.6, thresholdBySource: { 'multilang-fp32': 0.95, 'case-folded': CASE_FOLDED_THRESHOLD }, caseInsensitiveBackfill: true },
+  ORGANIZATION_NAME:        { maxLength: 120, threshold: 0.6, thresholdBySource: { 'multilang-fp32': 0.95, 'case-folded': CASE_FOLDED_THRESHOLD, 'despaced': DESPACED_THRESHOLD }, caseInsensitiveBackfill: true },
   ORGANIZATION_IDENTIFIER:  IDENTIFIER_RULE,
   CONTACT_HANDLE:           IDENTIFIER_RULE,
   IP_ADDRESS:               IDENTIFIER_RULE,
@@ -102,8 +110,8 @@ export const ENTITY_RULES = {
   PAYMENT_CARD_SECURITY:    IDENTIFIER_RULE,
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
   VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40, threshold: 0.5 },
-  LOCATION:                 { maxLength: 100, threshold: 0.75, mergeWithAdjacent: [], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD } },
-  POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD } },
+  LOCATION:                 { maxLength: 100, threshold: 0.75, mergeWithAdjacent: [], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD, 'despaced': DESPACED_THRESHOLD } },
+  POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD, 'despaced': DESPACED_THRESHOLD } },
   PERSON_ATTRIBUTE:         { maxLength: 80, threshold: 0.6 },
 };
 

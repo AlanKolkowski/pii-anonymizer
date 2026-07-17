@@ -7,6 +7,7 @@ import { createNerStep } from '../steps/ner.js';
 import { createCaseFoldedNerStep } from '../steps/case-folded-ner.js';
 import { createCaseAllowlistStep } from '../steps/case-allowlist.js';
 import { createJdgReviewFallbackStep } from '../steps/jdg-review-fallback.js';
+import { createDespacedNerStep } from '../steps/despaced-ner.js';
 import { createRegexStep } from '../steps/regex.js';
 import { createLexiconStep } from '../steps/lexicon.js';
 import { createSpecialCategoryLexiconStep } from '../steps/special-category-lexicon.js';
@@ -78,10 +79,17 @@ export function createNerSteps(hfSubset, regexActive, lexiconActive, loadModel, 
   // is a joint pass over both) — see that file's dedicated, once-per-text
   // cache.caseFolded block and createCaseFoldedNerStep's own doc comment.
   const caseFoldedActive = options.caseFoldedActive ?? true;
+  // OS-1 (OCR-SPACING-DESIGN.md §2.2): same activation contract as B2's
+  // caseFoldedActive — the per-source caching loop in cache-orchestrator.js
+  // suppresses it and runs it standalone with the full source set. On top of
+  // the flag, the step itself is a hard no-op unless ctx.meta.ocrProvenance
+  // is set (provenance gate, §2.2 pkt 6).
+  const despacedActive = options.despacedActive ?? true;
   return [
     { phase: 'ner', steps: [
       createNerStep(hfSubset, loadModel, options),
       createCaseFoldedNerStep(hfSubset, loadModel, { active: caseFoldedActive }),
+      createDespacedNerStep(hfSubset, loadModel, { active: despacedActive }),
       createRegexStep(regexActive),
       createLexiconStep(lexiconActive),
       createSpecialCategoryLexiconStep(lexiconActive),
