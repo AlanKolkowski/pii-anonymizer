@@ -5,7 +5,7 @@
 // (analyzePersonName/generateForm/fullParadigm with the G1-G20 goldens)
 // builds ON these primitives — documented next step on this branch.
 
-import { genderFromAdjectivalSurname, isForeignName } from './paradigms.js';
+import { genderFromAdjectivalSurname, isForeignName, generateSurnameParadigm, surnameLemmaCandidates } from './paradigms.js';
 
 const INITIAL_RE = /^\p{Lu}\.$/u;
 const WORD_RE = /^\p{Lu}[\p{L}]+(?:-\p{Lu}[\p{L}]+)?$/u;
@@ -120,3 +120,184 @@ export function resolveGender(slowa, imiona = new Map(), attestedForms = []) {
 
 // Re-exported here so K1 consumers deal with one module surface.
 export { isForeignName };
+
+// --- analyzePersonName (K1/K3, FLEKSJA-IMPL-PLAN.md SS2.4) ------------------
+//
+// The generation half of K1: builds on parseNameStructure + resolveGender
+// above (structure/gender) and paradigms.js (surname rule engine) to
+// resolve, per word, a LEMMA (nominative) and the set of cases the word's
+// surface form could itself represent — the basis both for reconstructing
+// the nominative ("lematM", G12's "legend holds the first-seen case, not
+// the nominative" problem) and for attesting which surface forms are on
+// file per case (poswiadczoneWgPrzypadka, SS3.3).
+//
+// Word-level resolution never guesses: an unresolved word gets przypadki:
+// [] and a zrodloLematu flag explaining why (obce / imię-nieznane /
+// nieznane), which generateForm (generate.js) turns into a flag rather than
+// a fabricated form.
+
+function capitalizeLike(sample, word) {
+  // Mirrors the capitalization pattern of `sample` onto `word` (dictionary
+  // lemmas are stored lowercase in the imiona Map; the input text is the
+  // authority on how a real name is actually capitalized).
+  if (sample[0] === sample[0].toLocaleUpperCase('pl')) {
+    return word[0].toLocaleUpperCase('pl') + word.slice(1);
+  }
+  return word;
+}
+
+// Resolves ONE surname-typed word to its dictionary/rule lemma and the set
+// of cases the surface form could represent. Dictionary exceptions
+// (nazwiskaWyjatki, via the reverse index) are authoritative and skip the
+// rule engine entirely — a hyphenated word is treated as one opaque unit
+// in v1 (splitting each half is a v1.1 refinement, SS13 O-FL-5 territory).
+function resolveSurnameWord(tekst, morph) {
+  const key = tekst.toLocaleLowerCase('pl');
+  const dictHits = (morph?.formaDoLematu?.get(key) ?? []).filter((e) => e.sekcja === 'nazwiska');
+  if (dictHits.length > 0) {
+    const przypadki = [...new Set(dictHits.flatMap((h) => h.przypadki))];
+    return { lemat: dictHits[0].lemat, przypadki, zrodloLematu: 'słownik' };
+  }
+
+  if (isForeignName(tekst)) {
+    return { lemat: tekst, przypadki: [], zrodloLematu: 'obce' };
+  }
+
+  const candidates = surnameLemmaCandidates(tekst);
+  if (candidates.length === 0) {
+    return { lemat: tekst, przypadki: [], zrodloLematu: 'nieznane' };
+  }
+  const enriched = candidates.map((c) => {
+    const regenerated = generateSurnameParadigm(c.lemma, c.gender);
+    const przypadek = Object.entries(regenerated.paradygmat ?? {}).find(([, f]) => f === tekst)?.[0] ?? null;
+    return { ...c, przypadek };
+  });
+  // `feminine-indeclinable`'s paradigm is the constant function (every case
+  // equals the lemma), so a candidate whose lemma is the surface form
+  // ITSELF unchanged ALWAYS self-matches trivially — for every word, in
+  // every case, whether or not the bearer is actually an indeclinable
+  // feminine surname. That vacuous reading must never shadow a candidate
+  // that required a REAL inversion (a different lemma), which is the
+  // informative signal; it survives only as the fallback when nothing else
+  // inverted (e.g. genuinely nominative input).
+  const genuine = enriched.filter((e) => e.lemma !== tekst);
+  const ranked = genuine.length > 0 ? genuine : enriched;
+  return {
+    lemat: ranked[0].lemma,
+    przypadki: [...new Set(ranked.map((e) => e.przypadek).filter(Boolean))],
+    zrodloLematu: 'reguła',
+    kandydaciRodzaju: ranked,
+  };
+}
+
+// Resolves ONE word of any type (inicjał / imię / nazwisko*) — shared by
+// the primary value's word list and by every attested variant's word list
+// (buildAttestedByCase below), so both consult the exact same rules.
+function resolveWord(slowo, imiona, morph) {
+  if (slowo.typ === 'inicjał') {
+    return { ...slowo, lemat: slowo.tekst, przypadki: ['M'], zrodloLematu: 'inicjał', warianty: false };
+  }
+  if (slowo.typ === 'imię') {
+    const key = slowo.tekst.toLocaleLowerCase('pl');
+    if (imiona.has(key)) {
+      return { ...slowo, lemat: capitalizeLike(slowo.tekst, slowo.tekst), przypadki: ['M'], zrodloLematu: 'słownik', warianty: false };
+    }
+    const hit = morph?.formaDoLematu?.get(key)?.find((e) => e.sekcja === 'imiona');
+    if (hit) {
+      return {
+        ...slowo,
+        lemat: capitalizeLike(slowo.tekst, hit.lemat),
+        przypadki: hit.przypadki,
+        zrodloLematu: 'słownik',
+        warianty: false,
+      };
+    }
+    return { ...slowo, lemat: slowo.tekst, przypadki: [], zrodloLematu: 'imię-nieznane', warianty: false };
+  }
+  // nazwisko / nazwisko-dwuczłonowe
+  const resolved = resolveSurnameWord(slowo.tekst, morph);
+  const dictEntry = resolved.zrodloLematu === 'słownik' ? morph?.nazwiskaWyjatki?.get(resolved.lemat) : null;
+  return {
+    ...slowo,
+    lemat: resolved.lemat,
+    przypadki: resolved.przypadki,
+    zrodloLematu: resolved.zrodloLematu,
+    warianty: Boolean(dictEntry?.warianty),
+    kandydaciRodzaju: resolved.kandydaciRodzaju ?? null,
+  };
+}
+
+// Intersects the per-word case sets of a parsed value; [] on a word means
+// "unresolved", so it neither confirms nor contradicts agreement — words
+// that DID resolve must still agree with each other, or the value's own
+// case is 'niejednoznaczny' (never silently pick one).
+function agreeingCase(perWordCases) {
+  const resolved = perWordCases.filter((c) => c.length > 0);
+  if (resolved.length === 0) return null;
+  let inter = new Set(resolved[0]);
+  for (const cases of resolved.slice(1)) inter = new Set([...inter].filter((c) => cases.includes(c)));
+  if (inter.size === 0) return 'niejednoznaczny';
+  return inter.size === 1 ? [...inter][0] : [...inter];
+}
+
+// Formy poświadczone (SS3.3): `value` (the legend's first-seen form) plus
+// every other attested surface variant are each parsed and case-resolved
+// with the SAME rules as the primary analysis; a form whose words agree on
+// exactly one case is recorded under that case (first writer per slot —
+// `value` is inserted first, so it wins ties against later attestations).
+function buildAttestedByCase(value, attestedForms, imiona, morph) {
+  const out = {};
+  const forms = new Set([value, ...(attestedForms ?? [])].filter((f) => typeof f === 'string' && f !== ''));
+  for (const form of forms) {
+    const parsed = parseNameStructure(form, imiona);
+    if (parsed.status !== 'ok') continue; // unparseable/junk attested form — skip, never blocks the rest (K1.4)
+    const resolved = parsed.slowa.map((s) => resolveWord(s, imiona, morph));
+    const nonInitial = resolved.filter((s) => s.typ !== 'inicjał');
+    const przypadek = agreeingCase(nonInitial.map((s) => s.przypadki));
+    if (typeof przypadek === 'string' && przypadek !== 'niejednoznaczny' && !(przypadek in out)) {
+      out[przypadek] = form;
+    }
+  }
+  return out;
+}
+
+/**
+ * Analyzes a PERSON_NAME legend value (analyzePersonName, W1-W3-MORPHOLOGY-
+ * DESIGN.md SS2.4 / FLEKSJA-IMPL-PLAN.md SS2.4). `value` may be in ANY case —
+ * the legend holds whatever form was first seen, not necessarily the
+ * nominative (G12's problem) — so this reconstructs the nominative lemma
+ * ("lematM") from each word independently rather than assuming `value`
+ * already IS the base form.
+ *
+ * @param {string} value - legend value, e.g. "Jana Kowalskiego"
+ * @param {string[]} attestedForms - other raw surface variants seen for the
+ *   same token (deriveAttested, src/verifier/attested.js) — `value` itself
+ *   is folded in automatically, callers don't need to repeat it.
+ * @param {object|null} morph - loadMorphData() result, or null (dictionary
+ *   lookups then always miss — rule-governed surnames still work).
+ * @returns {{status:'ok', ...} | {status:'flaga', powod:string}}
+ */
+export function analyzePersonName(value, attestedForms = [], morph = null) {
+  const imiona = morph?.imiona ?? new Map();
+  const parsed = parseNameStructure(value, imiona);
+  if (parsed.status !== 'ok') return { status: 'flaga', powod: parsed.powod };
+
+  const rodzajInfo = resolveGender(parsed.slowa, imiona, attestedForms);
+  const slowa = parsed.slowa.map((s) => resolveWord(s, imiona, morph));
+  const lematM = slowa.map((s) => s.lemat).join(' ');
+  const nonInitial = slowa.filter((s) => s.typ !== 'inicjał');
+  const inputPrzypadek = agreeingCase(nonInitial.map((s) => s.przypadki));
+
+  return {
+    status: 'ok',
+    value,
+    slowa,
+    rodzaj: rodzajInfo.status === 'flaga' ? null : rodzajInfo.rodzaj,
+    rodzajZrodlo: rodzajInfo.status === 'flaga' ? null : rodzajInfo.zrodlo,
+    rodzajFlaga: rodzajInfo.status === 'flaga' ? rodzajInfo.powod : null,
+    lematM,
+    inputPrzypadek,
+    poswiadczoneWgPrzypadka: buildAttestedByCase(value, attestedForms, imiona, morph),
+    morph,
+  };
+}

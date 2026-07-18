@@ -14,4 +14,9 @@ export const ROLE_LEMMAS = [
   'radca', 'adwokat', 'mecenas', 'przewodniczący', 'ubezpieczyciel',
   'ubezpieczony', 'poręczyciel', 'zleceniodawca', 'zleceniobiorca',
   'kredytodawca', 'pożyczkodawca',
+  // Gate condition added at the W1 design gate (2026-07-12, FLEKSJA-IMPL-
+  // PLAN.md SS0/SS12 O-FL-1): consumer/business-party/injured-party/generic
+  // "strona" roles, missing from the original W1-W3-MORPHOLOGY-DESIGN.md
+  // SS1.8 list.
+  'konsument', 'przedsiębiorca', 'poszkodowany', 'strona',
 ];
