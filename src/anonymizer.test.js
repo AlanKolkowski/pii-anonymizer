@@ -1306,3 +1306,43 @@ describe('findRegexEntities — HC-2 R-DOW (dowód osobisty, H-3-CLOSURE-DESIGN.
   });
 });
 
+describe('findRegexEntities — HC-2 R-PJ (prawo jazdy, H-3-CLOSURE-DESIGN.md §5.3)', () => {
+  // Real sentences (test-data/adversarial-holdout/hold_identyfikatory_12.txt,
+  // test-data/adversarial/adw_14_dokumenty_tozsamosci.txt) — leak vectors #1
+  // and #2 from the design's §1.2 inventory. Today findRegexEntities emits
+  // nothing: the 5/2/4 digit clusters get split apart by "/" at the numeric-
+  // identifier scan (ID_SEPARATOR doesn't include "/"), and no other pattern
+  // reaches for this shape at all (§1.3).
+  it('detects a driving-licence number anchored by "prawo jazdy nr" (92712/00/2780)', () => {
+    const text = 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('92712/00/2780');
+  });
+
+  it('detects a driving-licence number anchored by "prawa jazdy nr" (00123/22/0611)', () => {
+    const text = 'W aktach znajduje się kopia paszportu nr EJ 1234567 oraz prawa jazdy nr 00123/22/0611 kat. B.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('00123/22/0611');
+  });
+
+  it('does not flag the same 5/2/4 shape with no "prawo/prawa jazdy" anchor anywhere nearby (invoice-number collision, §5.3)', () => {
+    const text = 'Faktura VAT nr 12345/07/2024 płatna w terminie 14 dni od daty wystawienia.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('12345/07/2024');
+  });
+
+  it('enforces the 40-char window: an anchor further back than the window does not license a match', () => {
+    const filler = 'x'.repeat(45);
+    const prefix = `Kredytobiorca okazał prawa jazdy ${filler} `;
+    const number = '12345/07/2024';
+    const text = `${prefix}a numer ${number} dotyczy zupełnie innej sprawy.`;
+    const gap = text.indexOf(number) - (prefix.indexOf('jazdy') + 'jazdy'.length);
+    expect(gap).toBeGreaterThan(40); // sanity check on the fixture itself
+
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain(number);
+  });
+});
+

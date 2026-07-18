@@ -621,6 +621,36 @@ function findDowodOsobistyEntities(text) {
   return entities;
 }
 
+// R-PJ: Polish driving-licence number, 5/2/4 digit groups
+// ("NNNNN/NN/RRRR", OCR-folded like the rest of the A1/HC-2 family).
+// Context-anchor ONLY, never bare (H-3-CLOSURE-DESIGN.md §5.3): the exact
+// same shape is how invoice/accounting document numbers are written
+// ("Faktura VAT nr 12345/07/2024") — a bare pattern would mask invoice
+// numbers as PERSON_IDENTIFIER in every business letter. The anchor
+// ("prawo/prawa/prawem jazdy") only needs to appear somewhere in the
+// preceding window, not immediately before the number — real sentences
+// interpose "nr"/"numer"/"seria" between the phrase and the digits.
+const PJ_DATA = identifierPatterns.prawoJazdy;
+const PJ_CONTEXT_ANCHORS = compileAnchors(PJ_DATA.contextAnchors);
+const PJ_CONTEXT_WINDOW = PJ_DATA.contextWindow;
+
+const PJ_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}[0-9lO]{5}/[0-9lO]{2}/[0-9lO]{4}${WORD_EDGE_AFTER}`,
+  'gu',
+);
+
+function findPrawoJazdyEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(PJ_CANDIDATE_RE)) {
+    const start = m.index;
+    const end = start + m[0].length;
+    if (hasContextAnchor(text, start, PJ_CONTEXT_WINDOW, PJ_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'PERSON_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
 // mod-97 validated as if "PL" were prepended, per the audit contract).
 const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
@@ -689,6 +719,7 @@ export function findRegexEntities(text) {
     ...findVehicleIdentifierEntities(text),
     ...findDocketNumberEntities(text),
     ...findDowodOsobistyEntities(text),
+    ...findPrawoJazdyEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

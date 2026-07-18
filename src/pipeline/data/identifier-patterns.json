@@ -9,5 +9,12 @@
       "seri[ai](?:\\s+(?:i|oraz))?\\s*nr"
     ],
     "contextWindow": 40
+  },
+  "prawoJazdy": {
+    "_comment": "R-PJ §5.3. WYŁĄCZNIE kotwiczone, nigdy bare: numeracja faktur/dokumentów księgowych (\"Faktura VAT nr 12345/07/2024\") ma identyczny kształt 5/2/4 — bez anchor ten wzorzec maskowałby numery faktur jako PERSON_IDENTIFIER w każdym piśmie gospodarczym.",
+    "contextAnchors": [
+      "praw\\p{L}*\\s+jazdy"
+    ],
+    "contextWindow": 40
   }
 }
