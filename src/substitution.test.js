@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { resolveOccurrences, renderResolvedText, effectiveOutcomeLegend } from './substitution.js';
+import { resolveOccurrences, renderResolvedText, effectiveOutcomeLegend, rawTokenLength } from './substitution.js';
+import { findTokens } from './tokens.js';
 import { anonymizeText, deanonymizeText, deduplicateEntities } from './anonymizer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -117,6 +118,45 @@ describe('resolveOccurrences — resolution layers', () => {
     const occ = resolveOccurrences('[A_1] i [B_1] i [A_1]', { legend: {} });
     expect(occ.map((o) => o.occurrenceIndex)).toEqual([0, 1, 2]);
     expect(occ.map((o) => o.tokenId)).toEqual(['A_1', 'B_1', 'A_1']);
+  });
+
+  // FLEKSJA-IMPL-PLAN.md SS3.4: detectCase's S-T signal (the token's own
+  // case annotation) can only ever reach a resolveReplacement implementation
+  // if resolveOccurrences forwards it — contextBefore/contextAfter are
+  // sliced to start AFTER the token's own raw span, so the annotation is
+  // otherwise invisible to the resolver. This is the one behavior delta
+  // beyond exporting rawTokenLength: purely additive (a new key on the
+  // object handed to an opt-in callback), so every existing call site
+  // (none currently pass resolveReplacement in production code) is
+  // byte-for-byte unaffected.
+  it('passes the token\'s own case annotation to the resolver as ctx.case', () => {
+    let seen;
+    resolveOccurrences('Doręczono [PERSON_NAME_1|C] niezwłocznie.', {
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      resolveReplacement: (ctx) => { seen = ctx; return { text: undefined }; },
+    });
+    expect(seen.case).toBe('C');
+  });
+
+  it('ctx.case is undefined when the occurrence carries no annotation', () => {
+    let seen;
+    resolveOccurrences('[PERSON_NAME_1] przyszedł.', {
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      resolveReplacement: (ctx) => { seen = ctx; return { text: undefined }; },
+    });
+    expect(seen.case).toBeUndefined();
+  });
+});
+
+describe('rawTokenLength (exported for FL-3 detectCase context windows, FLEKSJA-IMPL-PLAN.md SS3.4)', () => {
+  it('is the bracket-plus-tokenId length for a plain token', () => {
+    const [match] = findTokens('[PERSON_NAME_1] text');
+    expect(rawTokenLength(match)).toBe('[PERSON_NAME_1]'.length);
+  });
+
+  it('includes the pipe and case code for an annotated token', () => {
+    const [match] = findTokens('[PERSON_NAME_1|D] text');
+    expect(rawTokenLength(match)).toBe('[PERSON_NAME_1|D]'.length);
   });
 });
 

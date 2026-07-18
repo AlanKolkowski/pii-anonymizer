@@ -15,7 +15,12 @@ const CONTEXT_CHARS = 40;
 // source text than its canonical `[${tokenId}]` form. tokenId/case (both from
 // findTokens) are enough to recover the exact raw span without tokens.js
 // having to expose match lengths itself.
-function rawTokenLength(entry) {
+//
+// Exported (FLEKSJA-IMPL-PLAN.md SS3.4, the one sanctioned S2 delta): W3's
+// detectCase needs an occurrence's exact raw length to build its context
+// windows the same way resolveOccurrences does below — a second, private
+// copy of this arithmetic elsewhere would be one more place to keep in sync.
+export function rawTokenLength(entry) {
   return entry.case
     ? entry.tokenId.length + entry.case.length + 3 // "[" + "|" + "]"
     : entry.tokenId.length + 2; // "[" + "]"
@@ -53,6 +58,12 @@ export function resolveOccurrences(text, { legend = {}, decisions, resolveReplac
           tokenId,
           type,
           baseValue,
+          // The occurrence's own case annotation ([TYP_N|D] -> 'D'), if any
+          // — findTokens (S1) already parses it; contextBefore/contextAfter
+          // below start AFTER the token's raw span, so without this the
+          // annotation (W3's S-T signal) would be invisible to any resolver.
+          // undefined when unannotated, matching every other absent field.
+          case: match.case,
           contextBefore: text.slice(Math.max(0, index - CONTEXT_CHARS), index),
           contextAfter: text.slice(index + rawLength, index + rawLength + CONTEXT_CHARS),
           occurrence: occurrenceIndex,
