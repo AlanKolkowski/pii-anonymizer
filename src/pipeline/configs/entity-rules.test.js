@@ -36,7 +36,7 @@ describe('rulesFor', () => {
 // MF-1 (MASK-FLOOR-DESIGN.md §2.2 pkt 2, §2.4, R-MF-4): config-consistency
 // check for the mask-floor mechanism's single knob.
 describe('MASK_FLOOR (MF-1)', () => {
-  it('starts disabled (null) — this commit ships the mechanism, not a value; GATE-MF\'s measurement sets the real number', () => {
+  it('starts disabled (null): this commit ships the mechanism, not a value; GATE-MF\'s measurement sets the real number', () => {
     expect(MASK_FLOOR).toBeNull();
   });
 
@@ -47,11 +47,11 @@ describe('MASK_FLOOR (MF-1)', () => {
     expect(MASK_FLOOR).toBeLessThanOrEqual(1);
   });
 
-  // R-MF-4 (documenting, not blocking — MASK-FLOOR-DESIGN.md §8): a floor at
+  // R-MF-4 (documenting, not blocking; MASK-FLOOR-DESIGN.md §8): a floor at
   // or above every mask-tier type's own base threshold would be a silent
   // no-op. This test never fails on its own account (a genuinely no-op
   // value chosen deliberately by GATE-MF is still a valid, if pointless,
-  // config) — it prints a warning so the condition is never silent.
+  // config); it prints a warning so the condition is never silent.
   it('(informational) warns if MASK_FLOOR would be a silent no-op for every mask-tier type', () => {
     const maskTypeThresholds = Object.keys(TYPE_TIERS)
       .filter((type) => TYPE_TIERS[type] === 'mask')
@@ -63,13 +63,13 @@ describe('MASK_FLOOR (MF-1)', () => {
       // eslint-disable-next-line no-console
       console.warn(
         `[mask-floor] MASK_FLOOR=${MASK_FLOOR} is >= the lowest mask-tier base ` +
-        `threshold (${lowestMaskThreshold}) — every mask-tier type's own ` +
+        `threshold (${lowestMaskThreshold}): every mask-tier type's own ` +
         'threshold already sits at or below the floor, so it is a silent ' +
         'no-op (R-MF-4). Re-check the GATE-MF sweep result before shipping this value.',
       );
     }
     // Sanity that the computed reference itself is meaningful (not NaN/0
-    // from an empty filter — a real assertion, not a decoy).
+    // from an empty filter, a real assertion, not a decoy).
     expect(lowestMaskThreshold).toBeGreaterThan(0);
   });
 });

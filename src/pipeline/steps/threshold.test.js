@@ -14,14 +14,14 @@ vi.mock('../configs/entity-rules.js', () => ({
       // MF-1 tests below can prove the floor stays out of its way.
       PERSON_NAME: { threshold: 0.5, thresholdBySource: { 'case-folded': 0.8 } },
       PERSON_ROLE_OR_TITLE: { threshold: 0.6, thresholdBySource: { 'polish-q8': 0.75 } },
-      // review-tier (type-tiers.js TYPE_TIERS, unmocked/real in this file) —
+      // review-tier (type-tiers.js TYPE_TIERS, unmocked/real in this file):
       // used by the MF-1 tests to prove the floor never touches review.
       PERSON_ATTRIBUTE: { threshold: 0.6, thresholdBySource: {} },
     };
     return map[type] || { threshold: 0, thresholdBySource: {} };
   },
   // Every test below that exercises the floor passes maskFloorOverride
-  // explicitly (createThresholdStep's third argument) — this mocked export
+  // explicitly (createThresholdStep's third argument); this mocked export
   // only satisfies the default-parameter reference for calls that omit it
   // (e.g. the bare createThresholdStep() below), mirroring the real
   // entity-rules.js starting value.
@@ -106,13 +106,13 @@ describe('createThresholdStep overrides', () => {
 
 // MF-1 (MASK-FLOOR-DESIGN.md §2.2/§2.3/§2.4): tier-aware floor for the
 // `mask` tier's per-type thresholds. `tierOpts` is the third-position
-// argument here (overrides, tierOpts, maskFloorOverride) — the same
+// argument here (overrides, tierOpts, maskFloorOverride): the same
 // {allMask, tierOverrides} object createPostprocessSteps threads into
 // dedup/backfill via bindTierOf (default.js), no second configuration
 // channel. `maskFloorOverride` defaults to entity-rules.js's real
-// MASK_FLOOR (null today) when omitted — every test below passes it
+// MASK_FLOOR (null today) when omitted; every test below passes it
 // explicitly so it never depends on that default.
-describe('createThresholdStep — MF-1 mask floor', () => {
+describe('createThresholdStep, MF-1 mask floor', () => {
   it('RED baseline: with the floor off (MASK_FLOOR=null) a below-threshold mask candidate is dropped, exactly like today', () => {
     const step = createThresholdStep({}, { allMask: false }, null);
     const result = step(ctx([
@@ -137,7 +137,7 @@ describe('createThresholdStep — MF-1 mask floor', () => {
     expect(result.entities).toHaveLength(0);
   });
 
-  it('2.3.1: a review-tier PERSON_ATTRIBUTE at the same score is NOT rescued — the floor only ever touches the mask tier', () => {
+  it('2.3.1: a review-tier PERSON_ATTRIBUTE at the same score is NOT rescued, the floor only ever touches the mask tier', () => {
     const step = createThresholdStep({}, { allMask: false }, 0.4);
     const result = step(ctx([
       { entity_group: 'PERSON_ATTRIBUTE', start: 0, end: 5, score: 0.45, source: 'multilang-q8' },
@@ -145,7 +145,7 @@ describe('createThresholdStep — MF-1 mask floor', () => {
     expect(result.entities).toHaveLength(0);
   });
 
-  it('2.3.1: a case-folded PERSON_NAME candidate at the same score is NOT rescued — source thresholds are outside the floor\'s reach (§2.2 pkt 3)', () => {
+  it('2.3.1: a case-folded PERSON_NAME candidate at the same score is NOT rescued, source thresholds are outside the floor\'s reach (§2.2 pkt 3)', () => {
     const step = createThresholdStep({}, { allMask: false }, 0.4);
     const result = step(ctx([
       { entity_group: 'PERSON_NAME', start: 0, end: 5, score: 0.45, source: 'case-folded' },
@@ -179,10 +179,10 @@ describe('createThresholdStep — MF-1 mask floor', () => {
     expect(result.entities).toHaveLength(0);
   });
 
-  // 2.3.4: no fuzzing dependency in this repo (package.json has none) — a
+  // 2.3.4: no fuzzing dependency in this repo (package.json has none), so a
   // deterministic combinatorial sweep stands in for the property test.
   // Claim: prógEfektywny(floor) <= prógEfektywny(null) for every entity and
-  // config, observable as survival monotonicity — anything that survives
+  // config, observable as survival monotonicity: anything that survives
   // WITHOUT a floor must also survive WITH one (a floor only ever lowers
   // the bar, never raises it).
   it('2.3.4 (property): a floor never raises the effective threshold, for every score/type/source/tierOpts combination', () => {

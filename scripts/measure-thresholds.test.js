@@ -1,6 +1,6 @@
 // MF-2 (MASK-FLOOR-DESIGN.md §3.2): golden test on a hand-built, spreparowany
-// mini-cache — three documents, one case each (recovers-leak / fragment /
-// clean FP) — no models, no disk I/O, laptop-safe. Shape mirrors exactly
+// mini-cache: three documents, one case each (recovers-leak / fragment /
+// clean FP), no models, no disk I/O, laptop-safe. Shape mirrors exactly
 // what cache-ner-for-thresholds.mjs writes: { name, expected, nerCtx: {
 // text, segments, entities } }.
 import { describe, it, expect } from 'vitest';
@@ -16,7 +16,7 @@ import {
   MASK_FLOOR_GRID,
 } from './measure-thresholds.mjs';
 
-// PERSON_NAME's real base threshold is 0.5 (entity-rules.js) — every
+// PERSON_NAME's real base threshold is 0.5 (entity-rules.js); every
 // candidate below is scored 0.45 so it is unambiguously "dropped today"
 // and unambiguously rescued by any floor >= 0.45 (e.g. the 0.4 grid
 // point). source:'multilang-fp32' is PERSON_NAME's real authoritative
@@ -25,8 +25,8 @@ import {
 // scoreHistogram) keeps these candidates rather than silently dropping them
 // for an unrelated reason.
 
-// Doc 1 — "recovers-leak": one low-score candidate, nothing else detects
-// this GT span at all — a full leak at baseline, closed by the floor.
+// Doc 1, "recovers-leak": one low-score candidate, nothing else detects
+// this GT span at all, a full leak at baseline, closed by the floor.
 const DOC1 = {
   name: 'doc1-recovers-leak',
   expected: [{ entity_group: 'PERSON_NAME', start: 0, end: 12, text: 'Jan Kowalski' }],
@@ -39,11 +39,11 @@ const DOC1 = {
   },
 };
 
-// Doc 2 — "fragment": a wide, high-score candidate ALREADY covers the GT
+// Doc 2, "fragment": a wide, high-score candidate ALREADY covers the GT
 // span at baseline (0.9 clears the 0.5 threshold today); a second, low-score
 // candidate is a narrower sub-span of the SAME mention. The floor rescues
 // the narrow one from the raw-candidate gate, but it doesn't close a fresh
-// leak — the GT was never leaking.
+// leak: the GT was never leaking.
 const DOC2 = {
   name: 'doc2-fragment',
   expected: [{ entity_group: 'PERSON_NAME', start: 0, end: 10, text: 'Anna Nowak' }],
@@ -57,8 +57,8 @@ const DOC2 = {
   },
 };
 
-// Doc 3 — "no-coverage": a low-score candidate with no ground truth at all
-// (a spurious detection) — the floor would let through a clean FP.
+// Doc 3, "no-coverage": a low-score candidate with no ground truth at all
+// (a spurious detection): the floor would let through a clean FP.
 const DOC3 = {
   name: 'doc3-no-coverage',
   expected: [],
@@ -115,7 +115,7 @@ describe('MF-2 pure helpers (unit-level, hand-built entity lists)', () => {
       expect(leakRecovery(gt, off, floored)).toHaveLength(0);
     });
 
-    it('respects minWeight (PERSON_ROLE_OR_TITLE is weight 1 — never a "full leak" recovery in the weight>=4 sense)', () => {
+    it('respects minWeight (PERSON_ROLE_OR_TITLE is weight 1, never a "full leak" recovery in the weight>=4 sense)', () => {
       const gt = [{ entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 5 }];
       const off = [];
       const floored = [{ entity_group: 'PERSON_ROLE_OR_TITLE', start: 0, end: 5, score: 0.45 }];
@@ -157,11 +157,11 @@ describe('MF-2 golden: sweepMaskFloor / scoreHistogram on the 3-document fixture
   it('scoreHistogram: the 0.45 bin has exactly one candidate in each of the three buckets', async () => {
     const bins = await scoreHistogram(FIXTURE_CACHE, { enabledEntities: ['PERSON_NAME'] });
     expect(bins['0.45']).toEqual({ 'recovers-leak': 1, fragment: 1, 'no-coverage': 1 });
-    // No other bin should exist — every fixture candidate scores exactly 0.45.
+    // No other bin should exist: every fixture candidate scores exactly 0.45.
     expect(Object.keys(bins)).toEqual(['0.45']);
   });
 
-  it('sweepMaskFloor: floor=null (off) is trivially all-zero — the self-consistency baseline', async () => {
+  it('sweepMaskFloor: floor=null (off) is trivially all-zero, the self-consistency baseline', async () => {
     const [offRow] = await sweepMaskFloor(FIXTURE_CACHE, { enabledEntities: ['PERSON_NAME'], floors: [null] });
     expect(offRow).toMatchObject({ floor: null, leaksRecovered: 0, maskDelta: 0, byType: {} });
   });
@@ -198,7 +198,7 @@ describe('MF-2 golden: sweepMaskFloor / scoreHistogram on the 3-document fixture
 describe('MF-2 non-regression: the pre-existing per-type sweep() still works after the refactor', () => {
   it('sweep() reproduces the expected P/R swing across doc1\'s 0.45 candidate at thresholds 0.4 and 0.5', async () => {
     // sweep() is keyed by the two real corpus names; adversarial is left
-    // empty on purpose (this fixture doesn't model it) — withRates()
+    // empty on purpose (this fixture doesn't model it): withRates()
     // reports null precision/recall for zero denominators, which is exactly
     // what an empty corpus should produce.
     const cache = { synthetic: [DOC1], adversarial: [] };

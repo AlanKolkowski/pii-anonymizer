@@ -18,12 +18,12 @@
 // (EVAL-RECALL-AUDIT §10 convention).
 //
 // MF-2 (MASK-FLOOR-DESIGN.md §3): a second CLI mode reusing the SAME cache,
-// added rather than a new script — sweeps MASK_FLOOR (§2) instead of a
+// added rather than a new script: sweeps MASK_FLOOR (§2) instead of a
 // per-type threshold, in tiered mode (allMask:false):
 //   node scripts/measure-thresholds.mjs --floor [--floors=off,0.45,0.40,0.35,0.30] [--min-weight=4]
 // Writes test-data/results/mask-floor-sweep.json (gitignored, same
 // discipline). Metric is leak recovery / character coverage (§3.1 pt 3,
-// §0 pt 3 — NOT strict P/R): a candidate below strict-match quality can
+// §0 pt 3, NOT strict P/R): a candidate below strict-match quality can
 // still close a full leak. See sweepMaskFloor/scoreHistogram below.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -34,7 +34,7 @@ import { allEntityTypes } from '../src/pipeline/configs/entity-sources.js';
 import { matchEntities } from '../src/eval/matching.js';
 // MF-2 (MASK-FLOOR-DESIGN.md §3): charCoverage is EVAL-RECALL-AUDIT part C's
 // character-coverage primitive (analyze.js), already reused by
-// score-tiers.js — the mask-floor sweep reuses it too rather than
+// score-tiers.js; the mask-floor sweep reuses it too rather than
 // reimplementing span-union math a third time.
 import { charCoverage } from '../src/eval/analyze.js';
 import { tierFor } from '../src/pipeline/configs/type-tiers.js';
@@ -144,7 +144,7 @@ function entityKey(e) {
   return `${e.entity_group}:${e.start}:${e.end}`;
 }
 
-// Threshold-only view of one floor value — deliberately bypasses dedup/
+// Threshold-only view of one floor value: deliberately bypasses dedup/
 // merge/backfill/snap. "Which raw candidates does lowering the gate let
 // through" (A8's framing, entity-rules.js:36-40 comment) is a property of
 // the threshold step alone; running the full chain here would make the
@@ -173,15 +173,15 @@ export function isDroppedToday(candidate) {
 }
 
 // One rescued (or any) candidate's relationship to ground truth, judged
-// against `referenceEntities` — normally the REAL baseline's final,
-// fully-postprocessed output (what the product shows today) — via
+// against `referenceEntities` (normally the REAL baseline's final,
+// fully-postprocessed output, what the product shows today) via
 // charCoverage (src/eval/analyze.js, reused):
-//   'no-coverage'   — doesn't overlap any GT span of its type at all (a
+//   'no-coverage'   : doesn't overlap any GT span of its type at all (a
 //                      clean FP the floor would introduce).
-//   'fragment'      — overlaps a GT span the baseline ALREADY covers some
+//   'fragment'      : overlaps a GT span the baseline ALREADY covers some
 //                      other way (A8's class: redundant, not a fresh leak
 //                      closed).
-//   'recovers-leak' — overlaps a GT span that is a FULL leak (0% coverage)
+//   'recovers-leak' : overlaps a GT span that is a FULL leak (0% coverage)
 //                      at the baseline.
 export function classifyCandidate(candidate, groundTruth, referenceEntities) {
   const overlapping = groundTruth.filter(
@@ -196,21 +196,21 @@ export function classifyCandidate(candidate, groundTruth, referenceEntities) {
 // weight >= minWeight that are a full leak (0% coverage) in `offFinal`
 // (baseline's real final output) and become partly-or-fully covered in
 // `flooredFinal`. Deliberately the FULL pipeline's output (dedup/merge/
-// backfill included, via buildFloorPostSteps below) — this is "does the
+// backfill included, via buildFloorPostSteps below): this is "does the
 // actual product recover it", not a raw-candidate question.
 export function leakRecovery(groundTruth, offFinal, flooredFinal, { minWeight = 4 } = {}) {
   const recovered = [];
   for (const gt of groundTruth) {
     if (tierFor(gt.entity_group) !== 'mask') continue;
     if (weightFor(gt.entity_group) < minWeight) continue;
-    if (charCoverage(gt, offFinal).coverage > 0) continue; // not a full leak — out of scope
+    if (charCoverage(gt, offFinal).coverage > 0) continue; // not a full leak, out of scope
     if (charCoverage(gt, flooredFinal).coverage > 0) recovered.push(gt);
   }
   return recovered;
 }
 
 // Full real postprocess chain (createPostprocessSteps, tiered) with the
-// threshold step's floor swapped for `floor` — locates it by step.name
+// threshold step's floor swapped for `floor`: locates it by step.name
 // exactly like cache-orchestrator.js locates backfillOccurrencesStep
 // (default.js's own doc comment on bindTierOf), so this stays correct if
 // the chain's step order or membership ever changes.
@@ -229,9 +229,9 @@ async function runSteps(steps, nerCtx) {
 
 // Per-floor-value sweep: leak recovery, mask-count delta (ergonomics) and
 // the three-bucket rescued-candidate breakdown, aggregated per type and
-// per document. `floors` should include `null` (off) — its row is the
+// per document. `floors` should include `null` (off): its row is the
 // self-consistency check (MASK-FLOOR-DESIGN.md §2.3 pkt 2/4 in measurement
-// form): everything is trivially zero there.
+// form), everything is trivially zero there.
 export async function sweepMaskFloor(cache, opts = {}) {
   const enabledEntities = opts.enabledEntities ?? allEntityTypes();
   const floors = opts.floors ?? MASK_FLOOR_GRID;
@@ -278,7 +278,7 @@ export async function sweepMaskFloor(cache, opts = {}) {
 // Floor-INDEPENDENT diagnostic (§3.1 pt 3, bullet 3): every mask-tier
 // candidate dropped by today's real threshold, scored in [min, max),
 // bucketed by its own score into `binWidth`-wide bins and classified via
-// classifyCandidate against the real baseline's final output — "the chart
+// classifyCandidate against the real baseline's final output: "the chart
 // you read the knee and the value from" per the design, independent of
 // which specific floor value in the grid would rescue it.
 export async function scoreHistogram(cache, opts = {}) {
@@ -315,7 +315,7 @@ function printFloorTable(results) {
   for (const r of results) {
     const byTypeStr = Object.entries(r.byType)
       .map(([t, b]) => `${t}:${b['recovers-leak']}/${b.fragment}/${b['no-coverage']}`)
-      .join(', ') || '—';
+      .join(', ') || '(none)';
     console.log(`${(r.floor ?? 'off').toString().padEnd(5)} | ${String(r.leaksRecovered).padStart(15)} | ${String(r.maskDelta).padStart(10)} | ${byTypeStr}`);
   }
 }

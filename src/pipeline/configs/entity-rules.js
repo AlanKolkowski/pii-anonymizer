@@ -32,7 +32,7 @@ const CASE_FOLDED_THRESHOLD = 0.8;
 
 // MF-1 (MASK-FLOOR-DESIGN.md §2.2 pkt 2): a single global floor for the
 // `mask` tier's per-type thresholds, consumed by createThresholdStep
-// (threshold.js) — when tiering is active (allMask:false) and this is not
+// (threshold.js): when tiering is active (allMask:false) and this is not
 // null, a mask-tier entity's effective threshold is clamped down to
 // min(threshold, MASK_FLOOR); it never raises a threshold, never touches
 // review/pass, and never overrides a source-specific threshold
@@ -40,10 +40,10 @@ const CASE_FOLDED_THRESHOLD = 0.8;
 // bars of their own, §2.2 pkt 3).
 //
 // Starting value: null (disabled). The mechanism can ship on main ahead of
-// the measurement — with MASK_FLOOR null, createThresholdStep's floor
+// the measurement: with MASK_FLOOR null, createThresholdStep's floor
 // branch never fires, so behavior is byte-for-byte identical to today even
 // in tiered mode (allMask:false). Only GATE-MF's sweep (§5, PC-side) sets a
-// real value here; that is a config-only change, not a code change — see
+// real value here, and that is a config-only change, not a code change; see
 // entity-rules.test.js for the domain check (null or a number in (0, 1]).
 export const MASK_FLOOR = null;
 

@@ -190,10 +190,10 @@ describe('ST-2 tier activation default (SCOPE-TIERS-DESIGN.md §3.4 pkt 2, §9)'
 
 describe('MF-1 mask floor default (MASK-FLOOR-DESIGN.md §2.3 pkt 2, §6 GM-1)', () => {
   // Real entity-rules.js, unmocked (unlike threshold.test.js's isolated
-  // unit tests) — this proves the SHIPPED MASK_FLOOR=null is a genuine
+  // unit tests): this proves the SHIPPED MASK_FLOOR=null is a genuine
   // no-op through the actual wiring end to end, not just in a mock.
-  // "Jan"/"Kowalski" both score 0.45 — below PERSON_NAME's real 0.5
-  // threshold — so whatever B-/I- aggregation createNerStep uses, the
+  // "Jan"/"Kowalski" both score 0.45, below PERSON_NAME's real 0.5
+  // threshold, so whatever B-/I- aggregation createNerStep uses, the
   // final entity score is unambiguously 0.45 either way.
   const mockLoadModel = async () => ({
     infer: async (text) => {
@@ -207,7 +207,7 @@ describe('MF-1 mask floor default (MASK-FLOOR-DESIGN.md §2.3 pkt 2, §6 GM-1)',
     dispose: async () => {},
   });
 
-  it('allMask:false alone does not rescue a borderline PERSON_NAME — MASK_FLOOR ships null, mechanism wired but inert', async () => {
+  it('allMask:false alone does not rescue a borderline PERSON_NAME: MASK_FLOOR ships null, mechanism wired but inert', async () => {
     const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, {
       enabledEntities: ALL_ENTITIES,
       allMask: false,
@@ -215,12 +215,12 @@ describe('MF-1 mask floor default (MASK-FLOOR-DESIGN.md §2.3 pkt 2, §6 GM-1)',
     const result = await runPipeline('Jan Kowalski przyszedł do sądu.', pipeline);
 
     // 0.45 < PERSON_NAME's real base threshold of 0.5, and MASK_FLOOR is
-    // null in entity-rules.js today — dropped, identical to allMask:true.
+    // null in entity-rules.js today: dropped, identical to allMask:true.
     expect(result.anonymized).toContain('Jan Kowalski');
     expect(result.anonymized).not.toContain('[PERSON_NAME_');
   });
 
-  it('allMask:true reproduces the exact same (dropped) outcome — sanity that the tiered case above isn\'t accidentally testing something else', async () => {
+  it('allMask:true reproduces the exact same (dropped) outcome: sanity that the tiered case above isn\'t accidentally testing something else', async () => {
     const pipeline = createDefaultPipeline(mockLoadModel, get_sentence_boundaries, {
       enabledEntities: ALL_ENTITIES,
       allMask: true,
