@@ -651,6 +651,39 @@ function findPrawoJazdyEntities(text) {
   return entities;
 }
 
+// R-TR: Polish vehicle registration plate — 2-3 uppercase letters (powiat
+// prefix) + 4-5 alphanumerics containing at least one digit. Context-anchor
+// ONLY, never bare (H-3-CLOSURE-DESIGN.md §5.4): the bare shape collides
+// head-on with currency amounts written ISO-code-first ("CHF 250 000",
+// "USD 88812", "PLN 12345") — exactly the credit-agreement corpus this tool
+// targets — and with case-law repertoria ("KIO 2345/21") before the "/"
+// breaks them. `(?=[0-9A-Z]*[0-9])` is unbounded but safe: the character
+// class it scans through is itself bounded by the first non-alnum char, and
+// the trailing WORD_EDGE_AFTER on the literal `{4,5}` match independently
+// rejects any run longer than 5 — so a false "digit exists somewhere" can
+// never let a match through that the length+boundary check wouldn't anyway
+// (mirrors VIN_RE's existing digit/letter lookaheads above).
+const TR_DATA = identifierPatterns.tablicaRejestracyjna;
+const TR_CONTEXT_ANCHORS = compileAnchors(TR_DATA.contextAnchors);
+const TR_CONTEXT_WINDOW = TR_DATA.contextWindow;
+
+const TR_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}[A-Z]{2,3}${SINGLE_SEP_OPT}(?=[0-9A-Z]*[0-9])[0-9A-Z]{4,5}${WORD_EDGE_AFTER}`,
+  'gu',
+);
+
+function findTablicaRejestracyjnaEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(TR_CANDIDATE_RE)) {
+    const start = m.index;
+    const end = start + m[0].length;
+    if (hasContextAnchor(text, start, TR_CONTEXT_WINDOW, TR_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'VEHICLE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
 // mod-97 validated as if "PL" were prepended, per the audit contract).
 const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
@@ -720,6 +753,7 @@ export function findRegexEntities(text) {
     ...findDocketNumberEntities(text),
     ...findDowodOsobistyEntities(text),
     ...findPrawoJazdyEntities(text),
+    ...findTablicaRejestracyjnaEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

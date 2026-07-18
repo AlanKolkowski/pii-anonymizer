@@ -951,9 +951,14 @@ describe('findRegexEntities — A1 checksum-validated identifiers', () => {
 
   // VIN — A1 extension (RECALL-90-DESIGN.md R-2), adw_31_komornik
   it('detects a 17-char VIN by structure alone (no checksum)', () => {
+    // HC-2/R-TR (H-3-CLOSURE-DESIGN.md §5.4) now also anchors on "nr rej."
+    // in this exact real sentence and correctly catches "CT 4567K" too (it
+    // is itself a real VEHICLE_IDENTIFIER in the corpus ground truth,
+    // adw_31_komornik.expected.json) — this test only pins down the VIN.
     const text = 'nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016';
-    const e = findOne(text, 'VEHICLE_IDENTIFIER');
-    expect(text.slice(e.start, e.end)).toBe('VF1BB05CF12345678');
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('VF1BB05CF12345678');
   });
 
   it('does not treat a plain 17-letter word as a VIN (requires a digit)', () => {
@@ -1343,6 +1348,42 @@ describe('findRegexEntities — HC-2 R-PJ (prawo jazdy, H-3-CLOSURE-DESIGN.md §
 
     const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
     expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain(number);
+  });
+});
+
+describe('findRegexEntities — HC-2 R-TR (tablica rejestracyjna, H-3-CLOSURE-DESIGN.md §5.4)', () => {
+  // Real sentence (test-data/adversarial/adw_31_komornik.txt) — leak vector
+  // #5 from the design's §1.2 inventory. Today findRegexEntities emits
+  // nothing for a plate this short: the only vehicle pattern is the
+  // 17-char VIN (§1.3).
+  it('detects a vehicle plate anchored by "nr rej." (CTR 88812)', () => {
+    const text = 'przyczepa lekka, nr rej. CTR 88812.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('CTR 88812');
+  });
+
+  it('detects a second, shorter anchored plate in the same document (CT 4567K)', () => {
+    const text = 'samochód osobowy marki Astra Kombi, nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('CT 4567K');
+  });
+
+  it('does not flag the identical shape as a currency amount with no plate anchor nearby (USD 88812)', () => {
+    // Same 3-letters+5-digits shape as the real CTR 88812 leak above — only
+    // the anchor (absent here) may distinguish an amount from a plate.
+    const text = 'Zobowiązanie wyrażone jest w walucie obcej: USD 88812 na dzień wymagalności.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('USD 88812');
+  });
+
+  it('does not flag a Supreme Court/KIO-style docket as a plate with no anchor nearby (KIO 2345/21)', () => {
+    // 3 letters + 4 digits also fits the bare shape (before the "/21" breaks
+    // it) — same near-miss as the currency case, closed only by the anchor.
+    const text = 'Analogiczne stanowisko potwierdza wyrok (sygn. akt KIO 2345/21).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('KIO 2345');
   });
 });
 

@@ -16,5 +16,15 @@
       "praw\\p{L}*\\s+jazdy"
     ],
     "contextWindow": 40
+  },
+  "tablicaRejestracyjna": {
+    "_comment": "R-TR §5.4. WYŁĄCZNIE kotwiczone, nigdy bare: 2-3 uppercase letters + 4-5 alphanumerics (≥1 digit) collides head-on with currency amounts (\"CHF 250 000\", \"USD 88812\", \"PLN 12345\") — a bare pattern would mask amounts as VEHICLE_IDENTIFIER in every credit-agreement fragment (the exact corpus this tool is built for).",
+    "contextAnchors": [
+      "nr\\.?\\s*rej\\.?",
+      "numer\\s+rejestracyjn\\p{L}*",
+      "tablic\\p{L}*\\s+rejestracyjn\\p{L}*",
+      "rejestracj\\p{L}*"
+    ],
+    "contextWindow": 30
   }
 }
