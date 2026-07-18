@@ -1,5 +1,6 @@
 import { findTokens } from './tokens.js';
 import { resolveOccurrences, renderResolvedText } from './substitution.js';
+import identifierPatterns from './pipeline/data/identifier-patterns.json' with { type: 'json' };
 
 const INFLECTION_SUFFIXES = ['a', 'ą', 'ę', 'em', 'owi', 'u', 'ie'];
 const ADJECTIVAL_SURNAME_FAMILIES = [
@@ -528,6 +529,98 @@ function findVehicleIdentifierEntities(text) {
   return entities;
 }
 
+// ── Context-anchored official-document identifiers (HC-2: H-3-CLOSURE-DESIGN.md §5) ──
+//
+// Closes H-3 case (a): formats findRegexEntities never produced ANY
+// candidate for (dowód osobisty, prawo jazdy, tablica rejestracyjna), so a
+// same-type "mask" candidate never existed to compete with the model's
+// mistaken "pass" guess (DOCUMENT_REFERENCE) at dedup. Anchors and
+// blocklists live in identifier-patterns.json (§5.1 pt 1); this file holds
+// only the pattern skeletons and the one arithmetic validator (R-DOW), same
+// split as the A1 family above.
+//
+// A context anchor is a plain lexical pattern found ANYWHERE in a bounded
+// backward window from the candidate — not required to sit immediately
+// before it — but the window never crosses a paragraph break (§5.1 pt 3):
+// an anchor from a previous, unrelated paragraph must not license a match.
+function paragraphSafeWindow(text, upTo, maxWindow) {
+  const rawStart = Math.max(0, upTo - maxWindow);
+  const slice = text.slice(rawStart, upTo);
+  const lastBreak = slice.lastIndexOf('\n\n');
+  return lastBreak === -1 ? slice : slice.slice(lastBreak + 2);
+}
+
+function hasContextAnchor(text, upTo, maxWindow, anchorRegexes) {
+  const window = paragraphSafeWindow(text, upTo, maxWindow);
+  return anchorRegexes.some((re) => re.test(window));
+}
+
+function compileAnchors(patternSources) {
+  return patternSources.map((src) => new RegExp(src, 'iu'));
+}
+
+// Single optional separator between an identifier's letter/digit groups —
+// deliberately a SUBSET of ID_SEPARATOR (no `\n`): a line break inside a
+// short 9-char token is OCR/scan residue this v1 doesn't chase (§5.1 pt 2,
+// consistent with the R-ST-5 limitation already accepted for the A1 family).
+const SINGLE_SEP_OPT = '[ \\u00a0-]?';
+const WORD_EDGE_BEFORE = '(?<![\\p{L}\\p{N}_])';
+const WORD_EDGE_AFTER = '(?![\\p{L}\\p{N}_])';
+
+// R-DOW: Polish national ID card ("dowód osobisty") number — 3 uppercase
+// letters (series) + 6 digits (fold OCR l→1, O→0, same as the A1 family),
+// first digit is a check digit over the whole 9-character token (letters
+// valued A=10..Z=35, weights 7-3-1 for the letters and 7-3-1-7-3 for the
+// five digits that follow the check digit — H-3-CLOSURE-DESIGN.md §5.2,
+// confirmed by hand against both corpus vectors: DKR 744829 valid, BMA
+// 733701 invalid). Two independent paths, either one emits:
+//   (A) arithmetic — checksum valid AND the 3-letter prefix is not on the
+//       acronym blocklist (O-HC-3: KRS/NIP/VAT/... also fit the bare shape
+//       and pass the checksum on a ~1/10 chance, R-HC-3) — no context
+//       needed, same "precision from arithmetic" house style as PESEL/NIP.
+//   (B) context-anchored — checksum invalid (a scanned/re-typed number can
+//       have a genuinely broken check digit) but a literal "dowód
+//       osobisty" / "dow. os." / "seria i nr" mention sits in the
+//       preceding window.
+const DOW_DATA = identifierPatterns.dowodOsobisty;
+const DOW_BLOCKLIST = new Set(DOW_DATA.blocklistPrefixes);
+const DOW_CONTEXT_ANCHORS = compileAnchors(DOW_DATA.contextAnchors);
+const DOW_CONTEXT_WINDOW = DOW_DATA.contextWindow;
+
+const DOW_LETTER_WEIGHTS = [7, 3, 1];
+const DOW_DIGIT_WEIGHTS = [7, 3, 1, 7, 3];
+
+function dowChecksumValid(letters, digits) {
+  let sum = 0;
+  for (let i = 0; i < 3; i++) sum += DOW_LETTER_WEIGHTS[i] * (letters.charCodeAt(i) - 55);
+  for (let i = 0; i < 5; i++) sum += DOW_DIGIT_WEIGHTS[i] * (digits.charCodeAt(i + 1) - 48);
+  return (sum % 10) === (digits.charCodeAt(0) - 48);
+}
+
+const DOW_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}([A-Z]{3})${SINGLE_SEP_OPT}([0-9lO]{6})${WORD_EDGE_AFTER}`,
+  'gu',
+);
+
+function findDowodOsobistyEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(DOW_CANDIDATE_RE)) {
+    const letters = m[1];
+    const digits = [...m[2]].map(toDigitChar).join('');
+    const start = m.index;
+    const end = start + m[0].length;
+
+    if (dowChecksumValid(letters, digits) && !DOW_BLOCKLIST.has(letters)) {
+      entities.push({ entity_group: 'PERSON_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+      continue;
+    }
+    if (hasContextAnchor(text, start, DOW_CONTEXT_WINDOW, DOW_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'PERSON_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
 // mod-97 validated as if "PL" were prepended, per the audit contract).
 const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
@@ -595,6 +688,7 @@ export function findRegexEntities(text) {
     ...findIbanEntities(text),
     ...findVehicleIdentifierEntities(text),
     ...findDocketNumberEntities(text),
+    ...findDowodOsobistyEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

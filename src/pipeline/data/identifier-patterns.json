@@ -1,0 +1,13 @@
+{
+  "_comment": "H-3-CLOSURE-DESIGN.md §5 (HC-2): context anchors and prefix blocklists for the regex identifier patterns that have no check digit of their own (or whose check digit can legitimately fail on a scanned/re-typed number). Closed lists, same discipline as surname-gazetteer.json / special-category-lexicon.json — extend only via a newly measured leak + test, never speculatively. `contextAnchors` are plain regex source strings (no flags baked in; anonymizer.js compiles them with 'iu') tested for PRESENCE anywhere in a bounded backward window from the candidate match — NOT anchored to the character immediately before the candidate — and the window itself is truncated at a paragraph break (\\n\\n) so context never leaks across an unrelated paragraph. `contextWindow` is the window length in characters, per pattern (§5.2-§5.4).",
+  "dowodOsobisty": {
+    "_comment": "R-DOW §5.2. blocklistPrefixes (O-HC-3): acronyms that are also valid-shaped 3-letter series prefixes and must never be emitted via the arithmetic path (A) even if the 9-char token happens to pass the check-digit formula by chance (~1/10 of random 3L+6D tokens do, R-HC-3) — defense in depth alongside the arithmetic itself. contextAnchors (path B): literal mentions of the document that let a checksum-invalid (e.g. OCR-damaged) number through anyway.",
+    "blocklistPrefixes": ["KRS", "NIP", "VAT", "REG", "PKO", "BIK", "KIO"],
+    "contextAnchors": [
+      "dow[oó]d\\p{L}*\\s+osobist\\p{L}*",
+      "dow\\.\\s*os\\.",
+      "seri[ai](?:\\s+(?:i|oraz))?\\s*nr"
+    ],
+    "contextWindow": 40
+  }
+}

@@ -1233,3 +1233,76 @@ describe('buildTokenMapMulti', () => {
   });
 });
 
+describe('findRegexEntities — HC-2 R-DOW (dowód osobisty, H-3-CLOSURE-DESIGN.md §5.2)', () => {
+  // Real sentences from the corpus (test-data/adversarial/adw_14_dokumenty_tozsamosci.txt,
+  // test-data/adversarial-holdout/hold_identyfikatory_12.txt) — the exact H-3
+  // leak vectors #2-4 from the design's §1.2 inventory. Today (pre-HC-2)
+  // findRegexEntities emits NOTHING for any of them (§1.3 triage): no dowód-
+  // osobisty pattern exists yet, and findNumericIdentifierEntities only sees
+  // pure digit clusters, not 3-letter+6-digit tokens.
+  it('detects a dowód osobisty number via the checksum path (DKR 744829, valid check digit)', () => {
+    const text = 'Tożsamość mocodawcy ustalono na podstawie dowodu osobistego seria i nr DKR 744829, wydanego przez Prezydenta Miasta Torunia.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('DKR 744829');
+    expect(matches[0].score).toBe(1.0);
+    expect(matches[0].source).toBe('regex');
+  });
+
+  it('detects the same number glued without a separator (DKR744829)', () => {
+    const text = 'Zbiorczy zapis z systemu: dow. os. DKR744829 (bez spacji).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('DKR744829');
+  });
+
+  it('detects a dowód osobisty number whose checksum is INVALID via the context-anchor path (BMA 733701)', () => {
+    // Design §1.3: BMA 733701 fails the arithmetic checksum (verified by
+    // hand: sum mod 10 = 3, actual check digit is 7) — closed only by the
+    // "seria i nr" anchor sitting right before it in the real sentence.
+    const text = 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('BMA 733701');
+  });
+
+  it('does not flag a bare 3-letter+6-digit token with no anchor and a failing checksum', () => {
+    const text = 'Numer wewnętrzny zlecenia to XYZ123456 w naszym systemie.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('XYZ123456');
+  });
+
+  it('does not emit via the arithmetic path when the prefix is on the acronym blocklist, even if the checksum happens to validate', () => {
+    // NIP + "000000": checksum IS valid by the dowód formula (verified by
+    // hand: sum = 240, mod 10 = 0, matches check digit '0') but "NIP" is a
+    // blocklisted acronym prefix (O-HC-3) — must not be emitted, and there
+    // is no dowód-osobisty context anchor here either.
+    const text = 'Numer w rejestrze wewnętrznym: NIP000000 (pole techniczne).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('NIP000000');
+  });
+
+  // Property test on a wider set of known-good/known-bad numbers than just
+  // the two corpus vectors (design §5.8 "Uwaga wykonawcza"): each pair below
+  // is the SAME letters + digits with only the check digit (first numeric
+  // char) flipped, hand-computed from the §1.3 algorithm (letters A=10..Z=35,
+  // weights 7-3-1 for the 3 letters and 7-3-1-7-3 for the 5 digits after the
+  // check digit). No anchor context in any of these sentences — only the
+  // arithmetic can be responsible for a detection here.
+  it.each([
+    ['ABC412345', true],  // 7*10+3*11+1*12 + 7*1+3*2+1*3+7*4+3*5 = 174 → check digit 4 ✓
+    ['ABC912345', false], // same letters/tail, check digit forced to 9 ≠ 4
+    ['XYZ800000', true],  // 7*33+3*34+1*35 = 368 → check digit 8 ✓ (tail all zero)
+    ['XYZ100000', false], // same letters/tail, check digit forced to 1 ≠ 8
+  ])('checksum property check: %s is detected only when the check digit is actually valid (%s)', (token, shouldMatch) => {
+    const text = `W polu technicznym systemu kadrowego zapisano ciąg ${token} bez dalszego opisu.`;
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    if (shouldMatch) {
+      expect(spans).toContain(token);
+    } else {
+      expect(spans).not.toContain(token);
+    }
+  });
+});
+
