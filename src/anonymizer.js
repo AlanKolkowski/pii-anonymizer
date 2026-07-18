@@ -694,6 +694,40 @@ function findTablicaRejestracyjnaEntities(text) {
   return entities;
 }
 
+// R-PASZ: Polish passport number, 2 uppercase letters + 7 digits (OCR-folded
+// like the rest of the family). Context-anchor ONLY, no checksum in v1
+// (H-3-CLOSURE-DESIGN.md §8 O-HC-2): unlike R-DOW's arithmetic path, no
+// passport check-digit algorithm has been confirmed against real corpus
+// vectors, and this file doesn't invent one — same "don't fabricate
+// arithmetic" discipline as every other validator above. The anchor is a
+// bare "paszport" mention (any inflected form) in the preceding window,
+// symmetric to R-DOW's path B / R-PJ. The shape is structurally disjoint
+// from R-DOW's 3-letter+6-digit token in the same 9-character budget (a
+// third letter that isn't itself an OCR-foldable 'O' blocks a 2L+7D read,
+// and a 2-letter prefix followed by a non-digit blocks a 3L+6D read) — the
+// trap corpus proves the anchor still gates it either way (EJ 1234567 with
+// no "paszport" nearby).
+const PASZ_DATA = identifierPatterns.paszport;
+const PASZ_CONTEXT_ANCHORS = compileAnchors(PASZ_DATA.contextAnchors);
+const PASZ_CONTEXT_WINDOW = PASZ_DATA.contextWindow;
+
+const PASZ_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}[A-Z]{2}${SINGLE_SEP_OPT}[0-9lO]{7}${WORD_EDGE_AFTER}`,
+  'gu',
+);
+
+function findPaszportEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(PASZ_CANDIDATE_RE)) {
+    const start = m.index;
+    const end = start + m[0].length;
+    if (hasContextAnchor(text, start, PASZ_CONTEXT_WINDOW, PASZ_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'PERSON_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
 // mod-97 validated as if "PL" were prepended, per the audit contract).
 const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
@@ -764,6 +798,7 @@ export function findRegexEntities(text) {
     ...findDowodOsobistyEntities(text),
     ...findPrawoJazdyEntities(text),
     ...findTablicaRejestracyjnaEntities(text),
+    ...findPaszportEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

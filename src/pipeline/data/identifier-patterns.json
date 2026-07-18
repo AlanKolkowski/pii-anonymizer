@@ -26,5 +26,12 @@
       "rejestracj\\p{L}*"
     ],
     "contextWindow": 30
+  },
+  "paszport": {
+    "_comment": "R-PASZ §8 O-HC-2. WYŁĄCZNIE kotwiczone, bez sumy kontrolnej w v1 (nie zmyślamy algorytmu paszportu — dopiero po potwierdzeniu). 2 wielkie litery + 7 cyfr jest tym samym 9-znakowym budżetem co R-DOW (3 litery + 6 cyfr), ale rozłączne strukturalnie: dowolny prefiks kończący się nie-cyfrą/nie-'O' łamie próbę odczytania 2L+7C wewnątrz 3L+6D, a odwrotnie trzecia litera R-DOW blokuje domknięcie 7-cyfrowego okna R-PASZ, chyba że tą literą jest akurat 'O' (rzadki, nieszkodliwy zbieg: obie interpretacje wskazują ten sam span i typ PERSON_IDENTIFIER, więc dedup i tak scala je w jedną encję).",
+    "contextAnchors": [
+      "paszport\\p{L}*"
+    ],
+    "contextWindow": 40
   }
 }
