@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities } from './anonymizer.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -951,9 +956,14 @@ describe('findRegexEntities — A1 checksum-validated identifiers', () => {
 
   // VIN — A1 extension (RECALL-90-DESIGN.md R-2), adw_31_komornik
   it('detects a 17-char VIN by structure alone (no checksum)', () => {
+    // HC-2/R-TR (H-3-CLOSURE-DESIGN.md §5.4) now also anchors on "nr rej."
+    // in this exact real sentence and correctly catches "CT 4567K" too (it
+    // is itself a real VEHICLE_IDENTIFIER in the corpus ground truth,
+    // adw_31_komornik.expected.json) — this test only pins down the VIN.
     const text = 'nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016';
-    const e = findOne(text, 'VEHICLE_IDENTIFIER');
-    expect(text.slice(e.start, e.end)).toBe('VF1BB05CF12345678');
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('VF1BB05CF12345678');
   });
 
   it('does not treat a plain 17-letter word as a VIN (requires a digit)', () => {
@@ -1230,6 +1240,284 @@ describe('buildTokenMapMulti', () => {
     };
     const { legend } = buildTokenMapMulti([docA, docB]);
     expect(legend).toEqual({ '[PERSON_NAME_2]': 'Anna Nowak' });
+  });
+});
+
+describe('findRegexEntities — HC-2 R-DOW (dowód osobisty, H-3-CLOSURE-DESIGN.md §5.2)', () => {
+  // Real sentences from the corpus (test-data/adversarial/adw_14_dokumenty_tozsamosci.txt,
+  // test-data/adversarial-holdout/hold_identyfikatory_12.txt) — the exact H-3
+  // leak vectors #2-4 from the design's §1.2 inventory. Today (pre-HC-2)
+  // findRegexEntities emits NOTHING for any of them (§1.3 triage): no dowód-
+  // osobisty pattern exists yet, and findNumericIdentifierEntities only sees
+  // pure digit clusters, not 3-letter+6-digit tokens.
+  it('detects a dowód osobisty number via the checksum path (DKR 744829, valid check digit)', () => {
+    const text = 'Tożsamość mocodawcy ustalono na podstawie dowodu osobistego seria i nr DKR 744829, wydanego przez Prezydenta Miasta Torunia.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('DKR 744829');
+    expect(matches[0].score).toBe(1.0);
+    expect(matches[0].source).toBe('regex');
+  });
+
+  it('detects the same number glued without a separator (DKR744829)', () => {
+    const text = 'Zbiorczy zapis z systemu: dow. os. DKR744829 (bez spacji).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('DKR744829');
+  });
+
+  it('detects a dowód osobisty number whose checksum is INVALID via the context-anchor path (BMA 733701)', () => {
+    // Design §1.3: BMA 733701 fails the arithmetic checksum (verified by
+    // hand: sum mod 10 = 3, actual check digit is 7) — closed only by the
+    // "seria i nr" anchor sitting right before it in the real sentence.
+    const text = 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('BMA 733701');
+  });
+
+  it('does not flag a bare 3-letter+6-digit token with no anchor and a failing checksum', () => {
+    const text = 'Numer wewnętrzny zlecenia to XYZ123456 w naszym systemie.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('XYZ123456');
+  });
+
+  it('does not emit via the arithmetic path when the prefix is on the acronym blocklist, even if the checksum happens to validate', () => {
+    // NIP + "000000": checksum IS valid by the dowód formula (verified by
+    // hand: sum = 240, mod 10 = 0, matches check digit '0') but "NIP" is a
+    // blocklisted acronym prefix (O-HC-3) — must not be emitted, and there
+    // is no dowód-osobisty context anchor here either.
+    const text = 'Numer w rejestrze wewnętrznym: NIP000000 (pole techniczne).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('NIP000000');
+  });
+
+  // Property test on a wider set of known-good/known-bad numbers than just
+  // the two corpus vectors (design §5.8 "Uwaga wykonawcza"): each pair below
+  // is the SAME letters + digits with only the check digit (first numeric
+  // char) flipped, hand-computed from the §1.3 algorithm (letters A=10..Z=35,
+  // weights 7-3-1 for the 3 letters and 7-3-1-7-3 for the 5 digits after the
+  // check digit). No anchor context in any of these sentences — only the
+  // arithmetic can be responsible for a detection here.
+  it.each([
+    ['ABC412345', true],  // 7*10+3*11+1*12 + 7*1+3*2+1*3+7*4+3*5 = 174 → check digit 4 ✓
+    ['ABC912345', false], // same letters/tail, check digit forced to 9 ≠ 4
+    ['XYZ800000', true],  // 7*33+3*34+1*35 = 368 → check digit 8 ✓ (tail all zero)
+    ['XYZ100000', false], // same letters/tail, check digit forced to 1 ≠ 8
+  ])('checksum property check: %s is detected only when the check digit is actually valid (%s)', (token, shouldMatch) => {
+    const text = `W polu technicznym systemu kadrowego zapisano ciąg ${token} bez dalszego opisu.`;
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    if (shouldMatch) {
+      expect(spans).toContain(token);
+    } else {
+      expect(spans).not.toContain(token);
+    }
+  });
+});
+
+describe('findRegexEntities — HC-2 R-PJ (prawo jazdy, H-3-CLOSURE-DESIGN.md §5.3)', () => {
+  // Real sentences (test-data/adversarial-holdout/hold_identyfikatory_12.txt,
+  // test-data/adversarial/adw_14_dokumenty_tozsamosci.txt) — leak vectors #1
+  // and #2 from the design's §1.2 inventory. Today findRegexEntities emits
+  // nothing: the 5/2/4 digit clusters get split apart by "/" at the numeric-
+  // identifier scan (ID_SEPARATOR doesn't include "/"), and no other pattern
+  // reaches for this shape at all (§1.3).
+  it('detects a driving-licence number anchored by "prawo jazdy nr" (92712/00/2780)', () => {
+    const text = 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('92712/00/2780');
+  });
+
+  it('detects a driving-licence number anchored by "prawa jazdy nr" (00123/22/0611)', () => {
+    const text = 'W aktach znajduje się kopia paszportu nr EJ 1234567 oraz prawa jazdy nr 00123/22/0611 kat. B.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('00123/22/0611');
+  });
+
+  it('does not flag the same 5/2/4 shape with no "prawo/prawa jazdy" anchor anywhere nearby (invoice-number collision, §5.3)', () => {
+    const text = 'Faktura VAT nr 12345/07/2024 płatna w terminie 14 dni od daty wystawienia.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('12345/07/2024');
+  });
+
+  it('enforces the 40-char window: an anchor further back than the window does not license a match', () => {
+    const filler = 'x'.repeat(45);
+    const prefix = `Kredytobiorca okazał prawa jazdy ${filler} `;
+    const number = '12345/07/2024';
+    const text = `${prefix}a numer ${number} dotyczy zupełnie innej sprawy.`;
+    const gap = text.indexOf(number) - (prefix.indexOf('jazdy') + 'jazdy'.length);
+    expect(gap).toBeGreaterThan(40); // sanity check on the fixture itself
+
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain(number);
+  });
+});
+
+describe('findRegexEntities — HC-2 R-TR (tablica rejestracyjna, H-3-CLOSURE-DESIGN.md §5.4)', () => {
+  // Real sentence (test-data/adversarial/adw_31_komornik.txt) — leak vector
+  // #5 from the design's §1.2 inventory. Today findRegexEntities emits
+  // nothing for a plate this short: the only vehicle pattern is the
+  // 17-char VIN (§1.3).
+  it('detects a vehicle plate anchored by "nr rej." (CTR 88812)', () => {
+    const text = 'przyczepa lekka, nr rej. CTR 88812.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('CTR 88812');
+  });
+
+  it('detects a second, shorter anchored plate in the same document (CT 4567K)', () => {
+    const text = 'samochód osobowy marki Astra Kombi, nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('CT 4567K');
+  });
+
+  it('does not flag the identical shape as a currency amount with no plate anchor nearby (USD 88812)', () => {
+    // Same 3-letters+5-digits shape as the real CTR 88812 leak above — only
+    // the anchor (absent here) may distinguish an amount from a plate.
+    const text = 'Zobowiązanie wyrażone jest w walucie obcej: USD 88812 na dzień wymagalności.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('USD 88812');
+  });
+
+  it('does not flag a Supreme Court/KIO-style docket as a plate with no anchor nearby (KIO 2345/21)', () => {
+    // 3 letters + 4 digits also fits the bare shape (before the "/21" breaks
+    // it) — same near-miss as the currency case, closed only by the anchor.
+    const text = 'Analogiczne stanowisko potwierdza wyrok (sygn. akt KIO 2345/21).';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('KIO 2345');
+  });
+});
+
+describe('findRegexEntities — HC-2 R-EM (e-mail IDN, H-3-CLOSURE-DESIGN.md §5.5)', () => {
+  // Real sentences (test-data/adversarial-holdout/hold_dane_osobowe_09.txt
+  // and hold_dane_osobowe_11.txt) — leak vector #6 from the design's §1.2
+  // inventory. Today EMAIL_ANCHORED_RE/EMAIL_LOCAL_CHAR/EMAIL_DOMAIN_CHAR
+  // are ASCII-only (`\w`), so domain expansion stops dead at "ę"/"ó" (§1.3
+  // triage: "regex jest ASCII-owy... kandydat odpada").
+  it('detects an email whose domain contains a Polish diacritic (kontakt@przedsiębior.pl)', () => {
+    const text = 'Korespondencję firmową prosimy kierować na adres kontakt@przedsiębior.pl.';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@przedsiębior.pl');
+  });
+
+  it('detects an email whose LOCAL part contains Polish diacritics (bożena.wróblewska@poczta-testowa.pl)', () => {
+    const text = 'e-mail bożena.wróblewska@poczta-testowa.pl. Korespondencję firmową...';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('bożena.wróblewska@poczta-testowa.pl');
+  });
+
+  it('keeps matching plain-ASCII emails unchanged (regression control from §1.3)', () => {
+    const text = 'kontakt@bankwielkopo.pl';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@bankwielkopo.pl');
+  });
+
+  it('keeps excluding a trailing sentence dot on a non-ASCII domain, same as the existing ASCII behavior', () => {
+    const text = 'Adres: kontakt@przedsiębior.pl.';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@przedsiębior.pl');
+  });
+});
+
+describe('findRegexEntities — HC-2 pułapkownik (H-3-CLOSURE-DESIGN.md §5.6, zero FP)', () => {
+  // Precision is load-bearing: an unanchored/imprecise regex here would map
+  // real dates/amounts/docket-numbers/invoice-numbers onto [DRIVER_LICENSE]-
+  // style tokens. This reads test-data/traps/h3-pulapki.txt (data, not code
+  // — a "living registry": a future measured FP gets a new line here first,
+  // red, then a pattern fix) and asserts each line contributes ZERO
+  // PERSON_IDENTIFIER (R-DOW/R-PJ) or VEHICLE_IDENTIFIER (R-TR) candidates.
+  function loadTraps() {
+    const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+  }
+
+  const traps = loadTraps();
+
+  it('loads a non-trivial trap corpus (sanity check on the fixture itself)', () => {
+    expect(traps.length).toBeGreaterThanOrEqual(25);
+  });
+
+  it.each(traps)('zero HC-2 false positives on: %s', (trapText) => {
+    const hits = findRegexEntities(trapText).filter(
+      (e) => e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'VEHICLE_IDENTIFIER',
+    );
+    expect(
+      hits.map((e) => ({ type: e.entity_group, value: trapText.slice(e.start, e.end) })),
+    ).toEqual([]);
+  });
+});
+
+describe('findRegexEntities — H-3 re-analiza: 6/6 wycieków case-(a) z korpusu (H-3-CLOSURE-DESIGN.md §1.2-§1.3)', () => {
+  // The design's own re-measurement discipline (§7 laptop step 2): re-run
+  // findRegexEntities directly on the corpus SENTENCES containing the six
+  // measured H-3 leak values (no models, no eval, laptop-safe) and assert
+  // every one now gets a "mask"-tier (PERSON_IDENTIFIER/EMAIL_ADDRESS/
+  // VEHICLE_IDENTIFIER) candidate — the exact proof HC-2 is supposed to
+  // deliver. All six sentences are copied verbatim from the corpus.
+  const CASE_A_LEAKS = [
+    {
+      id: '#1 92712/00/2780 (PERSON_IDENTIFIER, hold_identyfikatory_12)',
+      text: 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.',
+      value: '92712/00/2780',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#2 00123/22/0611 (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'W aktach znajduje się kopia paszportu nr EJ 1234567 oraz prawa jazdy nr 00123/22/0611 kat. B.',
+      value: '00123/22/0611',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#3 DKR 744829 (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'Tożsamość mocodawcy ustalono na podstawie dowodu osobistego seria i nr DKR 744829, wydanego przez Prezydenta Miasta Torunia.',
+      value: 'DKR 744829',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#4 DKR744829 sklejone (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'Zbiorczy zapis z systemu: dow. os. DKR744829 (bez spacji).',
+      value: 'DKR744829',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#5 CTR 88812 (VEHICLE_IDENTIFIER, adw_31_komornik)',
+      text: 'przyczepa lekka, nr rej. CTR 88812.',
+      value: 'CTR 88812',
+      type: 'VEHICLE_IDENTIFIER',
+    },
+    {
+      id: '#6 kontakt@przedsiębior.pl (EMAIL_ADDRESS, hold_dane_osobowe_09/11/16)',
+      text: 'Korespondencję firmową prosimy kierować na adres kontakt@przedsiębior.pl.',
+      value: 'kontakt@przedsiębior.pl',
+      type: 'EMAIL_ADDRESS',
+    },
+  ];
+
+  it.each(CASE_A_LEAKS)('$id now gets a same-type regex "mask" candidate', ({ text, value, type }) => {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === type);
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain(value);
+  });
+
+  it('all 6/6 case-(a) leak values from the design §1.2 inventory now have a regex mask candidate', () => {
+    const results = CASE_A_LEAKS.map(({ id, text, value, type }) => {
+      const found = findRegexEntities(text)
+        .filter((e) => e.entity_group === type)
+        .some((e) => text.slice(e.start, e.end) === value);
+      return { id, found };
+    });
+    expect(results.filter((r) => r.found)).toHaveLength(6);
   });
 });
 

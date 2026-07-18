@@ -7,7 +7,10 @@ import { weightFor } from '../configs/type-weights.js';
 // in full because it exceeded maxLength by 18 characters). Lower-weight types
 // keep the original drop behavior, where a garbage over-long span is more
 // likely than a genuine secrecy risk.
-const OVERSIZE_WEIGHT_THRESHOLD = 3;
+// Exported so the tier-safety lint (configs/tier-safety.js, consumed by
+// tier-safety.test.js) tracks the real threshold instead of a stale copy —
+// export only, the value and every use below are unchanged.
+export const OVERSIZE_WEIGHT_THRESHOLD = 3;
 
 export function maxLengthStep(ctx) {
   const entities = ctx.entities.flatMap((e) => {

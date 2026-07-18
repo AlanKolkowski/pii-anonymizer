@@ -1,0 +1,54 @@
+# H-3-CLOSURE-DESIGN.md §5.6 — pułapkownik dla HC-2 (R-DOW/R-PJ/R-TR).
+# Dane, nie kod: jeden wektor pułapki na linię (linie puste i zaczynające
+# się od "#" są pomijane przez ładowarkę testu). Żywy rejestr — każdy
+# przyszły FP jednego z trzech wzorców HC-2 dostaje najpierw linię tutaj
+# (czerwony test w src/anonymizer.test.js), potem poprawkę wzorca.
+# Wartości syntetyczne albo już obecne w korpusie adversarial/adversarial-holdout.
+
+# Sygnatury cytowanych orzeczeń (nie własne sprawy) — DOCKET_RE je już wyklucza,
+# ale muszą też pozostać poza R-DOW/R-PJ/R-TR (ksztaltem, nie tylko wykluczeniem SN).
+II CSKP 975/22
+III CZP 6/21
+C-260/18
+I ACa 155/21
+I C 123/22
+Km 1234/22
+KIO 2345/21
+
+# Daty — separator "." albo dwucyfrowe grupy, nie 5/2/4.
+12/05/2024
+1/2/2024
+01.02.2023
+
+# Kwoty zapisane kodem ISO waluty przed liczbą — identyczny kształt do R-TR
+# bez kotwicy tablicy rejestracyjnej w pobliżu.
+CHF 250 000,00
+EUR 5000
+PLN 12345
+USD 88812
+88 812,00 zł
+
+# Numeracja faktur/dokumentów księgowych — identyczny kształt 5/2/4 do R-PJ
+# (i w przypadku FV, też do R-TR), bez kotwicy "prawo/prawa jazdy" w pobliżu.
+Faktura VAT nr 98765/12/2023
+FV 54321/01/2023
+
+# Inne identyfikatory urzędowe rozłączne kształtem albo bez kotwicy.
+TO1T/00012345/6
+KRS 0000123456
+3215669833
+60-663
++48 566 519 403
+ul. Polna 3/5
+art. 385¹ § 1
+poz. 1270
+
+# Paszport (2 litery + 7 cyfr) bez słowa "paszport" w oknie — R-DOW wymaga
+# dokładnie 3 liter + 6 cyfr, więc kształtem rozłączny; R-PASZ (O-HC-2) poza
+# zakresem tej sesji.
+EJ 1234567
+
+# Akronim + 6 cyfr z poprawną sumą kontrolną dowodu (wyliczone przy
+# implementacji: NIP + "000000" → suma = 240, mod 10 = 0 = pierwsza cyfra) —
+# na blockliście R-DOW mimo ważnej arytmetyki (dowód działania blocklisty).
+NIP000000
