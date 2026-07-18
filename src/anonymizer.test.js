@@ -1392,6 +1392,46 @@ describe('findRegexEntities — HC-2 R-TR (tablica rejestracyjna, H-3-CLOSURE-DE
   });
 });
 
+describe('findRegexEntities — HC-2 R-PASZ (paszport, H-3-CLOSURE-DESIGN.md §8 O-HC-2)', () => {
+  // Real sentences (test-data/adversarial-holdout/hold_identyfikatory_12.txt,
+  // test-data/adversarial/adw_14_dokumenty_tozsamosci.txt) — the same two
+  // corpus sentences already used by the R-DOW/R-PJ tests above, each of
+  // which also carries a passport number findRegexEntities emits NOTHING for
+  // today: no 2-letter+7-digit pattern exists yet, only the shape-disjoint
+  // 3L+6D (R-DOW) and 5/2/4 (R-PJ) formats are covered.
+  it('detects a passport number anchored by "paszport nr" (AG 1391751)', () => {
+    const text = 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('AG 1391751');
+  });
+
+  it('detects a passport number anchored by "paszportu nr" (EJ 1234567)', () => {
+    const text = 'W aktach znajduje się kopia paszportu nr EJ 1234567 oraz prawa jazdy nr 00123/22/0611 kat. B.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('EJ 1234567');
+  });
+
+  it('does not flag the same 2-letter+7-digit shape with no "paszport" anchor anywhere nearby', () => {
+    const text = 'Numer wewnętrzny zlecenia to EJ 1234567 w naszym systemie.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('EJ 1234567');
+  });
+
+  it('enforces the 40-char window: an anchor further back than the window does not license a match', () => {
+    const filler = 'x'.repeat(45);
+    const prefix = `Okazano paszport ${filler} `;
+    const number = 'EJ 1234567';
+    const text = `${prefix}a numer ${number} dotyczy zupełnie innej sprawy.`;
+    const gap = text.indexOf(number) - (prefix.indexOf('paszport') + 'paszport'.length);
+    expect(gap).toBeGreaterThan(40); // sanity check on the fixture itself
+
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'PERSON_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain(number);
+  });
+});
+
 describe('findRegexEntities — HC-2 R-EM (e-mail IDN, H-3-CLOSURE-DESIGN.md §5.5)', () => {
   // Real sentences (test-data/adversarial-holdout/hold_dane_osobowe_09.txt
   // and hold_dane_osobowe_11.txt) — leak vector #6 from the design's §1.2
