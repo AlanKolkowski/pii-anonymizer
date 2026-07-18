@@ -285,9 +285,19 @@ export function chunkText(text, maxChars) {
   return chunks;
 }
 
-const EMAIL_ANCHORED_RE = /^[\w.+-]+@[\w.-]+\.\w{2,}/;
-const EMAIL_LOCAL_CHAR = /[\w.+-]/;
-const EMAIL_DOMAIN_CHAR = /[\w.-]/;
+// R-EM (H-3-CLOSURE-DESIGN.md §5.5): Unicode-letter/number classes instead
+// of ASCII-only `\w`, so an IDN domain or a diacritic-bearing local part
+// ("kontakt@przedsiębior.pl", "bożena.wróblewska@poczta-testowa.pl") no
+// longer breaks the expand-around-@ walk below. `_` is kept in the local/
+// domain classes even though the design's literal char-class spec omits
+// it — `\w` already included `_` today, and dropping it would be a silent
+// ASCII regression the design's own acceptance bar explicitly forbids
+// ("bez zmiany zachowania na ASCII"). TLD is letters-only (`\p{L}{2,}`),
+// per spec — no real TLD is ever numeric, so this doesn't narrow ASCII
+// behavior either.
+const EMAIL_ANCHORED_RE = /^[\p{L}\p{N}_.+-]+@[\p{L}\p{N}_.-]+\.\p{L}{2,}/u;
+const EMAIL_LOCAL_CHAR = /[\p{L}\p{N}_.+-]/u;
+const EMAIL_DOMAIN_CHAR = /[\p{L}\p{N}_.-]/u;
 
 function findEmailEntities(text) {
   const entities = [];

@@ -1387,3 +1387,38 @@ describe('findRegexEntities — HC-2 R-TR (tablica rejestracyjna, H-3-CLOSURE-DE
   });
 });
 
+describe('findRegexEntities — HC-2 R-EM (e-mail IDN, H-3-CLOSURE-DESIGN.md §5.5)', () => {
+  // Real sentences (test-data/adversarial-holdout/hold_dane_osobowe_09.txt
+  // and hold_dane_osobowe_11.txt) — leak vector #6 from the design's §1.2
+  // inventory. Today EMAIL_ANCHORED_RE/EMAIL_LOCAL_CHAR/EMAIL_DOMAIN_CHAR
+  // are ASCII-only (`\w`), so domain expansion stops dead at "ę"/"ó" (§1.3
+  // triage: "regex jest ASCII-owy... kandydat odpada").
+  it('detects an email whose domain contains a Polish diacritic (kontakt@przedsiębior.pl)', () => {
+    const text = 'Korespondencję firmową prosimy kierować na adres kontakt@przedsiębior.pl.';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@przedsiębior.pl');
+  });
+
+  it('detects an email whose LOCAL part contains Polish diacritics (bożena.wróblewska@poczta-testowa.pl)', () => {
+    const text = 'e-mail bożena.wróblewska@poczta-testowa.pl. Korespondencję firmową...';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('bożena.wróblewska@poczta-testowa.pl');
+  });
+
+  it('keeps matching plain-ASCII emails unchanged (regression control from §1.3)', () => {
+    const text = 'kontakt@bankwielkopo.pl';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@bankwielkopo.pl');
+  });
+
+  it('keeps excluding a trailing sentence dot on a non-ASCII domain, same as the existing ASCII behavior', () => {
+    const text = 'Adres: kontakt@przedsiębior.pl.';
+    const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
+    expect(emails).toHaveLength(1);
+    expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@przedsiębior.pl');
+  });
+});
+
