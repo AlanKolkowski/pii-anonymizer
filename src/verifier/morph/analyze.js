@@ -243,8 +243,10 @@ function agreeingCase(perWordCases) {
 // Formy poświadczone (SS3.3): `value` (the legend's first-seen form) plus
 // every other attested surface variant are each parsed and case-resolved
 // with the SAME rules as the primary analysis; a form whose words agree on
-// exactly one case is recorded under that case (first writer per slot —
-// `value` is inserted first, so it wins ties against later attestations).
+// one OR MORE cases (agreeingCase returns an array for genuine syncretism,
+// e.g. masculine-personal D=B) is recorded under every such case slot
+// (first writer per slot — `value` is inserted first, so it wins ties
+// against later attestations).
 function buildAttestedByCase(value, attestedForms, imiona, morph) {
   const out = {};
   const forms = new Set([value, ...(attestedForms ?? [])].filter((f) => typeof f === 'string' && f !== ''));
@@ -254,8 +256,9 @@ function buildAttestedByCase(value, attestedForms, imiona, morph) {
     const resolved = parsed.slowa.map((s) => resolveWord(s, imiona, morph));
     const nonInitial = resolved.filter((s) => s.typ !== 'inicjał');
     const przypadek = agreeingCase(nonInitial.map((s) => s.przypadki));
-    if (typeof przypadek === 'string' && przypadek !== 'niejednoznaczny' && !(przypadek in out)) {
-      out[przypadek] = form;
+    if (przypadek == null || przypadek === 'niejednoznaczny') continue;
+    for (const p of Array.isArray(przypadek) ? przypadek : [przypadek]) {
+      if (!(p in out)) out[p] = form;
     }
   }
   return out;
