@@ -74,7 +74,7 @@ async function loadModelNode(model) {
   };
 }
 
-async function processDocument(filePath, pipelineConfig, runDir) {
+async function processDocument(filePath, pipelineConfig, runDir, allMask) {
   const text = await readEvalText(filePath);
   const name = basename(filePath, extname(filePath));
 
@@ -84,13 +84,22 @@ async function processDocument(filePath, pipelineConfig, runDir) {
   const ctx = await runPipeline(text, pipelineConfig);
 
   const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-  console.log(`  Done in ${elapsed}s — ${ctx.segments.length} segments, ${ctx.entities.length} entities, ${Object.keys(ctx.legend).length} tokens`);
+  const reviewNote = allMask ? '' : `, ${ctx.reviewCandidates?.length ?? 0} review candidates`;
+  console.log(`  Done in ${elapsed}s — ${ctx.segments.length} segments, ${ctx.entities.length} entities${reviewNote}, ${Object.keys(ctx.legend).length} tokens`);
 
   const outDir = join(runDir, name);
   await mkdir(outDir, { recursive: true });
 
   await writeFile(join(outDir, 'anonymized.txt'), ctx.anonymized, 'utf-8');
   await writeFile(join(outDir, 'entities.json'), JSON.stringify(ctx.entities, null, 2), 'utf-8');
+  // Only written when tiering is active: under allMask (the default),
+  // ctx.reviewCandidates is always [] (GS-5), and score-tiers.js's fallback
+  // (reviewPredictionsFor) treats a present-but-empty candidates.json as
+  // authoritative rather than deriving W2 predictions from entities.json —
+  // writing [] here would silently zero every legacy all-mask run's W2 score.
+  if (!allMask) {
+    await writeFile(join(outDir, 'candidates.json'), JSON.stringify(ctx.reviewCandidates ?? [], null, 2), 'utf-8');
+  }
   await writeFile(join(outDir, 'debug.json'), JSON.stringify(ctx.debug, null, 2), 'utf-8');
   await writeFile(
     join(outDir, 'legend.json'),
@@ -167,21 +176,29 @@ async function main() {
     enabledEntities = allEntityTypes();
   }
 
+  // ST-2 (SCOPE-TIERS-DESIGN.md §6.2 pt 1): --allMask=false opts an eval run
+  // into real tiering (mask/review/pass partition); default true preserves
+  // today's single-tier behavior byte-for-byte (SCOPE-TIERS-DESIGN.md §3.4
+  // pkt 2, createPostprocessSteps's own default).
+  const allMaskArg = args.find(a => a.startsWith('--allMask='))?.slice('--allMask='.length);
+  const allMask = allMaskArg !== 'false';
+
   console.log(`Eval: ${files.length} document(s)`);
   console.log(`Run:  ${runId}${label ? ` (${label})` : ''}`);
   console.log(`Entities: ${enabledEntities.length === allEntityTypes().length ? 'all' : enabledEntities.join(', ')}`);
+  console.log(`Tiering: ${allMask ? 'off (all-mask, legacy)' : 'ON (allMask:false — mask/review/pass partition active)'}`);
   console.log('Loading models...');
 
   const pipelineConfig = createDefaultPipeline(
     loadModelNode,
     get_sentence_boundaries,
-    { enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES },
+    { enabledEntities, entitySources: ENTITY_SOURCES, sources: SOURCES, allMask },
   );
   await mkdir(runDir, { recursive: true });
 
   const results = [];
   for (const file of files) {
-    results.push(await processDocument(file, pipelineConfig, runDir));
+    results.push(await processDocument(file, pipelineConfig, runDir, allMask));
   }
 
   // Build summary
