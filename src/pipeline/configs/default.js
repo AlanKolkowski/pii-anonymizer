@@ -102,7 +102,12 @@ export function createPostprocessSteps(options) {
   return [
     { phase: 'postprocess', steps: [
       createSourceFilterStep({ enabledEntities, entitySources }),
-      createThresholdStep(options.thresholdOverrides),
+      // MF-1 (MASK-FLOOR-DESIGN.md §2.2 pkt 1): tierOpts threaded the same
+      // way bindTierOf feeds dedup/backfill below — the only conduit for
+      // {allMask, tierOverrides} into thresholdStep. No third argument
+      // here: production always defers to entity-rules.js's real
+      // MASK_FLOOR (null until GATE-MF sets it).
+      createThresholdStep(options.thresholdOverrides, tierOpts),
       refineFinancialAmountStep,
       snapStep,
       trimTrailingPunctuationStep,
