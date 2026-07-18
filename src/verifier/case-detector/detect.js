@@ -15,6 +15,14 @@ import { PREPOSITION_CASES } from './prepositions.js';
 import { VERB_GOVERNMENT } from './verbs.js';
 
 const VERB_LOOKBACK = 3;
+// Apposition is adjacency, not "somewhere in the sentence": scanning the
+// whole +/-40-char window for ANY role-form match risks pinning the case
+// of a role word that refers to a DIFFERENT person nearby (e.g. "[TOKEN]
+// złożył pozew przeciwko pozwanemu" — "pozwanemu" is the object of
+// "przeciwko" describing someone else, not in apposition to [TOKEN]).
+// Immediate neighbors only, matching how apposition actually reads
+// ("powodowi Janowi Kowalskiemu" / "Jan Kowalski, powód,").
+const ROLE_LOOKAROUND = 2;
 
 function words(text) {
   return (text.match(/\p{L}+/gu) ?? []).map((w) => w.toLocaleLowerCase('pl'));
@@ -67,10 +75,11 @@ export function detectCase({ contextBefore = '', contextAfter = '', annotation }
     }
   }
 
-  // S-A: a role lemma's inflected form on either side (apposition can
-  // precede — "powodowi Janowi Kowalskiemu" — or follow — "Jan Kowalski,
-  // powód, ..." — the name).
-  const roleHit = findRoleSignal([...beforeWords, ...afterWords], deps.morph);
+  // S-A: a role lemma's inflected form immediately adjacent, on either side
+  // (apposition can precede — "powodowi Janowi Kowalskiemu" — or follow —
+  // "Jan Kowalski, powód, ..." — the name).
+  const roleWindow = [...beforeWords.slice(-ROLE_LOOKAROUND), ...afterWords.slice(0, ROLE_LOOKAROUND)];
+  const roleHit = findRoleSignal(roleWindow, deps.morph);
   if (roleHit) {
     candidate = narrow(candidate, roleHit.cases);
     signals.push({ signal: 'S-A', word: roleHit.word, lemma: roleHit.lemma, cases: roleHit.cases });
