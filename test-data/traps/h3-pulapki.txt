@@ -43,10 +43,14 @@ ul. Polna 3/5
 art. 385¹ § 1
 poz. 1270
 
-# Paszport (2 litery + 7 cyfr) bez słowa "paszport" w oknie — R-DOW wymaga
-# dokładnie 3 liter + 6 cyfr, więc kształtem rozłączny; R-PASZ (O-HC-2) poza
-# zakresem tej sesji.
+# Paszport (2 litery + 7 cyfr) bez słowa "paszport" w oknie — kształtem
+# rozłączny z R-DOW (dokładnie 3 litery + 6 cyfr), ale identyczny kształtem
+# do R-PASZ (H-3-CLOSURE-DESIGN.md §8 O-HC-2, zaimplementowana): dowód
+# działania kotwicy - bez słowa "paszport" w tej samej linii R-PASZ też
+# nie łapie. Oba wektory z korpusu (adw_14_dokumenty_tozsamosci,
+# hold_identyfikatory_12), tu bez anchor.
 EJ 1234567
+AG 1391751
 
 # Akronim + 6 cyfr z poprawną sumą kontrolną dowodu (wyliczone przy
 # implementacji: NIP + "000000" → suma = 240, mod 10 = 0 = pierwsza cyfra) —
