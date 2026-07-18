@@ -13,7 +13,7 @@ const EXPECTED_MASK = [
   'PAYMENT_CARD', 'PAYMENT_CARD_SECURITY', 'ACCOUNT_IDENTIFIER',
   'DEVICE_IDENTIFIER', 'VEHICLE_IDENTIFIER', 'DATE_OF_BIRTH',
   'ORGANIZATION_IDENTIFIER', 'AUTH_SECRET', 'IP_ADDRESS', 'GEO_LOCATION',
-  'COOKIE_IDENTIFIER',
+  'COOKIE_IDENTIFIER', 'LAND_REGISTER_IDENTIFIER',
 ];
 
 const EXPECTED_REVIEW = [
@@ -59,9 +59,9 @@ describe('TYPE_TIERS config', () => {
     expect(ghosts).toEqual([]);
   });
 
-  it('accounts for exactly the 35 types of the ZAKRES §3 matrix', () => {
-    expect(Object.keys(TYPE_TIERS)).toHaveLength(35);
-    expect(allEntityTypes()).toHaveLength(35);
+  it('accounts for exactly the 36 types of the ZAKRES §3 matrix (35 + LAND_REGISTER_IDENTIFIER, KW-detection request)', () => {
+    expect(Object.keys(TYPE_TIERS)).toHaveLength(36);
+    expect(allEntityTypes()).toHaveLength(36);
   });
 });
 

@@ -130,3 +130,29 @@ export function findMaskTypesWithDropBlocklist(rules, tierFor) {
   }
   return offenders;
 }
+
+// ── Guard 4: "*_IDENTIFIER"-named types must be mask (KW-detection request,
+// 2026-07-18) ────────────────────────────────────────────────────────────
+//
+// A hard/unique identifier — PESEL-like, IBAN, VIN, device serial, land-
+// register number, ... — is exactly what this codebase names with an
+// "..._IDENTIFIER" suffix (PERSON_IDENTIFIER, BANK_ACCOUNT_IDENTIFIER,
+// VEHICLE_IDENTIFIER, LAND_REGISTER_IDENTIFIER, ...), and every one of them
+// can be emitted by a score-1.0 regex directly (findRegexEntities). A future
+// config edit that tiers one of these to 'review' or 'pass' would silently
+// stop masking a hard identifier the instant tiers activate — the exact
+// class of leak this whole file guards against, and Alan's specific
+// "never-W3" requirement for LAND_REGISTER_IDENTIFIER (KW numbers, R-KW) is
+// one concrete instance of it. Deliberately NOT DOCUMENT_REFERENCE (a
+// citation/invoice REFERENCE, not a personal/property IDENTIFIER — 'pass' by
+// design, see H-3-CLOSURE-DESIGN.md) — the naming convention itself is what
+// keeps this guard from over-reaching, no hardcoded roster to keep in sync.
+//
+// `typeTiers`: a type -> tier map shaped like TYPE_TIERS.
+// `tierFor`: (type) => 'mask' | 'review' | 'pass'.
+// Returns the list of offending "*_IDENTIFIER" type names, or [].
+export function findNonMaskIdentifierTypes(typeTiers, tierFor) {
+  return Object.keys(typeTiers)
+    .filter((type) => type.endsWith('_IDENTIFIER'))
+    .filter((type) => tierFor(type) !== 'mask');
+}

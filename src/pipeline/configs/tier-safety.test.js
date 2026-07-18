@@ -3,10 +3,11 @@ import {
   findUnsafeMergeRules,
   findMaskTypesDroppableByMaxLength,
   findMaskTypesWithDropBlocklist,
+  findNonMaskIdentifierTypes,
   TIER_PROTECTION_RANK,
 } from './tier-safety.js';
 import { ENTITY_RULES } from './entity-rules.js';
-import { tierFor } from './type-tiers.js';
+import { TYPE_TIERS, tierFor } from './type-tiers.js';
 import { weightFor } from './type-weights.js';
 import { OVERSIZE_WEIGHT_THRESHOLD } from '../steps/max-length.js';
 
@@ -202,5 +203,41 @@ describe('findMaskTypesWithDropBlocklist — Guard B: blocklist drop channel (fi
       expect(findMaskTypesWithDropBlocklist({ R: { blocklist: ['Foo'] } }, tierOf)).toEqual([]);
       expect(findMaskTypesWithDropBlocklist({ P: { rejectTruncatedWord: true } }, tierOf)).toEqual([]);
     });
+  });
+});
+
+describe('findNonMaskIdentifierTypes — Guard D: "*_IDENTIFIER" types must never be review/pass (KW-detection request, 2026-07-18)', () => {
+  // Alan's specific ask: tierFor('LAND_REGISTER_IDENTIFIER') === 'mask',
+  // never-W3 for KW numbers. Implemented as a naming-convention guard (every
+  // "..._IDENTIFIER" type) rather than a hardcoded roster, so it also covers
+  // any future hard-identifier type without needing an edit here.
+  it('REAL TYPE_TIERS has every "*_IDENTIFIER" type tiered mask (CI guard — must stay empty)', () => {
+    expect(findNonMaskIdentifierTypes(TYPE_TIERS, tierFor)).toEqual([]);
+  });
+
+  it('LAND_REGISTER_IDENTIFIER specifically is tiered mask (never-W3 guarantee for KW numbers)', () => {
+    expect(tierFor('LAND_REGISTER_IDENTIFIER')).toBe('mask');
+  });
+
+  it('flags an "*_IDENTIFIER" type that drifts to pass', () => {
+    const dangerous = { PERSON_IDENTIFIER: 'mask', FAKE_IDENTIFIER: 'pass' };
+    const fakeTierFor = (t) => dangerous[t] ?? 'mask';
+    expect(findNonMaskIdentifierTypes(dangerous, fakeTierFor)).toEqual(['FAKE_IDENTIFIER']);
+  });
+
+  it('flags an "*_IDENTIFIER" type that drifts to review', () => {
+    const dangerous = { FAKE_IDENTIFIER: 'review' };
+    const fakeTierFor = (t) => dangerous[t] ?? 'mask';
+    expect(findNonMaskIdentifierTypes(dangerous, fakeTierFor)).toEqual(['FAKE_IDENTIFIER']);
+  });
+
+  it('ignores non-identifier types entirely (e.g. DOCUMENT_REFERENCE, deliberately pass by design)', () => {
+    const rules = { DOCUMENT_REFERENCE: 'pass', PERSON_NAME: 'mask', LOCATION: 'review' };
+    const fakeTierFor = (t) => rules[t] ?? 'mask';
+    expect(findNonMaskIdentifierTypes(rules, fakeTierFor)).toEqual([]);
+  });
+
+  it('an empty table has no offenders', () => {
+    expect(findNonMaskIdentifierTypes({}, tierFor)).toEqual([]);
   });
 });

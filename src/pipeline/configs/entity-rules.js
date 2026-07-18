@@ -119,6 +119,13 @@ export const ENTITY_RULES = {
   PAYMENT_CARD_SECURITY:    IDENTIFIER_RULE,
   DOCUMENT_REFERENCE:       IDENTIFIER_RULE,
   VEHICLE_IDENTIFIER:       { ...IDENTIFIER_RULE, maxLength: 40, threshold: 0.5 },
+  // KW-detection request (2026-07-18): plain IDENTIFIER_RULE, same as the
+  // rest of the regex-only identifier family (ORGANIZATION_IDENTIFIER,
+  // BANK_ACCOUNT_IDENTIFIER, ...) — no maxLength (R-KW's fixed-shape output
+  // is always exactly 16 chars, never truncated/oversized) and no
+  // blocklist, so neither tier-safety drop channel (maxLength/blocklist,
+  // see tier-safety.js) can ever touch it.
+  LAND_REGISTER_IDENTIFIER: IDENTIFIER_RULE,
   LOCATION:                 { maxLength: 100, threshold: 0.75, mergeWithAdjacent: [], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD } },
   POSTAL_ADDRESS:           { maxLength: 100, threshold: 0.6, mergeWithFollowing: ['LOCATION'], thresholdBySource: { 'case-folded': CASE_FOLDED_THRESHOLD } },
   PERSON_ATTRIBUTE:         { maxLength: 80, threshold: 0.6 },

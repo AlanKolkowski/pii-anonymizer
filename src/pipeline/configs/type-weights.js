@@ -35,6 +35,15 @@ export const TYPE_WEIGHTS = {
   PAYMENT_CARD_SECURITY: 4,
   DEVICE_IDENTIFIER: 4,
   VEHICLE_IDENTIFIER: 4,
+  // KW-detection request (2026-07-18): same weight and same reasoning as
+  // VEHICLE_IDENTIFIER just above — a land-register number identifies a
+  // PROPERTY, not a person directly, so it sits at 4 ("bezpośrednie namiary"
+  // via the asset/registry it names) rather than 5 (reserved for identifiers
+  // OF a person / art. 9-10 categories). Not lower either: Poland's public
+  // KW lookup portal (ekw.ms.gov.pl) resolves a bare KW number straight to
+  // the owner's name for free, at least as direct a re-identification path
+  // as a vehicle plate through CEPiK.
+  LAND_REGISTER_IDENTIFIER: 4,
   ACCOUNT_IDENTIFIER: 4,
   DATE_OF_BIRTH: 3,
   DOCUMENT_REFERENCE: 3,
