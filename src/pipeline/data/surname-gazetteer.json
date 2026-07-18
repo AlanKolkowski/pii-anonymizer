@@ -17,6 +17,7 @@
     { "lemma": "Sikora", "forms": ["Sikora", "Sikory", "Sikorze", "Sikorę", "Sikorą"], "freq": 4, "slotOnly": false },
     { "lemma": "Sowa", "forms": ["Sowa", "Sowy", "Sowie", "Sowę", "Sową"], "freq": 4, "slotOnly": false },
     { "lemma": "Kruk", "forms": ["Kruk", "Kruka", "Krukowi", "Krukiem", "Kruku"], "freq": 4, "slotOnly": false },
+    { "lemma": "Ptak", "forms": ["Ptak", "Ptaka", "Ptakowi", "Ptakiem", "Ptaku"], "freq": 4, "slotOnly": true },
     { "lemma": "Szpak", "forms": ["Szpak", "Szpaka", "Szpakowi", "Szpakiem", "Szpaku"], "freq": 3, "slotOnly": false },
     { "lemma": "Wróbel", "forms": ["Wróbel", "Wróbla", "Wróblowi", "Wróblem", "Wróblu"], "freq": 4, "slotOnly": false },
     { "lemma": "Bocian", "forms": ["Bocian", "Bociana", "Bocianowi", "Bocianem", "Bocianie"], "freq": 3, "slotOnly": false },
