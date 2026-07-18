@@ -1467,6 +1467,91 @@ describe('findRegexEntities — HC-2 R-EM (e-mail IDN, H-3-CLOSURE-DESIGN.md §5
   });
 });
 
+describe('findRegexEntities — R-KW (numer księgi wieczystej, never-W3 bare-shape floor, KW-detection correction 2026-07-18)', () => {
+  // Alan's hard requirement: a KW number must NEVER resolve to the model's
+  // mistaken DOCUMENT_REFERENCE guess (tier 'pass') once tiers activate. An
+  // anchor-only design (mirroring R-PJ/R-TR/R-PASZ below) would still leak an
+  // unanchored KW number as DOCUMENT_REFERENCE — so, unlike the rest of the
+  // HC-2 family, R-KW emits on SHAPE ALONE, unconditionally, no anchor or
+  // checksum required. Precision comes from the shape being narrow and
+  // specific instead: 2 letters + 1 digit + 1 letter (the real structure of
+  // a Polish court code — see the comment above findKsiegaWieczystaEntities
+  // in anonymizer.js) + "/" + exactly 8 digits + "/" + 1 check digit. No
+  // other document-reference format in this tool's corpus (invoices, docket
+  // numbers, dates, amounts) produces this exact 2-slash/8-digit-middle
+  // shape — proven by the pułapkownik below, not merely assumed.
+  it('detects a bare KW number with ZERO surrounding context (the never-W3 floor itself)', () => {
+    const text = 'TO1T/00012345/6';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('TO1T/00012345/6');
+    expect(matches[0].score).toBe(1.0);
+    expect(matches[0].source).toBe('regex');
+  });
+
+  it('detects the same number embedded in unrelated prose with no "KW"/"księga wieczysta" wording anywhere nearby', () => {
+    // This exact sentence used to be an H-3-CLOSURE pułapkownik vector
+    // (test-data/traps/h3-pulapki.txt asserted ZERO hits here, back when KW
+    // detection was out of scope for HC-2) — deliberately flipped to a
+    // required POSITIVE match now that Alan has asked for a never-W3
+    // guarantee on KW specifically. Moved out of the trap file accordingly.
+    const text = 'Numer zlecenia wewnętrznego to TO1T/00012345/6 w naszym systemie.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain('TO1T/00012345/6');
+  });
+
+  it('detects a KW number naturally anchored by "KW nr" (anchor is not required, but must not interfere)', () => {
+    const text = 'Dla nieruchomości położonej w Toruniu Sąd Rejonowy prowadzi KW nr TO1T/00012345/6.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain('TO1T/00012345/6');
+  });
+
+  it.each([
+    'WA1M/00234567/8',
+    'KR1P/00098765/4',
+    'WR1K/00234567/8',
+  ])('detects further real-shaped KW numbers (%s)', (value) => {
+    const text = `Odpis zwykły księgi wieczystej ${value} nie ujawnia obciążeń.`;
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain(value);
+  });
+
+  it('detects the same number OCR-folded (lowercase-l→1, uppercase-O→0) in every purely-numeric position', () => {
+    // OCR-fold convention shared with the rest of the HC-2 family, applied
+    // to every purely-numeric slot: the lone digit inside the court code,
+    // the 8-digit property number, and the check digit.
+    const text = 'TOlT/OOO12345/6';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches).toHaveLength(1);
+    expect(text.slice(matches[0].start, matches[0].end)).toBe('TOlT/OOO12345/6');
+  });
+
+  it('does not flag a year-prefixed reference number of the same digit-group lengths (non-letter court-code position)', () => {
+    // Same "4 chars / 8 digits / 1 digit" silhouette as KW, but the first
+    // group is all-digits (a plausible "year/sequence/check" business
+    // numbering scheme) rather than the real 2-letter+digit+letter court
+    // code — exactly the collision the LLDL narrowing rules out.
+    const text = 'Zamówienie oznaczone jest numerem 2024/00012345/6 w systemie magazynowym.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('2024/00012345/6');
+  });
+
+  it.each([
+    ['TO1T/0001234/6', 'seven digits'],
+    ['TO1T/000123456/6', 'nine digits'],
+  ])('does not flag a court-code-shaped token whose middle group is not exactly 8 digits (%s / %s)', (value) => {
+    const text = `Numer referencyjny ${value} w naszej ewidencji.`;
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain(value);
+  });
+
+  it('does not flag a lowercase-cased court code (letters must be uppercase, same convention as R-DOW/R-PASZ)', () => {
+    const text = 'to1t/00012345/6 to zapis testowy w małych literach.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'LAND_REGISTER_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('to1t/00012345/6');
+  });
+});
+
 describe('findRegexEntities — HC-2 pułapkownik (H-3-CLOSURE-DESIGN.md §5.6, zero FP)', () => {
   // Precision is load-bearing: an unanchored/imprecise regex here would map
   // real dates/amounts/docket-numbers/invoice-numbers onto [DRIVER_LICENSE]-
@@ -1474,6 +1559,12 @@ describe('findRegexEntities — HC-2 pułapkownik (H-3-CLOSURE-DESIGN.md §5.6, 
   // — a "living registry": a future measured FP gets a new line here first,
   // red, then a pattern fix) and asserts each line contributes ZERO
   // PERSON_IDENTIFIER (R-DOW/R-PJ) or VEHICLE_IDENTIFIER (R-TR) candidates.
+  // LAND_REGISTER_IDENTIFIER (R-KW) is checked here too, now that it emits
+  // on bare shape alone (no anchor) — the one type in this family where an
+  // unguarded false positive would otherwise slip past this loop silently:
+  // R-KW is exactly as unconditional as the trap corpus itself, so this is
+  // the ONLY structural check that a real invoice/docket/date/amount line
+  // never collides with the KW shape.
   function loadTraps() {
     const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
     return raw
@@ -1490,7 +1581,7 @@ describe('findRegexEntities — HC-2 pułapkownik (H-3-CLOSURE-DESIGN.md §5.6, 
 
   it.each(traps)('zero HC-2 false positives on: %s', (trapText) => {
     const hits = findRegexEntities(trapText).filter(
-      (e) => e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'VEHICLE_IDENTIFIER',
+      (e) => e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'VEHICLE_IDENTIFIER' || e.entity_group === 'LAND_REGISTER_IDENTIFIER',
     );
     expect(
       hits.map((e) => ({ type: e.entity_group, value: trapText.slice(e.start, e.end) })),

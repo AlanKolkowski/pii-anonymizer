@@ -728,6 +728,65 @@ function findPaszportEntities(text) {
   return entities;
 }
 
+// R-KW: Polish land-and-mortgage register number ("numer księgi
+// wieczystej") — 2 uppercase letters + 1 digit + 1 uppercase letter (court
+// code) + "/" + exactly 8 digits (property number) + "/" + 1 digit (check
+// digit), e.g. "TO1T/00012345/6", "WA1M/00234567/8" (KW-detection request,
+// 2026-07-18, correcting an initial anchor-only draft).
+//
+// UNLIKE the rest of the HC-2 family above (R-DOW/R-PJ/R-TR/R-PASZ), this
+// pattern emits on SHAPE ALONE — no context anchor, no checksum gate. Alan's
+// requirement is that a KW number NEVER resolve to the model's mistaken
+// DOCUMENT_REFERENCE guess (tier 'pass'): an anchor-only design would still
+// leak an unanchored KW number as DOCUMENT_REFERENCE the moment tiers
+// activate, because no same-type "mask" candidate would exist to out-compete
+// it at dedup — the exact H-3 root cause, just one shape HC-2 itself never
+// covered. So the bare shape itself has to be the "never-W3" floor.
+//
+// Precision therefore comes entirely from the shape being narrow: the court-
+// code group is the REAL structure of a Polish court code (2 letters + 1
+// digit + 1 letter — not a generic 4-alnum run), combined with an exact
+// 8-digit middle group. Checked against the trap corpus
+// (test-data/traps/h3-pulapki.txt): invoice/order numbers use 5/2/4 digit
+// groups (R-PJ's own collision note), docket numbers use a space not a
+// slash before the roman division, dates use 2/2/4 or dot separators, and
+// currency amounts carry no slash at all — none produce this exact
+// 2-slash/8-digit-middle silhouette. The one realistic near-miss (a
+// "year/sequence/check" business numbering scheme, e.g. "2024/00012345/6")
+// is excluded because its first group is all-digits, not letter-digit-
+// letter — see the pułapkownik test for this exact vector.
+//
+// Checksum research note (why arithmetic is NOT wired in here): the
+// official algorithm — weights 1-3-7 cyclic over the 12 significant
+// characters (4 court-code chars + 8-digit number), a court-specific
+// letter-to-number table, final digit = sum mod 10 — was corroborated by
+// two independently fetched sources with fully worked examples, hand-
+// verified digit-by-digit here: romek.info/ut/ksiega-wieczysta.html
+// (KA1S/00012345/6 → check digit 6) and ekw.plus/blog/cyfra-kontrolna-
+// ksiegi-wieczystej-co-to-jest-i-jak-ja-ustalic (WA4M/00160286/2 → check
+// digit 2); both agree exactly on the letter values cross-checked (A=11,
+// M=23, W=31). However the COMPLETE 26-letter mapping table (beyond those
+// three values) rests on a single source, and one auxiliary web search
+// surfaced a conflicting fragment for other letters that could not be
+// resolved with full confidence against a primary/authoritative text (e.g.
+// the underlying Ministry of Justice regulation, ideally via Legalis).
+// Per the "safety of precision over fabricated arithmetic" house rule, no
+// checksum validator is implemented — the bare-shape floor above already
+// delivers the never-W3 guarantee without needing one; a confirmed checksum
+// would only ever add a confidence signal on top, never gate emission.
+const KW_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}[A-Z]{2}[0-9lO][A-Z]/[0-9lO]{8}/[0-9lO]${WORD_EDGE_AFTER}`,
+  'gu',
+);
+
+function findKsiegaWieczystaEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(KW_CANDIDATE_RE)) {
+    entities.push({ entity_group: 'LAND_REGISTER_IDENTIFIER', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
 // Polish IBAN (PL + 26 digits) and bare NRB (26 digits, no country code —
 // mod-97 validated as if "PL" were prepended, per the audit contract).
 const IBAN_PL_RE = new RegExp(`\\bPL${ID_SEPARATOR}?(?:[0-9lO]${ID_SEPARATOR}?){25}[0-9lO]\\b`, 'gi');
@@ -799,6 +858,7 @@ export function findRegexEntities(text) {
     ...findPrawoJazdyEntities(text),
     ...findTablicaRejestracyjnaEntities(text),
     ...findPaszportEntities(text),
+    ...findKsiegaWieczystaEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {
