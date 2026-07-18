@@ -25,6 +25,7 @@ export const TYPE_TIERS = {
   ACCOUNT_IDENTIFIER: 'mask',
   DEVICE_IDENTIFIER: 'mask',
   VEHICLE_IDENTIFIER: 'mask',
+  LAND_REGISTER_IDENTIFIER: 'mask',
   DATE_OF_BIRTH: 'mask',
   ORGANIZATION_IDENTIFIER: 'mask',
   AUTH_SECRET: 'mask',

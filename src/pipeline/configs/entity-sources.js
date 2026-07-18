@@ -91,6 +91,11 @@ export const ENTITY_SOURCES = {
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
   INCOME_COMPENSATION:      ['polish-fp16'],
   VEHICLE_IDENTIFIER:       ['polish-fp16', 'regex'],
+  // KW-detection request (2026-07-18): 'regex' only — no HF model taxonomy
+  // has a LAND_REGISTER_IDENTIFIER label, R-KW (anonymizer.js) is the only
+  // possible source. Structural (bare-shape) detection, so listing 'regex'
+  // here is what lets sourceFilterStep keep every candidate it emits.
+  LAND_REGISTER_IDENTIFIER: ['regex'],
   // B3 (RECALL-90-DESIGN.md §2.3): 'lexicon' added alongside the model for
   // the three proven-leak categories (EVAL-RECALL-AUDIT.md #2/#11/#30) plus
   // the remaining art. 9 categories below — same reasoning as B4-lite's
@@ -138,6 +143,7 @@ export const ENTITY_LABELS = {
   FINANCIAL_AMOUNT:         'Kwota',
   INCOME_COMPENSATION:      'Wynagrodzenie',
   VEHICLE_IDENTIFIER:       'Numer rejestracyjny, VIN',
+  LAND_REGISTER_IDENTIFIER: 'Numer księgi wieczystej (KW)',
   HEALTH_DATA:              'Dane medyczne',
   GENETIC_DATA:             'Dane genetyczne',
   BIOMETRIC_DATA:           'Dane biometryczne',
@@ -156,7 +162,7 @@ export const ENTITY_CATEGORIES = [
   { id: 'organizations',         label: 'Organizacje',                  entities: ['ORGANIZATION_NAME', 'ORGANIZATION_IDENTIFIER'] },
   { id: 'contact-location',      label: 'Kontakt i lokalizacja',        entities: ['EMAIL_ADDRESS', 'PHONE_NUMBER', 'CONTACT_HANDLE', 'POSTAL_ADDRESS', 'LOCATION', 'GEO_LOCATION'] },
   { id: 'technical-identifiers', label: 'Identyfikatory techniczne',    entities: ['IP_ADDRESS', 'DEVICE_IDENTIFIER', 'COOKIE_IDENTIFIER', 'ACCOUNT_IDENTIFIER', 'AUTH_SECRET'] },
-  { id: 'financial',             label: 'Finanse',                      entities: ['BANK_ACCOUNT_IDENTIFIER', 'PAYMENT_CARD', 'PAYMENT_CARD_SECURITY', 'DOCUMENT_REFERENCE', 'FINANCIAL_AMOUNT', 'INCOME_COMPENSATION', 'VEHICLE_IDENTIFIER'] },
+  { id: 'financial',             label: 'Finanse',                      entities: ['BANK_ACCOUNT_IDENTIFIER', 'PAYMENT_CARD', 'PAYMENT_CARD_SECURITY', 'DOCUMENT_REFERENCE', 'FINANCIAL_AMOUNT', 'INCOME_COMPENSATION', 'VEHICLE_IDENTIFIER', 'LAND_REGISTER_IDENTIFIER'] },
   { id: 'health-biometric',      label: 'Zdrowie i biometria',          entities: ['HEALTH_DATA', 'GENETIC_DATA', 'BIOMETRIC_DATA'] },
   { id: 'special-categories',    label: 'Kategorie szczególne',         entities: ['RELIGION_OR_BELIEF', 'POLITICAL_OPINION', 'SEXUAL_ORIENTATION', 'TRADE_UNION_MEMBERSHIP', 'ETHNIC_ORIGIN', 'CRIMINAL_OFFENCE_DATA'] },
 ];

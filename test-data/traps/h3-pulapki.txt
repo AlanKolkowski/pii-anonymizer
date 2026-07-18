@@ -34,7 +34,6 @@ Faktura VAT nr 98765/12/2023
 FV 54321/01/2023
 
 # Inne identyfikatory urzędowe rozłączne kształtem albo bez kotwicy.
-TO1T/00012345/6
 KRS 0000123456
 3215669833
 60-663
@@ -42,6 +41,16 @@ KRS 0000123456
 ul. Polna 3/5
 art. 385¹ § 1
 poz. 1270
+
+# R-KW (numer księgi wieczystej, KW-detection correction 2026-07-18): KW
+# łapane jest teraz na SAMYM kształcie (bez kotwicy) — TO1T/00012345/6
+# PRZENIESIONE stąd do testów pozytywnych R-KW w src/anonymizer.test.js (ma
+# być łapane jako LAND_REGISTER_IDENTIFIER, nie jest już pułapką). Wektor
+# poniżej zostaje pułapką celowo: identyczna sylwetka cyfr (4 znaki/8
+# cyfr/1 cyfra), ale pierwsza grupa to rok (same cyfry), nie realny kod
+# sądu (2 litery + cyfra + litera) — dowód, że zawężenie kształtu do LLDL
+# rzeczywiście robi robotę precyzji, nie tylko kotwica.
+2024/00012345/6
 
 # Paszport (2 litery + 7 cyfr) bez słowa "paszport" w oknie — kształtem
 # rozłączny z R-DOW (dokładnie 3 litery + 6 cyfr), ale identyczny kształtem
