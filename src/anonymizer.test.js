@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildTokenMap, anonymizeText, deanonymizeText, aggregateEntities, chunkText, deduplicateEntities, couldBeSamePerson, findRegexEntities } from './anonymizer.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe('buildTokenMap', () => {
   it('assigns indexed tokens per entity type', () => {
@@ -1419,6 +1424,100 @@ describe('findRegexEntities — HC-2 R-EM (e-mail IDN, H-3-CLOSURE-DESIGN.md §5
     const emails = findRegexEntities(text).filter((e) => e.entity_group === 'EMAIL_ADDRESS');
     expect(emails).toHaveLength(1);
     expect(text.slice(emails[0].start, emails[0].end)).toBe('kontakt@przedsiębior.pl');
+  });
+});
+
+describe('findRegexEntities — HC-2 pułapkownik (H-3-CLOSURE-DESIGN.md §5.6, zero FP)', () => {
+  // Precision is load-bearing: an unanchored/imprecise regex here would map
+  // real dates/amounts/docket-numbers/invoice-numbers onto [DRIVER_LICENSE]-
+  // style tokens. This reads test-data/traps/h3-pulapki.txt (data, not code
+  // — a "living registry": a future measured FP gets a new line here first,
+  // red, then a pattern fix) and asserts each line contributes ZERO
+  // PERSON_IDENTIFIER (R-DOW/R-PJ) or VEHICLE_IDENTIFIER (R-TR) candidates.
+  function loadTraps() {
+    const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+  }
+
+  const traps = loadTraps();
+
+  it('loads a non-trivial trap corpus (sanity check on the fixture itself)', () => {
+    expect(traps.length).toBeGreaterThanOrEqual(25);
+  });
+
+  it.each(traps)('zero HC-2 false positives on: %s', (trapText) => {
+    const hits = findRegexEntities(trapText).filter(
+      (e) => e.entity_group === 'PERSON_IDENTIFIER' || e.entity_group === 'VEHICLE_IDENTIFIER',
+    );
+    expect(
+      hits.map((e) => ({ type: e.entity_group, value: trapText.slice(e.start, e.end) })),
+    ).toEqual([]);
+  });
+});
+
+describe('findRegexEntities — H-3 re-analiza: 6/6 wycieków case-(a) z korpusu (H-3-CLOSURE-DESIGN.md §1.2-§1.3)', () => {
+  // The design's own re-measurement discipline (§7 laptop step 2): re-run
+  // findRegexEntities directly on the corpus SENTENCES containing the six
+  // measured H-3 leak values (no models, no eval, laptop-safe) and assert
+  // every one now gets a "mask"-tier (PERSON_IDENTIFIER/EMAIL_ADDRESS/
+  // VEHICLE_IDENTIFIER) candidate — the exact proof HC-2 is supposed to
+  // deliver. All six sentences are copied verbatim from the corpus.
+  const CASE_A_LEAKS = [
+    {
+      id: '#1 92712/00/2780 (PERSON_IDENTIFIER, hold_identyfikatory_12)',
+      text: 'Dane strony postępowania: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.',
+      value: '92712/00/2780',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#2 00123/22/0611 (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'W aktach znajduje się kopia paszportu nr EJ 1234567 oraz prawa jazdy nr 00123/22/0611 kat. B.',
+      value: '00123/22/0611',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#3 DKR 744829 (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'Tożsamość mocodawcy ustalono na podstawie dowodu osobistego seria i nr DKR 744829, wydanego przez Prezydenta Miasta Torunia.',
+      value: 'DKR 744829',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#4 DKR744829 sklejone (PERSON_IDENTIFIER, adw_14_dokumenty_tozsamosci)',
+      text: 'Zbiorczy zapis z systemu: dow. os. DKR744829 (bez spacji).',
+      value: 'DKR744829',
+      type: 'PERSON_IDENTIFIER',
+    },
+    {
+      id: '#5 CTR 88812 (VEHICLE_IDENTIFIER, adw_31_komornik)',
+      text: 'przyczepa lekka, nr rej. CTR 88812.',
+      value: 'CTR 88812',
+      type: 'VEHICLE_IDENTIFIER',
+    },
+    {
+      id: '#6 kontakt@przedsiębior.pl (EMAIL_ADDRESS, hold_dane_osobowe_09/11/16)',
+      text: 'Korespondencję firmową prosimy kierować na adres kontakt@przedsiębior.pl.',
+      value: 'kontakt@przedsiębior.pl',
+      type: 'EMAIL_ADDRESS',
+    },
+  ];
+
+  it.each(CASE_A_LEAKS)('$id now gets a same-type regex "mask" candidate', ({ text, value, type }) => {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === type);
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain(value);
+  });
+
+  it('all 6/6 case-(a) leak values from the design §1.2 inventory now have a regex mask candidate', () => {
+    const results = CASE_A_LEAKS.map(({ id, text, value, type }) => {
+      const found = findRegexEntities(text)
+        .filter((e) => e.entity_group === type)
+        .some((e) => text.slice(e.start, e.end) === value);
+      return { id, found };
+    });
+    expect(results.filter((r) => r.found)).toHaveLength(6);
   });
 });
 
