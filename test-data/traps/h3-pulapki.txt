@@ -84,3 +84,17 @@ NIP000000
 # Przechodzi Luhna, długość 16, ale prefiks "9" nie jest IIN żadnej sieci —
 # dokładnie luka "16 losowych cyfr przechodzi Luhna ~1/10", którą domyka IIN.
 9111111111111110
+
+# R-DATE (data urodzenia, wyłącznie kotwiczona, IDENTIFIER-COVERAGE-AUDIT §2,
+# 2026-07-19): wektory NEGATYWNE daty — każdy musi dać ZERO DATE_OF_BIRTH.
+# Daty są WSZĘDZIE w pismach (umowy, terminy, rozprawy, wyroki); R-DATE
+# emituje TYLKO gdy w oknie wstecz stoi kotwica urodzenia ("ur.",
+# "urodzon...", "data urodzenia"). Bez kotwicy — zero, choć kształt daty
+# (DD.MM.RRRR / DD miesiąc RRRR / RRRR-MM-DD) jest identyczny jak w dacie
+# urodzenia. To jest cały sens kotwicy: dowód, że sam kształt nie wystarcza.
+Umowę zawarto dnia 20 lutego 2025 r.
+Toruń, dnia 3 marca 2025 r.
+Termin rozprawy wyznaczono na 4 czerwca 2025 r.
+Wyrok z dnia 14 maja 2021 r. (sygn. akt II CSKP 975/22)
+Data wystawienia faktury: 01.02.2023
+Zamówienie z dnia 2024-05-15 zrealizowano w terminie.
