@@ -13,6 +13,95 @@ skompilował realnego SGJP – to poniższy krok, wykonywany świadomie przez
 Alana, poza tą gałęzią (albo na nowym commicie na tej samej gałęzi, jeśli
 tak zdecydujesz).**
 
+## Format zweryfikowany u źródła (Morfeusz 2, research 2026-07)
+
+**Finding #1 z poprzedniej tury (etykiety formatu niepotwierdzone) – ZAMKNIĘTY.**
+Format wejściowy, pod który napisany jest `compile-sgjp.mjs`, potwierdziłam
+wprost w podstawowej dokumentacji Morfeusza 2 i w instrukcji SGJP, bez pobierania
+realnego zrzutu danych (research webowy, gałąź `feature/sgjp-format-verify`).
+Założenia poprzedniej tury (`imię` / `nazwisko` / `pospolita`) okazały się
+ZGODNE ze źródłem – kod nie wymagał korekty wartości, tylko potwierdzenia i
+cytatów.
+
+### Źródła
+
+- **Morfeusz2.pdf, §7.1 „Słownik główny"** (Marcin Woliński, dokumentacja
+  techniczna i użytkowa): <https://download.sgjp.pl/morfeusz/Morfeusz2.pdf> –
+  kanoniczny redirect z <http://morfeusz.sgjp.pl/doc/doc/>. Definiuje format
+  źródłowy słownika, z którego `morfeusz_builder` buduje Morfeusza – DOKŁADNIE
+  ten sam „tab", który dystrybuuje `download.sgjp.pl/morfeusz/`.
+- **Instrukcja SGJP:** <https://sgjp.pl/instrukcja/> – podklasy nazw własnych
+  (imię, nazwisko, przydomek, człon nazwiska ...).
+- **Tagset fleksyjny:** `input/morfeusz-sgjp.tagset` w repo
+  <https://git.nlp.ipipan.waw.pl/SGJP/Morfeusz> – zawiera wyłącznie sekcję
+  `[TAGS]` (tagi gramatyczne), ZERO etykiet nazw własnych. To dowód, że
+  klasyfikacja nazw własnych jest OSOBNĄ kolumną, nie częścią tagu.
+
+### Kolumny (Morfeusz2.pdf §7.1, cytat)
+
+Plik źródłowy to **pięć kolumn rozdzielonych tabulatorem, ostatnia opcjonalna**
+(cytat §7.1: „Wiersz jest podzielony na 5 kolumn [...] Ostatnia kolumna jest
+opcjonalna"):
+
+| # | Kolumna (dokumentacja) | Pole w `compile-sgjp.mjs` |
+|---|---|---|
+| 1 | wykładnik formy | `forma` |
+| 2 | lemat (identyfikator leksemu) | `lemat` |
+| 3 | znacznik morfosyntaktyczny | `tag` |
+| 4 | **klasyfikacja nazw własnych** | `klasyfikacja` (OSOBNA kolumna) |
+| 5 | kwalifikator(y) rozdzielone pałką | `kwalifikatory` (opcjonalne) |
+
+Przykładowe wiersze wprost z §7.1 (demo-słownik w dokumentacji, kolumny
+rozdzielone tabulatorem):
+
+```
+Gdańsk     Gdańsk     subst:sg:nom:m3     geograficzna
+funkcja    funkcja    subst:sg:nom:f      pospolita
+funkcyj    funkcja    subst:pl:gen:f      pospolita     arch.|matem.
+```
+
+Drobna omyłka w dokumentacji, dla porządku: §7.1 pisze w jednym miejscu
+„rozdzielonych znakiem tabulacji (U+0008)" – U+0008 to backspace, tabulator to
+U+0009. Nagłówek tej samej sekcji mówi poprawnie „rozdzielonych tabulatorami",
+a przykłady używają zwykłego TAB-a. `compile-sgjp.mjs` dzieli po `\t` (U+0009),
+czyli poprawnie.
+
+### Tag jest pozycyjny i dwukropkowy
+
+„Pierwsza pozycja określa klasę gramatyczną («część mowy»), następne pozycje
+reprezentują wartości kategorii gramatycznych" (Morfeusz2.pdf §1.1). Dlatego
+skanowanie WSZYSTKICH segmentów tagu po człony przypadka/rodzaju/liczby
+(`splitTag`) jest bezpieczne niezależnie od układu specyficznego dla klasy.
+Tokeny potwierdzone w tagsecie: przypadki `nom/gen/dat/acc/inst/loc/voc`,
+rodzaje `m1/m2/m3/f/n`, liczby `sg/pl` – zgadzają się 1:1 z `CASE_TOKENS` /
+`GENDER_TOKENS` / `NUMBER_TOKENS` w kompilatorze.
+
+### Etykiety klasyfikacji (kolumna 4) – potwierdzone
+
+| Etykieta | Znaczenie | Źródło potwierdzenia |
+|---|---|---|
+| `pospolita` | rzeczownik pospolity | Morfeusz2.pdf §7.1, wiersz danych (literalnie) |
+| `geograficzna` | nazwa geograficzna | Morfeusz2.pdf §7.1, wiersz danych (literalnie) |
+| `nazwisko` | nazwisko | Morfeusz2.pdf §6 (API Python: „np. nazwa pospolita, marka, nazwisko") + instrukcja SGJP (podklasa nazw osób) |
+| `imię` | imię | Instrukcja SGJP: „nazw osób (imię, nazwisko, przydomek itp.)" |
+
+`DEFAULT_CLASSIFICATION` w `compile-sgjp.mjs` (`imię` / `nazwisko` / `pospolita`)
+jest zgodne ze źródłem i NIE wymaga zmiany. Zostaje konfigurowalne z dwóch
+powodów udokumentowanych u źródła (nie z ostrożności „na wszelki wypadek"):
+
+1. **Drobniejsze podklasy nazw osób.** Instrukcja SGJP notuje, że filtr „nazwa
+   własna osoby" pokazuje osoby, „które nie zostały scharakteryzowane dokładniej
+   jako imię, nazwisko, człon nazwiska, przydomek lub kilka innych podklas".
+   Kompilator zbiera WYŁĄCZNIE `imię` i `nazwisko`; ewentualne `człon nazwiska`
+   / `przydomek` / gołe „nazwa własna osoby" NIE trafią do słownika. To luka
+   POKRYCIA, nie błąd – tabela „Etykiety klasyfikacji zaobserwowane w danych"
+   w `COMPILE-REPORT.md` wylistuje je po pierwszej realnej kompilacji.
+2. **Wersja słownika.** Literał (np. `imię` z ogonkiem, kodowanie UTF-8)
+   potwierdzam z dokumentacji, nie z bajtów konkretnego `sgjp-<data>.tab.gz`.
+   Fail-closed w kompilatorze (odmowa, gdy ŻADNA rozpoznawana etykieta nie
+   wystąpi) plus tabela etykiet w raporcie to ostatnia bramka przy pierwszym
+   uruchomieniu.
+
 ## 0. Zanim zaczniesz: PC, nie laptop
 
 Zrzut SGJP po rozpakowaniu to **setki MB tekstu**. Kompilator streamuje
@@ -138,23 +227,17 @@ Sprawdź `sizeBytes` w locku po realnej kompilacji:
 
 ## 5. Co NIE jest jeszcze zrobione (uczciwie, do potwierdzenia)
 
-1. **Etykiety klasyfikacji nazwy własnej NIE są potwierdzone na realnym
-   pliku.** `W1-W3-MORPHOLOGY-DESIGN.md` §1.1 mówi to wprost: "dokładną
-   semantykę kolumn i etykiet klasyfikacji («imię», «nazwisko») kompilator
-   przybija testem na nagłówku pobranego pliku przy implementacji – nie
-   zakładamy jej z pamięci". `compile-sgjp.mjs` zakłada dokładnie te dwie
-   etykiety (`DEFAULT_CLASSIFICATION` w nagłówku pliku) – sprawdzone przeze
-   mnie strukturalnie (format 4-5 kolumn tab-separated, gramatyka tagów z
-   dwukropkiem) na publicznej dokumentacji Morfeusza/SGJP (tagset,
-   przykładowy plik budowy `PoliMorfSmall.tab`), ale **literalne wartości
-   etykiet dla imion/nazwisk w PRAWDZIWYM zrzucie `sgjp-*.tab.gz` nie były
-   przeze mnie widziane** (nie pobierałem realnego pliku – to zadanie
-   celowo tego zakazywało). `COMPILE-REPORT.md`, sekcja "Etykiety
-   klasyfikacji zaobserwowane w danych", pokaże Ci PRAWDZIWĄ listę po
-   pierwszym uruchomieniu – **przejrzyj ją ręcznie**. Jeśli etykiety
-   różnią się od "imię"/"nazwisko"/"pospolita", zmień
-   `DEFAULT_CLASSIFICATION` (albo przekaż `classification` do
-   `compileFile`) – jedna linia, nie przepisywanie logiki.
+1. **Etykiety klasyfikacji – POTWIERDZONE u źródła (zob. sekcję „Format
+   zweryfikowany u źródła" na górze).** `imię` / `nazwisko` / `pospolita`
+   zgadzają się z dokumentacją Morfeusza 2 (§7.1) i instrukcją SGJP – to już
+   nie jest założenie „z pamięci". Zostaje jedno realne zastrzeżenie POKRYCIA
+   (nie poprawności): SGJP ma drobniejsze podklasy nazw osób (`człon
+   nazwiska`, `przydomek`, gołe „nazwa własna osoby"), których ten kompilator
+   NIE zbiera – bierze tylko `imię` / `nazwisko`. Po pierwszej realnej
+   kompilacji przejrzyj tabelę „Etykiety klasyfikacji zaobserwowane w danych"
+   w `COMPILE-REPORT.md`: jeśli zobaczysz tam liczące się wolumeny
+   nieobsłużonych podklas, rozszerz `classification`/logikę o nie. Fail-closed
+   nadal chroni: brak JAKIEJKOLWIEK rozpoznanej etykiety = odmowa kompilacji.
 2. **Z2/Z3 (listy PESEL imion/nazwisk) NIE są zintegrowane.** Ten
    kompilator czyta WYŁĄCZNIE Z1 (SGJP). Efekt: każde imię dostaje
    `frek: 0` (uczciwy brak danych, nie zmyślona liczba); brak progów
@@ -224,3 +307,5 @@ Uruchomienie: `npx vitest run scripts/compile-sgjp.test.js`.
 _Autor: Claude Sonnet, na zlecenie Alana Kolkowskiego, gałąź
 `feature/sgjp-compile`. Ten dokument NIE jest poradą prawną – decyzje
 licencyjne (O-FL-1, GATE-FLEKSJA-DANE) podejmuje Alan._
+
+_Weryfikacja formatu u źródła (finding #1): Claude Sonnet, gałąź `feature/sgjp-format-verify`, 2026-07 – zob. sekcję „Format zweryfikowany u źródła" wyżej._

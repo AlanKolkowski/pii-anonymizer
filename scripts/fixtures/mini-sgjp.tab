@@ -8,11 +8,16 @@
 # is out of scope here and is never produced or imported by this fixture.
 #
 # Column shape (tab-separated): forma  lemat  tag  klasyfikacja  [kwalifikatory]
-# — confirmed structurally against a public SGJP/Morfeusz build-input sample
-# (PoliMorfSmall.tab) and the morfeusz-sgjp.tagset grammar (colon-separated
-# tag segments; case/number/gender tokens scanned by position-independent
-# membership, not fixed column offsets, per Morfeusz2.pdf SS"tagi pozycyjne").
-# Ten lexemes, one row per attested (lemma, case) surface form:
+# — this is the 5-column source format Morfeusz2.pdf §7.1 "Słownik główny"
+# defines verbatim (col 4 = "klasyfikacja nazw własnych", a SEPARATE column,
+# not part of the tag; col 5 = pipe-separated qualifiers, optional). The
+# colon-segmented positional tag grammar (case/number/gender tokens scanned by
+# position-independent membership, not fixed offsets) is Morfeusz2.pdf §1.1.
+# Format verified via web research on branch feature/sgjp-format-verify (see
+# docs/sgjp-compile.md §"Format zweryfikowany u źródła"); no real SGJP dump
+# was downloaded. Classification labels confirmed at source: imię, nazwisko,
+# pospolita, geograficzna.
+# Twelve lexemes, one row per attested (lemma, case) surface form:
 #   Wesołowski (m, adjectival-ski-m), Kania (f, noun-feminine-a) — regular
 #     surnames, fully rule-predictable: the compiler must SUBTRACT these
 #     (zero footprint in morph-pl.json, paradigms.js reproduces them at
@@ -58,6 +63,10 @@
 #     (a) non-role "pospolita" rows are correctly skipped, (b) the optional
 #     5th (qualifiers) column parses without breaking the 4-column rows
 #     everywhere else in this file.
+#   Sopot        — a geographic proper name (classification "geograficzna", a
+#     confirmed real SGJP label, Morfeusz2.pdf §7.1): proves a proper-name row
+#     whose subclass is NEITHER imię NOR nazwisko is correctly ignored — it
+#     falls through every name/role branch and is only tallied in the report.
 Wesołowski	Wesołowski	adj:sg:nom:m1:pos	nazwisko
 Wesołowskiego	Wesołowski	adj:sg:gen:m1:pos	nazwisko
 Wesołowskiemu	Wesołowski	adj:sg:dat:m1:pos	nazwisko
@@ -129,3 +138,5 @@ pozwanym	pozwany	adj:sg:inst:m1:pos	pospolita
 pozwanym	pozwany	adj:sg:loc:m1:pos	pospolita
 pozwany	pozwany	adj:sg:voc:m1:pos	pospolita
 sąd	sąd	subst:sg:nom:m3	pospolita	prawn.
+Sopot	Sopot	subst:sg:nom:m3	geograficzna
+Sopotu	Sopot	subst:sg:gen:m3	geograficzna
