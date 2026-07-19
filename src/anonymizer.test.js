@@ -1994,3 +1994,207 @@ describe('findRegexEntities — R-DATE pułapkownik (zero DATE_OF_BIRTH false po
   });
 });
 
+describe('findRegexEntities — R-DEV (device identifiers, DEVICE-IDENTIFIER-DESIGN.md)', () => {
+  // DEVICE_IDENTIFIER is W1 (masked) but had NO deterministic floor — only
+  // the model, which measured ~0% recall on synthetic (entity-rules.js's own
+  // comment on this type: "pure detection-layer gap"). R-DEV adds four
+  // independent patterns, each closing one shape this type actually takes in
+  // the corpus (design §1: 2 of the 3 measured leaks are serial numbers, not
+  // IMEI/MAC — the family can't skip the anchored serial path just because
+  // it looks "too wide" in isolation): R-IMEI (two paths, like R-DOW), R-MAC
+  // (unconditional shape, like VIN/KW), R-ICCID (anchored-only, like R-PJ/
+  // R-PASZ), R-SN (a NEW tight-tail anchor semantics — hasTailAnchor).
+  const findDevice = (text) =>
+    findRegexEntities(text).filter((e) => e.entity_group === 'DEVICE_IDENTIFIER');
+  const deviceSpans = (text) => findDevice(text).map((e) => text.slice(e.start, e.end));
+
+  describe('goldeny korpusowe (§1: 3 zmierzone wycieki, fragmenty korpusu verbatim)', () => {
+    // Real fragments from test-data/synthetic/pismo_06_reklamacja_konsumencka.txt
+    // and pismo_05_wypowiedzenie_umowy_o_prace.txt (CRLF line endings, copied
+    // verbatim including the \r\n and the leading-space indentation).
+    it('golden #1: R-SN detects WW90-2024-081234-PL after "nr seryjny urządzenia:" (pismo_06)', () => {
+      const text = 'Dotyczy: Reklamacja z tytułu rękojmi – pralka Samsung WW90T984DSH/S3,\r\n         nr seryjny urządzenia: WW90-2024-081234-PL,\r\n         nr zamówienia: EM/2024/10/0087654,\r\n         data zakupu: 14 października 2024 r.,';
+      const matches = findDevice(text);
+      expect(matches).toHaveLength(1);
+      expect(text.slice(matches[0].start, matches[0].end)).toBe('WW90-2024-081234-PL');
+      expect(matches[0].score).toBe(1.0);
+      expect(matches[0].source).toBe('regex');
+      // Precision proof (§3.4 known collision): the order number 20 chars
+      // later is anchored by "nr zamówienia:", not "nr seryjny" — the
+      // tight-tail anchor (not the loose shape) is what keeps it silent.
+      expect(deviceSpans(text)).not.toContain('EM/2024/10/0087654');
+    });
+
+    it('golden #2: R-SN detects 5CD3001XYZ after "nr seryjny:" across a CRLF + indentation break (pismo_05)', () => {
+      const text = 'zwrotu sprzętu służbowego (laptop HP EliteBook 845 G10, nr seryjny:\r\n    5CD3001XYZ; telefon służbowy Samsung Galaxy S23, IMEI: 354871234567890)';
+      expect(deviceSpans(text)).toContain('5CD3001XYZ');
+    });
+
+    it('golden #3: R-IMEI ścieżka B detects the Luhn-INVALID corpus IMEI 354871234567890 via the literal "IMEI:" anchor (pismo_05)', () => {
+      // Hand-verified (design §1 pt 2): this 15-digit string fails Luhn (sum
+      // 65) — a re-typed/scanned IMEI with a genuinely broken check digit.
+      // Only the anchor licenses it; bare arithmetic (ścieżka A) would reject it.
+      const text = 'zwrotu sprzętu służbowego (laptop HP EliteBook 845 G10, nr seryjny:\r\n    5CD3001XYZ; telefon służbowy Samsung Galaxy S23, IMEI: 354871234567890)';
+      expect(deviceSpans(text)).toContain('354871234567890');
+    });
+
+    it('all 3/3 goldens from §1 are detected in the same combined pismo_05 fragment', () => {
+      const text = 'zwrotu sprzętu służbowego (laptop HP EliteBook 845 G10, nr seryjny:\r\n    5CD3001XYZ; telefon służbowy Samsung Galaxy S23, IMEI: 354871234567890)';
+      const spans = deviceSpans(text);
+      expect(spans).toContain('5CD3001XYZ');
+      expect(spans).toContain('354871234567890');
+      expect(spans).toHaveLength(2);
+    });
+  });
+
+  describe('R-IMEI (§3.1, wektory §8)', () => {
+    it.each([
+      '351234567890124',
+      '359998887776666',
+    ])('ścieżka A: detects a bare 15-digit Luhn-valid, non-card-IIN IMEI with no "IMEI" wording anywhere (%s)', (value) => {
+      const text = `W protokole zatrzymania rzeczy zapisano numer ${value} bez dalszego opisu.`;
+      expect(deviceSpans(text)).toContain(value);
+    });
+
+    it('ścieżka A: detects the same 15-digit IMEI grouped 2-6-6-1 with spaces (TAC-dzielony)', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer 35 123456 789012 4 bez dalszego opisu.';
+      expect(deviceSpans(text)).toContain('35 123456 789012 4');
+    });
+
+    it('ścieżka A: bare Luhn-broken 15-digit run gives ZERO (last digit flipped: 351234567890125)', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer 351234567890125 bez dalszego opisu.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('ścieżka B: the same Luhn-broken run emits when anchored by "IMEI:"', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer IMEI: 351234567890125 bez dalszego opisu.';
+      expect(deviceSpans(text)).toContain('351234567890125');
+    });
+
+    it('ścieżka A: bare corpus IMEI (354871234567890, Luhn-invalid, sum 65) gives ZERO without the anchor', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer 354871234567890 bez dalszego opisu.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('16-digit run (IMEISV shape) never emits bare, even though its digits alone would satisfy ścieżka A\'s length neighbour', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer 3512345678901234 bez dalszego opisu.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('ścieżka B: the same 16-digit run emits when anchored by "IMEISV:"', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer IMEISV: 3512345678901234 bez dalszego opisu.';
+      expect(deviceSpans(text)).toContain('3512345678901234');
+    });
+
+    it('a bare Visa-16 test PAN never emits as DEVICE_IDENTIFIER (wrong length for ścieżka A, no anchor for ścieżka B)', () => {
+      const text = 'Płatność kartą nr 4111111111111111 została zaksięgowana.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+  });
+
+  describe('rozgraniczenie kart (GATE-DEVICE pkt 4, symetryczne)', () => {
+    it('370000000000002 (Amex-shaped, Luhn-valid): PAYMENT_CARD tak, DEVICE_IDENTIFIER nie', () => {
+      const text = 'Płatność kartą 370000000000002 została zaksięgowana.';
+      const all = findRegexEntities(text);
+      expect(all.filter((e) => e.entity_group === 'PAYMENT_CARD').map((e) => text.slice(e.start, e.end))).toContain('370000000000002');
+      expect(all.filter((e) => e.entity_group === 'DEVICE_IDENTIFIER')).toEqual([]);
+    });
+
+    it('351234567890124 (IMEI-shaped, non-card IIN): DEVICE_IDENTIFIER tak, PAYMENT_CARD nie', () => {
+      const text = 'W protokole zatrzymania rzeczy zapisano numer 351234567890124 bez dalszego opisu.';
+      const all = findRegexEntities(text);
+      expect(all.filter((e) => e.entity_group === 'DEVICE_IDENTIFIER').map((e) => text.slice(e.start, e.end))).toContain('351234567890124');
+      expect(all.filter((e) => e.entity_group === 'PAYMENT_CARD')).toEqual([]);
+    });
+  });
+
+  describe('R-MAC (§3.2, wektory §8)', () => {
+    it.each([
+      ['dwukropkowy', '00:1A:2B:3C:4D:5E'],
+      ['myślnikowy z literami hex', '00-1a-2b-3c-4d-5e'],
+    ])('detects a MAC address unconditionally (%s: %s)', (_label, value) => {
+      const text = `Adres karty sieciowej: ${value} widoczny w logach.`;
+      expect(deviceSpans(text)).toContain(value);
+    });
+
+    it('emits score 1.0 and source "regex"', () => {
+      const [mac] = findDevice('Adres MAC: 00:1A:2B:3C:4D:5E.');
+      expect(mac).toMatchObject({ entity_group: 'DEVICE_IDENTIFIER', score: 1.0, source: 'regex' });
+    });
+
+    it('all-digit hyphenated 6-group run gives ZERO (no hex letter anywhere, O-DEV-5): 00-11-22-33-44-55', () => {
+      const text = 'Numer wewnętrzny 00-11-22-33-44-55 zapisany w logu.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it.each([
+      ['czas', '12:30:45'],
+      ['data ISO', '2024-07-19'],
+      ['UUID', '550e8400-e29b-41d4-a716-446655440000'],
+    ])('pułapka (%s) gives ZERO: %s', (_label, value) => {
+      expect(deviceSpans(value)).toEqual([]);
+    });
+  });
+
+  describe('R-ICCID (§3.3, wektory §8)', () => {
+    it('detects a 20-digit ICCID (prefix 89) anchored by "ICCID:"', () => {
+      const text = 'ICCID: 89480212345678901234 zapisany w protokole retencji danych.';
+      expect(deviceSpans(text)).toContain('89480212345678901234');
+    });
+
+    it('detects the same number anchored by "karta SIM"', () => {
+      const text = 'Zabezpieczono kartę SIM o numerze 89480212345678901234.';
+      expect(deviceSpans(text)).toContain('89480212345678901234');
+    });
+
+    it('bare 20-digit ICCID-shaped run with no anchor gives ZERO', () => {
+      const text = 'Numer wewnętrzny 89480212345678901234 zapisany w ewidencji.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+  });
+
+  describe('R-SN (§3.4, wektory §8)', () => {
+    it('does not flag a serial-shaped token 20 chars behind a "nr zamówienia:" anchor (tight-tail vs luźne okno)', () => {
+      const text = 'nr zamówienia: EM/2024/09876';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('does not flag a bare "SN" acronym (Sąd Najwyższy collision, O-DEV-7)', () => {
+      const text = 'uchwała SN: III CZP 6/21';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('detects a serial anchored by "S/N:"', () => {
+      const text = 'Etykieta na obudowie: S/N: AB12-3456-CD78.';
+      expect(deviceSpans(text)).toContain('AB12-3456-CD78');
+    });
+
+    it('rejects a word with fewer than 2 digits even at a valid shape length ("nieczytelny")', () => {
+      const text = 'nr seryjny: nieczytelny';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+  });
+});
+
+describe('findRegexEntities — R-DEV pułapkownik (zero DEVICE_IDENTIFIER false positives)', () => {
+  // Mirror of the HC-2/R-CARD/R-DATE pułapkowniki, for R-DEV: every trap line
+  // in test-data/traps/h3-pulapki.txt must yield ZERO DEVICE_IDENTIFIER
+  // candidates. Before commit 2's implementation exists, this loop is
+  // trivially green (baseline) — the meaningful RED lines live in the
+  // describe above.
+  function loadTraps() {
+    const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+  }
+
+  const traps = loadTraps();
+
+  it.each(traps)('zero DEVICE_IDENTIFIER false positives on: %s', (trapText) => {
+    const hits = findRegexEntities(trapText).filter((e) => e.entity_group === 'DEVICE_IDENTIFIER');
+    expect(hits.map((e) => trapText.slice(e.start, e.end))).toEqual([]);
+  });
+});
+
