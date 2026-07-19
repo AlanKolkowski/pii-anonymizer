@@ -68,6 +68,33 @@ function unresolvedLabel(n) {
   return `${n} ${word} ${verb} ${adjective}`;
 }
 
+// DOCX-IMPL-PLAN.md FD-2/FD-5: grammatical case codes → Polish words — the
+// ONE place this mapping lives (the engine only ever emits the code, never
+// the word, per §3.3).
+const CASE_LABELS = {
+  M: 'mianownik', D: 'dopełniacz', C: 'celownik', B: 'biernik',
+  N: 'narzędnik', Ms: 'miejscownik', W: 'wołacz',
+};
+
+function declinedLabel(n) {
+  return `odmieniono ${n} ${pluralPl(n, 'formę', 'formy', 'form')}`;
+}
+
+// Flattens every export report's per-part `declined` rows (FD-2) plus the
+// PERSON_NAME refusal counter (FD-2/O-FL-2) into one view for the
+// expandable detail panel under the run bar.
+function flexionReportRows(reports) {
+  const rows = [];
+  let refused = 0;
+  for (const { report } of Array.isArray(reports) ? reports : []) {
+    refused += report?.flexionDeclined?.count ?? 0;
+    for (const part of report?.parts ?? []) {
+      for (const row of part.declined ?? []) rows.push(row);
+    }
+  }
+  return { rows, refused };
+}
+
 function formatRunBarStats(outcomes, legend, exportState) {
   if (exportState.message) return exportState.message;
   if (outcomes.length === 0) return '0 dokumentów wynikowych';
@@ -159,7 +186,7 @@ export function createDeanonWorkspace(rootEl, opts) {
   const getOutcomes = opts.getOutcomes ?? (() => []);
   const getLegend = opts.getLegend ?? (() => ({}));
   const labels = opts.entityLabels ?? {};
-  const exportState = { busy: false, format: null, message: '' };
+  const exportState = { busy: false, format: null, message: '', flexionRows: [], flexionRefused: 0 };
 
   function setExportState(next) {
     Object.assign(exportState, next);
@@ -172,11 +199,32 @@ export function createDeanonWorkspace(rootEl, opts) {
   function renderSignature() {
     return JSON.stringify({
       legend: getLegend(),
-      outcomes: getOutcomes().map((o) => [o.id, o.label, o.text]),
+      outcomes: getOutcomes().map((o) => [o.id, o.label, o.text, Boolean(o.docx)]),
       activeId,
       busy: exportState.busy,
       message: exportState.message,
+      flexionRows: exportState.flexionRows.length,
     });
+  }
+
+  // DOCX-REBUILD §6.2/O-5: the reconstruction report line comes from the
+  // ENGINE's numbers, never from the text preview; rendered via textContent
+  // like every other status (C-DOCX-4). FD-2/FD-5: a declined (inflected)
+  // count is informational, never a block — it rides in the same line.
+  function reportSummary(reports) {
+    if (!Array.isArray(reports) || reports.length === 0) return '';
+    let replaced = 0;
+    let left = 0;
+    let declined = 0;
+    for (const { report } of reports) {
+      replaced += report?.totals?.replaced ?? 0;
+      left += report?.totals?.left ?? 0;
+      declined += report?.totals?.declined ?? 0;
+    }
+    let text = ` · rekonstrukcja DOCX: ${replaced} tokenów podmienionych`;
+    if (declined > 0) text += ` · ${declinedLabel(declined)}`;
+    if (left > 0) text += ` · UWAGA: ${left} tokenów pozostało w dokumencie — otwórz plik i uzupełnij ręcznie przed podpisem`;
+    return text;
   }
 
   async function runExport(format) {
@@ -186,14 +234,20 @@ export function createDeanonWorkspace(rootEl, opts) {
     if (typeof opts.onExport !== 'function') return;
 
     clearTimeout(exportMessageTimer);
-    setExportState({ busy: true, format, message: exportStartMessage(format, outcomes.length) });
+    setExportState({
+      busy: true, format, message: exportStartMessage(format, outcomes.length), flexionRows: [], flexionRefused: 0,
+    });
     render();
     try {
       const result = await opts.onExport(format);
+      const { rows, refused } = flexionReportRows(result?.reports);
       setExportState({
         busy: false,
         format: null,
-        message: exportSuccessLabel(format, result?.count ?? outcomes.length, result?.archive),
+        message: exportSuccessLabel(format, result?.count ?? outcomes.length, result?.archive)
+          + reportSummary(result?.reports),
+        flexionRows: rows,
+        flexionRefused: refused,
       });
     } catch (err) {
       const fallback = format === 'pdf'
@@ -304,14 +358,58 @@ export function createDeanonWorkspace(rootEl, opts) {
       left.appendChild(makeSep());
       left.appendChild(size);
     }
+    // DOCX-REBUILD §3.4: DOCX outcomes carry a badge; the preview is
+    // read-only (bytes are the source of truth) and the import-time
+    // inspection is surfaced right here.
+    if (active?.docx) {
+      const badge = document.createElement('span');
+      badge.className = 'meta deanon-docx-badge';
+      badge.dataset.testid = 'deanon-docx-badge';
+      badge.textContent = 'DOCX · podgląd tylko do odczytu';
+      left.appendChild(makeSep());
+      left.appendChild(badge);
+      const hyperlinks = active.docx.inspection?.external?.hyperlinks ?? 0;
+      if (hyperlinks > 0) {
+        const linksMeta = document.createElement('span');
+        linksMeta.className = 'meta';
+        linksMeta.dataset.testid = 'deanon-docx-hyperlinks';
+        linksMeta.textContent = `${hyperlinks} hiperłączy zewnętrznych`;
+        left.appendChild(makeSep());
+        left.appendChild(linksMeta);
+      }
+    }
     toolbar.appendChild(left);
 
     const right = document.createElement('div');
     right.className = 'right';
+    if (typeof opts.onImportDocx === 'function') {
+      const importInput = document.createElement('input');
+      importInput.type = 'file';
+      importInput.accept = '.docx';
+      importInput.style.display = 'none';
+      importInput.dataset.testid = 'deanon-import-docx-input';
+      importInput.addEventListener('change', () => {
+        const file = importInput.files?.[0];
+        importInput.value = '';
+        if (file) void opts.onImportDocx(file);
+      });
+      const importBtn = document.createElement('button');
+      importBtn.type = 'button';
+      importBtn.className = 'btn btn-sm btn-ghost';
+      importBtn.dataset.testid = 'deanon-import-docx';
+      importBtn.textContent = 'Importuj pismo od AI (DOCX)';
+      importBtn.addEventListener('click', () => importInput.click());
+      right.appendChild(importInput);
+      right.appendChild(importBtn);
+    }
     const pasteBtn = document.createElement('button');
     pasteBtn.type = 'button';
     pasteBtn.className = 'btn btn-sm btn-ghost';
     pasteBtn.dataset.testid = 'deanon-paste';
+    pasteBtn.disabled = Boolean(active?.docx);
+    pasteBtn.title = active?.docx
+      ? 'Wpis DOCX: źródłem prawdy są bajty pliku — podgląd nie podlega edycji.'
+      : '';
     pasteBtn.innerHTML = `${PASTE_ICON_SVG} Wklej`;
     pasteBtn.addEventListener('click', () => { void pasteIntoActive(active, outcomes); });
     right.appendChild(pasteBtn);
@@ -464,6 +562,45 @@ export function createDeanonWorkspace(rootEl, opts) {
     parent.appendChild(bar);
   }
 
+  // FD-5: expandable detail panel under the run bar — the declined
+  // ("odmieniono") rows from the last export's report, plus the refusal
+  // count (O-FL-2). Collapsed by default, textContent only (C-DOCX-4): no
+  // HTML interpolation of legend-derived values anywhere in this panel.
+  function renderFlexionReport(parent) {
+    if (exportState.flexionRows.length === 0) return;
+
+    const details = document.createElement('details');
+    details.className = 'deanon-flexion-report';
+    details.dataset.testid = 'deanon-flexion-report';
+
+    const summary = document.createElement('summary');
+    summary.textContent = `${declinedLabel(exportState.flexionRows.length)} przy rekonstrukcji DOCX`;
+    details.appendChild(summary);
+
+    const list = document.createElement('ul');
+    list.dataset.testid = 'deanon-flexion-rows';
+    for (const row of exportState.flexionRows) {
+      const li = document.createElement('li');
+      const casLabel = CASE_LABELS[row.przypadek] ?? row.przypadek ?? '';
+      li.textContent = `${row.token}: „${row.z}” → „${row.na}”${casLabel ? ` (${casLabel})` : ''}`
+        + (row.part ? ` · ${row.part}` : '');
+      list.appendChild(li);
+    }
+    details.appendChild(list);
+
+    if (exportState.flexionRefused > 0) {
+      const note = document.createElement('p');
+      note.className = 'meta';
+      note.dataset.testid = 'deanon-flexion-refused';
+      const occurrenceLocative = pluralPl(exportState.flexionRefused, 'wystąpieniu', 'wystąpieniach', 'wystąpieniach');
+      note.textContent = `Silnik nie odmienił nazwiska w ${exportState.flexionRefused} ${occurrenceLocative}`
+        + ' – pozostała forma z legendy.';
+      details.appendChild(note);
+    }
+
+    parent.appendChild(details);
+  }
+
   function render() {
     const outcomes = getOutcomes();
     const legend = getLegend();
@@ -485,6 +622,7 @@ export function createDeanonWorkspace(rootEl, opts) {
     renderOutputPane(body, active, legend);
     rootEl.appendChild(body);
     renderRunBar(rootEl, outcomes, legend);
+    renderFlexionReport(rootEl);
 
     if (preservedScroll.input) {
       const node = rootEl.querySelector('[data-testid="deanon-input-body"]');
@@ -503,6 +641,17 @@ export function createDeanonWorkspace(rootEl, opts) {
     activateOutcome(id) {
       activeId = id;
       render();
+    },
+    // Status line in the run bar (textContent sink only) — used by the DOCX
+    // import path for inspection warnings and failures.
+    showMessage(message) {
+      clearTimeout(exportMessageTimer);
+      setExportState({ message });
+      render();
+      exportMessageTimer = setTimeout(() => {
+        exportState.message = '';
+        render();
+      }, EXPORT_MESSAGE_TIMEOUT_MS);
     },
     refreshLegend() {
       const sig = renderSignature();

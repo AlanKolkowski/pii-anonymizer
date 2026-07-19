@@ -92,7 +92,7 @@ Cztery granice, cztery różne poziomy dojrzałości:
 | **I**nfo disclosure | PII w logach / dumpach / pliku wymiany | G3 | **OTWARTE**, patrz S6 |
 | **I**nfo disclosure | Legenda → schowek przez `?debug=1` | wewn. | **OTWARTE**, patrz S7 |
 | **I**nfo disclosure | Fałszywy negatyw NER przechodzi przez MCP | G4 | **NIEUSUWALNE**, patrz S3 i R1 |
-| **D**oS | Bomba dekompresyjna / encje XML w DOCX | G1 | ograniczone limitem 25 MB (`src/file-import/index.js:10`) |
+| **D**oS | Bomba dekompresyjna / encje XML w DOCX | G1 | ograniczone limitem 25 MB (`src/file-import/index.js:10`); tor DOCX-REBUILD dodatkowo: limity C-DOCX-2 — ≤ 2048 wpisów, ≤ 50 MiB/część, ≤ 200 MiB sumarycznie PO dekompresji (`src/docx-rebuild/zip-reader.js:24-26`), a encje XML odcina pre-skan DOCTYPE zanim parser zobaczy bajt (C-DOCX-1) |
 | **E**levation | RCE przez parser dokumentu | G1 | patrz S4 |
 | **E**levation | Ucieczka z sandboxa renderera | G2 | zależna od Chromium, `sandbox: true` |
 
@@ -213,6 +213,19 @@ Pomniejsze: `src/file-import/pdf.js:99` nie ustawia `isEvalSupported: false`,
 więc worker pdf.js może kompilować funkcje typu 4 przez `new Function`.
 To wąskie, numeryczne wykonanie, nie dowolny kod z pliku, ale to właśnie ono
 (obok glue OpenCV) trzyma `'unsafe-eval'` w CSP strony.
+
+**Drugi konsument DOCX (rekonstrukcja chirurgiczna, `src/docx-rebuild/`).**
+Od DOCX-REBUILD niezaufany .docx wchodzi też na zakładce deanonimizacji
+(pismo od AI). Analiza scenariuszy dla tego toru żyje w
+`DOCX-REBUILD-DESIGN.md` §9: scenariusze S-DOCX-1…6 (bomba dekompresyjna,
+XXE/encje, makra, egress przez relacje zewnętrzne, run-splitting ukrywający
+tokeny, wrogie wartości legendy) i ryzyka rezydualne RD-1…4 (m.in. RD-2:
+Word może wyrenderować dokument inaczej niż producent pliku — właściwość
+formatu, przypięta ręcznym testem złotych plików `test-data/docx/README.md`).
+Reżim wejścia: C-DOCX-1…10 w `SECURITY-CHECKLIST.md` §3. Kluczowe różnice
+względem toru mammoth: parsowanie dopiero PO pre-skanie DOCTYPE, twarde
+limity kontenera po dekompresji, klasyfikacja odwołań zewnętrznych §9.3
+(nie-hiperłącza blokują eksport) i zasada verbatim dla części bez podmian.
 
 ---
 

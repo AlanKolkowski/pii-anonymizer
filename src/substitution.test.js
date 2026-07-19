@@ -160,6 +160,36 @@ describe('rawTokenLength (exported for FL-3 detectCase context windows, FLEKSJA-
   });
 });
 
+// DOCX-IMPL-PLAN.md §1.3/D-0/O-DOCX-3: after merging feature/docx-rebuild,
+// the repo carries TWO sources of truth for a token's raw matched span —
+// `findTokens(...).rawLength` (the branch: `match[0].length`, consumed by
+// the DOCX token engine) and `rawTokenLength(entry)` above (main: arithmetic
+// on tokenId/case length, consumed by W3/resolveOccurrences). The grammar is
+// deterministic so the two must always agree — this is the binding proof;
+// a future drift here should break the build, not surface as a silent
+// off-by-one in either consumer. Consolidation (rawTokenLength delegating to
+// entry.rawLength) is O-DOCX-3's follow-up, deliberately outside this delta.
+describe('D-0 (DOCX-IMPL-PLAN.md §1.3/O-DOCX-3): rawTokenLength(entry) === entry.rawLength on the full grammar matrix', () => {
+  const CASE_CODES = ['Ms', 'M', 'D', 'C', 'B', 'N', 'W'];
+  const INDEXES = [1, 9, 42]; // single- and multi-digit
+
+  it('agrees for a bare (unannotated) token', () => {
+    for (const idx of INDEXES) {
+      const [match] = findTokens(`[PERSON_NAME_${idx}] text`);
+      expect(rawTokenLength(match)).toBe(match.rawLength);
+      expect(match.rawLength).toBe(`[PERSON_NAME_${idx}]`.length);
+    }
+  });
+
+  it.each(CASE_CODES)('agrees for a token annotated with case %s', (code) => {
+    for (const idx of INDEXES) {
+      const [match] = findTokens(`[PERSON_NAME_${idx}|${code}] text`);
+      expect(rawTokenLength(match)).toBe(match.rawLength);
+      expect(match.rawLength).toBe(`[PERSON_NAME_${idx}|${code}]`.length);
+    }
+  });
+});
+
 describe('case-annotated tokens (decyzja 17) are fully consumed, never leak into output', () => {
   it('replaces the whole annotated span, including the case hint, with finalText', () => {
     expect(deanon('Doręczono [PERSON_NAME_1|C].', { '[PERSON_NAME_1]': 'Jan Kowalski' }))

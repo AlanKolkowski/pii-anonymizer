@@ -24,13 +24,28 @@ import { analyzePersonName } from './morph/analyze.js';
 import { generateForm } from './morph/generate.js';
 import { deriveAttested } from './attested.js';
 
+// DOCX-IMPL-PLAN.md FD-4: detectCase's confidence is 'niska' | 'wysoka' —
+// a total order lets the threshold be a single comparison instead of a
+// hardcoded string check, and keeps the option additive (no threshold ==
+// no comparison == today's behavior, byte for byte).
+const CONFIDENCE_RANK = { niska: 0, wysoka: 1 };
+
 /**
- * @param {{morph?: object|null, seen?: Record<string,string>}} deps
- * @returns {(ctx: object) => ({text: string}|undefined)} a resolveReplacement
- *   implementation for resolveOccurrences (src/substitution.js)
+ * @param {{morph?: object|null, seen?: Record<string,string>,
+ *   minConfidence?: 'niska'|'wysoka'}} deps - `minConfidence` is additive
+ *   (DOCX-IMPL-PLAN.md FD-4): omitted, this resolver behaves exactly as
+ *   before (accepts detectCase's result unfiltered by confidence) — correct
+ *   for a future human-in-the-loop consumer where a 'niska' suggestion still
+ *   waits on a click. A sink with no per-occurrence approval (v1 .docx
+ *   reconstruction, O-DOCX-2) has no click to wait for, so it sets
+ *   `minConfidence: 'wysoka'` to fail closed to the base value instead.
+ * @returns {(ctx: object) => ({text: string, note?: object}|undefined)} a
+ *   resolveReplacement implementation for resolveOccurrences
+ *   (src/substitution.js) and rebuildPart (src/docx-rebuild/token-engine.js)
  */
-export function createFlexionResolver({ morph = null, seen = {} } = {}) {
+export function createFlexionResolver({ morph = null, seen = {}, minConfidence } = {}) {
   const attested = deriveAttested(seen);
+  const minRank = minConfidence === undefined ? undefined : CONFIDENCE_RANK[minConfidence];
 
   return function resolveReplacement(ctx) {
     if (ctx.type !== 'PERSON_NAME') return undefined;
@@ -43,10 +58,18 @@ export function createFlexionResolver({ morph = null, seen = {} } = {}) {
       { morph },
     );
     if (detected.status !== 'ok') return undefined;
+    if (minRank !== undefined && CONFIDENCE_RANK[detected.confidence] < minRank) return undefined;
 
     const generated = generateForm(analysis, new Set(detected.cases));
     if (generated.status !== 'ok') return undefined;
 
-    return { text: generated.tekst };
+    // `note` is additive (FD-2/FD-4): S2 reads only `.text` (resolveOccurrences
+    // does `resolved?.text`), so this carries zero risk to that contract;
+    // the DOCX engine's report ("odmieniono" rows) reads it for przypadek/
+    // źródło/pewność without the engine ever inventing that metadata itself.
+    return {
+      text: generated.tekst,
+      note: { przypadek: generated.przypadek, zrodlo: generated.zrodlo, pewnosc: detected.confidence },
+    };
   };
 }

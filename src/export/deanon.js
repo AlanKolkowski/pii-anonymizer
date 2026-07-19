@@ -231,7 +231,34 @@ async function generateFileBlob(entry, format) {
   return format === 'docx' ? generateDocxBlob(entry) : generatePdfBlob(entry);
 }
 
-export async function exportDeanonOutcomes({ outcomes, legend, format }) {
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+// DOCX-REBUILD §3.4/§6.3/§9.3: a DOCX outcome exports through the surgical
+// reconstruction instead of the flat generator — same file name pipeline,
+// same download path. Export gates throw with the user-facing diagnosis;
+// residues do NOT block (the report carries them).
+//
+// DOCX-IMPL-PLAN.md FD-3: `resolveReplacement` (the flexion seam) is an
+// OPTIONAL pass-through, undefined by default — flat exports (text/PDF,
+// buildDeanonExportEntries above) never receive it in this plan (§4.2:
+// those outputs stay at the base legend value until FL-5); only the DOCX
+// reconstruction gets a chance to inflect, and only when its caller built
+// a resolver at all.
+async function rebuildDocxBlob(outcome, legend, resolveReplacement) {
+  const { rebuildDocx } = await import('../docx-rebuild/rebuild-docx.js');
+  const outcomeLegend = effectiveOutcomeLegend(outcome, legend);
+  const { status, bytes, report } = await rebuildDocx(outcome.docx.bytes, outcomeLegend, { resolveReplacement });
+  if (status === 'blocked-egress') {
+    const findings = report.egress.blocked.map((b) => b.type).join(', ');
+    throw new Error(`Eksport zablokowany: dokument zawiera odwołania zewnętrzne (${findings}). Usuń je w edytorze i zaimportuj ponownie.`);
+  }
+  if (status === 'blocked-no-replacements') {
+    throw new Error('Eksport zablokowany: w dokumencie nie znaleziono żadnego tokenu z legendy (zły plik albo cudza legenda).');
+  }
+  return { blob: new Blob([bytes], { type: DOCX_MIME }), report };
+}
+
+export async function exportDeanonOutcomes({ outcomes, legend, format, resolveReplacement }) {
   assertFormat(format);
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
     throw new Error('Brak dokumentów wynikowych do eksportu');
@@ -243,8 +270,17 @@ export async function exportDeanonOutcomes({ outcomes, legend, format }) {
   const archive = outcomes.length > 1;
   const entries = buildDeanonExportEntries(outcomes, legend, format, { prefix: archive });
   const files = [];
-  for (const entry of entries) {
-    files.push({ name: entry.name, data: await generateFileBlob(entry, format) });
+  const reports = [];
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const outcome = outcomes[i];
+    if (format === 'docx' && outcome?.docx?.bytes) {
+      const { blob, report } = await rebuildDocxBlob(outcome, legend, resolveReplacement);
+      files.push({ name: entry.name, data: blob });
+      reports.push({ name: entry.name, report });
+    } else {
+      files.push({ name: entry.name, data: await generateFileBlob(entry, format) });
+    }
   }
 
   if (files.length === 1) {
@@ -255,6 +291,7 @@ export async function exportDeanonOutcomes({ outcomes, legend, format }) {
       format,
       archive: false,
       files: [files[0].name],
+      ...(reports.length > 0 && { reports }),
     };
   }
 
@@ -267,6 +304,7 @@ export async function exportDeanonOutcomes({ outcomes, legend, format }) {
     format,
     archive: true,
     files: files.map((file) => file.name),
+    ...(reports.length > 0 && { reports }),
   };
 }
 

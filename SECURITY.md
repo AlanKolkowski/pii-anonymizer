@@ -350,6 +350,14 @@ nie da się nakłonić zmienną środowiskową do załadowania originu http.
 
 ## §14. Świadomie odłożone (rejestr dla audytu — etap 2)
 
+- **Formatowany eksport deanonimizacji (DOCX)** — do 2026-07 odłożony
+  niejawnie (eksport tylko płaski); ZREALIZOWANY jako rekonstrukcja
+  chirurgiczna `src/docx-rebuild/` (gałąź `feature/docx-rebuild`, wg
+  `DOCX-REBUILD-DESIGN.md`). Przed zdjęciem z tej listy brakuje: bramki
+  Opusa nad gałęzią oraz dowodów MD6 wymagających środowiska (rozszerzenie
+  `desktop:smoke`, ręczny test w Wordzie — scenariusz w
+  `test-data/docx/README.md`). Uwaga porządkowa: projekt w §11.3 zakładał,
+  że taka pozycja już tu figuruje — nie figurowała, stąd wpis powstał teraz.
 - **Model zagrożeń i pełny audyt** — poza zakresem podwalin.
 - **Transport MCP na desktopie** — §10.
 - **Trwałość legendy** — §9 (dziś: brak trwałości).
