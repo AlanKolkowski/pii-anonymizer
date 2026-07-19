@@ -1,5 +1,6 @@
 import { buildTokenMapMulti, applyTokens } from './anonymizer.js';
 import { buildSourceListing, buildReadSourceContent, buildOutcomeListing, buildReadOutcomeContent, createLabelSequence } from './mcp/listings.js';
+import { getToolDefinition } from './mcp/tool-catalog.js';
 import { createEntitySelector } from './ui/entity-selector.js';
 import { createSourcesList } from './ui/sources-list/index.js';
 import { createDeanonWorkspace } from './ui/deanon-workspace/index.js';
@@ -1639,54 +1640,48 @@ function textContent(value) {
   return { content: [{ type: 'text', text: value }] };
 }
 
+// Tool name/description/inputSchema come from src/mcp/tool-catalog.js — the
+// ONE source of truth shared with the future desktop bridge adapter
+// (MOST-IMPL-PLAN.md R-2: "parity by construction" instead of a comparison
+// test). Handlers below are untouched — same closures over sources/seen/
+// outcomes/createOutcome/updateOutcomeFields as before this refactor.
+const listSourcesDef = getToolDefinition('list_sources');
 mcp.registerTool(
-  'list_sources',
-  'Wypisz gotowe zanonimizowane dokumenty źródłowe. Zwraca id, label i char_count dla każdego dokumentu. label to nazwa syntetyczna (np. „Źródło 1") albo nazwa jawnie udostępniona przez użytkownika — nigdy surowa nazwa pliku. Źródła bez wykrytych encji nie są udostępniane przez MCP, bo nie można potwierdzić tokenizacji.',
-  { type: 'object', properties: {} },
+  listSourcesDef.name,
+  listSourcesDef.description,
+  listSourcesDef.inputSchema,
   () => jsonContent(buildSourceListing(sources, seen)),
 );
 
+const readSourceDef = getToolDefinition('read_source');
 mcp.registerTool(
-  'read_source',
-  'Odczytaj tokenizowaną treść pojedynczego dokumentu źródłowego po id. Źródła bez wykrytych encji zwracają błąd zamiast tekstu, bo nie można potwierdzić anonimizacji.',
-  {
-    type: 'object',
-    properties: { id: { type: 'string' } },
-    required: ['id'],
-  },
+  readSourceDef.name,
+  readSourceDef.description,
+  readSourceDef.inputSchema,
   ({ id }) => buildReadSourceContent(sources, seen, id),
 );
 
+const listOutcomesDef = getToolDefinition('list_outcomes');
 mcp.registerTool(
-  'list_outcomes',
-  'Wypisz dokumenty wynikowe w formie tokenów. Zwraca id, label i char_count. label to nazwa syntetyczna (np. „Wynik 1") albo nazwa nadana przez asystenta — nigdy prywatna nazwa użytkownika. Wyniki bez tokenów anonimizacji nie są udostępniane przez MCP.',
-  { type: 'object', properties: {} },
+  listOutcomesDef.name,
+  listOutcomesDef.description,
+  listOutcomesDef.inputSchema,
   () => jsonContent(buildOutcomeListing(outcomes)),
 );
 
+const readOutcomeDef = getToolDefinition('read_outcome');
 mcp.registerTool(
-  'read_outcome',
-  'Odczytaj tokenizowaną treść dokumentu wynikowego po id (wcześniejsza odpowiedź LLM). Wyniki bez tokenów anonimizacji zwracają błąd zamiast tekstu.',
-  {
-    type: 'object',
-    properties: { id: { type: 'string' } },
-    required: ['id'],
-  },
+  readOutcomeDef.name,
+  readOutcomeDef.description,
+  readOutcomeDef.inputSchema,
   ({ id }) => buildReadOutcomeContent(outcomes, id),
 );
 
+const writeOutcomeDef = getToolDefinition('write_outcome');
 mcp.registerTool(
-  'write_outcome',
-  'Utwórz lub zaktualizuj dokument wynikowy. Podaj id, aby zaktualizować istniejący dokument; pomiń id, aby utworzyć nowy. text MUSI być w formie tokenów (np. [PERSON_NAME_1]); przeglądarka deanonimizuje go tylko dla użytkownika i nigdy nie zwraca PII.',
-  {
-    type: 'object',
-    properties: {
-      id: { type: 'string' },
-      label: { type: 'string' },
-      text: { type: 'string' },
-    },
-    required: ['label', 'text'],
-  },
+  writeOutcomeDef.name,
+  writeOutcomeDef.description,
+  writeOutcomeDef.inputSchema,
   ({ id, label, text }) => {
     if (typeof label !== 'string' || label.trim().length === 0) {
       return jsonContent({ error: 'label musi być niepustym ciągiem znaków' });
