@@ -2198,3 +2198,109 @@ describe('findRegexEntities — R-DEV pułapkownik (zero DEVICE_IDENTIFIER false
   });
 });
 
+describe('findRegexEntities — R-DEV bramki jednostkowe i pary typów (GATE-DEVICE, commit 3/4)', () => {
+  // Isolates each individual precision mechanism the acceptance-level tests
+  // above rely on collectively — mirrors R-CARD's own "── precision gates
+  // ──" split (one test per gate, proving THAT gate specifically is
+  // responsible), plus the pair-disambiguation tests GATE-DEVICE §10 asks
+  // for beyond the Amex↔IMEI-15 pair already covered above.
+  const findDevice = (text) =>
+    findRegexEntities(text).filter((e) => e.entity_group === 'DEVICE_IDENTIFIER');
+  const deviceSpans = (text) => findDevice(text).map((e) => text.slice(e.start, e.end));
+  const cardSpans = (text) =>
+    findRegexEntities(text).filter((e) => e.entity_group === 'PAYMENT_CARD').map((e) => text.slice(e.start, e.end));
+
+  describe('R-IMEI — bramki jednostkowe', () => {
+    it('anty-IIN gate: a SECOND Amex prefix (34, not just 37) is also rejected bare, and still caught as PAYMENT_CARD', () => {
+      // 340000000000009: Luhn-valid (hand-computed, same "prefix + zeros +
+      // computed check digit" construction as the 370000000000002 vector
+      // above). Confirms the anti-IIN gate covers BOTH Amex IINs (34 and
+      // 37), not just the one already exercised by "rozgraniczenie kart".
+      const text = 'Numer 340000000000009 w protokole.';
+      expect(deviceSpans(text)).toEqual([]);
+      expect(cardSpans(text)).toContain('340000000000009');
+    });
+
+    it('grouping gate: a Luhn-valid, non-card-IIN 15-digit run split into an off-list grouping (6+9) does not emit bare', () => {
+      // Same digits as the ścieżka A positive vector (351234567890124),
+      // regrouped 6+9 — not in the closed TAC-consistent list ([15],
+      // [2,6,6,1], [8,6,1]) — isolates the grouping gate specifically (the
+      // digit-count/Luhn/IIN checks alone would otherwise let this through).
+      const text = 'Numer 351234 567890124 w protokole.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('grouping gate also blocks ścieżka B: the same off-list grouping does not emit even with an "IMEI:" anchor', () => {
+      const text = 'Numer IMEI: 351234 567890124 w protokole.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('"+"-ban gate: a Luhn-valid, non-card-IIN 15-digit run immediately preceded by "+" does not emit bare (E.164 exclusion)', () => {
+      const text = 'Numer +351234567890124 w protokole.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('window gate: an "IMEI" anchor further back than the 40-char window does not license ścieżka B', () => {
+      const filler = 'x'.repeat(45);
+      const prefix = `Kredytobiorca okazał IMEI ${filler} `;
+      const number = '351234567890125'; // Luhn-broken — needs the anchor to emit at all
+      const text = `${prefix}a numer ${number} dotyczy zupełnie innej sprawy.`;
+      const gap = text.indexOf(number) - (prefix.indexOf('IMEI') + 'IMEI'.length);
+      expect(gap).toBeGreaterThan(40); // sanity check on the fixture itself
+      expect(deviceSpans(text)).not.toContain(number);
+    });
+  });
+
+  describe('R-MAC — bramki jednostkowe', () => {
+    it('rejects a mixed-separator run (colon then hyphen) even though it is otherwise 6x2 hex', () => {
+      const text = 'Adres: 00:11-22:33:44:55 w logu.';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+
+    it('the colon variant is unconditional even when all-digit (no hex-letter requirement, unlike the hyphen variant)', () => {
+      const text = 'Adres: 00:11:22:33:44:55 w logu.';
+      expect(deviceSpans(text)).toContain('00:11:22:33:44:55');
+    });
+  });
+
+  describe('R-ICCID — prefiks vs Visa-19, wspólna długość (macierz §4)', () => {
+    it('a 19-digit ICCID (prefix 89, anchored) and a 19-digit Visa test PAN (prefix 4) are disjoint by prefix at the same length', () => {
+      const iccidText = 'ICCID: 8948021234567890123 w protokole.';
+      const visaText = 'Karta 4000000000000000006 do rozliczenia.';
+      expect(deviceSpans(iccidText)).toContain('8948021234567890123');
+      expect(cardSpans(iccidText)).toEqual([]);
+      expect(cardSpans(visaText)).toContain('4000000000000000006');
+      expect(deviceSpans(visaText)).toEqual([]);
+    });
+  });
+
+  describe('R-SN — bramka okna (tight-tail vs luźne okno, §3.4)', () => {
+    it('window gate: a "seryjny" anchor further back than the 50-char tail window does not license a match', () => {
+      const filler = 'x'.repeat(55);
+      const prefix = `Numer seryjny ${filler} `;
+      const value = 'AB123456';
+      const text = `${prefix}a numer ${value} dotyczy zupełnie innej sprawy.`;
+      const gap = text.indexOf(value) - (prefix.indexOf('seryjny') + 'seryjny'.length);
+      expect(gap).toBeGreaterThan(50); // sanity check on the fixture itself
+      expect(deviceSpans(text)).not.toContain(value);
+    });
+
+    it('tight-tail gate: "seryjny" followed by MORE than the 2 words the anchor allows before the candidate does not license a match', () => {
+      // tailAnchors' (?:\s+\p{L}+){0,2} allows at most 2 intervening nouns
+      // ("nr seryjny urządzenia:") — 5 extra words here exceeds that cap,
+      // proving the anchor must reach the END of the window (tight-tail),
+      // not merely appear somewhere in it (hasContextAnchor's semantics).
+      const text = 'Numer seryjny znajduje się poniżej tego opisu: XYZ123456';
+      expect(deviceSpans(text)).toEqual([]);
+    });
+  });
+
+  describe('pary typów — dual W1 emission jest nieszkodliwa, dedup arbitrażuje (macierz §4)', () => {
+    it('IMEISV (16, anchored) vs PAYMENT_CARD (16): a Luhn+IIN-valid 16-digit run anchored by "IMEI:" emits BOTH types', () => {
+      const text = 'Numer IMEI: 5500005555555559 w protokole.';
+      expect(deviceSpans(text)).toContain('5500005555555559');
+      expect(cardSpans(text)).toContain('5500005555555559');
+    });
+  });
+});
+
