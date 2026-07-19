@@ -20,7 +20,6 @@ import {
 import { extractText, MAX_BYTES } from './file-import/index.js';
 import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
-import { createFlexionResolver } from './verifier/flexion-resolver.js';
 import { buildOutcomeResolver } from './verifier/flexion-live.js';
 import { loadMorphArtifact } from './verifier/morph/artifact.js';
 import {
@@ -639,9 +638,10 @@ function resolveReplacementForOutcome(outcome, { alwaysOn = false } = {}) {
 async function exportDeanonDocuments(format) {
   // export/deanon.js is lazily imported (existing code-splitting convention:
   // this pulls in the docx/pdf-lib packages only when an export actually
-  // runs) — the flexion engine itself (createFlexionResolver/flexion-live.js)
-  // is a static import now (§3.5/§5.4: ~55 KB of source, negligible startup
-  // cost, no reason to defer it behind this dynamic import too).
+  // runs) — the flexion engine itself is a static import now, transitively,
+  // through flexion-live.js's own static import of createFlexionResolver
+  // (§3.5/§5.4: ~55 KB of source, negligible startup cost, no reason to
+  // defer it behind this dynamic import too).
   const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
   const result = await exportDeanonOutcomes({
     outcomes: outcomes.map((o) => ({
