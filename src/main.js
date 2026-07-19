@@ -20,6 +20,9 @@ import {
 import { extractText, MAX_BYTES } from './file-import/index.js';
 import { holdBackgroundLock } from './background-lock.js';
 import { backfillOccurrencesStep } from './pipeline/steps/backfill.js';
+import { createFlexionResolver } from './verifier/flexion-resolver.js';
+import { buildOutcomeResolver } from './verifier/flexion-live.js';
+import { loadMorphArtifact } from './verifier/morph/artifact.js';
 import {
   ENTITY_CATEGORIES,
   ENTITY_LABELS,
@@ -44,6 +47,20 @@ const sources = [];
 const outcomes = [];
 let legend = {};
 let seen = {};
+// FL-5-LIVE-WIRING-DESIGN.md K5/§3.5: `seenVersion` is bumped every time
+// `seen`/`legend` are rebuilt from scratch (refreshLegend below) — the
+// workspace's renderSignature() includes it (K4) so a re-render is never
+// skipped as a no-op when ONLY the attested-forms set changed underneath an
+// unchanged legend (a new source variant, or the morph artifact finishing
+// its async load, see morphReady below).
+let seenVersion = 0;
+// `morph` starts null (restricted mode §4.4: attested forms + rule-based
+// adjectival surnames still work; everything else declines) until
+// loadMorphArtifact() resolves — K5 ships an empty-but-valid A0 artifact
+// (data/morph-pl-core.json), semantically identical to null; a real A1/A2
+// data drop is a later, separately-gated step that touches only that file.
+let morph = null;
+let morphReady = false;
 const nextSourceMcpLabel = createLabelSequence('Źródło');
 const nextOutcomeMcpLabel = createLabelSequence('Wynik');
 let lastRun = null;
@@ -68,6 +85,31 @@ const LS_KEY = 'pii.selected-entities';
 const GPU_LS_KEY = 'pii.allow-gpu';
 const PRELOAD_OCR_LS_KEY = 'pii.preload-ocr';
 const PRELOAD_NER_LS_KEY = 'pii.preload-ner';
+
+// FL-5-LIVE-WIRING-DESIGN.md §7/O-FL5-4: mechanism wired in full, activation
+// is one switch — the DEFAULT VALUE is a gate decision (bramka), left OFF
+// here (`allMask`-from-ST-2 pattern: code merged and testable, asleep until
+// activated). Scope: U1-U3 only (screen/clipboard/flat export) — U4 (DOCX
+// reconstruction) is permanently on regardless of this flag (§7: it is
+// already gated by GATE-DOCX/O-DOCX-2, and gating it again here would be a
+// behavior regression from `main`). No UI toggle in v1 (checkbox is FL-6);
+// DevTools/localStorage is enough: `localStorage.setItem('pii.deanon-flexion','1')`.
+const FLEXION_LS_KEY = 'pii.deanon-flexion';
+const FLEXION_LIVE_DEFAULT = false;
+
+function isFlexionLiveEnabled() {
+  // Read fresh every time (no caching), matching isGpuAllowed()'s pattern —
+  // cheap, and keeps this correct if localStorage is ever edited mid-session.
+  try {
+    const raw = localStorage.getItem(FLEXION_LS_KEY);
+    if (raw === '1') return true;
+    if (raw === '0') return false;
+  } catch {
+    // localStorage unavailable (privacy mode, disabled storage) — fall
+    // through to the default rather than throwing.
+  }
+  return FLEXION_LIVE_DEFAULT;
+}
 
 function isAnyClassifyInFlight() { return inFlightSourceIds.size > 0; }
 function isAnyFileImportInFlight() { return inFlightFileImportIds.size > 0; }
@@ -483,6 +525,14 @@ const deanonWorkspace = createDeanonWorkspace(deanonWorkspaceRoot, {
   onImportDocx(file) {
     return importDocxOutcome(file);
   },
+  // FL-5 K5/§3.5: U1 (screen)/U2 (clipboard) — always flag-gated, never the
+  // U4 "always on" exception (this sink never touches docx bytes).
+  getResolveReplacement(outcome) {
+    return resolveReplacementForOutcome(outcome);
+  },
+  getFlexionEnabled: () => isFlexionLiveEnabled(),
+  getMorphReady: () => morphReady,
+  getSeenVersion: () => seenVersion,
 });
 
 const outcomeCoordinator = createOutcomesCoordinator({
@@ -492,6 +542,20 @@ const outcomeCoordinator = createOutcomesCoordinator({
 });
 
 deanonWorkspace.render();
+
+// FL-5 K5/§3.5/§5.2: kick off the (code-split, one-time) morphology artifact
+// load right after boot — until it resolves, `morph` stays `null` (the
+// restricted, fail-closed mode that already works today, §4.4). A forced
+// re-render on completion is required: the artifact only ever unlocks NEW
+// generation paths (dictionary/rule-based full-name inflection) — it never
+// changes the legend itself, so refreshLegend()'s signature must move
+// (morphReady, K4) or an already-open outcome would keep showing the
+// pre-artifact (base) form until some unrelated re-render happened to fire.
+loadMorphArtifact().then((loaded) => {
+  morph = loaded;
+  morphReady = true;
+  deanonWorkspace.render();
+});
 
 const modeController = createToolModeController(toolRoot, {
   onChange(mode) {
@@ -548,44 +612,44 @@ function removeOutcome(id) {
   return outcomeCoordinator.removeOutcome(id);
 }
 
-// DOCX-IMPL-PLAN.md FD-3: main.js is the flexion resolver's owner — `seen`
-// (the live per-source surface-form map, line 45) lives here, matching where
-// the legend itself lives. Lazily imported alongside export/deanon.js
-// (existing code-splitting convention: this pulls in the morphology engine
-// only when a DOCX export actually runs).
+// FL-5-LIVE-WIRING-DESIGN.md K5/§3.1/§3.5/O-FL5-2: main.js is the flexion
+// resolver's owner — `seen`/`legend` (the live per-source state) live here.
+// This is the ONE function that decides, per outcome, whether a sink's
+// resolver is built at all: U1/U2 (workspace opts.getResolveReplacement,
+// above) always call this with the default (flag-gated); exportDeanonDocuments
+// below passes `alwaysOn: true` for an outcome carrying `.docx.bytes` (U4,
+// permanently on, §7 — "wyłączanie jej flagą FL-5 byłoby regresją zachowania
+// z main") and leaves every other outcome (U3, flat — PDF always, or DOCX
+// with no bytes) flag-gated exactly like U1/U2.
 //
-// `morph` is `null`: the compiled artifact (morph-pl.json, FL-1b/
-// GATE-FLEKSJA-DANE) does not exist yet, so the resolver runs in the
-// restricted, fail-closed mode §4.4 describes (attested forms + rule-based
-// adjectival surnames + S-P/S-R signals from tables already in the repo;
-// everything else declines to the base value — never a guess). Swapping in
-// the real artifact later is a one-line change here, nothing downstream.
+// `morph` starts `null` (module-level state above) until loadMorphArtifact()
+// resolves — the restricted, fail-closed mode §4.4 of the parent design
+// describes (attested forms + rule-based adjectival surnames + S-P/S-R
+// signals from tables already in the repo; everything else declines to the
+// base value, never a guess) continues to work exactly as it did before FL-5.
 //
-// `minConfidence: 'wysoka'` (O-DOCX-2(a)) and auto-apply with no
-// per-occurrence approval (O-DOCX-1) are Fable's recommended defaults,
-// wired here so the seam is provable end-to-end — both are still Alan's
-// decisions to formally confirm at GATE-DOCX; only the "odmieniono" report
-// row (FD-2, surfaced in the UI) is the human control in v1, exactly like
-// RD-3 elsewhere in this app.
+// `minConfidence: 'wysoka'` (O-FL5-1/O-DOCX-2(a)) is fixed inside
+// buildOutcomeResolver itself — not a caller-supplied option here — so every
+// sink shares the identical confidence policy by construction.
+function resolveReplacementForOutcome(outcome, { alwaysOn = false } = {}) {
+  const enabled = alwaysOn || isFlexionLiveEnabled();
+  return buildOutcomeResolver({ enabled, morph, seen, liveLegend: legend, outcome });
+}
+
 async function exportDeanonDocuments(format) {
-  const [{ exportDeanonOutcomes, downloadBlob }, { createFlexionResolver }] = await Promise.all([
-    import('./export/deanon.js'),
-    import('./verifier/flexion-resolver.js'),
-  ]);
-  // FL-5 K3 interim adaptation (full K5 wiring — flag, buildOutcomeResolver,
-  // seenVersion — lands separately): exportDeanonOutcomes now takes a
-  // per-outcome resolveReplacementFor(outcome) instead of a single
-  // resolveReplacement. This keeps today's U4 behavior byte-for-byte through
-  // the new signature (same resolver for every outcome) until K5 replaces
-  // this whole function body with the flag-aware construction.
-  const resolveReplacement = createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' });
+  // export/deanon.js is lazily imported (existing code-splitting convention:
+  // this pulls in the docx/pdf-lib packages only when an export actually
+  // runs) — the flexion engine itself (createFlexionResolver/flexion-live.js)
+  // is a static import now (§3.5/§5.4: ~55 KB of source, negligible startup
+  // cost, no reason to defer it behind this dynamic import too).
+  const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
   const result = await exportDeanonOutcomes({
     outcomes: outcomes.map((o) => ({
       id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot, docx: o.docx,
     })),
     legend: { ...legend },
     format,
-    resolveReplacementFor: () => resolveReplacement,
+    resolveReplacementFor: (outcome) => resolveReplacementForOutcome(outcome, { alwaysOn: Boolean(outcome?.docx?.bytes) }),
   });
   downloadBlob(result.blob, result.fileName);
   return result;
@@ -701,6 +765,13 @@ function updateSourceDirtyState(id, dirty) {
 
 function refreshLegend() {
   const ready = sources.filter((s) => s.status === 'ready' && s.entities.length > 0);
+  // FL-5 K5/§3.5: `seen`/`legend` are rebuilt from scratch on EVERY call
+  // (buildTokenMapMulti starts fresh state each time) — seenVersion bumps
+  // every time too, unconditionally, so the workspace's renderSignature (K4)
+  // always changes here even in the pathological case where the rebuilt
+  // legend happens to be deep-equal to the previous one (e.g. re-annotating
+  // a source without changing which names got attested).
+  seenVersion += 1;
   if (ready.length === 0) {
     legend = {};
     seen = {};

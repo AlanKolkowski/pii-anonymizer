@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "wersjaFormatu": "morph-pl/1",
+    "zrodla": {
+      "opis": "FL-5 K5 (FL-5-LIVE-WIRING-DESIGN.md SS5.1/SS11): pusty-poprawny artefakt A0 - imiona/nazwiska/role to {} celowo, semantycznie rownowazne morph=null. Prawdziwe dane (A1 role-v0 / A2 imiona-core PESEL CC0) wchodza w osobnym, oddzielnie zbramkowanym kroku (K6), podmieniajac WYLACZNIE ten plik."
+    }
+  },
+  "imiona": {},
+  "nazwiska": {},
+  "role": {}
+}
