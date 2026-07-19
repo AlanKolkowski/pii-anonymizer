@@ -662,32 +662,50 @@ function findPrawoJazdyEntities(text) {
 }
 
 // R-TR: Polish vehicle registration plate — 2-3 uppercase letters (powiat
-// prefix) + 4-5 alphanumerics containing at least one digit. Context-anchor
-// ONLY, never bare (H-3-CLOSURE-DESIGN.md §5.4): the bare shape collides
-// head-on with currency amounts written ISO-code-first ("CHF 250 000",
-// "USD 88812", "PLN 12345") — exactly the credit-agreement corpus this tool
-// targets — and with case-law repertoria ("KIO 2345/21") before the "/"
-// breaks them. `(?=[0-9A-Z]*[0-9])` is unbounded but safe: the character
-// class it scans through is itself bounded by the first non-alnum char, and
-// the trailing WORD_EDGE_AFTER on the literal `{4,5}` match independently
-// rejects any run longer than 5 — so a false "digit exists somewhere" can
-// never let a match through that the length+boundary check wouldn't anyway
-// (mirrors VIN_RE's existing digit/letter lookaheads above).
+// prefix) + 4-5 alphanumerics containing at least one digit. Two independent
+// paths, either one emits (same "arithmetic-or-context" shape as R-DOW
+// above, just swapping a checksum for a whitelist):
+//   (A) anchored — a context anchor ("nr rej.", "tablica rejestracyjna", ...)
+//       sits in the preceding window (H-3-CLOSURE-DESIGN.md §5.4): needed
+//       because the bare shape collides head-on with currency amounts
+//       written ISO-code-first ("CHF 250 000", "USD 88812", "PLN 12345") —
+//       exactly the credit-agreement corpus this tool targets — and with
+//       case-law repertoria ("KIO 2345/21") before the "/" breaks them.
+//   (B) bare, whitelist-gated (O-HC-1, decyzja Alana 2026-07-19) — no anchor
+//       needed IF the 2-3 letter prefix is a REAL Polish county/city plate
+//       code (`countyPrefixes` in identifier-patterns.json, sourced from the
+//       official Załącznik nr 13 to the vehicle-registration regulation —
+//       see that field's comment for full provenance/methodology). This is
+//       what makes bare emission safe: no ISO-4217 currency code is also
+//       a whitelisted county prefix (proven by the property test in
+//       identifier-patterns.test.js, checked against both the active AND
+//       historical/withdrawn code sets), so "USD 88812" / "CHF 250 000" /
+//       "PLN 12345" still never emit even with zero anchor nearby, while
+//       a real bare plate like "CTR 88812" (Toruń county) now does.
+// `(?=[0-9A-Z]*[0-9])` is unbounded but safe: the character class it scans
+// through is itself bounded by the first non-alnum char, and the trailing
+// WORD_EDGE_AFTER on the literal `{4,5}` match independently rejects any run
+// longer than 5 — so a false "digit exists somewhere" can never let a match
+// through that the length+boundary check wouldn't anyway (mirrors VIN_RE's
+// existing digit/letter lookaheads above).
 const TR_DATA = identifierPatterns.tablicaRejestracyjna;
 const TR_CONTEXT_ANCHORS = compileAnchors(TR_DATA.contextAnchors);
 const TR_CONTEXT_WINDOW = TR_DATA.contextWindow;
+const TR_COUNTY_PREFIXES = new Set(TR_DATA.countyPrefixes);
 
 const TR_CANDIDATE_RE = new RegExp(
-  `${WORD_EDGE_BEFORE}[A-Z]{2,3}${SINGLE_SEP_OPT}(?=[0-9A-Z]*[0-9])[0-9A-Z]{4,5}${WORD_EDGE_AFTER}`,
+  `${WORD_EDGE_BEFORE}([A-Z]{2,3})${SINGLE_SEP_OPT}(?=[0-9A-Z]*[0-9])[0-9A-Z]{4,5}${WORD_EDGE_AFTER}`,
   'gu',
 );
 
 function findTablicaRejestracyjnaEntities(text) {
   const entities = [];
   for (const m of text.matchAll(TR_CANDIDATE_RE)) {
+    const prefix = m[1];
     const start = m.index;
     const end = start + m[0].length;
-    if (hasContextAnchor(text, start, TR_CONTEXT_WINDOW, TR_CONTEXT_ANCHORS)) {
+    const anchored = hasContextAnchor(text, start, TR_CONTEXT_WINDOW, TR_CONTEXT_ANCHORS);
+    if (anchored || TR_COUNTY_PREFIXES.has(prefix)) {
       entities.push({ entity_group: 'VEHICLE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
     }
   }

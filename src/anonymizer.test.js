@@ -1392,6 +1392,86 @@ describe('findRegexEntities — HC-2 R-TR (tablica rejestracyjna, H-3-CLOSURE-DE
   });
 });
 
+describe('findRegexEntities — HC-2 R-TR v2: bare variant + county whitelist (O-HC-1, decyzja Alana 2026-07-19)', () => {
+  // RED->GREEN vector for O-HC-1: before the whitelist-gated bare path
+  // existed, a plate with no "nr rej."/"tablica rejestracyjna"/etc. anywhere
+  // nearby produced ZERO VEHICLE_IDENTIFIER candidates, full stop — the same
+  // gap the R-TR §5.4 design note originally flagged and deferred. "KR" is
+  // Kraków's real, widely-recognized plate prefix (Małopolskie K + Kraków
+  // city code R — identifier-patterns.json:tablicaRejestracyjna.
+  // countyPrefixes).
+  it('detects a bare vehicle plate with a real county prefix and ZERO context anchor nearby (KR 12345, Kraków)', () => {
+    const text = 'Nieoznakowany radiowóz miał tablice KR 12345, ale nikt tego nie odnotował w raporcie.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('KR 12345');
+  });
+
+  it('detects a bare plate with a 3-letter real county prefix and zero anchor (DBL 45210, bolesławiecki/Dolnośląskie)', () => {
+    const text = 'Na parkingu przy sądzie stał od rana samochód DBL 45210, nikt się nim nie interesował.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    const spans = matches.map((e) => text.slice(e.start, e.end));
+    expect(spans).toContain('DBL 45210');
+  });
+
+  it('the anchored path (existing behavior) is unaffected: KR 12345 is still caught when an anchor IS present', () => {
+    const text = 'Pojazd, nr rej. KR 12345, zaparkowany przy chodniku.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain('KR 12345');
+  });
+
+  // Pułapkownik dla wariantu bez kotwicy: dokładnie wektory z żądania Alana.
+  // Bezpieczeństwo ma DWA niezależne źródła zależnie od waluty: (1) kształt
+  // nigdy nie tworzy kandydata (spacja w liczbie łamie grupę {4,5} — CHF), (2)
+  // litera waluty nigdy nie jest literą żadnego województwa (U — USD), (3)
+  // kandydat powstaje, ale prefiks nie jest na whiteliście (PLN, EUR) — trzy
+  // różne mechanizmy, jeden efekt: zero trafień.
+  it.each([
+    ['CHF 250 000', 'spacja w liczbie łamie grupę {4,5} — kandydat nigdy nie powstaje'],
+    ['PLN 45000', 'kandydat powstaje (P+LN), ale "LN" nie jest kodem żadnego powiatu wielkopolskiego'],
+    ['USD 88812', 'litera "U" nie jest wyróżnikiem żadnego województwa (H, Q, U nieużywane)'],
+    ['EUR 5000', 'kandydat powstaje (E+UR), ale "UR" nie jest kodem żadnego powiatu łódzkiego'],
+  ])('does not flag a currency amount with no anchor and no whitelisted prefix: %s (%s)', (text) => {
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toEqual([]);
+  });
+
+  it('does not flag a real-shaped-but-excluded county prefix that collides with a currency code (PKR 12345, Wielkopolskie krotoszyński)', () => {
+    // PKR is a REAL plate prefix (P=Wielkopolskie + KR=krotoszyński) but is
+    // deliberately absent from countyPrefixes because it collides with the
+    // Pakistani-rupee ISO-4217 code (countyPrefixesCurrencyExclusions in
+    // identifier-patterns.json) — defense in depth, mirroring R-DOW's O-HC-3
+    // blocklist. Only the anchor-free bare path is closed for this one
+    // prefix; see the next test for the (unaffected) anchored path.
+    const text = 'W tle zdjęcia widoczny był fragment pojazdu PKR 12345 zaparkowanego przy chodniku.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('PKR 12345');
+  });
+
+  it('the excluded prefix from the test above still works fine through the existing anchored path', () => {
+    const text = 'Pojazd, nr rej. PKR 12345, zaparkowany przy chodniku.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain('PKR 12345');
+  });
+
+  it('does not flag a docket-shaped near-miss whose prefix is not a real county code, even without an anchor (ELI 1234, near-miss noted in H-3-CLOSURE-DESIGN.md §5.4)', () => {
+    const text = 'Dokument oznaczony jako ELI 1234 nie ma nic wspólnego z pojazdem.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).not.toContain('ELI 1234');
+  });
+
+  it('the case-(a) leak vector CTR 88812 (H-3 re-analiza) is now ALSO caught bare, not only anchored', () => {
+    // Regression control: the real corpus sentence from adw_31_komornik used
+    // in the H-3 re-analiza suite below always had "nr rej." nearby (path A).
+    // This confirms the same value would also survive with the anchor
+    // stripped out entirely (path B) — the whitelist, not the anchor, is now
+    // doing the work.
+    const text = 'W dokumentacji pojazdu widniał zapis CTR 88812 bez dalszych adnotacji.';
+    const matches = findRegexEntities(text).filter((e) => e.entity_group === 'VEHICLE_IDENTIFIER');
+    expect(matches.map((e) => text.slice(e.start, e.end))).toContain('CTR 88812');
+  });
+});
+
 describe('findRegexEntities — HC-2 R-PASZ (paszport, H-3-CLOSURE-DESIGN.md §8 O-HC-2)', () => {
   // Real sentences (test-data/adversarial-holdout/hold_identyfikatory_12.txt,
   // test-data/adversarial/adw_14_dokumenty_tozsamosci.txt) — the same two
