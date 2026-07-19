@@ -93,6 +93,22 @@ describe('generateSurnameParadigm — flags, never guesses (§2.1/§2.6)', () =>
     expect(isForeignName('Kowalski')).toBe(false);
   });
 
+  it('H-fix: native -cki/-cka is never foreign, despite containing the "ck" digraph', () => {
+    // "ck" is a real foreign tell (Beck, Nowack, Jack) as a BARE final
+    // cluster, but the native -cki/-cka adjectival suffix (Nowacki/Nowacka,
+    // Sobocki/Sobocka) also happens to contain "c"+"k" adjacently — before
+    // this fix isForeignName flagged the entire -cki/-cka branch as foreign
+    // and generateSurnameParadigm refused to generate for it at all.
+    for (const form of ['Nowacki', 'Nowacka', 'Nowackiego', 'Nowackiej', 'Nowacką', 'Nowackim', 'Nowackiemu']) {
+      expect(isForeignName(form), form).toBe(false);
+    }
+    expect(paradigmOf('Nowacki', 'm').D).toBe('Nowackiego');
+    expect(paradigmOf('Nowacka', 'f').D).toBe('Nowackiej');
+    // A bare final "ck" cluster (no following vowel) is still foreign.
+    expect(isForeignName('Beck')).toBe(true);
+    expect(isForeignName('Nowack')).toBe(true);
+  });
+
   it('dictionary-only classes refuse to generate (movable -el/-ec, masc -a/-o, other adjectivals)', () => {
     for (const [lemma, klasa] of [
       ['Wróbel', 'noun-masculine-el'],
