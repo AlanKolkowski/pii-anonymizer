@@ -1,0 +1,5 @@
+# Binary formats: never let autocrlf touch these (goldens must stay byte-identical)
+*.docx binary
+*.pdf binary
+*.png binary
+*.onnx binary

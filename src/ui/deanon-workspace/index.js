@@ -172,11 +172,27 @@ export function createDeanonWorkspace(rootEl, opts) {
   function renderSignature() {
     return JSON.stringify({
       legend: getLegend(),
-      outcomes: getOutcomes().map((o) => [o.id, o.label, o.text]),
+      outcomes: getOutcomes().map((o) => [o.id, o.label, o.text, Boolean(o.docx)]),
       activeId,
       busy: exportState.busy,
       message: exportState.message,
     });
+  }
+
+  // DOCX-REBUILD §6.2/O-5: the reconstruction report line comes from the
+  // ENGINE's numbers, never from the text preview; rendered via textContent
+  // like every other status (C-DOCX-4).
+  function reportSummary(reports) {
+    if (!Array.isArray(reports) || reports.length === 0) return '';
+    let replaced = 0;
+    let left = 0;
+    for (const { report } of reports) {
+      replaced += report?.totals?.replaced ?? 0;
+      left += report?.totals?.left ?? 0;
+    }
+    const base = ` · rekonstrukcja DOCX: ${replaced} tokenów podmienionych`;
+    if (left === 0) return base;
+    return `${base} · UWAGA: ${left} tokenów pozostało w dokumencie — otwórz plik i uzupełnij ręcznie przed podpisem`;
   }
 
   async function runExport(format) {
@@ -193,7 +209,8 @@ export function createDeanonWorkspace(rootEl, opts) {
       setExportState({
         busy: false,
         format: null,
-        message: exportSuccessLabel(format, result?.count ?? outcomes.length, result?.archive),
+        message: exportSuccessLabel(format, result?.count ?? outcomes.length, result?.archive)
+          + reportSummary(result?.reports),
       });
     } catch (err) {
       const fallback = format === 'pdf'
@@ -304,14 +321,58 @@ export function createDeanonWorkspace(rootEl, opts) {
       left.appendChild(makeSep());
       left.appendChild(size);
     }
+    // DOCX-REBUILD §3.4: DOCX outcomes carry a badge; the preview is
+    // read-only (bytes are the source of truth) and the import-time
+    // inspection is surfaced right here.
+    if (active?.docx) {
+      const badge = document.createElement('span');
+      badge.className = 'meta deanon-docx-badge';
+      badge.dataset.testid = 'deanon-docx-badge';
+      badge.textContent = 'DOCX · podgląd tylko do odczytu';
+      left.appendChild(makeSep());
+      left.appendChild(badge);
+      const hyperlinks = active.docx.inspection?.external?.hyperlinks ?? 0;
+      if (hyperlinks > 0) {
+        const linksMeta = document.createElement('span');
+        linksMeta.className = 'meta';
+        linksMeta.dataset.testid = 'deanon-docx-hyperlinks';
+        linksMeta.textContent = `${hyperlinks} hiperłączy zewnętrznych`;
+        left.appendChild(makeSep());
+        left.appendChild(linksMeta);
+      }
+    }
     toolbar.appendChild(left);
 
     const right = document.createElement('div');
     right.className = 'right';
+    if (typeof opts.onImportDocx === 'function') {
+      const importInput = document.createElement('input');
+      importInput.type = 'file';
+      importInput.accept = '.docx';
+      importInput.style.display = 'none';
+      importInput.dataset.testid = 'deanon-import-docx-input';
+      importInput.addEventListener('change', () => {
+        const file = importInput.files?.[0];
+        importInput.value = '';
+        if (file) void opts.onImportDocx(file);
+      });
+      const importBtn = document.createElement('button');
+      importBtn.type = 'button';
+      importBtn.className = 'btn btn-sm btn-ghost';
+      importBtn.dataset.testid = 'deanon-import-docx';
+      importBtn.textContent = 'Importuj pismo od AI (DOCX)';
+      importBtn.addEventListener('click', () => importInput.click());
+      right.appendChild(importInput);
+      right.appendChild(importBtn);
+    }
     const pasteBtn = document.createElement('button');
     pasteBtn.type = 'button';
     pasteBtn.className = 'btn btn-sm btn-ghost';
     pasteBtn.dataset.testid = 'deanon-paste';
+    pasteBtn.disabled = Boolean(active?.docx);
+    pasteBtn.title = active?.docx
+      ? 'Wpis DOCX: źródłem prawdy są bajty pliku — podgląd nie podlega edycji.'
+      : '';
     pasteBtn.innerHTML = `${PASTE_ICON_SVG} Wklej`;
     pasteBtn.addEventListener('click', () => { void pasteIntoActive(active, outcomes); });
     right.appendChild(pasteBtn);
@@ -503,6 +564,17 @@ export function createDeanonWorkspace(rootEl, opts) {
     activateOutcome(id) {
       activeId = id;
       render();
+    },
+    // Status line in the run bar (textContent sink only) — used by the DOCX
+    // import path for inspection warnings and failures.
+    showMessage(message) {
+      clearTimeout(exportMessageTimer);
+      setExportState({ message });
+      render();
+      exportMessageTimer = setTimeout(() => {
+        exportState.message = '';
+        render();
+      }, EXPORT_MESSAGE_TIMEOUT_MS);
     },
     refreshLegend() {
       const sig = renderSignature();

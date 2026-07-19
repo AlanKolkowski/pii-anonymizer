@@ -33,7 +33,17 @@ export function findTokens(text) {
   const out = [];
   for (const match of text.matchAll(tokenRegex())) {
     const tokenId = match[1];
-    const entry = { token: `[${tokenId}]`, tokenId, type: tokenType(tokenId), index: match.index };
+    // rawLength is the matched span in the SOURCE text — longer than the
+    // canonical token when a case annotation is present. Consumers that
+    // splice text (docx-rebuild's token engine, W4's occurrence scan) need
+    // it; legend lookups keep using the canonical `token`.
+    const entry = {
+      token: `[${tokenId}]`,
+      tokenId,
+      type: tokenType(tokenId),
+      index: match.index,
+      rawLength: match[0].length,
+    };
     if (match[2]) entry.case = match[2];
     out.push(entry);
   }
