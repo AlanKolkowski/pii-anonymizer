@@ -572,6 +572,12 @@ async function exportDeanonDocuments(format) {
     import('./export/deanon.js'),
     import('./verifier/flexion-resolver.js'),
   ]);
+  // FL-5 K3 interim adaptation (full K5 wiring — flag, buildOutcomeResolver,
+  // seenVersion — lands separately): exportDeanonOutcomes now takes a
+  // per-outcome resolveReplacementFor(outcome) instead of a single
+  // resolveReplacement. This keeps today's U4 behavior byte-for-byte through
+  // the new signature (same resolver for every outcome) until K5 replaces
+  // this whole function body with the flag-aware construction.
   const resolveReplacement = createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' });
   const result = await exportDeanonOutcomes({
     outcomes: outcomes.map((o) => ({
@@ -579,7 +585,7 @@ async function exportDeanonDocuments(format) {
     })),
     legend: { ...legend },
     format,
-    resolveReplacement,
+    resolveReplacementFor: () => resolveReplacement,
   });
   downloadBlob(result.blob, result.fileName);
   return result;

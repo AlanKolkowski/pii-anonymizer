@@ -5,6 +5,8 @@ import {
   sanitizeFileStem,
   uniqueDeanonFileName,
 } from './deanon.js';
+import { deanonymizeText } from '../anonymizer.js';
+import { createFlexionResolver } from '../verifier/flexion-resolver.js';
 
 describe('deanon export helpers', () => {
   it('sanitizes Polish labels into safe portable file stems', () => {
@@ -71,5 +73,62 @@ describe('deanon export helpers', () => {
     expect(result.fileName).toBe('jedyny-wynik-deanon.docx');
     expect(result.zipName).toBeUndefined();
     expect(result.blob.size).toBeGreaterThan(0);
+  });
+});
+
+// FL-5-LIVE-WIRING-DESIGN.md K3 (§3.4/U3): the flat export path (PDF always,
+// DOCX for outcomes with no attached .docx bytes) gains a per-outcome
+// resolveReplacementFor(outcome) — the same flexion seam U1/U2 use, built by
+// the SAME construction point (buildOutcomeResolver, flexion-live.js) at the
+// caller. A missing/undefined resolver must reproduce today's
+// deanonymizeText output byte for byte (G-FL5-1).
+describe('buildDeanonExportEntries — flexion seam (resolveReplacementFor, FL-5 K3)', () => {
+  it('inflects an unannotated token using an attested case form from `seen`, with no morphology artifact (morph: null)', () => {
+    // FD-3 recipe (proven end to end in main.docx-export.test.js/
+    // deanon-docx.test.js): an unambiguous preposition ("od") immediately
+    // before the token reaches 'wysoka' confidence on context alone, no
+    // annotation needed — an annotation ALONE (no corroborating signal)
+    // would only ever reach 'niska', which minConfidence: 'wysoka' declines
+    // regardless of whether the eventual form is attested or rule-based, so
+    // this recipe (not an annotated-alone one) is what actually exercises
+    // the attested-form path under the O-FL5-1 threshold every sink applies.
+    const seen = { 'PERSON_NAME::Jana Kowalskiego': '[PERSON_NAME_1]' };
+    const resolveReplacement = createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' });
+
+    const entries = buildDeanonExportEntries(
+      [{ id: 'o1', label: 'Pismo.txt', text: 'Zasądza się od [PERSON_NAME_1] kwotę zadośćuczynienia.' }],
+      { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      'docx',
+      { resolveReplacementFor: () => resolveReplacement },
+    );
+
+    expect(entries[0].text).toBe('Zasądza się od Jana Kowalskiego kwotę zadośćuczynienia.');
+  });
+
+  it('resolveReplacementFor is called per outcome — different outcomes may get different resolvers (or none)', () => {
+    const seen = { 'PERSON_NAME::Jana Kowalskiego': '[PERSON_NAME_1]' };
+    const resolveReplacement = createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' });
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [
+      { id: 'o1', label: 'Inflected.txt', text: 'Zasądza się od [PERSON_NAME_1] kwotę.' },
+      { id: 'o2', label: 'Plain.txt', text: 'Zasądza się od [PERSON_NAME_1] kwotę.' },
+    ];
+
+    const entries = buildDeanonExportEntries(outcomes, legend, 'docx', {
+      resolveReplacementFor: (outcome) => (outcome.id === 'o1' ? resolveReplacement : undefined),
+    });
+
+    expect(entries[0].text).toBe('Zasądza się od Jana Kowalskiego kwotę.');
+    expect(entries[1].text).toBe('Zasądza się od Jan Kowalski kwotę.'); // no resolver for o2 -> base legend value
+  });
+
+  it('without resolveReplacementFor, output is byte-identical to the deanonymizeText facade (golden, unchanged behavior)', () => {
+    const outcomes = [{ id: 'o1', label: 'Pismo.txt', text: 'A [PERSON_NAME_1|D] B [PERSON_NAME_2].' }];
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski', '[PERSON_NAME_2]': 'Anna Nowak' };
+
+    const entries = buildDeanonExportEntries(outcomes, legend, 'docx');
+
+    expect(entries[0].text).toBe(deanonymizeText(outcomes[0].text, legend));
+    expect(entries[0].text).toBe('A Jan Kowalski B Anna Nowak.'); // annotation consumed, never leaks (unchanged S2 behavior)
   });
 });
