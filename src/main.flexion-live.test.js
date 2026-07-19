@@ -189,7 +189,7 @@ const OUTCOME_TEXT = 'Zasądza się od [PERSON_NAME_1] kwotę zadośćuczynienia
 const BASE_TEXT = 'Zasądza się od Jan Kowalski kwotę zadośćuczynienia.';
 const INFLECTED_TEXT = 'Zasądza się od Jana Kowalskiego kwotę zadośćuczynienia.';
 
-describe('FL-5 K5 — flag OFF (default/explicit): U1/U2 byte-for-byte as today (G-FL5-1)', () => {
+describe('FL-5 K5 — default ON activates deanon inflection; explicit "0" is the off-switch (G-FL5-1)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     delete globalThis.Worker;
@@ -198,20 +198,24 @@ describe('FL-5 K5 — flag OFF (default/explicit): U1/U2 byte-for-byte as today 
     Object.assign(navigator, { clipboard: { readText: vi.fn(), writeText: vi.fn() } });
   });
 
-  it('default (no localStorage key at all): screen and clipboard show the base legend value, unchanged', async () => {
+  // FLEXION_LIVE_DEFAULT = true (activated on Alan's approval, 2026-07-19): with
+  // no localStorage key the deanon sinks inflect, matching the DOCX export path
+  // that already inflects by default. The attested genitive from SOURCE_TEXT
+  // supplies the form; the 'od' preposition confirms the case.
+  it('default (no localStorage key at all): screen and clipboard inflect (default ON)', async () => {
     const worker = await bootApp();
     const sourceId = addPasteSourceWithText(SOURCE_TEXT);
     clickAnonymize();
     worker.emit({ type: 'result', id: sourceId, data: sourceEntities(SOURCE_TEXT) });
 
     await addOutcomeViaPaste(OUTCOME_TEXT);
-    expect(outputBodyText()).toBe(BASE_TEXT);
+    expect(outputBodyText()).toBe(INFLECTED_TEXT);
 
     await clickCopyAndFlush();
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(BASE_TEXT);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(INFLECTED_TEXT);
   });
 
-  it("explicit pii.deanon-flexion='0': same as the default (base value everywhere)", async () => {
+  it("explicit pii.deanon-flexion='0' (off-switch): base value everywhere, overriding the ON default", async () => {
     localStorage.setItem(FLAG_KEY, '0');
     const worker = await bootApp();
     const sourceId = addPasteSourceWithText(SOURCE_TEXT);
