@@ -11,24 +11,47 @@
 // every compiled `imiona` entry gets frek: 0 (load.js's own documented
 // default for "no frequency data"), never a fabricated number.
 //
-// Format grounding (do not invent, per the task brief): the tab-separated,
-// forma/lemat/tag/klasyfikacja[/kwalifikatory] column shape and the
-// colon-segmented, positionally-decoded tag grammar (case/gender/number
-// tokens can appear at ANY segment position — "the first position
-// determines the grammatical class; further positions follow uniquely
-// from the class", Morfeusz2.pdf) are confirmed against public Morfeusz/
-// SGJP build-input documentation (morfeusz-sgjp.tagset on the SGJP GitLab;
-// a public PoliMorfSmall.tab structural sample). The EXACT literal
-// classification-label strings the real sgjp-*.tab.gz dump uses for
-// personal names (this script assumes "imię" / "nazwisko", matching the
-// vocabulary FLEKSJA-IMPL-PLAN.md/W1-W3-MORPHOLOGY-DESIGN.md already use)
-// are NOT independently confirmed here — W1-W3-MORPHOLOGY-DESIGN.md SS1.1
-// says so explicitly ("dokładną semantykę kolumn i etykiet klasyfikacji
-// kompilator przybija testem na nagłówku pobranego pliku przy implementacji
-// – nie zakładamy jej z pamięci"). CLASSIFICATION below is a config object
-// for exactly that reason: one-line fix if the real dump differs, and
-// compileFile()'s report prints every distinct label actually observed so
-// the assumption is checked, not hoped for. See docs/sgjp-compile.md.
+// Format grounding (do not invent, per the task brief). VERIFIED against the
+// primary source on branch feature/sgjp-format-verify (web research, 2026-07;
+// NO real SGJP dump downloaded). Morfeusz2.pdf §7.1 "Słownik główny"
+// (https://download.sgjp.pl/morfeusz/Morfeusz2.pdf, the canonical redirect
+// from http://morfeusz.sgjp.pl/doc/doc/) specifies the source dictionary the
+// SGJP dump ships, i.e. the SAME "tab" format this script reads: FIVE
+// tab-separated columns, the last optional ("Wiersz jest podzielony na 5
+// kolumn [...] Ostatnia kolumna jest opcjonalna"):
+//   1 wykładnik formy               -> forma
+//   2 lemat (identyfikator leksemu) -> lemat
+//   3 znacznik morfosyntaktyczny    -> tag
+//   4 klasyfikacja nazw własnych    -> klasyfikacja  (a SEPARATE column, NOT a
+//                                      tag segment; the flexional tagset file
+//                                      input/morfeusz-sgjp.tagset defines ZERO
+//                                      name labels, which confirms the split)
+//   5 kwalifikator(y) rozdzielone pałką -> kwalifikatory (pipe-separated)
+// The tag is positional and colon-segmented ("Pierwsza pozycja określa klasę
+// gramatyczną [...] następne pozycje reprezentują wartości kategorii", §1.1),
+// so scanning EVERY segment for case/gender/number tokens (splitTag, below) is
+// safe regardless of the class-specific layout. Tokens confirmed in the
+// tagset: cases nom/gen/dat/acc/inst/loc/voc, genders m1/m2/m3/f/n, numbers
+// sg/pl.
+//
+// The LITERAL column-4 label strings are confirmed too, so the previous turn's
+// assumption ("imię"/"nazwisko"/"pospolita") is CORRECT, not guessed:
+//   * "pospolita"    verbatim §7.1 example row ("funkcja funkcja
+//                    subst:sg:nom:f pospolita");
+//   * "geograficzna" verbatim §7.1 example row ("Gdańsk ... geograficzna");
+//   * "nazwisko"     a column-4 value in §6 (Python API lists the noun's
+//                    classification "np. nazwa pospolita, marka, nazwisko")
+//                    AND a person-name subclass in the SGJP manual
+//                    (https://sgjp.pl/instrukcja/: "nazw osób (imię, nazwisko,
+//                    przydomek itp.)");
+//   * "imię"         the given-name subclass label in that same manual line.
+// DEFAULT_CLASSIFICATION stays a config object for two source-documented
+// reasons (not mere caution): (a) real SGJP also carries FINER person
+// subclasses the manual names ("człon nazwiska", "przydomek", the bare "nazwa
+// własna osoby") which this compiler does NOT harvest (only imię/nazwisko);
+// (b) compileFile()'s report prints every distinct label observed, so drift in
+// a future dump is caught, not hoped away. See docs/sgjp-compile.md
+// §"Format zweryfikowany u źródła".
 //
 // Streaming discipline (contract: peak memory bounded by VOCABULARY size,
 // never by file size): every pass over the input reads the file — after
@@ -89,7 +112,8 @@ export function splitTag(tag) {
   return { segments, cases: [...cases], genders: [...genders], numbers: [...numbers] };
 }
 
-// --- classification config (SS above: NOT assumed from memory) -------------
+// --- classification config (VERIFIED at source: Morfeusz2.pdf §7.1 + SGJP
+// manual https://sgjp.pl/instrukcja/, not assumed from memory) --------------
 
 export const DEFAULT_CLASSIFICATION = { givenName: 'imię', surname: 'nazwisko', common: 'pospolita' };
 
@@ -494,9 +518,11 @@ function renderReport({ stats, sourceLabel }, lock) {
   lines.push('');
   lines.push('## Etykiety klasyfikacji zaobserwowane w danych');
   lines.push('');
-  lines.push('Sprawdź to ręcznie, jeśli kompilujesz realny zrzut SGJP po raz pierwszy –');
-  lines.push('`compile-sgjp.mjs` zakłada etykiety "imię" / "nazwisko" / "pospolita"');
-  lines.push('(patrz nagłówek skryptu i docs/sgjp-compile.md).');
+  lines.push('Etykiety "imię" / "nazwisko" / "pospolita" są POTWIERDZONE u źródła');
+  lines.push('(Morfeusz2.pdf §7.1 + sgjp.pl/instrukcja, zob. docs/sgjp-compile.md).');
+  lines.push('Ta tabela pokazuje też realne podklasy nazw osób, których kompilator NIE');
+  lines.push('zbiera (np. "człon nazwiska", "przydomek", "geograficzna") – przejrzyj,');
+  lines.push('czy któraś powinna trafiać do słownika.');
   lines.push('');
   lines.push('| Etykieta | Liczba wierszy |');
   lines.push('|---|---|');

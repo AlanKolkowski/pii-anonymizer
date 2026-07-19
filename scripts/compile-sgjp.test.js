@@ -260,6 +260,22 @@ describe('compileFromLines — subtractive dictionary (FLEKSJA-IMPL-PLAN.md SS1.
     expect(stats.classificationCounts.pospolita).toBe(1);
   });
 
+  it('a proper-name row whose subclass is NEITHER imię NOR nazwisko (e.g. "geograficzna") is skipped, only tallied', async () => {
+    // "geograficzna" is a confirmed real sibling label (Morfeusz2.pdf §7.1
+    // example: `Gdańsk ... geograficzna`). A recognized label must also appear
+    // or the compiler fail-closes; Tomasz (imię) provides it.
+    const rows = [
+      'Tomasz\tTomasz\tsubst:sg:nom:m1\timię',
+      'Sopot\tSopot\tsubst:sg:nom:m3\tgeograficzna',
+      'Sopotu\tSopot\tsubst:sg:gen:m3\tgeograficzna',
+    ].join('\n');
+    const { artifact, stats } = await compileFromLines(linesOf(rows));
+    expect(artifact.imiona.tomasz).toBeDefined();
+    expect(artifact.nazwiska).toEqual({});
+    expect(artifact.role).toEqual({});
+    expect(stats.classificationCounts.geograficzna).toBe(2);
+  });
+
   it('fail-closed: zero rows at all refuses rather than emitting an empty artifact', async () => {
     await expect(compileFromLines(linesOf(''))).rejects.toThrow(SgjpFormatError);
   });
@@ -317,6 +333,9 @@ describe('compileFile — end-to-end on the committed synthetic fixture', () => 
     expect(lock.sizeBytes).toBe(Buffer.byteLength(writtenBytes, 'utf8'));
     expect(lock.input.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(result.stats.counts).toEqual({ imiona: 4, nazwiska: 2, role: 2 });
+    // The fixture's Sopot rows (geograficzna) are a non-name proper noun: skipped,
+    // never added to imiona/nazwiska/role, only tallied among observed labels.
+    expect(result.stats.classificationCounts.geograficzna).toBe(2);
   });
 
   it('a gzip-compressed copy of the SAME fixture compiles to an artifact identical to the plain-text run', async () => {
