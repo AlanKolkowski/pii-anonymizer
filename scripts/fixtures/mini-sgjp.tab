@@ -1,0 +1,131 @@
+# Synthetic SGJP-shaped fixture for scripts/compile-sgjp.mjs (FLEKSJA-IMPL-
+# PLAN.md SS8, FL-1a row: "fixture ... syntetyczny w formacie z dokumentacji").
+# Every line below is hand-typed by the author for this test suite only —
+# zero content copied from any real SGJP/PoliMorf/Morfeusz distribution, so
+# no licensing question attaches to this file (mirrors the existing
+# disclaimer on src/verifier/morph/fixtures/mini-lexicon.js). The real
+# artifact (FL-1b, full SGJP compile from the licensed sgjp-*.tab.gz dump)
+# is out of scope here and is never produced or imported by this fixture.
+#
+# Column shape (tab-separated): forma  lemat  tag  klasyfikacja  [kwalifikatory]
+# — confirmed structurally against a public SGJP/Morfeusz build-input sample
+# (PoliMorfSmall.tab) and the morfeusz-sgjp.tagset grammar (colon-separated
+# tag segments; case/number/gender tokens scanned by position-independent
+# membership, not fixed column offsets, per Morfeusz2.pdf SS"tagi pozycyjne").
+# Ten lexemes, one row per attested (lemma, case) surface form:
+#   Wesołowski (m, adjectival-ski-m), Kania (f, noun-feminine-a) — regular
+#     surnames, fully rule-predictable: the compiler must SUBTRACT these
+#     (zero footprint in morph-pl.json, paradigms.js reproduces them at
+#     runtime). Kania's row set deliberately OMITS the vocative (W): the
+#     rule engine's own nounFeminineA generator returns W:null (an explicit,
+#     permanent gap — "vocative of feminine surnames left open, practice
+#     wavers between -o and the nominative", paradigms.js) — attesting any
+#     W form for Kania would necessarily "diverge" against that null and
+#     defeat the subtraction this lexeme exists to demonstrate.
+#     NOTE (compiler-adjacent finding, out of scope to fix here): an
+#     adjectival -ska/-cka/-dzka feminine surname (e.g. "Zawadzka") was
+#     deliberately NOT used for this slot — analyzing such a surname BARE
+#     (no dictionary hit, i.e. exactly the subtracted/common case) resolves
+#     to a WRONG lemma in src/verifier/morph/analyze.js's
+#     resolveSurnameWord: surnameLemmaCandidates('Zawadzka') returns the
+#     correct self-candidate PLUS spurious cross-lemma collisions
+#     ("Zawadzk"/m/noun-masculine, "Zawadzek"/m/noun-masculine-ek, both
+#     self-validating because their OWN genitive happens to equal the
+#     input "Zawadzka"); analyze.js's "genuine" filter (comment: "must
+#     never shadow a candidate that required a REAL inversion") discards
+#     ONLY the correct self-matching candidate and keeps a spurious one,
+#     so generation silently returns "Zawadzk" instead of "Zawadzkiej".
+#     Confirmed pre-existing and independent of this fixture/compiler
+#     (reproduces with morph:null, zero compiled data involved) — see the
+#     task report for the full trace; not touched by this branch.
+#   Kozioł (m)   — genuine dictionary exception with variant forms (two
+#     accepted surface forms per oblique case) — must survive subtraction.
+#   Fischer (m)  — foreign-orthography surname (isForeignName true, rule
+#     engine refuses by construction) — must survive subtraction via the
+#     SAME whole-lexeme mechanism, no special-casing.
+#   Tomasz (m), Ewa (f) — ordinary given names, full singular paradigm.
+#   Maria        — given name with an extra differently-gendered row
+#     (nominative only) to exercise multi-gender detection ("m/f"); a
+#     plausible stand-in for the real phenomenon, NOT a literal claim about
+#     how the real SGJP dump tags this specific name (see docs/sgjp-compile.md).
+#   Marek (m)    — given name attested with a SINGLE case only (nominative),
+#     proving the compiler never fabricates the missing six forms.
+#   powód, pozwany — procedural role nouns/adjectives (classification
+#     "pospolita", matched by lemma against src/verifier/case-detector/
+#     role-lemmas.js, NOT by name-classification label).
+#   sąd          — an ordinary common noun, "pospolita" and NOT a role
+#     lemma, with an attached qualifier ("prawn.") on its one row: proves
+#     (a) non-role "pospolita" rows are correctly skipped, (b) the optional
+#     5th (qualifiers) column parses without breaking the 4-column rows
+#     everywhere else in this file.
+Wesołowski	Wesołowski	adj:sg:nom:m1:pos	nazwisko
+Wesołowskiego	Wesołowski	adj:sg:gen:m1:pos	nazwisko
+Wesołowskiemu	Wesołowski	adj:sg:dat:m1:pos	nazwisko
+Wesołowskiego	Wesołowski	adj:sg:acc:m1:pos	nazwisko
+Wesołowskim	Wesołowski	adj:sg:inst:m1:pos	nazwisko
+Wesołowskim	Wesołowski	adj:sg:loc:m1:pos	nazwisko
+Wesołowski	Wesołowski	adj:sg:voc:m1:pos	nazwisko
+Kania	Kania	subst:sg:nom:f	nazwisko
+Kani	Kania	subst:sg:gen:f	nazwisko
+Kani	Kania	subst:sg:dat:f	nazwisko
+Kanię	Kania	subst:sg:acc:f	nazwisko
+Kanią	Kania	subst:sg:inst:f	nazwisko
+Kani	Kania	subst:sg:loc:f	nazwisko
+Kozioł	Kozioł	subst:sg:nom:m1	nazwisko
+Kozła	Kozioł	subst:sg:gen:m1	nazwisko
+Kozioła	Kozioł	subst:sg:gen:m1	nazwisko
+Kozłowi	Kozioł	subst:sg:dat:m1	nazwisko
+Koziołowi	Kozioł	subst:sg:dat:m1	nazwisko
+Kozła	Kozioł	subst:sg:acc:m1	nazwisko
+Kozioła	Kozioł	subst:sg:acc:m1	nazwisko
+Kozłem	Kozioł	subst:sg:inst:m1	nazwisko
+Koziołem	Kozioł	subst:sg:inst:m1	nazwisko
+Koźle	Kozioł	subst:sg:loc:m1	nazwisko
+Koziole	Kozioł	subst:sg:loc:m1	nazwisko
+Koźle	Kozioł	subst:sg:voc:m1	nazwisko
+Koziole	Kozioł	subst:sg:voc:m1	nazwisko
+Fischer	Fischer	subst:sg:nom:m1	nazwisko
+Fischera	Fischer	subst:sg:gen:m1	nazwisko
+Fischerowi	Fischer	subst:sg:dat:m1	nazwisko
+Fischera	Fischer	subst:sg:acc:m1	nazwisko
+Fischerem	Fischer	subst:sg:inst:m1	nazwisko
+Fischerze	Fischer	subst:sg:loc:m1	nazwisko
+Fischerze	Fischer	subst:sg:voc:m1	nazwisko
+Tomasz	Tomasz	subst:sg:nom:m1	imię
+Tomasza	Tomasz	subst:sg:gen:m1	imię
+Tomaszowi	Tomasz	subst:sg:dat:m1	imię
+Tomasza	Tomasz	subst:sg:acc:m1	imię
+Tomaszem	Tomasz	subst:sg:inst:m1	imię
+Tomaszu	Tomasz	subst:sg:loc:m1	imię
+Tomaszu	Tomasz	subst:sg:voc:m1	imię
+Ewa	Ewa	subst:sg:nom:f	imię
+Ewy	Ewa	subst:sg:gen:f	imię
+Ewie	Ewa	subst:sg:dat:f	imię
+Ewę	Ewa	subst:sg:acc:f	imię
+Ewą	Ewa	subst:sg:inst:f	imię
+Ewie	Ewa	subst:sg:loc:f	imię
+Ewo	Ewa	subst:sg:voc:f	imię
+Maria	Maria	subst:sg:nom:f	imię
+Marii	Maria	subst:sg:gen:f	imię
+Marii	Maria	subst:sg:dat:f	imię
+Marię	Maria	subst:sg:acc:f	imię
+Marią	Maria	subst:sg:inst:f	imię
+Marii	Maria	subst:sg:loc:f	imię
+Mario	Maria	subst:sg:voc:f	imię
+Maria	Maria	subst:sg:nom:m1	imię
+Marek	Marek	subst:sg:nom:m1	imię
+powód	powód	subst:sg:nom:m1	pospolita
+powoda	powód	subst:sg:gen:m1	pospolita
+powodowi	powód	subst:sg:dat:m1	pospolita
+powoda	powód	subst:sg:acc:m1	pospolita
+powodem	powód	subst:sg:inst:m1	pospolita
+powodzie	powód	subst:sg:loc:m1	pospolita
+powodzie	powód	subst:sg:voc:m1	pospolita
+pozwany	pozwany	adj:sg:nom:m1:pos	pospolita
+pozwanego	pozwany	adj:sg:gen:m1:pos	pospolita
+pozwanemu	pozwany	adj:sg:dat:m1:pos	pospolita
+pozwanego	pozwany	adj:sg:acc:m1:pos	pospolita
+pozwanym	pozwany	adj:sg:inst:m1:pos	pospolita
+pozwanym	pozwany	adj:sg:loc:m1:pos	pospolita
+pozwany	pozwany	adj:sg:voc:m1:pos	pospolita
+sąd	sąd	subst:sg:nom:m3	pospolita	prawn.

@@ -22,3 +22,8 @@ dist-desktop/
 release/
 # Embedded models — downloaded by `npm run desktop:fetch-models`, never committed
 models/
+
+# Downloaded SGJP source dump (docs/sgjp-compile.md) — the LICENSED source
+# file (sgjp-*.tab.gz) never enters the repo, only the compiled artifact
+# (src/verifier/morph/data/morph-pl.json) + its lock/report do.
+scripts/.cache/
