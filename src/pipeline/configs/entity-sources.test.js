@@ -138,6 +138,11 @@ describe('ENTITY_SOURCES — regex-floor coverage (self-validating)', () => {
     'Powód urodzony 7.03.1985 w Toruniu.',
     'Analogiczne stanowisko w uchwale (sygn. akt III CZP 87/22).',
     'Zasądzono kwotę 45 000,00 zł tytułem odszkodowania.',
+    // R-DEV (DEVICE-IDENTIFIER-DESIGN.md §6 pt 2): IMEI anchored path B
+    // (Luhn-invalid corpus value, licensed only by the "IMEI:" anchor) and a
+    // bare MAC address in the same line — one line per regex family, per the
+    // convention above.
+    'Telefon służbowy Samsung Galaxy S23, IMEI: 354871234567890, adres karty sieciowej 00:1A:2B:3C:4D:5E.',
   ];
 
   it("lists 'regex' for every type findRegexEntities actually emits", () => {

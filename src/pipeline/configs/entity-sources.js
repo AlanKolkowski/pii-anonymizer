@@ -96,7 +96,20 @@ export const ENTITY_SOURCES = {
   LOCATION:                 ['polish-fp16', 'case-folded'],
   GEO_LOCATION:             ['polish-fp16'],
   IP_ADDRESS:               ['polish-fp16'],
-  DEVICE_IDENTIFIER:        ['multilang-fp32'],
+  // R-DEV (DEVICE-IDENTIFIER-DESIGN.md): 'regex' added alongside the model —
+  // findImeiEntities/findMacEntities/findIccidEntities/
+  // findNumerSeryjnyEntities (anonymizer.js) are the deterministic W1 floor
+  // for device identifiers (IMEI/IMEISV, MAC, ICCID, numer seryjny). Load-
+  // bearing, NOT cosmetic: DEVICE_IDENTIFIER is weight 4 (type-weights.js) —
+  // EXACTLY sourceFilterStep's A8 safety-net threshold
+  // (SAFETY_NET_WEIGHT_THRESHOLD, source-filter.js) — so a regex candidate
+  // (score 1.0) whose source isn't listed here would pass through
+  // mis-flagged unauthoritativeSource instead of being the authoritative
+  // floor it actually is: the exact R-CARD mistake, one weight change away
+  // from a silent dead floor. "we do not lean on the A8 net." Adds no new
+  // model source (regex is not a download), so requiredSources is
+  // unchanged (entity-sources.test.js).
+  DEVICE_IDENTIFIER:        ['multilang-fp32', 'regex'],
   COOKIE_IDENTIFIER:        ['polish-fp16'],
   ACCOUNT_IDENTIFIER:       ['polish-fp16'],
   AUTH_SECRET:              ['polish-fp16'],

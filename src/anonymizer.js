@@ -987,6 +987,177 @@ function findPaymentCardEntities(text) {
   return entities;
 }
 
+// ── Device identifiers (R-DEV: DEVICE-IDENTIFIER-DESIGN.md) ────────────
+//
+// DEVICE_IDENTIFIER is W1 (masked) but had NO deterministic floor — only the
+// model, which measured ~0% recall on synthetic (entity-rules.js's own
+// comment on this type: "pure detection-layer gap"). Four independent
+// patterns close this, each matching one shape this type actually takes in
+// the corpus (design §1: 2 of the 3 measured leaks are serial numbers, not
+// IMEI/MAC — the family can't skip the anchored serial path just because it
+// looks "too wide" in isolation).
+
+// R-IMEI (§3.1): two paths, the same "arithmetic-or-context" shape as R-DOW.
+// The candidate is a maximal digit-or-separator cluster — CARD_CLUSTER_RE,
+// shared verbatim with R-CARD (same OCR-fold, same alnum lookaround
+// boundary) — filtered to a closed list of TAC-consistent digit groupings
+// (same role as cardGroupingValid: a table row split by one space must
+// never accidentally read as an IMEI just because the concatenated digits
+// pass Luhn).
+//   Ścieżka A (bare) — precision from arithmetic: exactly 15 digits,
+//   Luhn-valid (reuse luhnValid unmodified — the same mod-10 check as
+//   PAYMENT_CARD), NOT a card IIN (reuse hasCardIin unmodified — deferred to
+//   R-CARD, same split as the Amex-15/IMEI-15 length collision, §4), no
+//   leading '+' immediately before the cluster (blocks a bare E.164
+//   international number that also reaches 15 digits).
+//   Ścieżka B (anchored) — 15 OR 16 digits, grouping still gated, a literal
+//   "IMEI"/"IMEISV" mention in the preceding window, but deliberately NO
+//   Luhn requirement: the corpus IMEI (354871234567890) fails Luhn (sum 65,
+//   hand-verified) — a scanned/re-typed IMEI with a broken check digit is
+//   still an IMEI, the same house rule R-DOW's ścieżka B already
+//   established (a context anchor licenses a checksum-invalid number
+//   because re-typing/OCR corrupts sums, not identities).
+const IMEI_DATA = identifierPatterns.imei;
+const IMEI_CONTEXT_ANCHORS = compileAnchors(IMEI_DATA.contextAnchors);
+const IMEI_CONTEXT_WINDOW = IMEI_DATA.contextWindow;
+
+const IMEI_GROUPINGS_15 = [[15], [2, 6, 6, 1], [8, 6, 1]];
+const IMEISV_GROUPINGS_16 = [[16], [2, 6, 6, 2], [8, 6, 2]];
+
+function groupingMatches(groupLengths, allowedShapes) {
+  return allowedShapes.some(
+    (shape) => shape.length === groupLengths.length && shape.every((n, i) => n === groupLengths[i]),
+  );
+}
+
+function findImeiEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(CARD_CLUSTER_RE)) {
+    const raw = m[0];
+    const { digits } = digitPositions(raw);
+    const groupLengths = raw.split(CARD_GROUP_SEP).map((g) => g.length);
+    const start = m.index;
+    const end = start + raw.length;
+
+    if (digits.length === 15 && groupingMatches(groupLengths, IMEI_GROUPINGS_15)) {
+      const precededByPlus = start > 0 && text[start - 1] === '+';
+      if (!precededByPlus && luhnValid(digits) && !hasCardIin(digits)) {
+        entities.push({ entity_group: 'DEVICE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+        continue;
+      }
+    }
+
+    const groupingOkForAnchoredLength =
+      (digits.length === 15 && groupingMatches(groupLengths, IMEI_GROUPINGS_15)) ||
+      (digits.length === 16 && groupingMatches(groupLengths, IMEISV_GROUPINGS_16));
+    if (groupingOkForAnchoredLength && hasContextAnchor(text, start, IMEI_CONTEXT_WINDOW, IMEI_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'DEVICE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
+// R-MAC (§3.2): unconditional on shape, the same "silhouette is specific
+// enough" house style as VIN/KW — 6 groups of exactly 2 hex chars, ONE
+// separator style throughout (mixed ":"/"-" is rejected by construction:
+// only one literal separator is baked into each pattern, so a mixed run
+// simply matches neither). The trailing/leading lookaround additionally
+// blocks the SAME separator immediately outside the match, so a 7-group
+// chain never donates its first 6 octets to a false MAC read. No OCR-fold
+// (hex letters are significant; MACs in these documents come from printed
+// logs/expert reports, not scans). The hyphenated variant additionally
+// requires at least one hex letter (O-DEV-5) — otherwise it collides with
+// any 6-group all-digit hyphenated numbering scheme, a far more common
+// shape in these documents than a genuine all-numeric-looking MAC.
+const MAC_COLON_RE = /(?<![\p{L}\p{N}_:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![\p{L}\p{N}_:])/gu;
+const MAC_HYPHEN_RE = /(?<![\p{L}\p{N}_-])[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5}(?![\p{L}\p{N}_-])/gu;
+const HEX_LETTER_RE = /[A-Fa-f]/;
+
+function findMacEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(MAC_COLON_RE)) {
+    entities.push({ entity_group: 'DEVICE_IDENTIFIER', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  for (const m of text.matchAll(MAC_HYPHEN_RE)) {
+    if (!HEX_LETTER_RE.test(m[0])) continue;
+    entities.push({ entity_group: 'DEVICE_IDENTIFIER', start: m.index, end: m.index + m[0].length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
+// R-ICCID (§3.3): WYŁĄCZNIE kotwiczone (jak R-PJ/R-PASZ) — 19-20 digits,
+// ITU-T E.118 prefix "89" (telecom Major Industry Identifier — a standard,
+// not a heuristic), a literal "ICCID"/"karta SIM" mention nearby. Luhn is
+// NOT wired in: ICCID formally carries one, but real-world records get
+// truncated to 19 digits and re-typed, so anchor + length + prefix alone is
+// what delivers FP=0 here (the same "don't fabricate arithmetic" call as
+// R-PASZ). No grouping-list gate either (unlike R-IMEI): the anchor already
+// licenses emission, so the extra rigor buys nothing — any single separator
+// is fine, contiguous or grouped.
+const ICCID_DATA = identifierPatterns.iccid;
+const ICCID_CONTEXT_ANCHORS = compileAnchors(ICCID_DATA.contextAnchors);
+const ICCID_CONTEXT_WINDOW = ICCID_DATA.contextWindow;
+
+function findIccidEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(CARD_CLUSTER_RE)) {
+    const raw = m[0];
+    const { digits } = digitPositions(raw);
+    if (digits.length !== 19 && digits.length !== 20) continue;
+    if (!digits.startsWith('89')) continue;
+    const start = m.index;
+    const end = start + raw.length;
+    if (hasContextAnchor(text, start, ICCID_CONTEXT_WINDOW, ICCID_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'DEVICE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
+// R-SN (§3.4): the one pattern in this family where a LOOSE window
+// (hasContextAnchor) would be wrong — "nr seryjny" sitting 30-50 chars back
+// would also license an unrelated neighbouring token ("nr zamówienia:" sits
+// only ~20 chars ahead of the real serial in the pismo_06 corpus sentence).
+// hasTailAnchor instead requires the anchor to reach all the way to the END
+// of the backward window — i.e. sit immediately before the candidate — the
+// same "$"-anchored-regex trick KRS_CONTEXT_RE already uses inline, just
+// promoted to a named, reusable helper because this family needs it twice
+// (two tail-anchor patterns) with a wider (50-char) window than KRS's
+// hand-inlined 20. The candidate shape itself is deliberately loose (6-24
+// chars, letters+digits+/+-, no OCR-fold — letters are significant, and an
+// all-digit serial is legitimate too): precision comes entirely from the
+// anchor, exactly as designed. The >=2-digit requirement rejects plain words
+// ("nieczytelny", "następujący") that would otherwise fit the shape.
+function hasTailAnchor(text, upTo, maxWindow, anchorRegexes) {
+  const window = paragraphSafeWindow(text, upTo, maxWindow);
+  return anchorRegexes.some((re) => re.test(window));
+}
+
+const SN_DATA = identifierPatterns.numerSeryjny;
+const SN_TAIL_ANCHORS = compileAnchors(SN_DATA.tailAnchors);
+const SN_TAIL_WINDOW = SN_DATA.tailWindow;
+
+const SN_CANDIDATE_RE = new RegExp(
+  `${WORD_EDGE_BEFORE}[A-Za-z0-9][A-Za-z0-9/-]{4,22}[A-Za-z0-9]${WORD_EDGE_AFTER}`,
+  'gu',
+);
+const SN_DIGIT_RE = /[0-9]/g;
+
+function findNumerSeryjnyEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(SN_CANDIDATE_RE)) {
+    const raw = m[0];
+    const digitCount = (raw.match(SN_DIGIT_RE) || []).length;
+    if (digitCount < 2) continue;
+    const start = m.index;
+    const end = start + raw.length;
+    if (hasTailAnchor(text, start, SN_TAIL_WINDOW, SN_TAIL_ANCHORS)) {
+      entities.push({ entity_group: 'DEVICE_IDENTIFIER', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // ── Financial amounts (A4: EVAL-RECALL-AUDIT §8) ───────────────────────
 //
 // Thousands groups accept either a dot or whitespace (incl. NBSP) as
@@ -1025,6 +1196,10 @@ export function findRegexEntities(text) {
     ...findPaszportEntities(text),
     ...findKsiegaWieczystaEntities(text),
     ...findDataUrodzeniaEntities(text),
+    ...findImeiEntities(text),
+    ...findMacEntities(text),
+    ...findIccidEntities(text),
+    ...findNumerSeryjnyEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {
