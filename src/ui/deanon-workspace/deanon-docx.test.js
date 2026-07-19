@@ -85,6 +85,65 @@ describe('deanon workspace — DOCX outcomes (§3.4)', () => {
     expect(stats).toContain('2 tokenów pozostało w dokumencie');
   });
 
+  // DOCX-IMPL-PLAN.md FD-5: the "odmieniono" summary + the expandable
+  // declined-forms detail panel, driven entirely by the engine's report
+  // (never invented by the UI) — case codes mapped to Polish words here,
+  // the one place CASE_LABELS lives.
+  it('export success message appends the declined-forms count and renders the detail panel', async () => {
+    const outcomes = [docxOutcome()];
+    const onExport = vi.fn().mockResolvedValue({
+      count: 1,
+      archive: false,
+      reports: [{
+        name: 'x.docx',
+        report: {
+          totals: { replaced: 3, left: 0, declined: 1 },
+          flexionDeclined: { count: 2 },
+          parts: [{
+            part: 'word/document.xml',
+            replaced: [], left: [],
+            declined: [{
+              token: '[PERSON_NAME_1]', z: 'Jan Kowalski', na: 'Jana Kowalskiego',
+              przypadek: 'D', zrodlo: 'reguła', pewnosc: 'wysoka', part: 'word/document.xml',
+            }],
+          }],
+        },
+      }],
+    });
+    mount({ outcomes, legend: { '[PERSON_NAME_1]': 'Jan Kowalski' }, onExport });
+    byId('deanon-export-docx').click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const stats = byId('deanon-run-bar-stats').textContent;
+    expect(stats).toContain('odmieniono 1 formę');
+
+    const details = byId('deanon-flexion-report');
+    expect(details).not.toBeNull();
+    expect(details.querySelector('summary').textContent).toContain('odmieniono 1 formę');
+    const rows = byId('deanon-flexion-rows').textContent;
+    expect(rows).toContain('Jan Kowalski');
+    expect(rows).toContain('Jana Kowalskiego');
+    expect(rows).toContain('dopełniacz'); // CASE_LABELS['D'], never the bare code
+    expect(byId('deanon-flexion-refused').textContent).toContain('2');
+  });
+
+  it('no declined forms — no detail panel, no "odmieniono" suffix', async () => {
+    const outcomes = [docxOutcome()];
+    const onExport = vi.fn().mockResolvedValue({
+      count: 1,
+      archive: false,
+      reports: [{ name: 'x.docx', report: { totals: { replaced: 3, left: 0, declined: 0 }, flexionDeclined: { count: 0 }, parts: [] } }],
+    });
+    mount({ outcomes, legend: { '[PERSON_NAME_1]': 'Jan Kowalski' }, onExport });
+    byId('deanon-export-docx').click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(byId('deanon-run-bar-stats').textContent).not.toContain('odmieniono');
+    expect(byId('deanon-flexion-report')).toBeNull();
+  });
+
   it('showMessage surfaces import failures in the run bar', () => {
     const workspace = mount({});
     workspace.showMessage('Import DOCX nieudany: makra');

@@ -8,6 +8,9 @@ import { buildZip } from '../docx-rebuild/test-helpers/zip-fixture.js';
 import { openZip } from '../docx-rebuild/zip-reader.js';
 import { exportDeanonOutcomes } from './deanon.js';
 import { buildOutcomeListing, buildReadOutcomeContent } from '../mcp/listings.js';
+import { createFlexionResolver } from '../verifier/flexion-resolver.js';
+import { loadMorphData } from '../verifier/morph/load.js';
+import { MINI_LEXICON } from '../verifier/morph/fixtures/mini-lexicon.js';
 
 const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -55,7 +58,47 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
     const rebuilt = openZip(new Uint8Array(await result.blob.arrayBuffer()));
     const doc = new TextDecoder().decode(await rebuilt.extract('word/document.xml'));
     expect(doc).toContain('Pozwany Jan Kowalski wnosi.');
-    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0 });
+    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0, declined: 0 });
+  });
+
+  // DOCX-IMPL-PLAN.md FD-3: end-to-end proof that resolveReplacement,
+  // passed in from the caller (main.js in production), reaches rebuildDocx
+  // through exportDeanonOutcomes -> rebuildDocxBlob and actually changes
+  // the bytes written into the .docx — the seam is not just wired, it does
+  // something observable in the file, plus the "odmieniono" report row.
+  it('a resolveReplacement passed to exportDeanonOutcomes inflects an annotated token in the rebuilt .docx', async () => {
+    const bytes = await docxBytes(docxParts(
+      '<w:p><w:r><w:t xml:space="preserve">Zasądza się od [PERSON_NAME_1|D] kwotę.</w:t></w:r></w:p>',
+    ));
+    const morph = loadMorphData(MINI_LEXICON);
+    const resolveReplacement = createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' });
+
+    const result = await exportDeanonOutcomes({
+      outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx', resolveReplacement,
+    });
+
+    const rebuilt = openZip(new Uint8Array(await result.blob.arrayBuffer()));
+    const doc = new TextDecoder().decode(await rebuilt.extract('word/document.xml'));
+    expect(doc).toContain('Zasądza się od Jana Kowalskiego kwotę.');
+    expect(doc).not.toContain('Jan Kowalski kwotę'); // not the untouched nominative
+    expect(doc).not.toContain('|D'); // the annotation itself never leaks into the file
+
+    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0, declined: 1 });
+    expect(result.reports[0].report.parts[0].declined).toEqual([{
+      token: '[PERSON_NAME_1]', z: 'Jan Kowalski', na: 'Jana Kowalskiego',
+      przypadek: 'D', zrodlo: 'reguła', pewnosc: 'wysoka', part: 'word/document.xml',
+    }]);
+  });
+
+  it('an omitted resolveReplacement leaves the DOCX export byte-for-byte identical to today (G-D9)', async () => {
+    const bytes = await docxBytes(docxParts('<w:p><w:r><w:t>Pozwany [PERSON_NAME_1] wnosi.</w:t></w:r></w:p>'));
+    const withResolver = await exportDeanonOutcomes({
+      outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx',
+      resolveReplacement: createFlexionResolver({ morph: null, seen: {} }),
+    });
+    const withoutResolver = await exportDeanonOutcomes({ outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx' });
+    expect(new Uint8Array(await withResolver.blob.arrayBuffer()))
+      .toEqual(new Uint8Array(await withoutResolver.blob.arrayBuffer()));
   });
 
   it('blocks the export when the input carries non-hyperlink external references (§9.3)', async () => {
@@ -92,7 +135,7 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
     // Exactly one report — for the reconstructed outcome, matched by name.
     expect(result.reports).toHaveLength(1);
     expect(result.files).toContain(result.reports[0].name);
-    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0 });
+    expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0, declined: 0 });
 
     // The ZIP holds both files; the rebuilt entry is a real DOCX whose
     // document.xml carries the deanonymized value, not the token.

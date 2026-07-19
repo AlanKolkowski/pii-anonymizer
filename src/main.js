@@ -547,14 +547,38 @@ function removeOutcome(id) {
   return outcomeCoordinator.removeOutcome(id);
 }
 
+// DOCX-IMPL-PLAN.md FD-3: main.js is the flexion resolver's owner — `seen`
+// (the live per-source surface-form map, line 45) lives here, matching where
+// the legend itself lives. Lazily imported alongside export/deanon.js
+// (existing code-splitting convention: this pulls in the morphology engine
+// only when a DOCX export actually runs).
+//
+// `morph` is `null`: the compiled artifact (morph-pl.json, FL-1b/
+// GATE-FLEKSJA-DANE) does not exist yet, so the resolver runs in the
+// restricted, fail-closed mode §4.4 describes (attested forms + rule-based
+// adjectival surnames + S-P/S-R signals from tables already in the repo;
+// everything else declines to the base value — never a guess). Swapping in
+// the real artifact later is a one-line change here, nothing downstream.
+//
+// `minConfidence: 'wysoka'` (O-DOCX-2(a)) and auto-apply with no
+// per-occurrence approval (O-DOCX-1) are Fable's recommended defaults,
+// wired here so the seam is provable end-to-end — both are still Alan's
+// decisions to formally confirm at GATE-DOCX; only the "odmieniono" report
+// row (FD-2, surfaced in the UI) is the human control in v1, exactly like
+// RD-3 elsewhere in this app.
 async function exportDeanonDocuments(format) {
-  const { exportDeanonOutcomes, downloadBlob } = await import('./export/deanon.js');
+  const [{ exportDeanonOutcomes, downloadBlob }, { createFlexionResolver }] = await Promise.all([
+    import('./export/deanon.js'),
+    import('./verifier/flexion-resolver.js'),
+  ]);
+  const resolveReplacement = createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' });
   const result = await exportDeanonOutcomes({
     outcomes: outcomes.map((o) => ({
       id: o.id, label: o.label, text: o.text, legendSnapshot: o.legendSnapshot, docx: o.docx,
     })),
     legend: { ...legend },
     format,
+    resolveReplacement,
   });
   downloadBlob(result.blob, result.fileName);
   return result;

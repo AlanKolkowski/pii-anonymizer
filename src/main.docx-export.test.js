@@ -20,6 +20,7 @@
 // the observable, user-facing signature of "did reconstruction actually run".
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildZip } from './docx-rebuild/test-helpers/zip-fixture.js';
+import { openZip } from './docx-rebuild/zip-reader.js';
 
 const TOKEN = '[PERSON_NAME_1]';
 const DOCX_BODY_TEXT = `Pozwany ${TOKEN} wnosi o oddalenie powództwa.`;
@@ -257,5 +258,74 @@ describe('exportDeanonDocuments — DOCX outcome projection (main.js:553)', () =
     const stats = await importDocxAndExport(worker, bytes);
 
     expect(stats).toContain('odwołania zewnętrzne');
+  });
+});
+
+// DOCX-IMPL-PLAN.md FD-3: THE end-to-end proof — through the REAL main.js
+// wiring (createFlexionResolver({ morph: null, seen, minConfidence: 'wysoka' }),
+// exactly as production builds it), an unannotated token in an unambiguous
+// preposition context ("od" -> dopełniacz) gets INFLECTED in the exported
+// .docx bytes, using an attested surface form from `seen` — no morphology
+// artifact needed (§4.4: attested forms work end to end without one).
+describe('exportDeanonDocuments — flexion seam wired end to end (FD-3)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete globalThis.Worker;
+    delete globalThis.WebMCP;
+  });
+
+  it('an unannotated token after an unambiguous preposition is inflected using an attested form from `seen`', async () => {
+    const worker = await bootApp();
+
+    // Two real mentions of the SAME person in one source, in DIFFERENT
+    // grammatical cases — exactly the FLEKSJA-IMPL-PLAN.md G12 recipe
+    // (deriveAttested(seen) attributes each surface form to the case it
+    // already agrees with, via rule-based surname-form inversion; needs no
+    // dictionary for "Jan" at all). Nominative listed first so it becomes
+    // the legend's base value (first-seen wins, unchanged anonymizer rule).
+    const sourceText = 'Jan Kowalski zawarł umowę. Wcześniej informowano Jana Kowalskiego o warunkach.';
+    addPasteSourceWithText(sourceText);
+    clickAnonymize();
+    const nomStart = sourceText.indexOf('Jan Kowalski');
+    const genStart = sourceText.indexOf('Jana Kowalskiego');
+    worker.emit({
+      type: 'result',
+      id: 's2',
+      data: [
+        { entity_group: 'PERSON_NAME', start: nomStart, end: nomStart + 'Jan Kowalski'.length, score: 0.99, source: 'ner' },
+        { entity_group: 'PERSON_NAME', start: genStart, end: genStart + 'Jana Kowalskiego'.length, score: 0.99, source: 'ner' },
+      ],
+    });
+
+    // No case annotation on the token at all — S-P ("od" -> {D}, a
+    // single-case table entry) reaches 'wysoka' confidence on its own
+    // (DOCX-IMPL-PLAN.md §4.3, third worked example).
+    const bytes = await docxBytes('<w:p><w:r><w:t xml:space="preserve">Zasądza się od [PERSON_NAME_1] kwotę zadośćuczynienia.</w:t></w:r></w:p>');
+    const file = new File([bytes], 'pismo-od-AI.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const input = document.querySelector('[data-testid="deanon-import-docx-input"]');
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    await waitFor(() => document.querySelector('[data-testid="deanon-docx-badge"]') !== null);
+
+    document.querySelector('[data-testid="deanon-export-docx"]').click();
+    await waitFor(() => {
+      const stats = document.querySelector('[data-testid="deanon-run-bar-stats"]')?.textContent ?? '';
+      return stats !== '' && stats !== 'Generuję plik DOCX…';
+    });
+    const stats = document.querySelector('[data-testid="deanon-run-bar-stats"]').textContent;
+
+    // The user-visible signal (FD-5): a report line, not a silent rewrite.
+    expect(stats).toContain('1 tokenów podmienionych');
+    expect(stats).toContain('odmieniono 1 formę');
+
+    // The actual file bytes carry the inflected form — the real proof.
+    const { downloadBlob } = await import('./export/deanon.js');
+    const [blob] = downloadBlob.mock.calls.at(-1);
+    const rebuilt = openZip(new Uint8Array(await blob.arrayBuffer()));
+    const doc = new TextDecoder().decode(await rebuilt.extract('word/document.xml'));
+    expect(doc).toContain('Zasądza się od Jana Kowalskiego kwotę zadośćuczynienia.');
+    expect(doc).not.toContain('od Jan Kowalski kwotę'); // not the untouched nominative legend value
   });
 });

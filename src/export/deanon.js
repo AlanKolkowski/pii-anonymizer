@@ -237,10 +237,17 @@ const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingm
 // reconstruction instead of the flat generator — same file name pipeline,
 // same download path. Export gates throw with the user-facing diagnosis;
 // residues do NOT block (the report carries them).
-async function rebuildDocxBlob(outcome, legend) {
+//
+// DOCX-IMPL-PLAN.md FD-3: `resolveReplacement` (the flexion seam) is an
+// OPTIONAL pass-through, undefined by default — flat exports (text/PDF,
+// buildDeanonExportEntries above) never receive it in this plan (§4.2:
+// those outputs stay at the base legend value until FL-5); only the DOCX
+// reconstruction gets a chance to inflect, and only when its caller built
+// a resolver at all.
+async function rebuildDocxBlob(outcome, legend, resolveReplacement) {
   const { rebuildDocx } = await import('../docx-rebuild/rebuild-docx.js');
   const outcomeLegend = effectiveOutcomeLegend(outcome, legend);
-  const { status, bytes, report } = await rebuildDocx(outcome.docx.bytes, outcomeLegend);
+  const { status, bytes, report } = await rebuildDocx(outcome.docx.bytes, outcomeLegend, { resolveReplacement });
   if (status === 'blocked-egress') {
     const findings = report.egress.blocked.map((b) => b.type).join(', ');
     throw new Error(`Eksport zablokowany: dokument zawiera odwołania zewnętrzne (${findings}). Usuń je w edytorze i zaimportuj ponownie.`);
@@ -251,7 +258,7 @@ async function rebuildDocxBlob(outcome, legend) {
   return { blob: new Blob([bytes], { type: DOCX_MIME }), report };
 }
 
-export async function exportDeanonOutcomes({ outcomes, legend, format }) {
+export async function exportDeanonOutcomes({ outcomes, legend, format, resolveReplacement }) {
   assertFormat(format);
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
     throw new Error('Brak dokumentów wynikowych do eksportu');
@@ -268,7 +275,7 @@ export async function exportDeanonOutcomes({ outcomes, legend, format }) {
     const entry = entries[i];
     const outcome = outcomes[i];
     if (format === 'docx' && outcome?.docx?.bytes) {
-      const { blob, report } = await rebuildDocxBlob(outcome, legend);
+      const { blob, report } = await rebuildDocxBlob(outcome, legend, resolveReplacement);
       files.push({ name: entry.name, data: blob });
       reports.push({ name: entry.name, report });
     } else {
