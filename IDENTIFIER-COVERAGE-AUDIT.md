@@ -27,7 +27,7 @@
 - **Karta płatnicza** — ✅ **ZAMKNIĘTE** (R-CARD, 2026-07-19): Luhn + prefiks IIN (Visa/MC/Amex) + grupowanie, FP=0. `PAYMENT_CARD` listuje `'regex'` (autorytatywne).
 - **Data urodzenia** — ✅ **ZAMKNIĘTE** (R-DATE, 2026-07-19): wyłącznie kotwiczony („ur.", „urodzon…", „data urodzenia"), daty spraw/umów nietknięte; `\bur\.` na granicy słowa (procedur./struktur. nie kotwiczą). `DATE_OF_BIRTH` listuje `'regex'`.
 - **Numer legitymacji zawodowej** — np. „Tr-1138" (dana radcy) → R-LEG kotwiczony. **UWAGA (decyzja Alana):** numer WŁASNY radcy jest na papierze firmowym (jawny, jak własna sygnatura → allowlista ST-5), ale numer INNEGO pełnomocnika/strony identyfikuje osobę. Domyślnie maskować, allowlista dla własnego — do potwierdzenia.
-- **DEVICE_IDENTIFIER** — ~0% recall (realna dziura detekcji).
+- **DEVICE_IDENTIFIER** — ✅ **ZAMKNIĘTE** (R-DEV, 2026-07-19, gałąź `feature/r-dev-floor` — implementacja gotowa, GATE-DEVICE zielona, **oczekuje scalenia przez bramkę**, nie na `main`): DEVICE-IDENTIFIER-DESIGN.md. R-IMEI dwuścieżkowy (ścieżka A: bare, Luhn + anty-IIN wobec `hasCardIin`, zakaz `+`; ścieżka B: kotwiczona „IMEI"/„IMEISV", BEZ Luhna — korpusowy IMEI jest Luhn-invalid, zmierzony fakt), R-MAC (kształt bezwarunkowy 6×hex, jak VIN/KW; wariant myślnikowy wymaga litery hex), R-ICCID (wyłącznie kotwiczony, prefiks 89 ITU-T E.118), R-SN (NOWA odmiana kotwicy — tight-tail `hasTailAnchor`, kotwica musi kończyć się dokładnie przed kandydatem, nie luźne okno — jedyny sposób, jak nie zamaskować „nr zamówienia" sąsiadującego z serialem w pismo_06). `DEVICE_IDENTIFIER` listuje `'regex'` (waga 4 = próg A8, strażnik z §2 pilnuje). **IMSI (O-DEV-8) świadomie POMINIĘTY** — brak zmierzonego wycieku, decyzja bramki „nigdy spekulacyjnie"; tier zostaje W1 bez zmian (O-DEV-9).
 
 **Strażnik systemowy (2026-07-19):** `entity-sources.test.js` ma self-validating strażnika pokrycia podłogi regex — uruchamia realny `findRegexEntities` na wektorach i żąda `'regex'` w `ENTITY_SOURCES` dla KAŻDEGO faktycznie emitowanego typu. Domyka klasę błędu, przez którą R-CARD początkowo ominął konwencję (typ regexowy bez `'regex'` w źródłach → ciche wypadnięcie przy wadze <4 albo mis-flag `unauthoritativeSource` przy ≥4).
 
@@ -37,8 +37,9 @@ Sygnatury cytowanych orzeczeń (CSKP/CZP/C-…), numery faktur, numery aktów pr
 ## 4. Rekomendowana kolejność następnych R-\* (menu dla Alana)
 1. ✅ **R-CARD** (Luhn) — ZROBIONE 2026-07-19 (na main).
 2. ✅ **R-DATE** (data urodzenia, kotwiczony) — ZROBIONE 2026-07-19 (na main).
-3. **Re-typ klasy KW** (Rep. A/polisa/umowa: W3 → W2) — **decyzja prawna Alana** (czy to dane osobowe do kosza przeglądu). BLOKUJE R-REPA/R-POL: bez re-typu detekcja ich nie maskuje (zostają W3).
-4. **R-REPA / R-POL** (kotwiczone) — czekają na decyzję #3.
-5. **R-LEG** (legitymacja zawodowa, kotwiczony) — decyzjo-lekki, ale patrz uwaga o numerze własnym (allowlista ST-5) w §2.
+3. ✅ **R-DEV** (IMEI/MAC/ICCID/numer seryjny) — ZROBIONE 2026-07-19 (gałąź `feature/r-dev-floor`, **oczekuje scalenia** — zob. §2).
+4. **Re-typ klasy KW** (Rep. A/polisa/umowa: W3 → W2) — **decyzja prawna Alana** (czy to dane osobowe do kosza przeglądu). BLOKUJE R-REPA/R-POL: bez re-typu detekcja ich nie maskuje (zostają W3).
+5. **R-REPA / R-POL** (kotwiczone) — czekają na decyzję #4.
+6. **R-LEG** (legitymacja zawodowa, kotwiczony) — decyzjo-lekki, ale patrz uwaga o numerze własnym (allowlista ST-5) w §2.
 
 Dyscyplina domu: każdy nowy R-\* przez zmierzony wyciek + test (czerwona linia w pułapkowniku, potem wzór), nigdy spekulacyjnie. Każdy nowy typ regexowy MUSI dopisać `'regex'` do `ENTITY_SOURCES` — pilnuje tego strażnik z §2.

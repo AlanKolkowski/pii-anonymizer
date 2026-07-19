@@ -98,3 +98,19 @@ Termin rozprawy wyznaczono na 4 czerwca 2025 r.
 Wyrok z dnia 14 maja 2021 r. (sygn. akt II CSKP 975/22)
 Data wystawienia faktury: 01.02.2023
 Zamówienie z dnia 2024-05-15 zrealizowano w terminie.
+
+# R-DEV (identyfikatory urządzeń: IMEI/MAC/ICCID/numer seryjny,
+# DEVICE-IDENTIFIER-DESIGN.md, 2026-07-19): wektory NEGATYWNE — każdy musi
+# dać ZERO DEVICE_IDENTIFIER. Luhn-invalid bare 15-cyfrowy ciąg (R-IMEI
+# ścieżka A bramkuje arytmetyką), pułapki MAC (czas, data ISO, UUID,
+# myślnikowy all-digit bez litery hex — O-DEV-5), pułapki sąsiedztwa R-SN
+# (numer zamówienia 20 znaków za "seryjny", akronim "SN" = Sąd Najwyższy —
+# O-DEV-7) oraz goły ICCID-kształt bez kotwicy.
+351234567890125
+00-11-22-33-44-55
+12:30:45
+2024-07-19
+550e8400-e29b-41d4-a716-446655440000
+nr zamówienia: EM/2024/09876
+uchwała SN: III CZP 6/21
+89480212345678901234

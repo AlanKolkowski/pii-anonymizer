@@ -114,5 +114,23 @@
       "data\\s+urodzenia"
     ],
     "contextWindow": 40
+  },
+  "imei": {
+    "_comment": "R-IMEI §3.1 (DEVICE-IDENTIFIER-DESIGN.md). contextAnchors gate ONLY ścieżkę B (kotwiczoną, 15 lub 16 cyfr, BEZ wymogu Luhna — korpusowy IMEI 354871234567890 jest Luhn-invalid, zmierzony fakt, §1 pkt 2). Ścieżka A (bare) nie czyta tego pliku wcale — precyzja pochodzi z arytmetyki (Luhn + anty-IIN wobec hasCardIin), nie z kontekstu.",
+    "contextAnchors": ["\\bIMEI\\b", "\\bIMEISV\\b"],
+    "contextWindow": 40
+  },
+  "iccid": {
+    "_comment": "R-ICCID §3.3. WYŁĄCZNIE kotwiczone (jak R-PJ/R-PASZ) — Luhn NIE bramkuje (zapisy ICCID bywają ucinane do 19 cyfr i przepisywane), precyzja pochodzi z kotwicy + długości 19-20 + prefiksu 89 (ITU-T E.118, Major Industry Identifier telekomunikacji).",
+    "contextAnchors": ["\\bICCID\\b", "kart\\p{L}*\\s+SIM"],
+    "contextWindow": 40
+  },
+  "numerSeryjny": {
+    "_comment": "R-SN §3.4. `tailAnchors` to ODMIANA RÓŻNA od `contextAnchors` powyżej: `contextAnchors` (reszta tego pliku, czytane przez hasContextAnchor) dopuszcza obecność kotwicy GDZIEKOLWIEK w oknie wstecznym; `tailAnchors` (czytane przez NOWY helper hasTailAnchor w anonymizer.js) wymaga, żeby kotwica kończyła się DOKŁADNIE na końcu okna, tuż przed kandydatem — stąd literalny `$` na końcu obu wzorców poniżej (semantyka identyczna do ręcznie inlinowanego KRS_CONTEXT_RE). Luźne okno byłoby tu błędem: licencjonowałoby też sąsiednie tokeny (np. „nr zamówienia:” stojące 20 znaków przed serialem w korpusowym pismo_06 — patrz macierz §4). `tailWindow` to długość tego okna wstecznego, analogicznie do `contextWindow`.",
+    "tailAnchors": [
+      "(?:\\bnr\\.?|\\bnumer)\\s+(?:seryjn\\p{L}*|fabryczn\\p{L}*)(?:\\s+\\p{L}+){0,2}\\s*[:.]?\\s*$",
+      "\\bS\\/N\\s*[:.]?\\s*$"
+    ],
+    "tailWindow": 50
   }
 }

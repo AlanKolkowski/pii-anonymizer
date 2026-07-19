@@ -69,7 +69,7 @@ pisma stają się czytelniejsze; radca zachowuje kontrolę nad przypadkami mozai
 | PAYMENT_CARD | 4 | (brak w próbie) | Numer karty. |
 | PAYMENT_CARD_SECURITY | 4 | (brak w próbie) | CVV / data ważności (z kartą). |
 | ACCOUNT_IDENTIFIER | 4 | (brak w próbie) | Login / numer konta – unikalny. |
-| DEVICE_IDENTIFIER | 4 | (brak w próbie) | MAC / IMEI / serial – unikalny identyfikator techniczny. |
+| DEVICE_IDENTIFIER | 4 | (brak w próbie) | MAC / IMEI / serial – unikalny identyfikator techniczny. **Dodano podłogę deterministyczną 2026-07-19 (R-DEV, DEVICE-IDENTIFIER-DESIGN.md, gałąź `feature/r-dev-floor` – oczekuje scalenia):** R-IMEI (ścieżka A bare: Luhn + anty-IIN wobec `hasCardIin`; ścieżka B kotwiczona „IMEI"/„IMEISV": bez Luhna, korpusowy IMEI jest Luhn-invalid), R-MAC (kształt bezwarunkowy 6×hex, jak VIN/KW), R-ICCID (wyłącznie kotwiczony, prefiks 89), R-SN (tight-tail na „nr seryjny"/„S/N", nowa odmiana kotwicy `hasTailAnchor`). Tier W1 bez zmian (status quo potwierdzony). |
 | VEHICLE_IDENTIFIER | 4 | 84,4% | Tablica / VIN – powiązane z właścicielem. |
 | LAND_REGISTER_IDENTIFIER | 4 | (brak w próbie) | **Dodane 2026-07-18 (zlecenie KW).** Numer księgi wieczystej – pośrednio identyfikuje osobę przez nieruchomość (jak tablica/VIN); portal publiczny (ekw.ms.gov.pl) rozwiązuje numer KW wprost na właściciela. Wykrywanie strukturalne (kształt 2 litery+cyfra+litera / 8 cyfr / 1 cyfra), bez wymogu kotwicy – twarda gwarancja „nigdy W3". |
 | DATE_OF_BIRTH | 3 | 100% | **Decyzja Alana 2026-07-14: W1.** Data urodzenia + inne dane zbyt łatwo wiąże z osobą (np. ur. 1921 = ~105 lat, osób bardzo mało). |
