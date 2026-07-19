@@ -172,6 +172,110 @@ describe('rebuildPart — injection and hygiene (§4.6, §9.4, C-DOCX-6)', () =>
     expect(calls[0]).toMatchObject({ token: '[PERSON_NAME_1]', baseValue: 'Jan Kowalski', part: 'word/document.xml' });
     expect(calls[0].contextBefore).toContain('przeciwko');
   });
+
+  // DOCX-IMPL-PLAN.md FD-1 pt 0: the historic bug — `createFlexionResolver`
+  // (and the S2 contract generally) refuses with a bare `undefined`; today's
+  // (pre-fix) `rebuildPart` did `sanitizeValue(resolved.text)` straight on
+  // that, throwing on the very first refusal. This is the RED->GREEN proof.
+  describe('the flexion seam — a resolver refusal never crashes (FD-1 pt 0, R-D8)', () => {
+    const REFUSER = () => undefined;
+
+    it('a refusing resolver does not throw and falls back to the base value', () => {
+      expect(() => rebuild(`<w:p>${run('Pozwany [PERSON_NAME_1] wnosi')}</w:p>`, LEGEND, {
+        resolveReplacement: REFUSER,
+      })).not.toThrow();
+    });
+
+    it('a refusing resolver produces output byte-for-byte identical to no resolver at all (G-D9)', () => {
+      const body = `<w:p>${run('Pozwany [PERSON_NAME_1|D], zam. [ADDRESS_2].')}</w:p>`;
+      const withRefuser = rebuild(body, LEGEND, { resolveReplacement: REFUSER });
+      const withoutResolver = rebuild(body, LEGEND);
+      expect(withRefuser.xml).toBe(withoutResolver.xml);
+      expect(withRefuser.replaced).toEqual(withoutResolver.replaced);
+      expect(withRefuser.declined).toEqual([]);
+    });
+  });
+
+  // FD-1 §3.2: full seam contract — the resolver gets tokenId/type/case/
+  // occurrence/part alongside token/baseValue/contexts, with contexts and
+  // occurrence counted from the RAW (annotated) match span, even when the
+  // token is torn across runs by proofErr/rsid.
+  it('the resolver receives the full FD-1 contract, contexts counted from the raw annotated span', () => {
+    const calls = [];
+    const body = '<w:p>'
+      + run('Zasądza od [PERSON_', '<w:rPr><w:b/></w:rPr>')
+      + '<w:proofErr w:type="spellStart"/>'
+      + run('NAME_1|D] kwotę.')
+      + '</w:p>';
+    rebuild(body, LEGEND, { resolveReplacement: (args) => { calls.push(args); return undefined; } });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      token: '[PERSON_NAME_1]',
+      tokenId: 'PERSON_NAME_1',
+      type: 'PERSON_NAME',
+      baseValue: 'Jan Kowalski',
+      case: 'D',
+      occurrence: 0,
+      part: 'word/document.xml',
+    });
+    expect(calls[0].contextBefore).toBe('Zasądza od ');
+    expect(calls[0].contextAfter).toBe(' kwotę.');
+  });
+
+  it('occurrence is a per-part counter over eligible (legend-having) hits, left to right', () => {
+    const calls = [];
+    const out = rebuild(
+      `<w:p>${run('[PERSON_NAME_9] i [PERSON_NAME_1] i [ADDRESS_2] i [PERSON_NAME_1|D]')}</w:p>`,
+      LEGEND,
+      { resolveReplacement: (args) => { calls.push(args); return undefined; } },
+    );
+    // [PERSON_NAME_9] has no legend entry — never reaches the resolver at all.
+    expect(calls.map((c) => c.occurrence)).toEqual([0, 1, 2]);
+    expect(calls.map((c) => c.token)).toEqual(['[PERSON_NAME_1]', '[ADDRESS_2]', '[PERSON_NAME_1]']);
+    expect(out.left).toContainEqual(expect.objectContaining({ token: '[PERSON_NAME_9]', reason: 'brak-w-legendzie' }));
+  });
+
+  // FD-2 (§3.3): a report row for every occurrence whose file value differs
+  // from the base, carrying the resolver's own note metadata; a refusal
+  // gets no row but is counted separately (flexionDeclinedCount, O-FL-2).
+  describe('the flexion seam — FD-2 "odmieniono" rows and the decline counter', () => {
+    it('a value differing from the base gets a declined row with the resolver note; a refusal gets none but bumps the counter', () => {
+      const out = rebuild(
+        `<w:p>${run('od [PERSON_NAME_1|D] oraz [PERSON_NAME_1]')}</w:p>`,
+        LEGEND,
+        {
+          resolveReplacement: (args) => {
+            if (args.occurrence === 0) {
+              return { text: 'Jana Kowalskiego', note: { przypadek: 'D', zrodlo: 'reguła', pewnosc: 'wysoka' } };
+            }
+            return undefined; // second occurrence: PERSON_NAME, has a legend value, declines
+          },
+        },
+      );
+      expect(out.declined).toEqual([{
+        token: '[PERSON_NAME_1]',
+        z: 'Jan Kowalski',
+        na: 'Jana Kowalskiego',
+        przypadek: 'D',
+        zrodlo: 'reguła',
+        pewnosc: 'wysoka',
+        part: 'word/document.xml',
+      }]);
+      expect(out.flexionDeclinedCount).toBe(1);
+    });
+
+    it('with no resolver at all, there are never declined rows nor decline counts', () => {
+      const out = rebuild(`<w:p>${run('od [PERSON_NAME_1|D]')}</w:p>`, LEGEND);
+      expect(out.declined).toEqual([]);
+      expect(out.flexionDeclinedCount).toBe(0);
+    });
+
+    it('a non-PERSON_NAME refusal does not inflate the PERSON_NAME-scoped decline counter', () => {
+      const out = rebuild(`<w:p>${run('zam. [ADDRESS_2]')}</w:p>`, LEGEND, { resolveReplacement: () => undefined });
+      expect(out.flexionDeclinedCount).toBe(0);
+      expect(out.declined).toEqual([]);
+    });
+  });
 });
 
 describe('countTokensInPart (report-only parts, §5.1)', () => {

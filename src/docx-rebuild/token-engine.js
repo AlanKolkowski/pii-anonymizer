@@ -146,18 +146,31 @@ function newTextForSegment(segment, matches, stream) {
  * @param {string} params.xmlText - the part's XML source
  * @param {string} params.partName
  * @param {object} params.legend - token → base value (read at export time, RAM only)
- * @param {Function} [params.resolveReplacement] - the flexion seam (§8);
- *   identity by default. Pure and local by contract; its output passes the
- *   same §4.6 sanitization as the base value.
+ * @param {Function} [params.resolveReplacement] - the flexion seam
+ *   (DOCX-IMPL-PLAN.md FD-1, §8 of the parent design). Called only for
+ *   occurrences with a legend value, as:
+ *   `resolveReplacement({ token, tokenId, type, baseValue, case, contextBefore,
+ *   contextAfter, occurrence, part }) -> { text, note? } | undefined`.
+ *   A refusal (`undefined` — including "no resolver at all", since the call
+ *   itself is skipped then) falls back to `baseValue`, NEVER throws (FD-1
+ *   pt 0 — the historic bug this contract closes). Pure and local by
+ *   contract; its output passes the same §4.6 sanitization as the base
+ *   value. `occurrence` is a per-PART counter, left to right in document
+ *   order, over ELIGIBLE (legend-having) occurrences only — v1 report scope
+ *   only (§3.2 point 3); binding to a global text-preview enumeration is
+ *   FL-7, out of this plan.
  */
 export function rebuildPart({ xmlText, partName, legend, resolveReplacement = null }) {
   const doc = parseXmlPart(xmlText, partName);
 
   const replacedCounts = new Map();
   const left = [];
+  const declined = [];
   const reportOnlyTokens = { instrText: 0, delText: 0 };
   let sanitizedTotal = 0;
   let anyReplacement = false;
+  let flexionDeclinedCount = 0;
+  let occurrence = 0;
 
   const paragraphs = [...doc.getElementsByTagNameNS(W_NS, 'p')];
   for (const paragraph of paragraphs) {
@@ -173,18 +186,45 @@ export function rebuildPart({ xmlText, partName, legend, resolveReplacement = nu
     for (const token of findTokens(stream)) {
       const baseValue = legend[token.token];
       if (baseValue === undefined) continue; // reported by the post-scan below
-      const resolved = resolveReplacement
-        ? resolveReplacement({
-          token: token.token,
-          baseValue,
-          contextBefore: stream.slice(Math.max(0, token.index - CONTEXT_RADIUS), token.index),
-          contextAfter: stream.slice(token.index + token.rawLength, token.index + token.rawLength + CONTEXT_RADIUS),
-          part: partName,
-        })
-        : { text: baseValue };
-      const { text: value, sanitized } = sanitizeValue(resolved.text);
+      // FD-1: resolveReplacement is invoked ONLY when provided — `?.()`
+      // yields `undefined` either way (no resolver, or a real refusal), so
+      // both collapse to the same fallback below with no special-casing.
+      const resolved = resolveReplacement?.({
+        token: token.token,
+        tokenId: token.tokenId,
+        type: token.type,
+        baseValue,
+        case: token.case,
+        contextBefore: stream.slice(Math.max(0, token.index - CONTEXT_RADIUS), token.index),
+        contextAfter: stream.slice(token.index + token.rawLength, token.index + token.rawLength + CONTEXT_RADIUS),
+        occurrence: occurrence++,
+        part: partName,
+      });
+      if (resolveReplacement && token.type === 'PERSON_NAME' && resolved === undefined) {
+        flexionDeclinedCount += 1;
+      }
+      // FD-1 pt 0 (the crash this delta closes): a resolver refusal is
+      // `undefined` per contract — `resolved?.text` never throws, and falls
+      // back to the base value exactly like having no resolver at all
+      // (aligned to substitution.js's `resolved?.text ?? baseValue`).
+      const { text: value, sanitized } = sanitizeValue(resolved?.text ?? baseValue);
       sanitizedTotal += sanitized;
       matches.push({ index: token.index, rawLength: token.rawLength, value, token: token.token });
+      // FD-2: a row for every substitution whose FILE value differs from the
+      // base (after sanitization) — the report can never disagree with what
+      // actually landed in the part (R-D6). Metadata comes from the
+      // resolver's own `note` (FD-4); never invented by this engine.
+      if (value !== baseValue) {
+        declined.push({
+          token: token.token,
+          z: baseValue,
+          na: value,
+          przypadek: resolved?.note?.przypadek,
+          zrodlo: resolved?.note?.zrodlo,
+          pewnosc: resolved?.note?.pewnosc,
+          part: partName,
+        });
+      }
     }
 
     if (matches.length > 0) {
@@ -237,6 +277,8 @@ export function rebuildPart({ xmlText, partName, legend, resolveReplacement = nu
     xml,
     replaced: [...replacedCounts.entries()].map(([token, count]) => ({ token, count })),
     left,
+    declined,
+    flexionDeclinedCount,
     reportOnlyTokens,
     sanitized: sanitizedTotal,
   };

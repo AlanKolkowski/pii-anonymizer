@@ -43,7 +43,11 @@ export async function rebuildDocx(bytes, legend, options = {}) {
       hyperlinks: inspection.external.hyperlinks,
       blocked: inspection.external.blocked,
     },
-    totals: { replaced: 0, left: 0 },
+    totals: { replaced: 0, left: 0, declined: 0 },
+    // FD-2/O-FL-2: occurrences where a PERSON_NAME resolver was consulted
+    // (a resolveReplacement was actually passed in) and declined — distinct
+    // from "no resolver at all", which never counts as a refusal.
+    flexionDeclined: { count: 0 },
   };
 
   if (inspection.external.blocked.length > 0) {
@@ -62,8 +66,15 @@ export async function rebuildDocx(bytes, legend, options = {}) {
     report.sanitized += outcome.sanitized;
     report.totals.replaced += outcome.replaced.reduce((sum, r) => sum + r.count, 0);
     report.totals.left += outcome.left.length;
-    if (outcome.replaced.length > 0 || outcome.left.length > 0) {
-      report.parts.push({ part: partName, replaced: outcome.replaced, left: outcome.left });
+    report.totals.declined += outcome.declined.length;
+    report.flexionDeclined.count += outcome.flexionDeclinedCount;
+    if (outcome.replaced.length > 0 || outcome.left.length > 0 || outcome.declined.length > 0) {
+      report.parts.push({
+        part: partName,
+        replaced: outcome.replaced,
+        left: outcome.left,
+        ...(outcome.declined.length > 0 && { declined: outcome.declined }),
+      });
     }
     if (outcome.reportOnlyTokens.instrText > 0) {
       report.reportOnly.push({ part: partName, warstwa: 'kody-pól', tokens: outcome.reportOnlyTokens.instrText });

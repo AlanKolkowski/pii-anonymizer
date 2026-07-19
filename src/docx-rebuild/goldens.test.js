@@ -30,7 +30,7 @@ describe('test-data/docx goldens — golden-pismo.docx', () => {
 
     // 6 in document.xml (whole-run, split-run, hyperlink text, fldSimple
     // result, tracked insert) + header + footer.
-    expect(report.totals).toEqual({ replaced: 8, left: 0 });
+    expect(report.totals).toEqual({ replaced: 8, left: 0, declined: 0 });
 
     // The one external hyperlink is reported, not blocking (§9.3).
     expect(report.egress.hyperlinks).toBe(1);

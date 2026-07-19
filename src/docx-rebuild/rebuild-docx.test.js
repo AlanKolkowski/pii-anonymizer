@@ -77,7 +77,7 @@ describe('rebuildDocx — golden flow', () => {
     // C-DOCX-5: the entry set is identical — nothing added, nothing dropped.
     expect(result.entries.map((e) => e.name).sort()).toEqual(source.entries.map((e) => e.name).sort());
 
-    expect(report.totals).toEqual({ replaced: 2, left: 1 });
+    expect(report.totals).toEqual({ replaced: 2, left: 1, declined: 0 });
     expect(report.parts.find((p) => p.part === 'word/document.xml').left[0]).toMatchObject({
       token: '[PERSON_NAME_9]',
       reason: 'brak-w-legendzie',

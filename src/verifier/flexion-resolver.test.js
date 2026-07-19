@@ -101,6 +101,65 @@ describe('createFlexionResolver — v1 scope: PERSON_NAME only (decyzja 13/O-FL-
   });
 });
 
+// DOCX-IMPL-PLAN.md FD-4/§4.3: the four worked examples binding for
+// O-DOCX-2(a) — confidence policy for a sink with no per-occurrence human
+// approval (v1 .docx reconstruction). Calls createFlexionResolver directly
+// (not through resolveOccurrences/deanon) so `note` is observable — S2 only
+// ever reads `.text`, but the DOCX report (FD-2) reads `.note` for the
+// "odmieniono" rows.
+describe('createFlexionResolver — FD-4 confidence policy (minConfidence)', () => {
+  const ctxFor = (overrides) => ({
+    token: '[PERSON_NAME_1]', tokenId: 'PERSON_NAME_1', type: 'PERSON_NAME',
+    baseValue: 'Jan Kowalski', occurrence: 0, part: 'word/document.xml', ...overrides,
+  });
+
+  it('S-P + agreeing annotation corroborate to wysoka — inflects even with the threshold on, with a note', () => {
+    const resolver = createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' });
+    const result = resolver(ctxFor({
+      case: 'D', contextBefore: 'Zasądza od ', contextAfter: ' kwotę zaległości.',
+    }));
+    expect(result).toEqual({
+      text: 'Jana Kowalskiego',
+      note: { przypadek: 'D', zrodlo: 'reguła', pewnosc: 'wysoka' },
+    });
+  });
+
+  it('an annotation alone (no corroborating signal) is niska — the threshold declines it, base value stands', () => {
+    const ctx = ctxFor({ case: 'D', contextBefore: 'Z akt wynika, że ', contextAfter: ' nie stawił się na rozprawę.' });
+
+    // O-DOCX-2(a): a wrong LLM annotation in a position with no context
+    // signal must NOT silently inflect a name sitting in subject position.
+    expect(createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' })(ctx)).toBeUndefined();
+
+    // Additive option (G-D7): omitted entirely, behavior is unfiltered by
+    // confidence — the SAME input now inflects (a future human-approval
+    // consumer would show this as a 'niska'-confidence suggestion instead).
+    const unfiltered = createFlexionResolver({ morph, seen: {} })(ctx);
+    expect(unfiltered).toEqual({
+      text: 'Jana Kowalskiego',
+      note: { przypadek: 'D', zrodlo: 'reguła', pewnosc: 'niska' },
+    });
+  });
+
+  it('an unambiguous preposition alone reaches wysoka with NO annotation at all', () => {
+    const resolver = createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' });
+    const result = resolver(ctxFor({
+      token: '[PERSON_NAME_2]', tokenId: 'PERSON_NAME_2', baseValue: 'Jan Kowalski',
+      contextBefore: 'Wnosimy o zasądzenie przeciwko ', contextAfter: ' kosztów procesu.',
+    }));
+    expect(result).toEqual({
+      text: 'Janowi Kowalskiemu',
+      note: { przypadek: 'C', zrodlo: 'reguła', pewnosc: 'wysoka' },
+    });
+  });
+
+  it('an annotation contradicting the context is nieustalony — base value, regardless of the threshold', () => {
+    const ctx = ctxFor({ case: 'M', contextBefore: 'Wnosimy o zasądzenie przeciwko ', contextAfter: ' kosztów.' });
+    expect(createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' })(ctx)).toBeUndefined();
+    expect(createFlexionResolver({ morph, seen: {} })(ctx)).toBeUndefined();
+  });
+});
+
 describe('createFlexionResolver — masking stays byte-for-byte untouched', () => {
   it('anonymizeText/buildTokenMap are unaffected by this module even existing (no import cycle, no shared mutable state)', () => {
     const text = 'Powód Jan Kowalski wnosi o zapłatę od pozwanego.';
