@@ -101,7 +101,17 @@ export const ENTITY_SOURCES = {
   ACCOUNT_IDENTIFIER:       ['polish-fp16'],
   AUTH_SECRET:              ['polish-fp16'],
   BANK_ACCOUNT_IDENTIFIER:  ['polish-fp16', 'regex'],
-  PAYMENT_CARD:             ['polish-fp16'],
+  // R-CARD (IDENTIFIER-COVERAGE-AUDIT §2): 'regex' added alongside the model —
+  // findPaymentCardEntities (anonymizer.js) is the deterministic W1 floor for
+  // payment cards (Luhn + IIN prefix + grouping). A Luhn+IIN-validated card is
+  // an AUTHORITATIVE detection (as much as PESEL/IBAN), so it must be listed
+  // here, not merely tolerated by the A8 net: PAYMENT_CARD is weight 4, so
+  // omitting 'regex' did not kill the floor (the net passes weight>=4 through)
+  // but flagged every regex card unauthoritativeSource — semantically wrong and
+  // one weight change from a silent dead floor. The house rule at the top of
+  // this map is explicit: "we do not lean on the A8 net." Adds no new model
+  // source (regex is not a download), so requiredSources is unchanged.
+  PAYMENT_CARD:             ['polish-fp16', 'regex'],
   PAYMENT_CARD_SECURITY:    ['polish-fp16'],
   DOCUMENT_REFERENCE:       ['multilang-fp32', 'polish-fp16', 'regex'],
   FINANCIAL_AMOUNT:         ['multilang-fp32', 'polish-fp16', 'regex'],
