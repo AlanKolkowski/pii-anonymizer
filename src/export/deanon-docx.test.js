@@ -61,12 +61,13 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
     expect(result.reports[0].report.totals).toEqual({ replaced: 1, left: 0, declined: 0 });
   });
 
-  // DOCX-IMPL-PLAN.md FD-3: end-to-end proof that resolveReplacement,
-  // passed in from the caller (main.js in production), reaches rebuildDocx
-  // through exportDeanonOutcomes -> rebuildDocxBlob and actually changes
-  // the bytes written into the .docx — the seam is not just wired, it does
-  // something observable in the file, plus the "odmieniono" report row.
-  it('a resolveReplacement passed to exportDeanonOutcomes inflects an annotated token in the rebuilt .docx', async () => {
+  // DOCX-IMPL-PLAN.md FD-3, updated for FL-5 K3's resolveReplacementFor(outcome)
+  // signature (behavior unchanged): resolveReplacementFor, passed in from the
+  // caller (main.js in production via buildOutcomeResolver), reaches
+  // rebuildDocx through exportDeanonOutcomes -> rebuildDocxBlob and actually
+  // changes the bytes written into the .docx — the seam is not just wired,
+  // it does something observable in the file, plus the "odmieniono" report row.
+  it('a resolveReplacementFor passed to exportDeanonOutcomes inflects an annotated token in the rebuilt .docx', async () => {
     const bytes = await docxBytes(docxParts(
       '<w:p><w:r><w:t xml:space="preserve">Zasądza się od [PERSON_NAME_1|D] kwotę.</w:t></w:r></w:p>',
     ));
@@ -74,7 +75,7 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
     const resolveReplacement = createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' });
 
     const result = await exportDeanonOutcomes({
-      outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx', resolveReplacement,
+      outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx', resolveReplacementFor: () => resolveReplacement,
     });
 
     const rebuilt = openZip(new Uint8Array(await result.blob.arrayBuffer()));
@@ -90,15 +91,55 @@ describe('exportDeanonOutcomes — DOCX outcomes go through the reconstruction',
     }]);
   });
 
-  it('an omitted resolveReplacement leaves the DOCX export byte-for-byte identical to today (G-D9)', async () => {
+  it('an omitted resolveReplacementFor leaves the DOCX export byte-for-byte identical to today (G-D9)', async () => {
     const bytes = await docxBytes(docxParts('<w:p><w:r><w:t>Pozwany [PERSON_NAME_1] wnosi.</w:t></w:r></w:p>'));
     const withResolver = await exportDeanonOutcomes({
       outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx',
-      resolveReplacement: createFlexionResolver({ morph: null, seen: {} }),
+      resolveReplacementFor: () => createFlexionResolver({ morph: null, seen: {} }),
     });
     const withoutResolver = await exportDeanonOutcomes({ outcomes: [docxOutcome(bytes)], legend: LEGEND, format: 'docx' });
     expect(new Uint8Array(await withResolver.blob.arrayBuffer()))
       .toEqual(new Uint8Array(await withoutResolver.blob.arrayBuffer()));
+  });
+
+  // FL-5 K3/O-FL5-2: exportDeanonOutcomes calls resolveReplacementFor(outcome)
+  // per outcome — the SAME callback threading through both the flat (U3) and
+  // reconstruction (U4) branches for a mixed export, one construction point.
+  it('resolveReplacementFor is invoked once per outcome, letting a mixed docx+flat export give each its own resolver', async () => {
+    const bytes = await docxBytes(docxParts(
+      '<w:p><w:r><w:t xml:space="preserve">Zasądza się od [PERSON_NAME_1|D] kwotę.</w:t></w:r></w:p>',
+    ));
+    const morph = loadMorphData(MINI_LEXICON);
+    const resolveReplacement = createFlexionResolver({ morph, seen: {}, minConfidence: 'wysoka' });
+    const seenOutcomeIds = [];
+    const textOutcome = {
+      id: 'o2', label: 'Notatka.txt', mcpLabel: 'Wynik 2',
+      text: 'Zobowiązuje [PERSON_NAME_1|D].', legendSnapshot: { ...LEGEND },
+    };
+
+    const result = await exportDeanonOutcomes({
+      outcomes: [docxOutcome(bytes), textOutcome],
+      legend: LEGEND,
+      format: 'docx',
+      resolveReplacementFor: (outcome) => {
+        seenOutcomeIds.push(outcome.id);
+        return outcome.id === 'o1' ? resolveReplacement : undefined;
+      },
+    });
+
+    // Per-outcome, in order — proves the callback is not a single shared
+    // resolver applied uniformly. o1 (docx-with-bytes) is called TWICE: once
+    // while buildDeanonExportEntries builds the flat rendering for every
+    // outcome (discarded for o1, since the reconstruction branch below
+    // supersedes it — pre-existing shape, unchanged by FL-5) and once more
+    // for the reconstruction itself; both calls are pure (buildOutcomeResolver
+    // has no side effects), so the extra call is harmless by construction.
+    expect(seenOutcomeIds).toEqual(['o1', 'o2', 'o1']);
+    const rebuilt = openZip(new Uint8Array(await result.blob.arrayBuffer()));
+    const rebuiltEntry = await rebuilt.extract(result.reports[0].name);
+    const inner = openZip(new Uint8Array(rebuiltEntry));
+    const doc = new TextDecoder().decode(await inner.extract('word/document.xml'));
+    expect(doc).toContain('Zasądza się od Jana Kowalskiego kwotę.'); // o1: inflected via its own resolver
   });
 
   it('blocks the export when the input carries non-hyperlink external references (§9.3)', async () => {

@@ -1,5 +1,4 @@
-import { deanonymizeText } from '../anonymizer.js';
-import { effectiveOutcomeLegend } from '../substitution.js';
+import { effectiveOutcomeLegend, resolveOccurrences, renderResolvedText } from '../substitution.js';
 import { createZipBlob } from './zip.js';
 
 const FORMAT_EXT = {
@@ -64,14 +63,28 @@ function hasEffectiveLegend(outcomes, liveLegend) {
   return outcomes.some((outcome) => Object.keys(outcome?.legendSnapshot ?? {}).length > 0);
 }
 
+// FL-5-LIVE-WIRING-DESIGN.md K3/U3: `options.resolveReplacementFor(outcome)`
+// is the per-outcome flexion seam (function -> resolveReplacement|undefined),
+// the same shape/construction point (buildOutcomeResolver,
+// verifier/flexion-live.js) every live sink shares. Omitted entirely (no key
+// on `options`), `resolveReplacementFor` stays undefined and
+// resolveOccurrences+renderResolvedText reduce to exactly deanonymizeText's
+// old behavior (proved byte-for-byte in substitution.test.js's "facade ≡
+// engine" golden) — every existing caller of this function is unaffected.
 export function buildDeanonExportEntries(outcomes, legend, format, options = {}) {
   assertFormat(format);
   const used = new Set();
-  return outcomes.map((outcome, index) => ({
-    name: uniqueDeanonFileName(outcome.label, index, format, used, options),
-    label: outcome.label,
-    text: deanonymizeText(outcome.text ?? '', effectiveOutcomeLegend(outcome, legend)),
-  }));
+  const { resolveReplacementFor } = options;
+  return outcomes.map((outcome, index) => {
+    const text = outcome.text ?? '';
+    const outcomeLegend = effectiveOutcomeLegend(outcome, legend);
+    const resolveReplacement = typeof resolveReplacementFor === 'function' ? resolveReplacementFor(outcome) : undefined;
+    return {
+      name: uniqueDeanonFileName(outcome.label, index, format, used, options),
+      label: outcome.label,
+      text: renderResolvedText(resolveOccurrences(text, { legend: outcomeLegend, resolveReplacement }), text),
+    };
+  });
 }
 
 function textLines(text) {
@@ -238,12 +251,13 @@ const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingm
 // same download path. Export gates throw with the user-facing diagnosis;
 // residues do NOT block (the report carries them).
 //
-// DOCX-IMPL-PLAN.md FD-3: `resolveReplacement` (the flexion seam) is an
-// OPTIONAL pass-through, undefined by default — flat exports (text/PDF,
-// buildDeanonExportEntries above) never receive it in this plan (§4.2:
-// those outputs stay at the base legend value until FL-5); only the DOCX
-// reconstruction gets a chance to inflect, and only when its caller built
-// a resolver at all.
+// FL-5-LIVE-WIRING-DESIGN.md K3/§3.4 (DOCX-IMPL-PLAN.md FD-3 done): the
+// flexion seam is an OPTIONAL pass-through, undefined by default. Since FL-5,
+// this branch (U4) and the flat path (U3, buildDeanonExportEntries above)
+// both take their resolver from the SAME per-outcome
+// resolveReplacementFor(outcome) the caller builds via buildOutcomeResolver
+// (verifier/flexion-live.js) — one construction point (O-FL5-2), no more
+// "flat stays at the base value" special case.
 async function rebuildDocxBlob(outcome, legend, resolveReplacement) {
   const { rebuildDocx } = await import('../docx-rebuild/rebuild-docx.js');
   const outcomeLegend = effectiveOutcomeLegend(outcome, legend);
@@ -258,7 +272,15 @@ async function rebuildDocxBlob(outcome, legend, resolveReplacement) {
   return { blob: new Blob([bytes], { type: DOCX_MIME }), report };
 }
 
-export async function exportDeanonOutcomes({ outcomes, legend, format, resolveReplacement }) {
+// `resolveReplacementFor` (K3, replacing the single `resolveReplacement`):
+// function outcome -> resolveReplacement|undefined, called once per outcome
+// so a mixed export (some DOCX-with-bytes, some flat) can give each outcome
+// its own resolver — U4 (DOCX reconstruction) always resolves through the
+// exact same callback U3 (flat) uses; the caller (main.js) is the one place
+// that decides per outcome whether the activation flag applies (§7: U4 is
+// permanently on, outside the flag). Omitted entirely, every outcome's
+// resolver is undefined — byte-for-byte today's behavior (G-FL5-1).
+export async function exportDeanonOutcomes({ outcomes, legend, format, resolveReplacementFor }) {
   assertFormat(format);
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
     throw new Error('Brak dokumentów wynikowych do eksportu');
@@ -268,13 +290,14 @@ export async function exportDeanonOutcomes({ outcomes, legend, format, resolveRe
   }
 
   const archive = outcomes.length > 1;
-  const entries = buildDeanonExportEntries(outcomes, legend, format, { prefix: archive });
+  const entries = buildDeanonExportEntries(outcomes, legend, format, { prefix: archive, resolveReplacementFor });
   const files = [];
   const reports = [];
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     const outcome = outcomes[i];
     if (format === 'docx' && outcome?.docx?.bytes) {
+      const resolveReplacement = typeof resolveReplacementFor === 'function' ? resolveReplacementFor(outcome) : undefined;
       const { blob, report } = await rebuildDocxBlob(outcome, legend, resolveReplacement);
       files.push({ name: entry.name, data: blob });
       reports.push({ name: entry.name, report });

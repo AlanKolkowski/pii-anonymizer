@@ -1,7 +1,6 @@
-import { deanonymizeText } from '../../anonymizer.js';
 import { applyPaletteVars } from '../entity-colors.js';
-import { splitTokenParts } from '../../tokens.js';
-import { effectiveOutcomeLegend } from '../../substitution.js';
+import { findTokens, splitTokenParts } from '../../tokens.js';
+import { effectiveOutcomeLegend, rawTokenLength, resolveOccurrences, renderResolvedText } from '../../substitution.js';
 
 const CLOSE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
 const COPY_ICON_SVG = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>';
@@ -160,6 +159,52 @@ function renderParts(host, text, legend, labels, mode) {
   }
 }
 
+// FL-5 K4 (§3.2 FL-5-LIVE-WIRING-DESIGN.md): a resolveOccurrences occurrence
+// pill — OUTPUT pane only. Unlike renderTokenPill/tokenParts (still used
+// as-is by the INPUT pane, which shows tokens, not resolved values, and is
+// deliberately untouched by FL-5), this always shows occ.finalText: with no
+// resolver that's just baseValue (source 'baza', identical to today), with
+// one it may be the generated/attested inflected form (source 'resolver').
+function renderOccurrencePill(occ) {
+  const span = document.createElement('span');
+  span.className = 'anno deanon-token deanon-token-output';
+  span.dataset.token = occ.token;
+  span.dataset.type = occ.type;
+  span.dataset.testid = `deanon-output-token-${occ.tokenId}`;
+  span.dataset.orig = occ.finalText;
+  span.title = `${occ.token} -> ${occ.finalText}`;
+  span.textContent = occ.finalText;
+  applyPaletteVars(span, occ.type);
+  return span;
+}
+
+// Private interleaving helper (O-FL5-7: not a S2 delta, kept local to this
+// module) — walks resolveOccurrences' result using the EXACT same spacer
+// arithmetic renderResolvedText uses (rawTokenLength via findTokens), so the
+// concatenation of these DOM text nodes is byte-identical to what copyActive
+// puts on the clipboard (G-FL5-2). A 'nierozwiązany' occurrence (no legend
+// entry at all) is a bare text node carrying its own finalText (===
+// the canonical token, annotation stripped) — matching today's
+// !part.orig branch in renderParts/tokenParts exactly.
+function renderResolvedParts(host, text, occurrences) {
+  host.innerHTML = '';
+  const rawLengthByIndex = new Map();
+  for (const match of findTokens(text)) rawLengthByIndex.set(match.index, rawTokenLength(match));
+
+  let cursor = 0;
+  for (const occ of occurrences) {
+    if (occ.index > cursor) host.appendChild(document.createTextNode(text.slice(cursor, occ.index)));
+    if (occ.source === 'nierozwiązany') {
+      host.appendChild(document.createTextNode(occ.finalText));
+    } else {
+      host.appendChild(renderOccurrencePill(occ));
+    }
+    const rawLength = rawLengthByIndex.get(occ.index) ?? occ.token.length;
+    cursor = occ.index + rawLength;
+  }
+  if (cursor < text.length) host.appendChild(document.createTextNode(text.slice(cursor)));
+}
+
 function emptyState(testid, title, body) {
   const el = document.createElement('div');
   el.className = 'editor-empty deanon-empty';
@@ -196,6 +241,18 @@ export function createDeanonWorkspace(rootEl, opts) {
   let exportMessageTimer = null;
   let lastRenderSignature = null;
 
+  // FL-5 K4/§3.5: three additive signature ingredients, each defaulting to a
+  // stable constant when the caller doesn't supply a getter (main.js wires
+  // them in K5) — existing callers/tests are unaffected, byte for byte.
+  // Without these, refreshLegend()'s no-op-skip (renderSignature equality)
+  // would silently skip a needed re-render whenever ONLY the attested-forms
+  // set changes underneath an unchanged legend (a new source variant, the
+  // flag flipping, or the morph artifact finishing its async load) — the
+  // screen would then show a stale inflection.
+  const getFlexionEnabled = opts.getFlexionEnabled ?? (() => false);
+  const getMorphReady = opts.getMorphReady ?? (() => false);
+  const getSeenVersion = opts.getSeenVersion ?? (() => 0);
+
   function renderSignature() {
     return JSON.stringify({
       legend: getLegend(),
@@ -204,6 +261,9 @@ export function createDeanonWorkspace(rootEl, opts) {
       busy: exportState.busy,
       message: exportState.message,
       flexionRows: exportState.flexionRows.length,
+      flexionEnabled: getFlexionEnabled(),
+      morphReady: getMorphReady(),
+      seenVersion: getSeenVersion(),
     });
   }
 
@@ -324,9 +384,18 @@ export function createDeanonWorkspace(rootEl, opts) {
     opts.onAdd?.(defaultOutcomeLabel(outcomes), text);
   }
 
+  // FL-5 K4/§3.3: the SAME resolveOccurrences construction the output pane
+  // renders from (opts.getResolveReplacement(active), pure/deterministic) —
+  // G-FL5-2's U1==U2 hash equality holds by construction, not by sharing
+  // state. No resolver (opts omits getResolveReplacement, or the caller's
+  // flag is off) reduces to exactly the old deanonymizeText behavior (proven
+  // byte-for-byte in substitution.test.js's facade golden).
   async function copyActive(active, legend) {
     if (!active) return;
-    await navigator.clipboard?.writeText?.(deanonymizeText(active.text, effectiveOutcomeLegend(active, legend)));
+    const outcomeLegend = effectiveOutcomeLegend(active, legend);
+    const resolveReplacement = typeof opts.getResolveReplacement === 'function' ? opts.getResolveReplacement(active) : undefined;
+    const occurrences = resolveOccurrences(active.text, { legend: outcomeLegend, resolveReplacement });
+    await navigator.clipboard?.writeText?.(renderResolvedText(occurrences, active.text));
   }
 
   function renderInputPane(parent, outcomes, active, legend) {
@@ -464,6 +533,15 @@ export function createDeanonWorkspace(rootEl, opts) {
     meta.textContent = 'wyjście · zdeanonimizowane';
     left.appendChild(meta);
     const activeLegend = effectiveOutcomeLegend(active, legend);
+    // FL-5 K4/§3.2: one resolveOccurrences call, shared by the restored/
+    // inflected counters AND the body below — a single construction per
+    // render, never re-derived per consumer (G-FL5-2 determinism).
+    const resolveReplacement = active && typeof opts.getResolveReplacement === 'function'
+      ? opts.getResolveReplacement(active)
+      : undefined;
+    const occurrences = active
+      ? resolveOccurrences(active.text, { legend: activeLegend, resolveReplacement })
+      : [];
     if (active && Object.keys(activeLegend).length > 0) {
       const restored = document.createElement('span');
       restored.className = 'meta deanon-restored-count';
@@ -471,6 +549,20 @@ export function createDeanonWorkspace(rootEl, opts) {
       restored.textContent = `${countRestored(active.text, activeLegend)} tokenów odtworzonych`;
       left.appendChild(makeSep());
       left.appendChild(restored);
+
+      // §3.2: "odmieniono N form" — informational only (never a gate),
+      // counted from source==='resolver' occurrences of THIS render's own
+      // occurrences array; hidden entirely at N=0 so flag-off/no-resolver
+      // outcomes show nothing new at all.
+      const inflectedCount = occurrences.filter((o) => o.source === 'resolver').length;
+      if (inflectedCount > 0) {
+        const inflected = document.createElement('span');
+        inflected.className = 'meta deanon-inflected-count';
+        inflected.dataset.testid = 'deanon-inflected-count';
+        inflected.textContent = declinedLabel(inflectedCount);
+        left.appendChild(makeSep());
+        left.appendChild(inflected);
+      }
     }
     toolbar.appendChild(left);
 
@@ -503,7 +595,7 @@ export function createDeanonWorkspace(rootEl, opts) {
       const body = document.createElement('div');
       body.className = 'deanon-editor deanon-editor-output anno-style-highlight';
       body.dataset.testid = 'deanon-output-body';
-      renderParts(body, active.text, activeLegend, labels, 'output');
+      renderResolvedParts(body, active.text, occurrences);
       editorPane.appendChild(body);
     }
 

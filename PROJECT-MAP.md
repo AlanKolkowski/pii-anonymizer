@@ -35,7 +35,17 @@ B = most do AI (human-in-the-loop, „pokazane = wysłane").
 (`src/verifier/checkers/n*`).
 **Projekty rozwoju:** `RECALL-90-DESIGN.md`, `W1-W3-MORPHOLOGY-DESIGN.md`,
 `DOCX-REBUILD-DESIGN.md`, `MCP-BRIDGE-DESIGN.md`, `SHARED-FOUNDATION-DESIGN.md`,
-`MACOS-BUILD-DESIGN.md`, `PRODUCT-DECISIONS.md`.
+`MACOS-BUILD-DESIGN.md`, `PRODUCT-DECISIONS.md`, `FL-5-LIVE-WIRING-DESIGN.md`.
+
+**Fleksja w żywych ujściach (FL-5, `feature/fl5-live-wiring`, pod bramką):**
+silnik fleksji (K1-K5/K7 z FL-5-LIVE-WIRING-DESIGN.md) wpięty w ekran, schowek
+i oba eksporty (`src/verifier/flexion-live.js`: `filterSeenForLegend` +
+`buildOutcomeResolver`, jedyny punkt konstrukcji resolvera; artefakt
+morfologiczny przez `src/verifier/morph/artifact.js`, dziś pusty-poprawny A0).
+Flaga `pii.deanon-flexion` (localStorage), domyślnie **OFF**
+(`FLEXION_LIVE_DEFAULT`, `src/main.js`) — aktywacja to osobna decyzja Alana.
+Ujście DOCX-rekonstrukcja pozostaje zawsze włączone, poza flagą. Silnik sam
+(`flexion-resolver.js`/`morph/*`/`case-detector/*`) pozostał niezmieniony.
 
 ---
 
