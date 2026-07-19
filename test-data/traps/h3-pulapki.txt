@@ -65,3 +65,22 @@ AG 1391751
 # implementacji: NIP + "000000" → suma = 240, mod 10 = 0 = pierwsza cyfra) —
 # na blockliście R-DOW mimo ważnej arytmetyki (dowód działania blocklisty).
 NIP000000
+
+# R-CARD (numer karty płatniczej, walidacja Luhna + prefiks IIN, 2026-07-19):
+# wektory NEGATYWNE karty — każdy musi dać ZERO PAYMENT_CARD. Dowód, że sama
+# suma Luhna nie wystarcza i że długość 13-19 + prefiks IIN robią realną
+# robotę precyzji (żaden nie jest kartą, choć kształtem bywa blisko).
+#
+# REGON-14 (ORGANIZATION_IDENTIFIER, adw_11_regon_krs): 14 cyfr, PRZECHODZI
+# Luhna (38+12459990001+0 → suma mod 10 = 0), ale prefiks "38" nie jest IIN
+# żadnej wspieranej sieci i żadna karta nie ma 14 cyfr (Diners tak — dlatego
+# świadomie poza podłogą) — dowód, że Luhn sam nie wystarcza.
+38124599900010
+# Bare NRB (BANK_ACCOUNT_IDENTIFIER): 26 cyfr, poza zakresem długości karty.
+61109010140000071219812874
+# Prefiks Visa (4) + długość 16, ale ZŁAMANA cyfra kontrolna Luhna (ostatnia
+# 1→2) — dowód działania bramki Luhna.
+4111111111111112
+# Przechodzi Luhna, długość 16, ale prefiks "9" nie jest IIN żadnej sieci —
+# dokładnie luka "16 losowych cyfr przechodzi Luhna ~1/10", którą domyka IIN.
+9111111111111110
