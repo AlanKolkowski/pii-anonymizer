@@ -329,7 +329,7 @@ export async function compileFromLines(lines, options = {}) {
   const recognizedLabels = [classification.givenName, classification.surname, classification.common];
   if (!recognizedLabels.some((l) => classificationCounts.has(l))) {
     throw new SgjpFormatError(
-      `żadna z rozpoznawanych etykiet klasyfikacji (${recognizedLabels.join(', ')}) nie wystąpiła w danych — `
+      `żadna z rozpoznawanych etykiet klasyfikacji (${recognizedLabels.join(', ')}) nie wystąpiła w danych – `
       + `zaobserwowano: ${[...classificationCounts.keys()].join(', ') || '(brak)'}. `
       + 'Sprawdź realny plik i ewentualnie dopasuj opcję "classification" (docs/sgjp-compile.md).',
     );
@@ -352,7 +352,7 @@ export async function compileFromLines(lines, options = {}) {
     const paradygmat = {};
     for (const [caseCode, forms] of byGender.get(bestGender)) {
       if (forms.size > 1) {
-        throw new SgjpFormatError(`imię "${lemma}", przypadek ${caseCode}: sprzeczne formy (${[...forms].sort().join('/')}) — imiona nie obsługują wariantywności w tym kompilatorze`);
+        throw new SgjpFormatError(`imię "${lemma}", przypadek ${caseCode}: sprzeczne formy (${[...forms].sort().join('/')}) – imiona nie obsługują wariantywności w tym kompilatorze`);
       }
       paradygmat[caseCode] = [...forms][0];
     }
@@ -374,7 +374,7 @@ export async function compileFromLines(lines, options = {}) {
         if (existing && !caseSetsAgree(existing, forms)) {
           throw new SgjpFormatError(
             `nazwisko "${lemma}": rozbieżne formy między rodzajami dla przypadku ${caseCode} `
-            + `(${[...existing].sort().join('/')} vs ${[...forms].sort().join('/')}) — `
+            + `(${[...existing].sort().join('/')} vs ${[...forms].sort().join('/')}) – `
             + 'format artefaktu (load.js) nie rozróżnia rodzaju w kluczu lematu nazwiska',
           );
         }
@@ -488,13 +488,13 @@ function renderReport({ stats, sourceLabel }, lock) {
   lines.push('| Klasa | Leksemy | Odjęte (zgodne z regułą) | Wyjątki (rozbieżne) | Zgodność |');
   lines.push('|---|---|---|---|---|');
   for (const [klasa, c] of Object.entries(stats.ruleAgreement)) {
-    const rate = c.rate == null ? '—' : `${(c.rate * 100).toFixed(1)}%`;
+    const rate = c.rate == null ? '–' : `${(c.rate * 100).toFixed(1)}%`;
     lines.push(`| ${klasa} | ${c.total} | ${c.subtracted} | ${c.exceptions} | ${rate} |`);
   }
   lines.push('');
   lines.push('## Etykiety klasyfikacji zaobserwowane w danych');
   lines.push('');
-  lines.push('Sprawdź to ręcznie, jeśli kompilujesz realny zrzut SGJP po raz pierwszy —');
+  lines.push('Sprawdź to ręcznie, jeśli kompilujesz realny zrzut SGJP po raz pierwszy –');
   lines.push('`compile-sgjp.mjs` zakłada etykiety "imię" / "nazwisko" / "pospolita"');
   lines.push('(patrz nagłówek skryptu i docs/sgjp-compile.md).');
   lines.push('');
