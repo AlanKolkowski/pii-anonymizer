@@ -142,4 +142,30 @@ describe('inspectDocx — egress classification (§9.3, C-DOCX-8)', () => {
     const inspection = await inspectDocx(reader);
     expect(inspection.external).toEqual({ hyperlinks: 0, blocked: [] });
   });
+
+  // MD3-D1: `w:` is a convention, not a guarantee — a document may legally
+  // bind the wordprocessingml namespace to any other prefix. The literal
+  // `<w:instrText`/`<w:fldSimple` regex would never see this; the
+  // namespace-aware DOM scan must catch it regardless.
+  it('a hostile field instruction under an ALIASED namespace prefix still blocks (regex would miss this)', async () => {
+    const aliasedDoc = `${XML_DECL}<x:document xmlns:x="http://schemas.openxmlformats.org/wordprocessingml/2006/main">`
+      + '<x:body><x:p><x:r><x:fldChar x:fldCharType="begin"/></x:r>'
+      + '<x:r><x:instrText xml:space="preserve"> DDEAUTO "cmd" "/c calc.exe" </x:instrText></x:r>'
+      + '<x:r><x:fldChar x:fldCharType="end"/></x:r></x:p></x:body></x:document>';
+    expect(aliasedDoc).not.toMatch(/<w:instrText/); // sanity: the old regex truly cannot see this
+    const reader = await docxOf(baseParts({ 'word/document.xml': aliasedDoc }));
+    const inspection = await inspectDocx(reader);
+    expect(inspection.external.blocked).toHaveLength(1);
+    expect(inspection.external.blocked[0]).toMatchObject({ part: 'word/document.xml', type: 'field:DDEAUTO' });
+  });
+
+  it('a hostile fldSimple instruction under an aliased prefix still blocks', async () => {
+    const aliasedDoc = `${XML_DECL}<x:document xmlns:x="http://schemas.openxmlformats.org/wordprocessingml/2006/main">`
+      + '<x:body><x:p><x:fldSimple x:instr="INCLUDEPICTURE &quot;http://evil.example/x.png&quot;">'
+      + '<x:r><x:t>result</x:t></x:r></x:fldSimple></x:p></x:body></x:document>';
+    const reader = await docxOf(baseParts({ 'word/document.xml': aliasedDoc }));
+    const inspection = await inspectDocx(reader);
+    expect(inspection.external.blocked).toHaveLength(1);
+    expect(inspection.external.blocked[0].type).toBe('field:INCLUDEPICTURE');
+  });
 });

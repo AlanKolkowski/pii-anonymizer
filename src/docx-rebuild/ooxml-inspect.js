@@ -46,13 +46,39 @@ const REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
 const OFFICE_DOCUMENT_REL = /\/relationships\/officeDocument$/;
 const TOKEN_PART_RELS = ['header', 'footer', 'footnotes', 'endnotes'];
 const STRICT_NS_MARKER = 'purl.oclc.org/ooxml';
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
 // Field instructions that make Word reach outside the document on open
 // (§9.3): INCLUDETEXT/INCLUDEPICTURE pull external content, DDE/DDEAUTO
-// launch inter-process links. Matched inside w:instrText elements or
-// w:fldSimple instruction attributes only — escaped body text cannot spell
-// a raw `<w:instrText` tag, so this cannot false-positive on prose.
+// launch inter-process links.
+const HOSTILE_INSTRUCTIONS = ['INCLUDETEXT', 'INCLUDEPICTURE', 'DDEAUTO', 'DDE'];
+const HOSTILE_INSTR_NAME_RE = new RegExp(`\\b(${HOSTILE_INSTRUCTIONS.join('|')})\\b`);
+
+// Fast POSITIVE pre-filter only (MD3-D1): matched inside a literal
+// `<w:instrText` element or a `<w:fldSimple w:instr="…">` attribute — escaped
+// body text cannot spell a raw tag, so a hit can never false-positive on
+// prose, and a hit still blocks without needing a DOM parse. A MISS does
+// NOT exempt the part from the DOM scan below: `w:` is a convention, not a
+// guarantee — the same document can legally declare
+// `xmlns:x="…wordprocessingml…"` and write `<x:instrText>DDEAUTO …`, which
+// this literal-prefix regex would never see but Word still executes.
 const HOSTILE_FIELD_RE = /<w:instrText[^>]*>[^<]*\b(INCLUDETEXT|INCLUDEPICTURE|DDEAUTO|DDE)\b|<w:fldSimple[^>]*w:instr="[^"]*\b(INCLUDETEXT|INCLUDEPICTURE|DDEAUTO|DDE)\b/;
+
+// Authoritative check (MD3-D1): namespace-aware, so it catches a hostile
+// instruction regardless of which prefix the document aliases the
+// wordprocessingml namespace to. `getElementsByTagNameNS`/`getAttributeNS`
+// resolve by the bound URI, never by the literal prefix string.
+function scanHostileFieldsDOM(doc) {
+  for (const el of doc.getElementsByTagNameNS(W_NS, 'instrText')) {
+    const hit = HOSTILE_INSTR_NAME_RE.exec(el.textContent ?? '');
+    if (hit) return hit[1];
+  }
+  for (const el of doc.getElementsByTagNameNS(W_NS, 'fldSimple')) {
+    const hit = HOSTILE_INSTR_NAME_RE.exec(el.getAttributeNS(W_NS, 'instr') ?? '');
+    if (hit) return hit[1];
+  }
+  return null;
+}
 
 function normalizeTarget(baseDir, target) {
   if (target.startsWith('/')) return target.slice(1);
@@ -165,16 +191,21 @@ export async function inspectDocx(reader) {
     }
   }
 
-  // §9.3: hostile field instructions in any token part block the export too.
+  // §9.3/MD3-D1: hostile field instructions in any token part block the
+  // export too. The regex is a fast positive pre-filter; a miss falls
+  // through to the namespace-aware DOM scan (parseXmlPart reuses the same
+  // parser MD4 uses on this same part downstream — cost is one extra parse,
+  // not a new dependency).
   for (const part of tokenParts) {
     const text = part === mainPart ? mainText : await readPartText(reader, part);
     rejectDoctype(text, part);
-    const hostile = HOSTILE_FIELD_RE.exec(text);
-    if (hostile) {
+    const regexHit = HOSTILE_FIELD_RE.exec(text);
+    const hostileName = regexHit ? (regexHit[1] ?? regexHit[2]) : scanHostileFieldsDOM(parseXmlPart(text, part));
+    if (hostileName) {
       external.blocked.push({
         part,
         id: '',
-        type: `field:${hostile[1] ?? hostile[2]}`,
+        type: `field:${hostileName}`,
         target: '',
       });
     }
