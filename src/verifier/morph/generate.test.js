@@ -99,6 +99,66 @@ describe('generateForm — foreign / unknown never generate', () => {
   });
 });
 
+describe('generateForm — bare feminine adjectival surnames (-ska/-cka/-dzka), morph:null (H-fix)', () => {
+  // Reproduces the resolveSurnameWord bug end to end: a legend value that IS
+  // already the nominative ("Zawadzka") must decline correctly into every
+  // dependent case with NO dictionary present. Before the fix, the "genuine"
+  // lemma filter mis-lemmatized to a truncated stem ("Zawadzk"), which then
+  // poisoned every generated case (and even wrongly "attested" D as the
+  // unchanged input via the poświadczona shortcut).
+  const analyzeNoDict = (value, attested = []) => analyzePersonName(value, attested, null);
+
+  it('declines every dependent case correctly from a nominative legend value, no dictionary', () => {
+    const a = analyzeNoDict('Zawadzka');
+    const expected = { D: 'Zawadzkiej', C: 'Zawadzkiej', B: 'Zawadzką', N: 'Zawadzką', Ms: 'Zawadzkiej' };
+    for (const [przypadek, tekst] of Object.entries(expected)) {
+      const g = generateForm(a, new Set([przypadek]));
+      expect(g.status, przypadek).toBe('ok');
+      expect(g.tekst, przypadek).toBe(tekst);
+      expect(g.zrodlo, przypadek).toBe('reguła');
+    }
+  });
+
+  it('holds for other -ska/-cka/-dzka surnames too', () => {
+    const table = {
+      Sowińska: { D: 'Sowińskiej', C: 'Sowińskiej', B: 'Sowińską', N: 'Sowińską', Ms: 'Sowińskiej' },
+      Kowalska: { D: 'Kowalskiej', C: 'Kowalskiej', B: 'Kowalską', N: 'Kowalską', Ms: 'Kowalskiej' },
+    };
+    for (const [lemma, forms] of Object.entries(table)) {
+      const a = analyzeNoDict(lemma);
+      for (const [przypadek, tekst] of Object.entries(forms)) {
+        expect(generateForm(a, new Set([przypadek])).tekst, `${lemma}/${przypadek}`).toBe(tekst);
+      }
+    }
+  });
+
+  it('a dependent-case legend value round-trips through the reconstructed nominative too', () => {
+    const a = analyzeNoDict('Zawadzkiej');
+    expect(generateForm(a, new Set(['M'])).tekst).toBe('Zawadzka');
+    expect(generateForm(a, new Set(['B'])).tekst).toBe('Zawadzką');
+  });
+
+  it('regression: masculine -ski/-cki/-dzki declines correctly from a nominative legend value (fix must not touch this path)', () => {
+    const a = analyzeNoDict('Kowalski');
+    expect(generateForm(a, new Set(['D'])).tekst).toBe('Kowalskiego');
+    expect(generateForm(a, new Set(['C'])).tekst).toBe('Kowalskiemu');
+    expect(generateForm(a, new Set(['N'])).tekst).toBe('Kowalskim');
+  });
+
+  it('regression: noun-type surname without an adjectival ending stays genuinely gender-ambiguous', () => {
+    // "Kowal" bears no adjectival ending, so — exactly like the pre-existing
+    // "Wilk" case above — masculine noun declension ("Kowala") and feminine
+    // indeclinable ("Kowal" unchanged) genuinely diverge. The fix's new
+    // adjectival self-match shortcut is keyed on class, not on "any
+    // self-match", so it must never fire here.
+    const a = analyzeNoDict('Kowal');
+    expect(a.rodzaj).toBeNull();
+    const g = generateForm(a, new Set(['D']));
+    expect(g.status).toBe('flaga');
+    expect(g.powod).toBe('rodzaj-niejednoznaczny');
+  });
+});
+
 describe('fullParadigm — complete 7-case view with explicit gaps', () => {
   it('all seven cases for a fully rule-governed adjectival surname', () => {
     const a = analyze('Jan Kowalski');

@@ -7,6 +7,14 @@
 
 import { genderFromAdjectivalSurname, isForeignName, generateSurnameParadigm, surnameLemmaCandidates } from './paradigms.js';
 
+// The -ski/-cki/-dzki (m) ~ -ska/-cka/-dzka (f) adjectival family is a
+// single closed, fully productive suffix set that denotes exactly one
+// paradigm each — unlike a generic ending (bare "-a", or "-na"/"-owa"),
+// nothing else in the rule engine legitimately produces these sequences at
+// the nominative by coincidence. See resolveSurnameWord's "genuine" filter
+// below for why that distinction matters.
+const ADJECTIVAL_SKI_FAMILY = new Set(['adjectival-ski-m', 'adjectival-ska-f']);
+
 const INITIAL_RE = /^\p{Lu}\.$/u;
 const WORD_RE = /^\p{Lu}[\p{L}]+(?:-\p{Lu}[\p{L}]+)?$/u;
 const MAX_WORDS = 4;
@@ -172,6 +180,31 @@ function resolveSurnameWord(tekst, morph) {
     const przypadek = Object.entries(regenerated.paradygmat ?? {}).find(([, f]) => f === tekst)?.[0] ?? null;
     return { ...c, przypadek };
   });
+
+  // A self-match from the closed -ski/-ska adjectival family (see
+  // ADJECTIVAL_SKI_FAMILY above) is diagnostic on its own: M (nominative)
+  // equals the lemma for every class, so this ISN'T a coincidence the way
+  // an indeclinable self-match is — the word genuinely already IS this
+  // surname's nominative. It must win outright over any noun-class
+  // candidate that the generic bare-vowel inversion heuristic derives from
+  // the SAME surface form purely by accident (e.g. treating "Zawadzka" —
+  // already the correct feminine nominative — as though it were the
+  // genitive of an invented masculine stem "Zawadzk"/"Zawadzek", both of
+  // which happen to regenerate "…a" as a coincidence of the closed
+  // alternation tables). This is intentionally NOT extended to -na/-owa:
+  // that ending is far less exclusive and collides with ordinary nouns too
+  // readily (e.g. "Barana", the oblique of the noun surname "Baran", also
+  // superficially matches adjectival-na-f) to trust a bare self-match.
+  const trusted = enriched.find((e) => e.lemma === tekst && ADJECTIVAL_SKI_FAMILY.has(e.klasa));
+  if (trusted) {
+    return {
+      lemat: trusted.lemma,
+      przypadki: [trusted.przypadek],
+      zrodloLematu: 'reguła',
+      kandydaciRodzaju: [trusted],
+    };
+  }
+
   // `feminine-indeclinable`'s paradigm is the constant function (every case
   // equals the lemma), so a candidate whose lemma is the surface form
   // ITSELF unchanged ALWAYS self-matches trivially — for every word, in

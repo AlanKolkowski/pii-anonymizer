@@ -40,6 +40,15 @@ const POLISH_LETTERS = new Set('abcdefghijklmnoprstuwyząćęłńóśźż'.split
 // declension targets); 'uy' has no native Polish occurrences.
 const FOREIGN_DIGRAPHS = ['th', 'sch', 'ck', 'oo', 'ee', 'ph', 'qu', 'uy'];
 
+// 'ck' is foreign only as a BARE final cluster (Beck, Nowack, Jack) —
+// followed by a vowel it is the native -cki/-cka adjectival surname suffix
+// (Nowacki/Nowacka, Sobocki/Sobocka: a palatalization cluster, unrelated to
+// the Germanic/English hard-k digraph). Every inflected form of that closed
+// suffix (classifySurname's adjectival-ski-m / adjectival-ska-f, §2.4) must
+// be exempted, or this gate silently refuses the entire -cki/-cka branch of
+// that very family before generateSurnameParadigm's own §2.4 rules ever run.
+const NATIVE_CKI_ENDING = /(?:cki|cka|ckiego|ckiej|ckiemu|ckim|cką)$/;
+
 // Orthography says "not a Polish declension target": q/v/x, foreign
 // diacritics, or tell-tale digraphs. PESEL frequency never overrides this
 // (§2.6 — the register carries foreign surnames too).
@@ -48,7 +57,11 @@ export function isForeignName(word) {
   for (const ch of lower) {
     if (/\p{L}/u.test(ch) && !POLISH_LETTERS.has(ch)) return true;
   }
-  return FOREIGN_DIGRAPHS.some((d) => lower.includes(d));
+  return FOREIGN_DIGRAPHS.some((d) => {
+    if (!lower.includes(d)) return false;
+    if (d === 'ck' && NATIVE_CKI_ENDING.test(lower)) return false;
+    return true;
+  });
 }
 
 // --- alternation tables (§2.4.1 — code, not data; closed, stable-only) ------
