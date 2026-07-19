@@ -85,16 +85,22 @@ const GPU_LS_KEY = 'pii.allow-gpu';
 const PRELOAD_OCR_LS_KEY = 'pii.preload-ocr';
 const PRELOAD_NER_LS_KEY = 'pii.preload-ner';
 
-// FL-5-LIVE-WIRING-DESIGN.md §7/O-FL5-4: mechanism wired in full, activation
-// is one switch — the DEFAULT VALUE is a gate decision (bramka), left OFF
-// here (`allMask`-from-ST-2 pattern: code merged and testable, asleep until
-// activated). Scope: U1-U3 only (screen/clipboard/flat export) — U4 (DOCX
-// reconstruction) is permanently on regardless of this flag (§7: it is
-// already gated by GATE-DOCX/O-DOCX-2, and gating it again here would be a
-// behavior regression from `main`). No UI toggle in v1 (checkbox is FL-6);
-// DevTools/localStorage is enough: `localStorage.setItem('pii.deanon-flexion','1')`.
+// FL-5-LIVE-WIRING-DESIGN.md §7/O-FL5-4/G-FL5-9: mechanism wired in full,
+// activation is one switch — the DEFAULT VALUE is a gate decision (bramka).
+// Gate verdict (2026-07-19, revised after re-analysis): DEFAULT ON. Reason:
+// the DOCX reconstruction sink (U4, cel #3 Alana) already inflects live with
+// no flag, so keeping screen/clipboard/flat export (U1-U3) behind an OFF flag
+// was an internal inconsistency; cel #2 Alana ("ma działać w całości...
+// z użyciem odpowiedniego przypadka") authorizes deanon-with-case directly.
+// Safe because fail-closed (a declined resolver = base value, never a guess),
+// visible on screen before use, and reversible (`pii.deanon-flexion='0'`).
+// Scope of the flag: U1-U3 (screen/clipboard/flat export) — U4 (DOCX
+// reconstruction) is permanently on regardless (§7: already gated by
+// GATE-DOCX/O-DOCX-2, gating it again here would be a behavior regression).
+// No UI toggle in v1 (checkbox is FL-6); DevTools/localStorage is enough to
+// turn it OFF: `localStorage.setItem('pii.deanon-flexion','0')`.
 const FLEXION_LS_KEY = 'pii.deanon-flexion';
-const FLEXION_LIVE_DEFAULT = false;
+const FLEXION_LIVE_DEFAULT = true;
 
 function isFlexionLiveEnabled() {
   // Read fresh every time (no caching), matching isGpuAllowed()'s pattern —

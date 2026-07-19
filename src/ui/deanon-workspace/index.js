@@ -694,6 +694,17 @@ export function createDeanonWorkspace(rootEl, opts) {
   }
 
   function render() {
+    // fl5-default-on test-isolation hardening: `exportMessageTimer` above (and
+    // any future async caller — an artifact/resolver load resolving late, an
+    // in-flight export finishing after its instance's owner has moved on) can
+    // fire against an instance whose `rootEl` a NEWER instance's DOM setup has
+    // since replaced (each test's `vi.resetModules()` + fresh `import('./main.js')`
+    // tears down the previous instance's document without ever cancelling its
+    // timers/promises). In real usage `rootEl` stays attached to `document.body`
+    // for the entire session, so this is always false there — a no-op guard,
+    // not a behavior change; it only silences a stale instance painting into a
+    // root the current page/test has already discarded.
+    if (!rootEl.isConnected) return;
     const outcomes = getOutcomes();
     const legend = getLegend();
     const active = currentOutcome(outcomes);

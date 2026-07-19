@@ -126,5 +126,10 @@ export default defineConfig({
   test: {
     globals: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', '**/.claude/worktrees/**'],
+    // fl5-default-on: see vitest.setup.js — flushes the morph artifact's
+    // fire-and-forget load after every test so it can never resolve mid-test
+    // in a later, unrelated file (cross-file flake once FLEXION_LIVE_DEFAULT
+    // made that late render observable).
+    setupFiles: ['./vitest.setup.js'],
   },
 });
