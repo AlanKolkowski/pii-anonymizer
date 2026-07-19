@@ -15,10 +15,13 @@
 // (baseValue) whenever the resolver declines, so an unresolvable occurrence
 // is simply left exactly as it is today.
 //
-// NOT wired into any UI call site by this turn (deanon-workspace,
-// outcomes-list, export/deanon.js all still call resolveOccurrences with no
-// resolveReplacement) — this module is inert in the running app until a
-// separately-gated change (FL-5/FL-6, human-approval plan+UI) invokes it.
+// Wired into the live app by FL-5 (FL-5-LIVE-WIRING-DESIGN.md): every
+// production construction goes through buildOutcomeResolver (flexion-live.js),
+// which the deanon sinks (screen/clipboard/flat export U1-U3, DOCX rebuild U4)
+// consume via resolveOccurrences. U1-U3 sit behind the pii.deanon-flexion flag
+// (default OFF — mechanism sleeps like allMask until Alan activates); U4 and
+// the R-D9 seen/legend filter run unconditionally. The 'niska'-confidence
+// review UI (surfacing sub-threshold suggestions for a click) is still FL-6.
 import { detectCase } from './case-detector/detect.js';
 import { analyzePersonName } from './morph/analyze.js';
 import { generateForm } from './morph/generate.js';
