@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createDeanonWorkspace } from './index.js';
 
-function mount({ outcomes = [], legend = {} } = {}) {
+function mount({ outcomes = [], legend = {}, ...extraOpts } = {}) {
   document.body.innerHTML = '<div id="root"></div>';
   const root = document.getElementById('root');
   const onAdd = vi.fn();
@@ -20,6 +20,7 @@ function mount({ outcomes = [], legend = {} } = {}) {
     onUpdate,
     onRemove,
     onExport,
+    ...extraOpts,
   });
   workspace.render();
   return { root, workspace, onAdd, onUpdate, onRemove, onExport };
@@ -298,5 +299,134 @@ describe('createDeanonWorkspace', () => {
     expect(stats).not.toContain('Pobrano plik PDF');
 
     vi.useRealTimers();
+  });
+});
+
+// FL-5-LIVE-WIRING-DESIGN.md K4 (§3.2/§3.3): the output pane renders from
+// resolveOccurrences (via opts.getResolveReplacement) instead of a plain
+// legend lookup, so a resolver-inflected occurrence shows its generated form
+// — a fake resolver stands in for the real engine here (already proven
+// end-to-end in flexion-resolver.test.js/main.docx-export.test.js); this
+// suite is about the WIRING (does the workspace call it and render/copy its
+// result correctly), not the linguistics.
+describe('deanon workspace — live flexion wiring (FL-5 K4)', () => {
+  it('(a) renders an inflected form in the output pill when opts.getResolveReplacement supplies a resolver', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'pismo.txt', text: 'Zobowiązuje [PERSON_NAME_1|D] do zapłaty.' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      getResolveReplacement: () => (ctx) => (ctx.tokenId === 'PERSON_NAME_1' ? { text: 'Jana Kowalskiego' } : undefined),
+    });
+
+    const pill = root.querySelector('[data-testid="deanon-output-token-PERSON_NAME_1"]');
+    expect(pill).not.toBeNull();
+    expect(pill.textContent).toBe('Jana Kowalskiego');
+    expect(pill.dataset.orig).toBe('Jana Kowalskiego');
+  });
+
+  it('(a) a declining resolver (returns undefined) leaves the base legend value untouched, exactly like no resolver at all', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'pismo.txt', text: 'Witaj [PERSON_NAME_1].' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      getResolveReplacement: () => () => undefined,
+    });
+
+    const pill = root.querySelector('[data-testid="deanon-output-token-PERSON_NAME_1"]');
+    expect(pill.textContent).toBe('Jan Kowalski');
+    expect(pill.dataset.orig).toBe('Jan Kowalski');
+  });
+
+  it('(b) copy places into the clipboard exactly the output pane\'s rendered textContent (hash equality, G-FL5-2)', async () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'pismo.txt', text: 'Zobowiązuje [PERSON_NAME_1|D] do zapłaty.' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+      getResolveReplacement: () => (ctx) => (ctx.tokenId === 'PERSON_NAME_1' ? { text: 'Jana Kowalskiego' } : undefined),
+    });
+
+    const outputBody = root.querySelector('[data-testid="deanon-output-body"]');
+    expect(outputBody.textContent).toBe('Zobowiązuje Jana Kowalskiego do zapłaty.');
+
+    root.querySelector('[data-testid="deanon-copy"]').click();
+    await Promise.resolve();
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(outputBody.textContent);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Zobowiązuje Jana Kowalskiego do zapłaty.');
+  });
+
+  it('(c) without opts.getResolveReplacement, output rendering/copy stay byte-for-byte identical to today', async () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'odpowiedz.txt', text: 'Witaj [PERSON_NAME_1].' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+    });
+    expect(root.querySelector('[data-testid="deanon-output-token-PERSON_NAME_1"]').textContent).toBe('Jan Kowalski');
+    root.querySelector('[data-testid="deanon-copy"]').click();
+    await Promise.resolve();
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Witaj Jan Kowalski.');
+  });
+
+  it('(d) shows "odmieniono N formę" only when at least one occurrence used the resolver', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'pismo.txt', text: 'Zobowiązuje [PERSON_NAME_1|D] wobec [PERSON_NAME_2].' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski', '[PERSON_NAME_2]': 'Anna Nowak' },
+      getResolveReplacement: () => (ctx) => (ctx.tokenId === 'PERSON_NAME_1' ? { text: 'Jana Kowalskiego' } : undefined),
+    });
+
+    const el = root.querySelector('[data-testid="deanon-inflected-count"]');
+    expect(el).not.toBeNull();
+    expect(el.textContent).toContain('odmieniono 1 formę');
+  });
+
+  it('(d) hides the inflected-count element entirely when nothing was resolved via the engine', () => {
+    const { root } = mount({
+      outcomes: [{ id: 'o1', label: 'a.txt', text: 'Witaj [PERSON_NAME_1].' }],
+      legend: { '[PERSON_NAME_1]': 'Jan Kowalski' },
+    });
+    expect(root.querySelector('[data-testid="deanon-inflected-count"]')).toBeNull();
+  });
+
+  it('(e) refreshLegend re-renders when opts.getSeenVersion() changes, even though legend/outcomes stay the same', () => {
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }];
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById('root');
+    let seenVersion = 1;
+    const workspace = createDeanonWorkspace(root, {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      entityLabels: {},
+      onExport: vi.fn(),
+      getSeenVersion: () => seenVersion,
+    });
+    workspace.render();
+
+    const before = root.querySelector('[data-testid="deanon-output-body"]');
+    seenVersion += 1; // e.g. a new attested surface-form variant just got ingested elsewhere
+    workspace.refreshLegend();
+    const after = root.querySelector('[data-testid="deanon-output-body"]');
+
+    expect(after).not.toBe(before); // re-rendered, not skipped as a no-op
+  });
+
+  it('(e) refreshLegend still skips a true no-op re-render when getSeenVersion() is stable (no regression on #38)', () => {
+    const legend = { '[PERSON_NAME_1]': 'Jan Kowalski' };
+    const outcomes = [{ id: 'o1', label: 'a.txt', text: 'A [PERSON_NAME_1]' }];
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById('root');
+    const workspace = createDeanonWorkspace(root, {
+      getOutcomes: () => outcomes,
+      getLegend: () => legend,
+      entityLabels: {},
+      onExport: vi.fn(),
+      getSeenVersion: () => 7,
+      getFlexionEnabled: () => true,
+      getMorphReady: () => false,
+    });
+    workspace.render();
+
+    const before = root.querySelector('[data-testid="deanon-output-body"]');
+    workspace.refreshLegend();
+    workspace.refreshLegend();
+    const after = root.querySelector('[data-testid="deanon-output-body"]');
+
+    expect(after).toBe(before);
   });
 });
