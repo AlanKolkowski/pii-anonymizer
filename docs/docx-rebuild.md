@@ -51,12 +51,34 @@ mieć odwołań, które Word odpali przy otwarciu:
 Blokada jest twarda (bez „eksportuj mimo to") — usuń odwołania w edytorze
 i zaimportuj plik ponownie.
 
+## Odmiana przez przypadki (fleksja)
+
+Aplikacja próbuje wstawić dane osobowe w poprawnym przypadku gramatycznym
+zamiast zawsze w mianowniku z legendy, gdy kontekst zdania na to pozwala
+(np. „od [PERSON_NAME_1]" wstawi „od Jana Kowalskiego", nie „od Jan Kowalski").
+Zasady:
+
+- Silnik nigdy nie zgaduje: odmienia tylko wtedy, gdy jest tego pewny
+  (jednoznaczny sygnał w zdaniu – przyimek, czasownik, rola procesowa – albo
+  poświadczona forma z innego miejsca w tym samym dokumencie źródłowym).
+  W razie wątpliwości wstawia formę bazową z legendy, tak jak dziś.
+- AI może (nieobowiązkowo) dopisać przypadek wprost przy tokenie, np.
+  `[PERSON_NAME_1|D]` dla dopełniacza – to podpowiedź, nie polecenie; błędna
+  podpowiedź bez potwierdzenia w kontekście zdania jest ignorowana.
+- Pasek stanu po eksporcie pokazuje „odmieniono N form"; pełna lista (z jakiej
+  wartości na jaką, w jakim przypadku) jest dostępna w rozwijanym raporcie pod
+  paskiem – to mapa do przeczytania pisma przed podpisem, nie zapora eksportu.
+- Dziś działa w trybie ograniczonym: pełny słownik odmiany (imiona, nazwiska)
+  jeszcze nie istnieje, więc odmiana działa najpewniej tam, gdzie dana osoba
+  pojawia się w dokumencie źródłowym więcej niż raz w różnych przypadkach, oraz
+  dla typowych nazwisk przymiotnikowych (np. na -ski/-cka). Zakres będzie rósł
+  bez zmian po stronie użytkownika.
+
 ## Ograniczenia v1
 
 - Eksport z zerem podmian jest blokowany (niemal na pewno zły plik albo cudza
   legenda); eksport płaski tekstowy pozostaje dostępny jak dotąd.
-- PDF dla wpisu DOCX nadal powstaje z płaskiego podglądu tekstowego.
-- Wartości wstawiane są w mianowniku z legendy (fleksja to osobny projekt —
-  szew `resolveReplacement` już istnieje).
+- PDF dla wpisu DOCX nadal powstaje z płaskiego podglądu tekstowego – odmiana
+  dotyczy wyłącznie rekonstrukcji .docx.
 - Formaty ODT/RTF/DOC oraz kontenery zaszyfrowane są odrzucane czytelnym
   błędem.
