@@ -9,6 +9,7 @@ import {
   defaultEnabledEntities,
   requiredSources,
 } from './entity-sources.js';
+import { findRegexEntities } from '../../anonymizer.js';
 
 describe('entity-sources config', () => {
   it('every alias used in ENTITY_SOURCES exists in SOURCES', () => {
@@ -101,6 +102,65 @@ describe('entity-sources config', () => {
     } finally {
       delete process.env.VITE_MODEL_DTYPE;
       vi.resetModules();
+    }
+  });
+});
+
+// Self-validating regex-floor coverage guard (IDENTIFIER-COVERAGE-AUDIT.md,
+// R-CARD entity-sources gap found 2026-07-19). sourceFilterStep drops any
+// candidate whose source alias isn't listed for its type — the "we do not lean
+// on the A8 net" rule stated at the top of ENTITY_SOURCES. So a find*Entities
+// that emits a type whose ENTITY_SOURCES entry omits 'regex' is silently
+// dropped (weight < 4, e.g. DATE_OF_BIRTH before R-DATE) or passed through
+// mis-flagged unauthoritativeSource (weight >= 4, e.g. PAYMENT_CARD after
+// R-CARD): fragile and one weight change from a dead floor. R-CARD's own green
+// suite couldn't catch it — the unit tests exercise findRegexEntities in
+// isolation, never through sourceFilterStep. This guard runs the REAL
+// findRegexEntities over real vectors and asserts 'regex' coverage for every
+// type it ACTUALLY emits — including the variable-emitted ones
+// (ORGANIZATION_IDENTIFIER, PERSON_IDENTIFIER) that a hand-written manifest of
+// literal `entity_group:` strings would miss. Self-validating: it only checks
+// types that are truly emitted, so it can never give a false PASS; its reach
+// equals the fixture's coverage, and each new R-* is expected to extend the
+// fixture with its own positive vector.
+describe('ENTITY_SOURCES — regex-floor coverage (self-validating)', () => {
+  // Real, checksum-valid vectors lifted from anonymizer.test.js — one line per
+  // regex family, kept separate so a long digit run in one line can't bleed
+  // into another family's shape.
+  const REGEX_FLOOR_FIXTURE = [
+    'Dane strony: Bożena Wróblewska, PESEL 57020976679, dowód osobisty seria i nr BMA 733701, paszport nr AG 1391751, prawo jazdy nr 92712/00/2780.',
+    'Pojazd: nr rej. CT 4567K, VIN VF1BB05CF12345678, rok prod. 2016.',
+    'Konto: PL61109010140000071219812874',
+    'NIP 524-987-12-30 oraz REGON 381245999 w rejestrze.',
+    'Kontakt: jan@test.com, tel. +48 600 123 45 67.',
+    'Dla nieruchomości Sąd Rejonowy prowadzi KW nr TO1T/00012345/6.',
+    'Karta: 4111 1111 1111 1111 (do rozliczenia).',
+    'Powód urodzony 7.03.1985 w Toruniu.',
+    'Analogiczne stanowisko w uchwale (sygn. akt III CZP 87/22).',
+    'Zasądzono kwotę 45 000,00 zł tytułem odszkodowania.',
+  ];
+
+  it("lists 'regex' for every type findRegexEntities actually emits", () => {
+    const emitted = new Set();
+    for (const line of REGEX_FLOOR_FIXTURE) {
+      for (const e of findRegexEntities(line)) emitted.add(e.entity_group);
+    }
+
+    // Fixture must keep its teeth: a broken fixture that emits nothing would
+    // make the coverage loop below vacuously pass. Pin the regression subject
+    // (PAYMENT_CARD) and a broad floor explicitly.
+    expect(emitted.has('PAYMENT_CARD'), 'fixture no longer exercises PAYMENT_CARD').toBe(true);
+    expect(emitted.size).toBeGreaterThanOrEqual(8);
+
+    for (const type of emitted) {
+      expect(
+        ENTITY_SOURCES[type],
+        `findRegexEntities emits ${type} but it has no ENTITY_SOURCES entry — sourceFilterStep drops it outright`,
+      ).toBeDefined();
+      expect(
+        ENTITY_SOURCES[type],
+        `findRegexEntities emits ${type} but ENTITY_SOURCES['${type}'] does not list 'regex' — sourceFilterStep silently drops it (weight<4) or passes it mis-flagged unauthoritativeSource (weight>=4). Add 'regex'.`,
+      ).toContain('regex');
     }
   });
 });
