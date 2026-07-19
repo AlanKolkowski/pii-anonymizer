@@ -841,6 +841,99 @@ function findIbanEntities(text) {
   return entities;
 }
 
+// ── Payment card numbers (R-CARD: IDENTIFIER-COVERAGE-AUDIT §2) ─────────
+//
+// PAYMENT_CARD is a W1 (masked) type that previously had NO deterministic
+// floor — only the model — so it leaked whenever the model missed it (audit
+// §2, eval PAYMENT_CARD recall 0%). A card number carries the Luhn (mod-10)
+// check digit, an ISO/IEC 7812 standard as reliable and public as the PESEL/
+// NIP/IBAN checksums above, so R-CARD is the same "precision from arithmetic,
+// not context" floor as the rest of the A1 family.
+//
+// Three independent, stacked constraints deliver FP=0 on the trap corpus
+// (test-data/traps/h3-pulapki.txt), each closing a gap the previous leaves:
+//   1. LENGTH 13-19 (digit count of the whole maximal run) excludes PESEL
+//      (11), NIP (10), REGON-9, phone (9) and IBAN/NRB (26) outright.
+//   2. LUHN rejects ~90% of remaining random runs — but NOT all: a 14-digit
+//      REGON coincidentally passes it (38124599900010 is Luhn-valid), which
+//      is exactly why Luhn alone is not sufficient.
+//   3. IIN PREFIX + PER-NETWORK LENGTH (ISO/IEC 7812), restricted to the
+//      networks that dominate the Polish market — Visa (4; len 13/16/19),
+//      Mastercard (51-55 / 2221-2720; len 16), American Express (34/37; len
+//      15). No supported network is 14 digits long, so the Luhn-valid
+//      REGON-14 is rejected; and a 16-digit run that passes Luhn but begins
+//      with a non-issuer digit (9111111111111110) is rejected too — the
+//      "~1/10 random Luhn pass" gap the audit flagged. Diners Club (14-digit)
+//      is deliberately OUT of the deterministic floor precisely because its
+//      length collides with REGON-14; the model still covers the rare
+//      Diners/Discover/JCB card as the non-deterministic ceiling above.
+//
+// GROUPING gate: a card may be written contiguously or grouped 4-4-4-4 (with
+// a trailing short group for 13/19-digit Visa) or Amex 4-6-5, using single
+// space/hyphen separators. Any OTHER grouping is rejected — which is what
+// stops two space-adjacent numbers in a table cell ("401288 8888881881")
+// from merging into a spuriously card-shaped run even when their concatenated
+// digits would pass Luhn + IIN. OCR l/O folding is shared with the rest of
+// the family; no newline separator (a card is a single-line token, per the
+// audit contract).
+const CARD_GROUP_SEP = /[ \u00a0-]/;
+const CARD_CLUSTER_RE = /(?<![A-Za-z0-9])[0-9lO]+(?:[ \u00a0-][0-9lO]+)*(?![A-Za-z0-9])/g;
+
+// Luhn (mod-10) check, ISO/IEC 7812. Verified against the canonical network
+// test PANs: 4111111111111111 (Visa), 5500005555555559 (Mastercard),
+// 378282246310005 (Amex) all validate; the same Visa PAN with a bumped final
+// digit (…112) does not.
+function luhnValid(digits) {
+  let sum = 0;
+  let doubleIt = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = digits.charCodeAt(i) - 48;
+    if (doubleIt) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+    doubleIt = !doubleIt;
+  }
+  return sum % 10 === 0;
+}
+
+// ISO/IEC 7812 issuer ranges paired with the network's real length(s). The
+// length pairing is load-bearing, not cosmetic: it is what keeps every Polish
+// official identifier out (none of 13/15/16/19 is a PESEL/NIP/REGON/IBAN/
+// phone length, and 14 — REGON-14 — is a length no listed network uses).
+function hasCardIin(digits) {
+  const len = digits.length;
+  const p2 = +digits.slice(0, 2);
+  const p4 = +digits.slice(0, 4);
+  if (digits[0] === '4') return len === 13 || len === 16 || len === 19; // Visa
+  if (p2 >= 51 && p2 <= 55) return len === 16;                          // Mastercard
+  if (p4 >= 2221 && p4 <= 2720) return len === 16;                      // Mastercard (2-series)
+  if (p2 === 34 || p2 === 37) return len === 15;                        // American Express
+  return false;
+}
+
+// Real cards group as 4-4-4-4 (a trailing 1-4 digit group covers the 13- and
+// 19-digit Visa lengths) or Amex 4-6-5; a contiguous run (one group) is
+// always fine. Anything else is two fields a single separator apart.
+function cardGroupingValid(groupLengths) {
+  if (groupLengths.length === 1) return true;
+  if (groupLengths.length === 3 && groupLengths[0] === 4 && groupLengths[1] === 6 && groupLengths[2] === 5) return true;
+  const last = groupLengths[groupLengths.length - 1];
+  return groupLengths.slice(0, -1).every((g) => g === 4) && last >= 1 && last <= 4;
+}
+
+function findPaymentCardEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(CARD_CLUSTER_RE)) {
+    const raw = m[0];
+    const { digits } = digitPositions(raw);
+    if (digits.length < 13 || digits.length > 19) continue;
+    if (!cardGroupingValid(raw.split(CARD_GROUP_SEP).map((g) => g.length))) continue;
+    if (!luhnValid(digits)) continue;
+    if (!hasCardIin(digits)) continue;
+    entities.push({ entity_group: 'PAYMENT_CARD', start: m.index, end: m.index + raw.length, score: 1.0, source: 'regex' });
+  }
+  return entities;
+}
+
 // ── Financial amounts (A4: EVAL-RECALL-AUDIT §8) ───────────────────────
 //
 // Thousands groups accept either a dot or whitespace (incl. NBSP) as
@@ -870,6 +963,7 @@ export function findRegexEntities(text) {
     ...findEmailEntities(text),
     ...findNumericIdentifierEntities(text),
     ...findIbanEntities(text),
+    ...findPaymentCardEntities(text),
     ...findVehicleIdentifierEntities(text),
     ...findDocketNumberEntities(text),
     ...findDowodOsobistyEntities(text),

@@ -1732,3 +1732,148 @@ describe('findRegexEntities — H-3 re-analiza: 6/6 wycieków case-(a) z korpusu
   });
 });
 
+describe('findRegexEntities — R-CARD (payment card number, Luhn + IIN floor)', () => {
+  // IDENTIFIER-COVERAGE-AUDIT.md §2 "Karta płatnicza — brak walidacji Luhna":
+  // PAYMENT_CARD is W1 (masked) but had NO deterministic floor, only the
+  // model. R-CARD adds a regex floor gated on three stacked, standard signals
+  // (length 13-19, Luhn mod-10, ISO/IEC 7812 issuer prefix). All card numbers
+  // below are SYNTHETIC test numbers (Visa 4111…, Mastercard 5500…, Amex
+  // 3782… — the canonical network test PANs), never real cards.
+  const findCards = (text) =>
+    findRegexEntities(text).filter((e) => e.entity_group === 'PAYMENT_CARD');
+  const cardSpans = (text) => findCards(text).map((e) => text.slice(e.start, e.end));
+
+  it.each([
+    ['Visa 16, contiguous', '4111111111111111'],
+    ['Visa 16 (with zeros)', '4012888888881881'],
+    ['Mastercard 16', '5500005555555559'],
+    ['Amex 15', '378282246310005'],
+    ['Visa 13', '4000000000006'],
+    ['Visa 19', '4000000000000000006'],
+  ])('detects a bare %s test card by Luhn + IIN alone (%s)', (_label, pan) => {
+    const text = `Płatność kartą nr ${pan} została zaksięgowana.`;
+    expect(cardSpans(text)).toContain(pan);
+  });
+
+  it('detects a Visa card grouped 4-4-4-4 with spaces (span includes the separators)', () => {
+    const text = 'Karta: 4111 1111 1111 1111 (do rozliczenia).';
+    expect(cardSpans(text)).toContain('4111 1111 1111 1111');
+  });
+
+  it('detects a Visa card grouped 4-4-4-4 with hyphens', () => {
+    const text = 'Numer karty 4111-1111-1111-1111 podany w formularzu.';
+    expect(cardSpans(text)).toContain('4111-1111-1111-1111');
+  });
+
+  it('detects an Amex card grouped 4-6-5', () => {
+    const text = 'Karta American Express 3782 822463 10005 obciążona kwotą.';
+    expect(cardSpans(text)).toContain('3782 822463 10005');
+  });
+
+  it('detects a card OCR-folded (lowercase-l→1, uppercase-O→0), same convention as the A1 family', () => {
+    // 4Ol2888888881881 folds to the valid Visa 4012888888881881.
+    const text = 'Skan potwierdzenia: karta 4Ol2888888881881 (niska jakość OCR).';
+    expect(cardSpans(text)).toContain('4Ol2888888881881');
+  });
+
+  it('emits score 1.0 and source "regex" (deterministic floor, same as PESEL/IBAN)', () => {
+    const [card] = findCards('Karta nr 4111111111111111.');
+    expect(card).toMatchObject({ entity_group: 'PAYMENT_CARD', score: 1.0, source: 'regex' });
+  });
+
+  // ── precision gates ───────────────────────────────────────────────────
+  it('rejects a Visa-prefixed 16-digit run whose Luhn check digit is wrong (Luhn gate)', () => {
+    // 4111111111111112 = the valid Visa test PAN with its last digit bumped.
+    const text = 'Rzekomy numer karty 4111111111111112 nie przechodzi sumy Luhna.';
+    expect(cardSpans(text)).toEqual([]);
+  });
+
+  it('rejects a Luhn-valid 16-digit run that starts with a non-issuer digit (IIN gate)', () => {
+    // 9111111111111110 passes Luhn but "9" is no card network's IIN — this is
+    // the "16-digit random string passes Luhn ~1/10" gap the audit flagged,
+    // closed by the IIN prefix requirement.
+    const text = 'Ciąg 9111111111111110 przechodzi Luhna, ale nie jest kartą.';
+    expect(cardSpans(text)).toEqual([]);
+  });
+
+  it('rejects a Luhn-valid 14-digit REGON even though it passes Luhn (IIN + no-14-length gate)', () => {
+    // 38124599900010 is a real 14-digit REGON (checksum-valid ORGANIZATION_
+    // IDENTIFIER) that ALSO happens to satisfy Luhn — the exact collision that
+    // Luhn-alone would misfire on. No supported network is 14 digits long
+    // (Diners Club is, and is deliberately excluded for precisely this
+    // reason), so its "38" prefix + 14 length is rejected.
+    const text = 'Oddział posługuje się REGON 38124599900010 w ewidencji.';
+    expect(cardSpans(text)).toEqual([]);
+    // …and it is still caught as the organization identifier it really is.
+    expect(
+      findRegexEntities(text)
+        .filter((e) => e.entity_group === 'ORGANIZATION_IDENTIFIER')
+        .map((e) => text.slice(e.start, e.end)),
+    ).toContain('38124599900010');
+  });
+
+  it('rejects two space-adjacent numbers that merge into a Luhn/IIN-valid but mis-grouped run (grouping gate)', () => {
+    // The digits of the valid Visa 4012888888881881 re-split as 6+10 groups —
+    // the shape two unrelated fields take when a single space sits between
+    // them in a table. Real cards group 4-4-4-4 (or Amex 4-6-5); [6,10] is
+    // neither, so the run is rejected even though the concatenated digits
+    // would pass Luhn + IIN.
+    const text = 'W wierszu tabeli: 401288 8888881881 (dwie osobne wartości).';
+    expect(cardSpans(text)).toEqual([]);
+  });
+
+  it('embeds cleanly in prose without swallowing neighbouring words/punctuation', () => {
+    const text = 'Obciążono kartę 4111111111111111, a następnie wystawiono paragon.';
+    const cards = findCards(text);
+    expect(cards).toHaveLength(1);
+    expect(text.slice(cards[0].start, cards[0].end)).toBe('4111111111111111');
+  });
+});
+
+describe('findRegexEntities — R-CARD pułapkownik (zero PAYMENT_CARD false positives)', () => {
+  // Mirror of the HC-2 pułapkownik above, for R-CARD: every trap line in
+  // test-data/traps/h3-pulapki.txt must yield ZERO PAYMENT_CARD candidates.
+  // The card-specific negative vectors (REGON-14, bare NRB, Luhn-broken and
+  // non-IIN 16-digit runs) were added to that living registry as part of
+  // R-CARD; the pre-existing HC-2 vectors (dates, amounts, docket/invoice
+  // numbers, KRS, phone) must stay card-free too.
+  function loadTraps() {
+    const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+  }
+
+  const traps = loadTraps();
+
+  it.each(traps)('zero PAYMENT_CARD false positives on: %s', (trapText) => {
+    const hits = findRegexEntities(trapText).filter((e) => e.entity_group === 'PAYMENT_CARD');
+    expect(hits.map((e) => trapText.slice(e.start, e.end))).toEqual([]);
+  });
+
+  // Family members that produce a legitimate non-card identifier of their own
+  // (so they cannot live in the shared HC-2 trap file, whose loop asserts zero
+  // PERSON_IDENTIFIER) — asserted inline for zero PAYMENT_CARD instead.
+  it.each([
+    ['PESEL (11 digits)', 'Dane: PESEL 92071314764 w aktach.', 'PERSON_IDENTIFIER'],
+    ['NIP (10 digits)', 'Sprzedawca NIP 5249871230 na fakturze.', 'ORGANIZATION_IDENTIFIER'],
+    ['REGON-9', 'Przedsiębiorca REGON 381245999 w rejestrze.', 'ORGANIZATION_IDENTIFIER'],
+    ['IBAN (PL + 26)', 'Konto: PL61109010140000071219812874 do wpłat.', 'BANK_ACCOUNT_IDENTIFIER'],
+    ['bare NRB (26 digits)', 'Rachunek 61109010140000071219812874 koniec.', 'BANK_ACCOUNT_IDENTIFIER'],
+    ['phone (+48)', 'Tel: +48 601 234 567 (kontakt).', 'PHONE_NUMBER'],
+    ['KW number', 'Księga wieczysta TO1T/00012345/6 bez obciążeń.', 'LAND_REGISTER_IDENTIFIER'],
+  ])('does not flag %s as a payment card (still caught as its real type)', (_label, text, realType) => {
+    expect(
+      findRegexEntities(text)
+        .filter((e) => e.entity_group === 'PAYMENT_CARD')
+        .map((e) => text.slice(e.start, e.end)),
+    ).toEqual([]);
+    // Sanity: the number is still detected as the identifier it actually is,
+    // so this is a type-precision proof, not just "nothing matched".
+    expect(
+      findRegexEntities(text).some((e) => e.entity_group === realType),
+    ).toBe(true);
+  });
+});
+
