@@ -1877,3 +1877,120 @@ describe('findRegexEntities — R-CARD pułapkownik (zero PAYMENT_CARD false pos
   });
 });
 
+describe('findRegexEntities — R-DATE (data urodzenia, anchored-only floor, IDENTIFIER-COVERAGE-AUDIT §2)', () => {
+  // DATE_OF_BIRTH is W1 (masked) but had NO deterministic floor — only the
+  // model — so it leaked whenever the model missed. R-DATE adds the floor, but
+  // ANCHORED ONLY (exactly like R-PJ): dates are everywhere in legal writing
+  // (contract/hearing/judgment/invoice dates, deadlines), so a bare date
+  // pattern would mask every one of them as DATE_OF_BIRTH. Precision comes
+  // entirely from a birth anchor ("ur.", "urodzon…", "data urodzenia") in the
+  // preceding window — the shape is deliberately liberal because the anchor,
+  // not the shape, is the gate. All three positive sentences are copied
+  // verbatim from test-data/adversarial/adw_36_daty_urodzenia.txt.
+  const findDob = (text) =>
+    findRegexEntities(text).filter((e) => e.entity_group === 'DATE_OF_BIRTH');
+  const dobSpans = (text) => findDob(text).map((e) => text.slice(e.start, e.end));
+
+  it('detects DD.MM.RRRR anchored by "ur." (7.03.1985)', () => {
+    const text = 'Wnioskodawca Konrad Żurawski, ur. 7.03.1985 r. w Toruniu, syn Marka i Grażyny.';
+    expect(dobSpans(text)).toContain('7.03.1985');
+  });
+
+  it('detects "DD miesiąc RRRR" anchored by "urodzona" (29 sierpnia 1959)', () => {
+    const text = 'Uczestniczka Leokadia Szczygieł, urodzona dnia 29 sierpnia 1959 roku w Chełmnie.';
+    expect(dobSpans(text)).toContain('29 sierpnia 1959');
+  });
+
+  it('detects RRRR-MM-DD anchored by "data urodzenia" (1985-03-07)', () => {
+    const text = 'W systemie ewidencji zapisano: data urodzenia: 1985-03-07.';
+    expect(dobSpans(text)).toContain('1985-03-07');
+  });
+
+  it('emits score 1.0 and source "regex" (deterministic floor, same as PESEL/IBAN/R-CARD)', () => {
+    const [dob] = findDob('Świadek, ur. 12.05.1970, zeznał do protokołu.');
+    expect(dob).toMatchObject({ entity_group: 'DATE_OF_BIRTH', score: 1.0, source: 'regex' });
+  });
+
+  it('detects a 2-digit-year DD.MM.RR anchored form (7.03.85)', () => {
+    const text = 'Powód, ur. 7.03.85, zam. w Toruniu.';
+    expect(dobSpans(text)).toContain('7.03.85');
+  });
+
+  // ── precision: NO birth anchor => ZERO, across all three date shapes ────
+  it('does not flag a contract date with no birth anchor nearby (verbal)', () => {
+    const text = 'Umowę zawarto dnia 20 lutego 2025 r., a wypowiedziano 11 marca 2025 r.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  it('does not flag a hearing date with no birth anchor nearby (verbal)', () => {
+    const text = 'Termin rozprawy wyznaczono na 4 czerwca 2025 r., godz. 9:30.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  it('does not flag a dotted invoice date with no birth anchor nearby', () => {
+    const text = 'Data wystawienia faktury: 01.02.2023 (płatność 14 dni).';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  it('does not flag an ISO order date with no birth anchor nearby', () => {
+    const text = 'Zamówienie z dnia 2024-05-15 zrealizowano w terminie.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  it('does not treat a generic "Data …" label as the birth anchor (anchor is birth-specific)', () => {
+    // "Data sporządzenia" is a date LABEL but not "data urodzenia" — the
+    // anchor requires the word "urodzenia", not merely "data".
+    const text = 'Data sporządzenia pisma: 7.03.1985.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  it('does not let a word ending in "ur." act as a birth anchor (procedur./struktur. word-tail)', () => {
+    // "procedur." (gen. pl. of "procedura") ends in the literal "ur." — a bare
+    // unguarded /ur\./ substring anchor would misread it as the "ur." (born)
+    // abbreviation and mask the following date. The anchor is word-boundary
+    // guarded (\bur\.), so a word-internal "ur." never licenses a match.
+    const text = 'Wdrożono szereg nowych procedur. 15.03.2024 rozpoczęto audyt.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+
+  // ── window enforcement, mirroring R-PJ / R-PASZ ─────────────────────────
+  it('enforces the context window: a birth anchor further back than the window does not license a match', () => {
+    const filler = 'x'.repeat(60);
+    const prefix = `Osoba ur. ${filler} `;
+    const number = '7.03.1985';
+    const text = `${prefix}a data ${number} dotyczy zupełnie innej sprawy.`;
+    const gap = text.indexOf(number) - (prefix.indexOf('ur.') + 'ur.'.length);
+    expect(gap).toBeGreaterThan(40); // sanity check on the fixture itself
+    expect(dobSpans(text)).not.toContain(number);
+  });
+
+  it('does not let a birth anchor cross a paragraph break (window truncated at \\n\\n)', () => {
+    const text = 'Powód urodzony w Toruniu.\n\nUmowę zawarto dnia 20.02.2025 r.';
+    expect(dobSpans(text)).toEqual([]);
+  });
+});
+
+describe('findRegexEntities — R-DATE pułapkownik (zero DATE_OF_BIRTH false positives)', () => {
+  // Mirror of the HC-2 / R-CARD pułapkowniki: every trap line in
+  // test-data/traps/h3-pulapki.txt must yield ZERO DATE_OF_BIRTH candidates.
+  // The date-specific negative vectors (contract/hearing/judgment/invoice/
+  // order dates with no birth anchor, including a dotted "01.02.2023" and an
+  // ISO "2024-05-15" — the exact shapes a birth date takes) were added to that
+  // living registry as part of R-DATE; the pre-existing HC-2/R-CARD vectors
+  // (their own dates, amounts, dockets) must stay DATE_OF_BIRTH-free too.
+  function loadTraps() {
+    const raw = readFileSync(join(__dirname, '../test-data/traps/h3-pulapki.txt'), 'utf-8');
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+  }
+
+  const traps = loadTraps();
+
+  it.each(traps)('zero DATE_OF_BIRTH false positives on: %s', (trapText) => {
+    const hits = findRegexEntities(trapText).filter((e) => e.entity_group === 'DATE_OF_BIRTH');
+    expect(hits.map((e) => trapText.slice(e.start, e.end))).toEqual([]);
+  });
+});
+

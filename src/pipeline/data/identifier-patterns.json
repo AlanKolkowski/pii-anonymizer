@@ -105,5 +105,14 @@
       "paszport\\p{L}*"
     ],
     "contextWindow": 40
+  },
+  "dataUrodzenia": {
+    "_comment": "R-DATE (IDENTIFIER-COVERAGE-AUDIT.md §2, 2026-07-19). DATE_OF_BIRTH jest typem W1 (maskowanym), ale dziś łapie go TYLKO model — R-DATE dokłada deterministyczną podłogę. WYŁĄCZNIE kotwiczone, nigdy bare (jak R-PJ): daty są WSZĘDZIE w pismach (umowy, terminy, rozprawy, wyroki, faktury), więc bezwarunkowy wzorzec daty zamaskowałby KAŻDĄ z nich jako DATE_OF_BIRTH — katastrofa precyzji. Precyzja pochodzi WYŁĄCZNIE z kotwicy urodzenia w oknie wstecz. `\\bur\\.` jest kotwicowane granicą słowa (a nie bare `ur\\.`), żeby ogon wyrazu ('procedur.', 'struktur.', 'kultur.', 'literatur.' — dopełniacz l.mn. rzeczowników na -ura kończy się na literalne 'ur.') nie udawał skrótu 'ur.' (urodzony) i nie maskował sąsiedniej daty sprawy — dowód w pułapkowniku (src/anonymizer.test.js). Formy złożone z projektu (`r\\.\\s*ur\\.`, `dat[ay] ur\\.`) są ŚCISŁYM PODZBIOREM `\\bur\\.` (ich 'ur.' też stoi po granicy słowa), więc są już w nim zawarte — nie dublujemy ich osobnym, martwym wzorcem. `urodzon\\p{L}*` obejmuje urodzony/urodzona/urodzoną…; `data\\s+urodzenia` obejmuje etykietę pełną. Zamknięta lista, ta sama dyscyplina co reszta rodziny — rozszerzać tylko przez zmierzony wyciek + test.",
+    "contextAnchors": [
+      "\\bur\\.",
+      "urodzon\\p{L}*",
+      "data\\s+urodzenia"
+    ],
+    "contextWindow": 40
   }
 }

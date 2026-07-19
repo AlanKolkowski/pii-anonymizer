@@ -746,6 +746,59 @@ function findPaszportEntities(text) {
   return entities;
 }
 
+// R-DATE: Polish date of birth — "DD.MM.RRRR"/"DD.MM.RR", "RRRR-MM-DD" (ISO),
+// or "DD <month-genitive> RRRR" (stycznia…grudnia). Context-anchor ONLY, never
+// bare (IDENTIFIER-COVERAGE-AUDIT.md §2): DATE_OF_BIRTH is a W1 (masked) type
+// that today only the model catches, so it leaks whenever the model misses —
+// but dates are EVERYWHERE in these documents (contract dates, hearing dates,
+// judgment dates, invoice dates, deadlines), so a bare date pattern would mask
+// every one of them as DATE_OF_BIRTH: a precision catastrophe. This is exactly
+// R-PJ's situation, and the same cure — precision comes entirely from a birth
+// anchor ("ur.", "urodzon…", "data urodzenia") sitting in the preceding
+// paragraph-safe window, not from the date shape. The shape is therefore left
+// deliberately liberal: once a birth anchor is present, the very next token IS
+// the birth date, while with no anchor nearby nothing emits regardless of how
+// date-shaped the text is (the whole point of the anchor — proven by the
+// pułapkownik, where real contract/hearing/invoice dates in every one of these
+// three shapes yield zero DATE_OF_BIRTH). The bare "ur." anchor is word-
+// boundary guarded (`\bur\.`, identifier-patterns.json) so a word-tail like
+// "procedur." can never impersonate the "born" abbreviation.
+const DATE_DATA = identifierPatterns.dataUrodzenia;
+const DATE_CONTEXT_ANCHORS = compileAnchors(DATE_DATA.contextAnchors);
+const DATE_CONTEXT_WINDOW = DATE_DATA.contextWindow;
+
+// Polish month names in the genitive — the form dates are actually written in
+// ("29 sierpnia 1959", not the nominative "sierpień"). Diacritics
+// (września/października) are literal; the pattern runs under the `u` flag.
+const DOB_MONTHS_GENITIVE =
+  'stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|września|października|listopada|grudnia';
+
+// `(?<!\d)` / `(?!\d)` keep the day and the year from being sliced out of a
+// longer digit run (a version string, an IP octet) instead of sitting at a
+// real date boundary. No OCR l/O folding in v1 (unlike the checksum family):
+// the contract's shapes are plain `\d`, and the anchor — not glyph recovery —
+// is what carries precision here.
+const DOB_CANDIDATE_RE = new RegExp(
+  '(?<!\\d)(?:'
+  + '\\d{4}-\\d{2}-\\d{2}'                                // RRRR-MM-DD (ISO)
+  + '|\\d{1,2}\\.\\d{1,2}\\.\\d{2,4}'                     // DD.MM.RRRR / DD.MM.RR
+  + `|\\d{1,2}\\s+(?:${DOB_MONTHS_GENITIVE})\\s+\\d{4}`   // DD <month> RRRR
+  + ')(?!\\d)',
+  'gu',
+);
+
+function findDataUrodzeniaEntities(text) {
+  const entities = [];
+  for (const m of text.matchAll(DOB_CANDIDATE_RE)) {
+    const start = m.index;
+    const end = start + m[0].length;
+    if (hasContextAnchor(text, start, DATE_CONTEXT_WINDOW, DATE_CONTEXT_ANCHORS)) {
+      entities.push({ entity_group: 'DATE_OF_BIRTH', start, end, score: 1.0, source: 'regex' });
+    }
+  }
+  return entities;
+}
+
 // R-KW: Polish land-and-mortgage register number ("numer księgi
 // wieczystej") — 2 uppercase letters + 1 digit + 1 uppercase letter (court
 // code) + "/" + exactly 8 digits (property number) + "/" + 1 digit (check
@@ -971,6 +1024,7 @@ export function findRegexEntities(text) {
     ...findTablicaRejestracyjnaEntities(text),
     ...findPaszportEntities(text),
     ...findKsiegaWieczystaEntities(text),
+    ...findDataUrodzeniaEntities(text),
   ];
   for (const { regex, entity_group } of patterns) {
     for (const m of text.matchAll(regex)) {

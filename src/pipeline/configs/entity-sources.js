@@ -69,7 +69,15 @@ export const ENTITY_SOURCES = {
   // below: sourceFilterStep drops any candidate whose source isn't listed
   // for its type, regardless of score (we do not lean on the A8 net).
   PERSON_NAME:              ['multilang-fp32', 'case-folded', 'gazetteer'],
-  DATE_OF_BIRTH:            ['polish-fp16'],
+  // R-DATE (IDENTIFIER-COVERAGE-AUDIT §2): 'regex' added alongside the model —
+  // findDataUrodzeniaEntities (anonymizer.js) is the deterministic W1 floor for
+  // birth dates. Load-bearing, NOT cosmetic: DATE_OF_BIRTH is weight 3
+  // (type-weights.js), BELOW sourceFilterStep's A8 safety-net floor (weight >=4),
+  // so a regex candidate whose source isn't listed here would be dropped
+  // outright regardless of its score 1.0 — the exact silent-discard trap every
+  // comment in this file warns about. Adds no new model source (regex is not a
+  // download), so requiredSources is unchanged (entity-sources.test.js).
+  DATE_OF_BIRTH:            ['polish-fp16', 'regex'],
   PERSON_ATTRIBUTE:         ['multilang-fp32'],
   PERSON_ALIAS:             ['polish-fp16'],
   PERSON_IDENTIFIER:        ['multilang-fp32', 'regex'],
